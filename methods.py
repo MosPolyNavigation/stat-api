@@ -27,7 +27,7 @@ async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas
 async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> tuple[schemas.Status, int]:
     try:
         user = db.execute(Select(models.UserId).filter_by(id=data.user_id)).scalar_one()
-        auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory)).scalar_one()
+        auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory_id)).scalar_one()
         item = models.SelectAuditory(user=user, auditory=auditory, success=data.success)
         db.add(item)
         db.commit()
