@@ -26,4 +26,19 @@ class SiteStat(BaseModel):
 
 
 class Status(BaseModel):
-    status: str = Field(title="Procedure_status", description="Status of procedure", default="OK")
+    status: str = Field(title="Procedure-status", description="Status of procedure", default="OK")
+
+
+class SelectedAuditory(BaseModel):
+    uuid: str = Field(title="id",
+                      description="Unique user id",
+                      min_length=36,
+                      max_length=36,
+                      pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+    auditory: str = Field(title="Selected-auditory",
+                          description="Selected auditory by user",
+                          max_length=50,
+                          min_length=1)
+    success: bool = Field(title="Selection-status",
+                          description="Status of auditory selection")
+    model_config = ConfigDict(from_attributes=True)
