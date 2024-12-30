@@ -20,7 +20,7 @@ class SiteStat(Base):
     id: int = Column(Integer, primary_key=True, index=True)
     uuid_id: str = Column(ForeignKey("uuids.id"), nullable=False)
     visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
-    endpoint: str = Column(String(100), default="/", nullable=False)
+    endpoint: str = Column(String(100), nullable=True)
 
     uuid: Mapped["UUID"] = relationship("UUID", back_populates="sites")
 

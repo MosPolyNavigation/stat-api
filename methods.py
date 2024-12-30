@@ -15,7 +15,7 @@ async def create_uuid(db: Session) -> schemas.UUID:
 
 async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas.Status, int]:
     try:
-        uuid = db.execute(Select(models.UUID).filter_by(id=data.uuid)).fetchone()
+        uuid = db.execute(Select(models.UUID).filter_by(id=data.uuid)).scalar_one()
         item = models.SiteStat(uuid=uuid, endpoint=data.endpoint)
         db.add(item)
         db.commit()
@@ -26,8 +26,8 @@ async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas
 
 async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> tuple[schemas.Status, int]:
     try:
-        uuid = db.execute(Select(models.UUID).filter_by(id=data.uuid)).fetchone()
-        auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory)).fetchone()
+        uuid = db.execute(Select(models.UUID).filter_by(id=data.uuid)).scalar_one()
+        auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory)).scalar_one()
         item = models.SelectAuditory(uuid=uuid, auditory=auditory, success=data.success)
         db.add(item)
         db.commit()
