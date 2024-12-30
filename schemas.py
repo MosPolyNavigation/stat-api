@@ -26,15 +26,15 @@ class SiteStat(BaseModel):
 
 
 class Status(BaseModel):
+    status: str = Field(title="Procedure-status", description="Status of procedure", default="OK")
+
+
+class SelectedAuditory(BaseModel):
     uuid: str = Field(title="id",
                       description="Unique user id",
                       min_length=36,
                       max_length=36,
                       pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
-    status: str = Field(title="Procedure-status", description="Status of procedure", default="OK")
-
-
-class SelectedAuditory(BaseModel):
     auditory: str = Field(title="Selected-auditory",
                           description="Selected auditory by user",
                           max_length=50,
