@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
-class UUID(BaseModel):
+class UserId(BaseModel):
     id: str = Field(title="id",
                     description="Unique user id",
                     min_length=36,
@@ -13,11 +13,11 @@ class UUID(BaseModel):
 
 
 class SiteStat(BaseModel):
-    uuid: str = Field(title="User-id",
-                      description="User id",
-                      min_length=36,
-                      max_length=36,
-                      pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+    user_id: str = Field(title="User-id",
+                         description="User id",
+                         min_length=36,
+                         max_length=36,
+                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
     endpoint: str | None = Field(title="User-path",
                                  description="Path visited by user",
                                  max_length=100,
@@ -30,11 +30,11 @@ class Status(BaseModel):
 
 
 class SelectedAuditory(BaseModel):
-    uuid: str = Field(title="id",
-                      description="Unique user id",
-                      min_length=36,
-                      max_length=36,
-                      pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+    user_id: str = Field(title="id",
+                         description="Unique user id",
+                         min_length=36,
+                         max_length=36,
+                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
     auditory: str = Field(title="Selected-auditory",
                           description="Selected auditory by user",
                           max_length=50,
