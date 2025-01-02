@@ -49,6 +49,15 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
                 }
             }
         },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
+                }
+            }
+        },
         200: {
             'model': SiteStatDB,
             "description": "List of found data"
@@ -77,6 +86,15 @@ async def get_sites(
             'content': {
                 "application/json": {
                     "example": {"status": "Some error"}
+                }
+            }
+        },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
                 }
             }
         },
