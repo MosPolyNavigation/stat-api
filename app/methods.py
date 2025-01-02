@@ -1,10 +1,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine import ScalarResult
+from datetime import datetime, timedelta
 from sqlalchemy import Select
 from typing import TypeVar
-import models
-import schemas
+from app.state import *
+from app import models
+from app import schemas
 
 T = TypeVar('T', bound=models.Base)
 
@@ -52,7 +54,7 @@ async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> t
 async def item_pagination(
         db: Session,
         data_model: T,
-        params: schemas.StatisticsBase
+        params: schemas.PaginationBase
 ) -> tuple[ScalarResult | schemas.Status, int]:
     query = Select(data_model)
     if params.page is not None and params.per_page is not None:
@@ -63,3 +65,10 @@ async def item_pagination(
         return db.execute(query).scalars(), 200
     except SQLAlchemyError as e:
         return schemas.Status(status=str(e)), 500
+
+
+def check_user(state: AppState, user_id) -> float:
+    state.user_access.setdefault(user_id, datetime.now() - timedelta(seconds=1))
+    delta = datetime.now() - state.user_access[user_id]
+    state.user_access[user_id] = datetime.now()
+    return delta.total_seconds()
