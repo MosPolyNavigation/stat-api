@@ -1,8 +1,12 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.engine import ScalarResult
 from sqlalchemy import Select
+from typing import TypeVar
 import models
 import schemas
+
+T = TypeVar('T', bound=models.Base)
 
 
 async def create_uuid(db: Session) -> tuple[schemas.UserId | schemas.Status, int]:
@@ -43,3 +47,19 @@ async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> t
     except SQLAlchemyError as e:
         return schemas.Status(status=str(e)), 500
     return schemas.Status(), 200
+
+
+async def item_pagination(
+        db: Session,
+        data_model: T,
+        params: schemas.StatisticsBase
+) -> tuple[ScalarResult | schemas.Status, int]:
+    query = Select(data_model)
+    if params.page is not None and params.per_page is not None:
+        query = query.offset(params.per_page*(params.page-1)).limit(params.per_page)
+    if params.user_id is not None:
+        query = query.filter_by(user_id=params.user_id)
+    try:
+        return db.execute(query).scalars(), 200
+    except SQLAlchemyError as e:
+        return schemas.Status(status=str(e)), 500
