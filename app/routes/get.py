@@ -1,4 +1,6 @@
+from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi import Depends, APIRouter, Response
+from fastapi_pagination import Page
 from app.database import get_db
 from app.schemas import *
 from app.methods import *
@@ -29,14 +31,14 @@ router = APIRouter(
     }
 )
 async def get_uuid(response: Response, db: Session = Depends(get_db)):
-    answer, status = await create_uuid(db)
-    response.status_code = status
+    answer, status_code = await create_uuid(db)
+    response.status_code = status_code
     return answer
 
 
 @router.get(
     "/site",
-    response_model=list[SiteStatDB],
+    response_model=Page[SiteStatDB],
     responses={
         500: {
             'model': Status,
@@ -55,17 +57,19 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
 )
 async def get_sites(
         response: Response,
-        query: PaginationBase = Depends(),
+        query: Filter = Depends(),
         db: Session = Depends(get_db)
-):
-    answer, status_code = await item_pagination(db, models.SiteStat, query)
-    response.status_code = status_code
-    return answer
+) -> Page[SiteStatDB]:
+    try:
+        return paginate(db, await item_pagination(models.SiteStat, query))
+    except SQLAlchemyError as e:
+        response.status_code = 500
+        return Status(status=str(e))
 
 
 @router.get(
     "/auds",
-    response_model=list[SelectedAuditoryDB],
+    response_model=Page[SelectedAuditoryDB],
     responses={
         500: {
             'model': Status,
@@ -84,9 +88,11 @@ async def get_sites(
 )
 async def get_auds(
         response: Response,
-        query: PaginationBase = Depends(),
+        query: Filter = Depends(),
         db: Session = Depends(get_db)
-):
-    answer, status_code = await item_pagination(db, models.SelectAuditory, query)
-    response.status_code = status_code
-    return answer
+) -> Page[SelectedAuditoryDB]:
+    try:
+        return paginate(db, await item_pagination(models.SelectAuditory, query))
+    except SQLAlchemyError as e:
+        response.status_code = 500
+        return Status(status=str(e))
