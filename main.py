@@ -1,15 +1,15 @@
 from fastapi import FastAPI, Depends, Body, Response
-
-import schemas
 from methods import *
 from schemas import UserId, SiteStat, Status, SelectedAuditory
 from models import Base
 from database import engine, get_db
+from state import AppState, check_user
 import uvicorn
 
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+app.state = AppState()
 
 
 @app.get(
@@ -96,10 +96,27 @@ async def add_site_stat(response: Response, data: SiteStat = Body(), db: Session
         200: {
             'model': Status,
             "description": "Status of adding new object to db"
+        },
+        429: {
+            'model': Status,
+            "description": "Too many requests",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Too many requests for this user within one second"}
+                }
+            }
         }
     }
 )
-async def add_selected_aud(response: Response, data: SelectedAuditory = Body(), db: Session = Depends(get_db)):
+async def add_selected_aud(
+        response: Response,
+        data: SelectedAuditory = Body(),
+        db: Session = Depends(get_db),
+        state: AppState = Depends(lambda: app.state)
+):
+    if check_user(state, data.user_id) < 1:
+        response.status_code = 429
+        return Status(status="Too many requests for this user within one second")
     answer, status = await insert_aud_selection(db, data)
     response.status_code = status
     return answer
