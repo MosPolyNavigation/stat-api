@@ -1,13 +1,12 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    admin_key: str = "1234567890abcdef"
+    admin_key: str = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
     sqlalchemy_database_url: str = "sqlite:///app.db"
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
 
 @lru_cache()

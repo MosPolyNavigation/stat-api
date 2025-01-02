@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends, Body, Response
 from methods import *
-from schemas import UserId, SiteStat, Status, SelectedAuditory
+from schemas import *
 from models import Base
 from database import engine, get_db
 from state import AppState, check_user
@@ -13,7 +13,7 @@ app.state = AppState()
 
 
 @app.get(
-    "/api/get_uuid",
+    "/api/get/user_id",
     response_model=UserId,
     responses={
         500: {
@@ -118,6 +118,64 @@ async def add_selected_aud(
         response.status_code = 429
         return Status(status="Too many requests for this user within one second")
     answer, status = await insert_aud_selection(db, data)
+    response.status_code = status
+    return answer
+
+
+@app.get(
+    "/api/get/site",
+    response_model=list[SiteStatDB],
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        200: {
+            'model': SiteStatDB,
+            "description": "List of found data"
+        }
+    }
+)
+async def get_sites(
+        response: Response,
+        query: StatisticsBase = Depends(),
+        db: Session = Depends(get_db)
+):
+    answer, status = await item_pagination(db, models.SiteStat, query)
+    response.status_code = status
+    return answer
+
+
+@app.get(
+    "/api/get/auds",
+    response_model=list[SelectedAuditoryDB],
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        200: {
+            'model': SelectedAuditoryDB,
+            "description": "List of found data"
+        }
+    }
+)
+async def get_auds(
+        response: Response,
+        query: StatisticsBase = Depends(),
+        db: Session = Depends(get_db)
+):
+    answer, status = await item_pagination(db, models.SelectAuditory, query)
     response.status_code = status
     return answer
 
