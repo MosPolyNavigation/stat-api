@@ -57,7 +57,7 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
             }
         },
         200: {
-            'model': SiteStatDB,
+            'model': Page[SiteStatDB],
             "description": "List of found data"
         }
     }
@@ -97,7 +97,7 @@ async def get_sites(
             }
         },
         200: {
-            'model': SelectedAuditoryDB,
+            'model': Page[SelectedAuditoryDB],
             "description": "List of found data"
         }
     }
