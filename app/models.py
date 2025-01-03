@@ -1,8 +1,10 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
+from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 from uuid import uuid4
-from app.database import Base
+
+Base = declarative_base()
 
 
 class UserId(Base):
