@@ -10,15 +10,12 @@ from app import schemas
 T = TypeVar('T', bound=models.Base)
 
 
-async def create_uuid(db: Session) -> tuple[schemas.UserId | schemas.Status, int]:
-    try:
-        item = models.UserId()
-        db.add(item)
-        db.commit()
-        db.refresh(item)
-        return item, 200
-    except SQLAlchemyError as e:
-        return schemas.Status(status=str(e)), 500
+async def create_user_id(db: Session) -> schemas.UserId:
+    item = models.UserId()
+    db.add(item)
+    db.commit()
+    db.refresh(item)
+    return item
 
 
 async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas.Status, int]:

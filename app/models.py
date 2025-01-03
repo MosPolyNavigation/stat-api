@@ -8,8 +8,8 @@ from app.database import Base
 class UserId(Base):
     __tablename__ = "user_ids"
 
-    user_id: str = Column(String(36), primary_key=True, default=str(uuid4()))
-    creation_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
+    user_id: str = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    creation_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
     sites: Mapped[list["SiteStat"]] = relationship("SiteStat", back_populates="user")
     selected: Mapped[list["SelectAuditory"]] = relationship("SelectAuditory", back_populates="user")
 

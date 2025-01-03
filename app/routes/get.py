@@ -31,9 +31,7 @@ router = APIRouter(
     }
 )
 async def get_uuid(response: Response, db: Session = Depends(get_db)):
-    answer, status_code = await create_uuid(db)
-    response.status_code = status_code
-    return answer
+    return await create_user_id(db)
 
 
 @router.get(
