@@ -37,7 +37,7 @@ router = APIRouter(
         }
     }
 )
-async def add_site_stat(response: Response, data: SiteStat = Body(), db: Session = Depends(get_db)):
+async def add_site_stat(response: Response, data: SiteStatIn = Body(), db: Session = Depends(get_db)):
     answer, status_code = await insert_site_stat(db, data)
     response.status_code = status_code
     return answer
@@ -83,7 +83,7 @@ async def add_site_stat(response: Response, data: SiteStat = Body(), db: Session
 async def add_selected_aud(
         request: Request,
         response: Response,
-        data: SelectedAuditory = Body(),
+        data: SelectedAuditoryIn = Body(),
         db: Session = Depends(get_db),
 ):
     state = request.app.state

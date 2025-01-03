@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
-class SiteStat(BaseModel):
+class SiteStatIn(BaseModel):
     user_id: str = Field(title="User-id",
                          description="User id",
                          min_length=36,
@@ -15,7 +15,7 @@ class SiteStat(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class SiteStatDB(BaseModel):
+class SiteStatOut(BaseModel):
     user_id: str = Field(title="User-id",
                          description="User id",
                          min_length=36,

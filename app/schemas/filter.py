@@ -1,6 +1,4 @@
-from pydantic import BaseModel, Field, model_validator, field_validator
-from app.config import Settings
-from typing import Any
+from pydantic import BaseModel, Field
 
 
 class Filter(BaseModel):

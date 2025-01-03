@@ -18,7 +18,7 @@ async def create_user_id(db: Session) -> schemas.UserId:
     return item
 
 
-async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas.Status, int]:
+async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> tuple[schemas.Status, int]:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     if user is None:
         return schemas.Status(status="User not found"), 404
@@ -31,7 +31,7 @@ async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas
     return schemas.Status(), 200
 
 
-async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> tuple[schemas.Status, int]:
+async def insert_aud_selection(db: Session, data: schemas.SelectedAuditoryIn) -> tuple[schemas.Status, int]:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory_id)).scalar_one_or_none()
     if user is None:

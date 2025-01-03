@@ -36,7 +36,7 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
 
 @router.get(
     "/site",
-    response_model=Page[SiteStatDB],
+    response_model=Page[SiteStatOut],
     responses={
         500: {
             'model': Status,
@@ -57,7 +57,7 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
             }
         },
         200: {
-            'model': Page[SiteStatDB],
+            'model': Page[SiteStatOut],
             "description": "List of found data"
         }
     }
@@ -66,7 +66,7 @@ async def get_sites(
         response: Response,
         query: Filter = Depends(),
         db: Session = Depends(get_db)
-) -> Page[SiteStatDB]:
+) -> Page[SiteStatOut]:
     try:
         return paginate(db, await item_pagination(models.SiteStat, query))
     except SQLAlchemyError as e:
@@ -76,7 +76,7 @@ async def get_sites(
 
 @router.get(
     "/auds",
-    response_model=Page[SelectedAuditoryDB],
+    response_model=Page[SelectedAuditoryOut],
     responses={
         500: {
             'model': Status,
@@ -97,7 +97,7 @@ async def get_sites(
             }
         },
         200: {
-            'model': Page[SelectedAuditoryDB],
+            'model': Page[SelectedAuditoryOut],
             "description": "List of found data"
         }
     }
@@ -106,7 +106,7 @@ async def get_auds(
         response: Response,
         query: Filter = Depends(),
         db: Session = Depends(get_db)
-) -> Page[SelectedAuditoryDB]:
+) -> Page[SelectedAuditoryOut]:
     try:
         return paginate(db, await item_pagination(models.SelectAuditory, query))
     except SQLAlchemyError as e:
