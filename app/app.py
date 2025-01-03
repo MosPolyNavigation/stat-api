@@ -43,4 +43,4 @@ async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
 
 @app.get("/healthcheck")
 async def healthcheck():
-    return JSONResponse(status_code=200, content={"status": str(datetime.now())})
+    return JSONResponse(status_code=200, content={"current_time": str(datetime.now())})
