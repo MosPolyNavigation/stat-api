@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+echo "ADMIN_KEY=\"$ADMIN_KEY\"" > .env
+echo "SQLALCHEMY_DATABASE_URL=\"$SQLALCHEMY_DATABASE_URL\"" >> .env
+echo "ALLOWED_HOSTS='$ALLOWED_HOSTS'" >> .env
+echo "ALLOWED_METHODS='$ALLOWED_METHODS'" >> .env
