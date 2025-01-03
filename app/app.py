@@ -3,14 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi_pagination import add_pagination
-from app.models import Base
-from app.database import engine
 from app.state import AppState
 from app.routes import get
 from app.routes import stat
 from app.config import Settings, get_settings
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 add_pagination(app)
