@@ -36,7 +36,7 @@ def test_422_stat_aud():
 
 
 def test_stat_aud():
-    response = client.put("/api/stat/site", json={
+    response = client.put("/api/stat/select-aud", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
         "auditory_id": "a-100",
         "success": True
