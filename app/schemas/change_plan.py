@@ -14,7 +14,7 @@ class ChangePlanIn(BaseModel):
                          min_length=3)
 
 
-class SelectedAuditoryOut(BaseModel):
+class ChangePlanOut(BaseModel):
     user_id: str = Field(title="id",
                          description="Unique user id",
                          min_length=36,
