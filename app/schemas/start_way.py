@@ -16,7 +16,6 @@ class StartWayIn(BaseModel):
                         description="Auditory where user ends way",
                         max_length=50,
                         min_length=1)
-    model_config = ConfigDict(from_attributes=True)
 
 
 class StartWayOut(BaseModel):
