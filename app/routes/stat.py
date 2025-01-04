@@ -91,7 +91,7 @@ async def add_selected_aud(
 
 
 @router.put(
-    "/start_way",
+    "/start-way",
     response_model=status.Status,
     responses={
         500: {
