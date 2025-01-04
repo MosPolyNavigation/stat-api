@@ -2,7 +2,6 @@ from fastapi import Depends, APIRouter, Response, Body, Request
 from app.database import get_db
 from app.schemas import *
 from app.methods import *
-from app.state import *
 
 router = APIRouter(
     prefix="/api/stat"
@@ -90,6 +89,44 @@ async def add_selected_aud(
     if check_user(state, data.user_id) < 1:
         response.status_code = 429
         return Status(status="Too many requests for this user within one second")
+    answer, status_code = await insert_aud_selection(db, data)
+    response.status_code = status_code
+    return answer
+
+
+@router.put(
+    "/start_way",
+    response_model=status.Status,
+    responses={
+        500: {
+            'model': status.Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        404: {
+            'model': status.Status,
+            'description': "Item not found",
+            'content': {
+                "application/json": {
+                    "example": {"status": "End auditory not found"}
+                }
+            }
+        },
+        200: {
+            'model': Status,
+            "description": "Status of adding new object to db"
+        }
+    }
+)
+async def add_started_way(
+        response: Response,
+        data: StartWayIn = Body(),
+        db: Session = Depends(get_db)
+):
     answer, status_code = await insert_aud_selection(db, data)
     response.status_code = status_code
     return answer
