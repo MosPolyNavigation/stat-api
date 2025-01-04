@@ -57,6 +57,19 @@ async def insert_start_way(db: Session, data: schemas.StartWayIn) -> schemas.Sta
     return schemas.Status()
 
 
+async def insert_changed_plan(db: Session, data: schemas.ChangePlanIn) -> schemas.Status:
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    plan = db.execute(Select(models.Plan).filter_by(id=data.plan_id)).scalar_one_or_none()
+    if user is None:
+        raise LookupException("User")
+    if plan is None:
+        raise LookupException("Changed plan")
+    item = models.ChangePlan(user=user, plan=plan)
+    db.add(item)
+    db.commit()
+    return schemas.Status()
+
+
 async def item_pagination(
         data_model: T,
         params: schemas.Filter
