@@ -1,6 +1,6 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import PostgresDsn, HttpUrl
-from app.dsn import SqliteDsn
+from app.helpers.dsn import SqliteDsn
 from functools import lru_cache
 
 
