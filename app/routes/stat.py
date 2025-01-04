@@ -123,3 +123,38 @@ async def add_started_way(
         db: Session = Depends(get_db)
 ):
     return await insert_start_way(db, data)
+
+
+@router.put(
+    "/change-plan",
+    response_model=status.Status,
+    responses={
+        500: {
+            'model': status.Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        404: {
+            'model': status.Status,
+            'description': "Item not found",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Changed plan not found"}
+                }
+            }
+        },
+        200: {
+            'model': Status,
+            "description": "Status of adding new object to db"
+        }
+    }
+)
+async def add_changed_plan(
+        data: ChangePlanIn = Body(),
+        db: Session = Depends(get_db)
+):
+    return await insert_changed_plan(db, data)
