@@ -30,7 +30,7 @@ router = APIRouter(
         }
     }
 )
-async def get_uuid(response: Response, db: Session = Depends(get_db)):
+async def get_uuid(db: Session = Depends(get_db)):
     return await create_user_id(db)
 
 
@@ -63,15 +63,10 @@ async def get_uuid(response: Response, db: Session = Depends(get_db)):
     }
 )
 async def get_sites(
-        response: Response,
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[SiteStatOut]:
-    try:
-        return paginate(db, await item_pagination(models.SiteStat, query))
-    except SQLAlchemyError as e:
-        response.status_code = 500
-        return Status(status=str(e))
+    return paginate(db, await item_pagination(models.SiteStat, query))
 
 
 @router.get(
@@ -103,12 +98,7 @@ async def get_sites(
     }
 )
 async def get_auds(
-        response: Response,
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
-    try:
-        return paginate(db, await item_pagination(models.SelectAuditory, query))
-    except SQLAlchemyError as e:
-        response.status_code = 500
-        return Status(status=str(e))
+    return paginate(db, await item_pagination(models.SelectAuditory, query))
