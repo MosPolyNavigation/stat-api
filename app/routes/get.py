@@ -102,3 +102,38 @@ async def get_auds(
         db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
     return paginate(db, await item_pagination(models.SelectAuditory, query))
+
+
+@router.get(
+    "/ways",
+    response_model=Page[StartWayOut],
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
+                }
+            }
+        },
+        200: {
+            'model': Page[StartWayOut],
+            "description": "List of found data"
+        }
+    }
+)
+async def get_ways(
+        query: Filter = Depends(),
+        db: Session = Depends(get_db)
+) -> Page[StartWayOut]:
+    return paginate(db, await item_pagination(models.StartWay, query))
