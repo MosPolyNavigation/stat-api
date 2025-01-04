@@ -1,4 +1,5 @@
 from .base import client
+from time import sleep
 
 
 def test_get_auds():
@@ -11,6 +12,7 @@ def test_get_auds():
 
 
 def test_user_404_stat_aud():
+    sleep(1)
     response = client.put("/api/stat/select-aud", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1",
         "auditory_id": "a-100",
@@ -21,6 +23,7 @@ def test_user_404_stat_aud():
 
 
 def test_auditory_404_stat_aud():
+    sleep(1)
     response = client.put("/api/stat/select-aud", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
         "auditory_id": "a-12122",
@@ -36,6 +39,7 @@ def test_422_stat_aud():
 
 
 def test_stat_aud():
+    sleep(1)
     response = client.put("/api/stat/select-aud", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
         "auditory_id": "a-100",
