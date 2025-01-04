@@ -519,7 +519,7 @@ def data_upgrades():
 
 
 def data_drop():
-    op.execute("DELETE FROM auditories;")
+    op.execute("DELETE FROM auditories")
 
 
 def upgrade() -> None:
