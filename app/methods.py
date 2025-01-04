@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime, timedelta
+from app.errors import LookupException
 from sqlalchemy import Select
 from typing import TypeVar
 from app.state import *
@@ -18,52 +18,43 @@ async def create_user_id(db: Session) -> schemas.UserId:
     return item
 
 
-async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> tuple[schemas.Status, int]:
+async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> schemas.Status:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     if user is None:
-        return schemas.Status(status="User not found"), 404
-    try:
-        item = models.SiteStat(user=user, endpoint=data.endpoint)
-        db.add(item)
-        db.commit()
-    except SQLAlchemyError as e:
-        return schemas.Status(status=str(e)), 500
-    return schemas.Status(), 200
+        raise LookupException("User")
+    item = models.SiteStat(user=user, endpoint=data.endpoint)
+    db.add(item)
+    db.commit()
+    return schemas.Status()
 
 
-async def insert_aud_selection(db: Session, data: schemas.SelectedAuditoryIn) -> tuple[schemas.Status, int]:
+async def insert_aud_selection(db: Session, data: schemas.SelectedAuditoryIn) -> schemas.Status:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory_id)).scalar_one_or_none()
     if user is None:
-        return schemas.Status(status="User not found"), 404
+        raise LookupException("User")
     if auditory is None:
-        return schemas.Status(status="Auditory not found"), 404
-    try:
-        item = models.SelectAuditory(user=user, auditory=auditory, success=data.success)
-        db.add(item)
-        db.commit()
-    except SQLAlchemyError as e:
-        return schemas.Status(status=str(e)), 500
-    return schemas.Status(), 200
+        raise LookupException("Auditory")
+    item = models.SelectAuditory(user=user, auditory=auditory, success=data.success)
+    db.add(item)
+    db.commit()
+    return schemas.Status()
 
 
-async def insert_start_way(db: Session, data: schemas.StartWayIn) -> tuple[schemas.Status, int]:
+async def insert_start_way(db: Session, data: schemas.StartWayIn) -> schemas.Status:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     start = db.execute(Select(models.Auditory).filter_by(id=data.start_id)).scalar_one_or_none()
     end = db.execute(Select(models.Auditory).filter_by(id=data.end_id)).scalar_one_or_none()
     if user is None:
-        return schemas.Status(status="User not found"), 404
+        raise LookupException("User")
     if start is None:
-        return schemas.Status(status="Start auditory not found"), 404
+        raise LookupException("Start auditory")
     if end is None:
-        return schemas.Status(status="End auditory not found"), 404
-    try:
-        item = models.StartWay(user=user, start=start, end=end)
-        db.add(item)
-        db.commit()
-    except SQLAlchemyError as e:
-        return schemas.Status(status=str(e)), 500
-    return schemas.Status(), 200
+        raise LookupException("End auditory")
+    item = models.StartWay(user=user, start=start, end=end)
+    db.add(item)
+    db.commit()
+    return schemas.Status()
 
 
 async def item_pagination(

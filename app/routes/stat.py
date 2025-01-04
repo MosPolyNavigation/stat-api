@@ -36,10 +36,8 @@ router = APIRouter(
         }
     }
 )
-async def add_site_stat(response: Response, data: SiteStatIn = Body(), db: Session = Depends(get_db)):
-    answer, status_code = await insert_site_stat(db, data)
-    response.status_code = status_code
-    return answer
+async def add_site_stat(data: SiteStatIn = Body(), db: Session = Depends(get_db)):
+    return await insert_site_stat(db, data)
 
 
 @router.put(
@@ -89,9 +87,7 @@ async def add_selected_aud(
     if check_user(state, data.user_id) < 1:
         response.status_code = 429
         return Status(status="Too many requests for this user within one second")
-    answer, status_code = await insert_aud_selection(db, data)
-    response.status_code = status_code
-    return answer
+    return await insert_aud_selection(db, data)
 
 
 @router.put(
@@ -123,10 +119,7 @@ async def add_selected_aud(
     }
 )
 async def add_started_way(
-        response: Response,
         data: StartWayIn = Body(),
         db: Session = Depends(get_db)
 ):
-    answer, status_code = await insert_start_way(db, data)
-    response.status_code = status_code
-    return answer
+    return await insert_start_way(db, data)
