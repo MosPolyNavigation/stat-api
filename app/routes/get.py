@@ -12,7 +12,7 @@ router = APIRouter(
 
 
 @router.get(
-    "/user_id",
+    "/user-id",
     response_model=UserId,
     responses={
         500: {
