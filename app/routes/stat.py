@@ -127,6 +127,6 @@ async def add_started_way(
         data: StartWayIn = Body(),
         db: Session = Depends(get_db)
 ):
-    answer, status_code = await insert_aud_selection(db, data)
+    answer, status_code = await insert_start_way(db, data)
     response.status_code = status_code
     return answer
