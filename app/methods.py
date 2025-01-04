@@ -63,7 +63,7 @@ async def insert_start_way(db: Session, data: schemas.StartWayIn) -> tuple[schem
         db.commit()
     except SQLAlchemyError as e:
         return schemas.Status(status=str(e)), 500
-    pass
+    return schemas.Status(), 200
 
 
 async def item_pagination(
