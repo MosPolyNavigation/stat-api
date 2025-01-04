@@ -15,6 +15,7 @@ class UserId(Base):
     sites: Mapped[list["SiteStat"]] = relationship("SiteStat", back_populates="user")
     selected: Mapped[list["SelectAuditory"]] = relationship("SelectAuditory", back_populates="user")
     started_ways: Mapped[list["StartWay"]] = relationship("StartWay", back_populates="user")
+    changed_plans: Mapped[list["ChangePlan"]] = relationship("ChangePlan", back_populates="user")
 
 
 class SiteStat(Base):
@@ -60,3 +61,23 @@ class StartWay(Base):
     user: Mapped["UserId"] = relationship("UserId", back_populates="started_ways")
     start: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[start_id])
     end: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[end_id])
+
+
+class Plan(Base):
+    __tablename__ = "plans"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)
+
+    changed: Mapped[list["ChangePlan"]] = relationship("ChangePlan", back_populates="plan")
+
+
+class ChangePlan(Base):
+    __tablename__ = "changed_plans"
+
+    id: int = Column(Integer, primary_key=True, index=True)
+    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
+    visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
+    plan_id: str = Column(ForeignKey("plans.id"), nullable=False)
+
+    user: Mapped["UserId"] = relationship("UserId", back_populates="changed_plans")
+    plan: Mapped["Plan"] = relationship("Plan", back_populates="changed")
