@@ -1,5 +1,5 @@
 /venv/
-/app.db
+/**/app.db
 /**/__pycache__/
 /.idea/
-/.env
+/**/.env
