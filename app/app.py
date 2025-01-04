@@ -1,12 +1,13 @@
 from sqlalchemy.exc import SQLAlchemyError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
+from app.helpers.errors import LookupException
 from fastapi_pagination import add_pagination
+from app.config import Settings, get_settings
+from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Request
 from app.state import AppState
 from app.routes import get
 from app.routes import stat
-from app.config import Settings, get_settings
 from datetime import datetime
 
 app = FastAPI()
@@ -39,6 +40,11 @@ async def token_auth_middleware(request: Request, call_next):
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
     return JSONResponse(status_code=500, content={"status": str(exc)})
+
+
+@app.exception_handler(LookupException)
+async def lookup_exception_handler(request: Request, exc: LookupException):
+    return JSONResponse(status_code=404, content={"status": str(exc)})
 
 
 @app.get("/healthcheck")
