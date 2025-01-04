@@ -137,3 +137,38 @@ async def get_ways(
         db: Session = Depends(get_db)
 ) -> Page[StartWayOut]:
     return paginate(db, await item_pagination(models.StartWay, query))
+
+
+@router.get(
+    "/plans",
+    response_model=Page[ChangePlanOut],
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
+                }
+            }
+        },
+        200: {
+            'model': Page[ChangePlanOut],
+            "description": "List of found data"
+        }
+    }
+)
+async def get_plans(
+        query: Filter = Depends(),
+        db: Session = Depends(get_db)
+) -> Page[ChangePlanOut]:
+    return paginate(db, await item_pagination(models.ChangePlan, query))
