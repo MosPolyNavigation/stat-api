@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.orm import Mapped, relationship, mapped_column
 from datetime import datetime
 from uuid import uuid4
 
@@ -14,6 +14,7 @@ class UserId(Base):
     creation_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
     sites: Mapped[list["SiteStat"]] = relationship("SiteStat", back_populates="user")
     selected: Mapped[list["SelectAuditory"]] = relationship("SelectAuditory", back_populates="user")
+    started_ways: Mapped[list["StartWay"]] = relationship("StartWay", back_populates="user")
 
 
 class SiteStat(Base):
@@ -30,7 +31,7 @@ class SiteStat(Base):
 class Auditory(Base):
     __tablename__ = "auditories"
 
-    id: str = Column(String(50), primary_key=True)
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)
     selected: Mapped[list["SelectAuditory"]] = relationship("SelectAuditory", back_populates="auditory")
 
 
@@ -45,3 +46,17 @@ class SelectAuditory(Base):
 
     user: Mapped["UserId"] = relationship("UserId", back_populates="selected")
     auditory: Mapped["Auditory"] = relationship("Auditory", back_populates="selected")
+
+
+class StartWay(Base):
+    __tablename__ = "started_ways"
+
+    id: int = Column(Integer, primary_key=True, index=True)
+    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
+    visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
+    start_id: Mapped[str] = mapped_column(ForeignKey("auditories.id"), nullable=False)
+    end_id: Mapped[str] = mapped_column(ForeignKey("auditories.id"), nullable=False)
+
+    user: Mapped["UserId"] = relationship("UserId", back_populates="started_ways")
+    start: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[start_id])
+    end: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[end_id])

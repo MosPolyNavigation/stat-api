@@ -18,7 +18,7 @@ async def create_user_id(db: Session) -> schemas.UserId:
     return item
 
 
-async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas.Status, int]:
+async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> tuple[schemas.Status, int]:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     if user is None:
         return schemas.Status(status="User not found"), 404
@@ -31,7 +31,7 @@ async def insert_site_stat(db: Session, data: schemas.SiteStat) -> tuple[schemas
     return schemas.Status(), 200
 
 
-async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> tuple[schemas.Status, int]:
+async def insert_aud_selection(db: Session, data: schemas.SelectedAuditoryIn) -> tuple[schemas.Status, int]:
     user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory_id)).scalar_one_or_none()
     if user is None:
@@ -40,6 +40,25 @@ async def insert_aud_selection(db: Session, data: schemas.SelectedAuditory) -> t
         return schemas.Status(status="Auditory not found"), 404
     try:
         item = models.SelectAuditory(user=user, auditory=auditory, success=data.success)
+        db.add(item)
+        db.commit()
+    except SQLAlchemyError as e:
+        return schemas.Status(status=str(e)), 500
+    return schemas.Status(), 200
+
+
+async def insert_start_way(db: Session, data: schemas.StartWayIn) -> tuple[schemas.Status, int]:
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    start = db.execute(Select(models.Auditory).filter_by(id=data.start_id)).scalar_one_or_none()
+    end = db.execute(Select(models.Auditory).filter_by(id=data.end_id)).scalar_one_or_none()
+    if user is None:
+        return schemas.Status(status="User not found"), 404
+    if start is None:
+        return schemas.Status(status="Start auditory not found"), 404
+    if end is None:
+        return schemas.Status(status="End auditory not found"), 404
+    try:
+        item = models.StartWay(user=user, start=start, end=end)
         db.add(item)
         db.commit()
     except SQLAlchemyError as e:

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
-class SelectedAuditory(BaseModel):
+class SelectedAuditoryIn(BaseModel):
     user_id: str = Field(title="id",
                          description="Unique user id",
                          min_length=36,
@@ -14,10 +14,9 @@ class SelectedAuditory(BaseModel):
                              min_length=1)
     success: bool = Field(title="Selection-status",
                           description="Status of auditory selection")
-    model_config = ConfigDict(from_attributes=True)
 
 
-class SelectedAuditoryDB(BaseModel):
+class SelectedAuditoryOut(BaseModel):
     user_id: str = Field(title="id",
                          description="Unique user id",
                          min_length=36,
