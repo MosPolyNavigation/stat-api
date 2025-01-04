@@ -6,7 +6,7 @@ Create Date: 2025-01-04 15:59:35.955135
 
 """
 from typing import Sequence, Union
-
+from app.helpers.data import plans
 from alembic import op
 import sqlalchemy as sa
 
@@ -16,29 +16,6 @@ revision: str = '3bce90c96a6a'
 down_revision: Union[str, None] = '811554982f66'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
-plans = """A-0
-A-1
-A-2
-A-3
-A-4
-B-1
-B-2
-B-3
-B-4
-V-1
-V-2
-V-3
-V-4
-V-5
-N-0
-N-1
-N-2
-N-3
-N-4
-N-5
-ND-1
-ND-2"""
 
 
 def data_upgrades():

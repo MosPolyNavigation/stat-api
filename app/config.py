@@ -5,7 +5,7 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    admin_key: str = "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+    admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     allowed_hosts: set[HttpUrl] = set()
     allowed_methods: set[str] = set()
