@@ -14,7 +14,6 @@ class SelectedAuditoryIn(BaseModel):
                              min_length=1)
     success: bool = Field(title="Selection-status",
                           description="Status of auditory selection")
-    model_config = ConfigDict(from_attributes=True)
 
 
 class SelectedAuditoryOut(BaseModel):
