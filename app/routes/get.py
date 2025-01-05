@@ -172,3 +172,34 @@ async def get_plans(
     db: Session = Depends(get_db)
 ) -> Page[ChangePlanOut]:
     return paginate(db, filter_by_user(models.ChangePlan, query))
+
+
+@router.get(
+    "/stat",
+    response_model=Statistics,
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
+                }
+            }
+        }
+    }
+)
+async def get_stat(
+    query: FilterQuery = Depends(),
+    db: Session = Depends(get_db)
+):
+    return await get_endpoint_stats(db, query)
