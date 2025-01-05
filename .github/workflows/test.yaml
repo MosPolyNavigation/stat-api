@@ -47,7 +47,7 @@ jobs:
           ./create_envfile
           alembic upgrade head
         env:
-          SQLALCHEMY_DATABASE_URL=${{secrets.SQLALCHEMY_DATABASE_URL}}
+          SQLALCHEMY_DATABASE_URL: ${{ secrets.SQLALCHEMY_DATABASE_URL }}
 
   publish:
     if: github.ref == 'refs/heads/master'
@@ -56,4 +56,4 @@ jobs:
 
     steps:
       - name: Trigger deploy action on hosting
-        run: curl ${{secrets.DEPLOY_HOOK}}
+        run: curl ${{ secrets.DEPLOY_HOOK }}
