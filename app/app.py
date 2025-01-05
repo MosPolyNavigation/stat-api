@@ -28,7 +28,7 @@ app.add_middleware(
 
 @app.middleware("http")
 async def token_auth_middleware(request: Request, call_next):
-    if request.scope['path'] in ["/api/get/site", "/api/get/auds"]:
+    if request.scope['path'] in ["/api/get/site", "/api/get/auds", "/api/get/ways", "/api/get/plans", "/api/get/stat"]:
         token = request.query_params.get('api_key')
         if not token:
             return JSONResponse(status_code=403, content={"status": "no api_key"})
