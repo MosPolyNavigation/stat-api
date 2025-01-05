@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, Response, Body, Request
 from app.database import get_db
 from app.schemas import *
-from app.methods import *
+from app.handlers import *
 
 router = APIRouter(
     prefix="/api/stat"
