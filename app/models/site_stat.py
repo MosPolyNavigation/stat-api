@@ -1,0 +1,15 @@
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy.orm import Mapped, relationship
+from datetime import datetime
+from .base import Base
+
+
+class SiteStat(Base):
+    __tablename__ = "site_statistics"
+
+    id: int = Column(Integer, primary_key=True, index=True)
+    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
+    visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
+    endpoint: str = Column(String(100), nullable=True)
+
+    user: Mapped["UserId"] = relationship("UserId", back_populates="sites")

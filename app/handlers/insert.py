@@ -1,21 +1,7 @@
-from app.helpers.errors import LookupException
-from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import Select
-from typing import TypeVar
-from app.state import *
-from app import schemas
-from app import models
-
-T = TypeVar('T', bound=models.Base)
-
-
-async def create_user_id(db: Session) -> schemas.UserId:
-    item = models.UserId()
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
+from app import schemas, models
+from app.helpers.errors import LookupException
 
 
 async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> schemas.Status:
@@ -68,20 +54,3 @@ async def insert_changed_plan(db: Session, data: schemas.ChangePlanIn) -> schema
     db.add(item)
     db.commit()
     return schemas.Status()
-
-
-async def item_pagination(
-        data_model: T,
-        params: schemas.Filter
-) -> Select:
-    query = Select(data_model)
-    if params.user_id is not None:
-        query = query.filter_by(user_id=params.user_id)
-    return query
-
-
-def check_user(state: AppState, user_id) -> float:
-    state.user_access.setdefault(user_id, datetime.now() - timedelta(seconds=1))
-    delta = datetime.now() - state.user_access[user_id]
-    state.user_access[user_id] = datetime.now()
-    return delta.total_seconds()
