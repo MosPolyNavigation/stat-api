@@ -1,5 +1,6 @@
 import pytest
 from .base import client
+from time import sleep
 
 
 def test_404_stat_site():
@@ -27,6 +28,7 @@ def test_404_stat_site():
     )
 ])
 def test_404_stat_aud(data, body):
+    sleep(1)
     response = client.put("/api/stat/select-aud", json={
         "success": True,
         **data
@@ -91,3 +93,8 @@ def test_404_stat_plan(data, body):
     })
     assert response.status_code == 404
     assert response.json() == body
+
+
+def test_404():
+    response = client.get("/")
+    assert response.status_code == 404
