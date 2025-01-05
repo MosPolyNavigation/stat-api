@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, computed_field
-from typing import Optional
+from typing import Optional, Type
 from datetime import date
 from app import models
 from enum import Enum
@@ -35,7 +35,7 @@ class FilterQuery(FilterBase):
 
     @computed_field
     @property
-    def model(self):
+    def model(self) -> Type[models.ChangePlan | models.StartWay | models.SelectAuditory | models.SiteStat]:
         if self.target is TargetEnum.plans:
             return models.ChangePlan
         elif self.target is TargetEnum.ways:
