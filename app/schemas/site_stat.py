@@ -1,29 +1,19 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel
+from app.schemas.base import *
 from datetime import datetime
+from typing import Optional
 
 
-class SiteStatIn(BaseModel):
-    user_id: str = Field(title="User-id",
-                         description="User id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
-    endpoint: str | None = Field(title="User-path",
-                                 description="Path visited by user",
-                                 max_length=100,
-                                 default=None)
-    model_config = ConfigDict(from_attributes=True)
+class SiteStatBase(BaseModel):
+    endpoint: Optional[str] = Field(title="User-path",
+                                    description="Path visited by user",
+                                    max_length=100,
+                                    default=None)
 
 
-class SiteStatOut(BaseModel):
-    user_id: str = Field(title="User-id",
-                         description="User id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+class SiteStatIn(SiteStatBase, UserIdBase):
+    pass
+
+
+class SiteStatOut(SiteStatBase, UserIdBase, FromOrmBase):
     visit_date: datetime = Field(description="Date when user visited this endpoint")
-    endpoint: str | None = Field(title="User-path",
-                                 description="Path visited by user",
-                                 max_length=100,
-                                 default=None)
-    model_config = ConfigDict(from_attributes=True)

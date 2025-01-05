@@ -31,6 +31,18 @@ def create_db_and_tables():
     auds_data: list[models.Auditory] = list(map(lambda x: models.Auditory(id=x), list(set(auds.split('\n')))))
     db.add_all(auds_data)
     db.commit()
+    data_site_stat = models.SiteStat(user=user)
+    db.add(data_site_stat)
+    db.commit()
+    data_start_way = models.StartWay(user=user, start_id="a-100", end_id="a-101")
+    db.add(data_start_way)
+    db.commit()
+    data_select_aud = models.SelectAuditory(user=user, auditory_id="a-100")
+    db.add(data_select_aud)
+    db.commit()
+    data_change_plan = models.ChangePlan(user=user, plan_id="A-0")
+    db.add(data_change_plan)
+    db.commit()
 
 
 create_db_and_tables()

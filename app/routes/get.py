@@ -1,9 +1,9 @@
 from fastapi_pagination.ext.sqlalchemy import paginate
-from fastapi import Depends, APIRouter, Response
+from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
 from app.database import get_db
 from app.schemas import *
-from app.methods import *
+from app.handlers import *
 from app import models
 
 router = APIRouter(
@@ -63,10 +63,10 @@ async def get_uuid(db: Session = Depends(get_db)):
     }
 )
 async def get_sites(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[SiteStatOut]:
-    return paginate(db, await item_pagination(models.SiteStat, query))
+    return paginate(db, filter_by_user(models.SiteStat, query))
 
 
 @router.get(
@@ -98,10 +98,10 @@ async def get_sites(
     }
 )
 async def get_auds(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
-    return paginate(db, await item_pagination(models.SelectAuditory, query))
+    return paginate(db, filter_by_user(models.SelectAuditory, query))
 
 
 @router.get(
@@ -133,10 +133,10 @@ async def get_auds(
     }
 )
 async def get_ways(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[StartWayOut]:
-    return paginate(db, await item_pagination(models.StartWay, query))
+    return paginate(db, filter_by_user(models.StartWay, query))
 
 
 @router.get(
@@ -168,7 +168,38 @@ async def get_ways(
     }
 )
 async def get_plans(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[ChangePlanOut]:
-    return paginate(db, await item_pagination(models.ChangePlan, query))
+    return paginate(db, filter_by_user(models.ChangePlan, query))
+
+
+@router.get(
+    "/stat",
+    response_model=Statistics,
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        403: {
+            'model': Status,
+            'description': "Api_key validation error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "no api_key"}
+                }
+            }
+        }
+    }
+)
+async def get_stat(
+    query: FilterQuery = Depends(),
+    db: Session = Depends(get_db)
+):
+    return await get_endpoint_stats(db, query)
