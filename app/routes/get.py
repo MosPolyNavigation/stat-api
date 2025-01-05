@@ -66,7 +66,7 @@ async def get_sites(
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[SiteStatOut]:
-    return paginate(db, await filter_by_user(models.SiteStat, query))
+    return paginate(db, filter_by_user(models.SiteStat, query))
 
 
 @router.get(
@@ -101,7 +101,7 @@ async def get_auds(
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
-    return paginate(db, await filter_by_user(models.SelectAuditory, query))
+    return paginate(db, filter_by_user(models.SelectAuditory, query))
 
 
 @router.get(
@@ -136,7 +136,7 @@ async def get_ways(
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[StartWayOut]:
-    return paginate(db, await filter_by_user(models.StartWay, query))
+    return paginate(db, filter_by_user(models.StartWay, query))
 
 
 @router.get(
@@ -171,4 +171,4 @@ async def get_plans(
         query: Filter = Depends(),
         db: Session = Depends(get_db)
 ) -> Page[ChangePlanOut]:
-    return paginate(db, await filter_by_user(models.ChangePlan, query))
+    return paginate(db, filter_by_user(models.ChangePlan, query))

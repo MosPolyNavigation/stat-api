@@ -4,7 +4,7 @@ from app import schemas
 from typing import Any
 
 
-async def filter_by_user(
+def filter_by_user(
         data_model: Any,
         params: schemas.Filter
 ) -> Select:
@@ -14,7 +14,7 @@ async def filter_by_user(
     return query
 
 
-async def filter_by_date(params: schemas.FilterQuery) -> Select:
+def filter_by_date(params: schemas.FilterQuery) -> Select:
     model = params.model
     query = Select(model)
     start_time = time(0, 0, 0)
