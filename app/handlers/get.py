@@ -7,7 +7,8 @@ from app import schemas, models
 async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
     query, borders = filter_by_date(params)
     all_visits = len(db.execute(query).scalars().all())
-    unique_query = Select(func.count(models.UserId)).filter(column("user_id").in_(query))
+    unique_query = Select(func.count(models.UserId.user_id)).filter(column("user_id").in_(query))
+    visitor_count = db.execute(unique_query).scalar()
     if borders is not None:
         unique_query = unique_query.filter(and_(
             models.UserId.creation_date >= borders[0],
@@ -16,6 +17,7 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
     unique_visitors = db.execute(unique_query).scalar()
     return schemas.Statistics(
         unique_visitors=unique_visitors,
-        all_visitors=all_visits-unique_visitors,
+        visitor_count=visitor_count,
+        all_visits=all_visits,
         period=borders
     )
