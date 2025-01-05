@@ -1,3 +1,4 @@
+import pytest
 from .base import client
 
 
@@ -16,37 +17,11 @@ def test_422_get_stat():
     assert response.status_code == 422
 
 
-def test_get_stat_site():
+@pytest.mark.parametrize("target", ["site", "auds", "ways", "plans"])
+def test_get_stat(target):
     response = client.get("/api/get/stat", params={
         "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         "target": "site"
-    })
-    assert response.status_code == 200
-    assert response.json()["unique_visitors"] == 1
-
-
-def test_get_stat_auds():
-    response = client.get("/api/get/stat", params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "target": "auds"
-    })
-    assert response.status_code == 200
-    assert response.json()["unique_visitors"] == 1
-
-
-def test_get_stat_ways():
-    response = client.get("/api/get/stat", params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "target": "ways"
-    })
-    assert response.status_code == 200
-    assert response.json()["unique_visitors"] == 1
-
-
-def test_get_stat_plans():
-    response = client.get("/api/get/stat", params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "target": "plans"
     })
     assert response.status_code == 200
     assert response.json()["unique_visitors"] == 1
