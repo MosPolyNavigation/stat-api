@@ -11,6 +11,13 @@ def test_get_auds():
     assert response.status_code == 200
 
 
+def test_403_get_auds():
+    response = client.get("/api/get/auds", params={
+        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde1"
+    })
+    assert response.status_code == 403
+
+
 def test_user_404_stat_aud():
     sleep(1)
     response = client.put("/api/stat/select-aud", json={
