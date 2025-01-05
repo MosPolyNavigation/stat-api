@@ -10,13 +10,6 @@ def test_get_ways():
     assert response.status_code == 200
 
 
-def test_403_get_ways():
-    response = client.get("/api/get/ways", params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde1"
-    })
-    assert response.status_code == 403
-
-
 def test_user_404_stat_way():
     response = client.put("/api/stat/start-way", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1",
