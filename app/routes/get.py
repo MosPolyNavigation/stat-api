@@ -63,8 +63,8 @@ async def get_uuid(db: Session = Depends(get_db)):
     }
 )
 async def get_sites(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[SiteStatOut]:
     return paginate(db, filter_by_user(models.SiteStat, query))
 
@@ -98,8 +98,8 @@ async def get_sites(
     }
 )
 async def get_auds(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
     return paginate(db, filter_by_user(models.SelectAuditory, query))
 
@@ -133,8 +133,8 @@ async def get_auds(
     }
 )
 async def get_ways(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[StartWayOut]:
     return paginate(db, filter_by_user(models.StartWay, query))
 
@@ -168,7 +168,7 @@ async def get_ways(
     }
 )
 async def get_plans(
-        query: Filter = Depends(),
-        db: Session = Depends(get_db)
+    query: Filter = Depends(),
+    db: Session = Depends(get_db)
 ) -> Page[ChangePlanOut]:
     return paginate(db, filter_by_user(models.ChangePlan, query))
