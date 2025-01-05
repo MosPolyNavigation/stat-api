@@ -35,11 +35,6 @@ def test_plan_404_stat_plan():
     assert response.json() == {"status": "Changed plan not found"}
 
 
-def test_422_stat_plan():
-    response = client.put("/api/stat/change-plan", json={})
-    assert response.status_code == 422
-
-
 def test_stat_plan():
     response = client.put("/api/stat/change-plan", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",

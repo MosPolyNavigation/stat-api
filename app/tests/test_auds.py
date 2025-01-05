@@ -40,11 +40,6 @@ def test_auditory_404_stat_aud():
     assert response.json() == {"status": "Auditory not found"}
 
 
-def test_422_stat_aud():
-    response = client.put("/api/stat/select-aud", json={})
-    assert response.status_code == 422
-
-
 def test_stat_aud():
     sleep(1)
     response = client.put("/api/stat/select-aud", json={

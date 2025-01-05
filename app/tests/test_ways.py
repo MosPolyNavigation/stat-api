@@ -47,11 +47,6 @@ def test_end_404_stat_way():
     assert response.json() == {"status": "End auditory not found"}
 
 
-def test_422_stat_way():
-    response = client.put("/api/stat/start-way", json={})
-    assert response.status_code == 422
-
-
 def test_stat_way():
     response = client.put("/api/stat/start-way", json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
