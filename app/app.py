@@ -38,12 +38,12 @@ async def token_auth_middleware(request: Request, call_next):
 
 
 @app.exception_handler(SQLAlchemyError)
-async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
     return JSONResponse(status_code=500, content={"status": str(exc)})
 
 
 @app.exception_handler(LookupException)
-async def lookup_exception_handler(request: Request, exc: LookupException):
+async def lookup_exception_handler(_, exc: LookupException):
     return JSONResponse(status_code=404, content={"status": str(exc)})
 
 
