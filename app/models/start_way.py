@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from sqlalchemy import Column, Integer, DateTime, ForeignKey
 from datetime import datetime
+from .auditory import Auditory
 from .base import Base
+from .user_id import UserId
 
 
 class StartWay(Base):
@@ -13,6 +15,6 @@ class StartWay(Base):
     start_id: Mapped[str] = mapped_column(ForeignKey("auditories.id"), nullable=False)
     end_id: Mapped[str] = mapped_column(ForeignKey("auditories.id"), nullable=False)
 
-    user: Mapped["UserId"] = relationship("UserId", back_populates="started_ways")
+    user: Mapped["UserId"] = relationship()
     start: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[start_id])
     end: Mapped["Auditory"] = relationship("Auditory", foreign_keys=[end_id])
