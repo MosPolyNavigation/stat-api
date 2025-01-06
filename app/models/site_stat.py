@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 from .base import Base
+from .user_id import UserId
 
 
 class SiteStat(Base):
@@ -12,4 +13,4 @@ class SiteStat(Base):
     visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
     endpoint: str = Column(String(100), nullable=True)
 
-    user: Mapped["UserId"] = relationship("UserId", back_populates="sites")
+    user: Mapped["UserId"] = relationship()

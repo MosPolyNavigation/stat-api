@@ -2,6 +2,8 @@ from sqlalchemy import Column, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 from .base import Base
+from .plan import Plan
+from .user_id import UserId
 
 
 class ChangePlan(Base):
@@ -12,5 +14,5 @@ class ChangePlan(Base):
     visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
     plan_id: str = Column(ForeignKey("plans.id"), nullable=False)
 
-    user: Mapped["UserId"] = relationship("UserId", back_populates="changed_plans")
-    plan: Mapped["Plan"] = relationship("Plan", back_populates="changed")
+    user: Mapped["UserId"] = relationship()
+    plan: Mapped["Plan"] = relationship()
