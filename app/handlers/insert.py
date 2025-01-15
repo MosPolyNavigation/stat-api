@@ -17,7 +17,7 @@ async def insert_site_stat(db: Session, data: schemas.SiteStatIn) -> schemas.Sta
     Returns:
         schemas.Status: Статус операции.
     """
-    user = db.execute(Select(models.User).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
     item = models.SiteStat(user=user, endpoint=data.endpoint)
@@ -39,7 +39,7 @@ async def insert_aud_selection(db: Session, data: schemas.SelectedAuditoryIn) ->
     Returns:
         schemas.Status: Статус операции.
     """
-    user = db.execute(Select(models.User).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     auditory = db.execute(Select(models.Auditory).filter_by(id=data.auditory_id)).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
@@ -64,7 +64,7 @@ async def insert_start_way(db: Session, data: schemas.StartWayIn) -> schemas.Sta
     Returns:
         schemas.Status: Статус операции.
     """
-    user = db.execute(Select(models.User).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     start = db.execute(Select(models.Auditory).filter_by(id=data.start_id)).scalar_one_or_none()
     end = db.execute(Select(models.Auditory).filter_by(id=data.end_id)).scalar_one_or_none()
     if user is None:
@@ -92,7 +92,7 @@ async def insert_changed_plan(db: Session, data: schemas.ChangePlanIn) -> schema
     Returns:
         schemas.Status: Статус операции.
     """
-    user = db.execute(Select(models.User).filter_by(user_id=data.user_id)).scalar_one_or_none()
+    user = db.execute(Select(models.UserId).filter_by(user_id=data.user_id)).scalar_one_or_none()
     plan = db.execute(Select(models.Plan).filter_by(id=data.plan_id)).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
