@@ -5,6 +5,21 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
+    """
+    Класс настроек приложения.
+
+    Этот класс содержит настройки приложения, которые могут быть загружены из файла .env.
+
+    Attributes:
+        admin_key: Административный ключ.
+        sqlalchemy_database_url: URL базы данных SQLAlchemy.
+        allowed_hosts: Разрешенные хосты.
+        allowed_methods: Разрешенные методы.
+
+    Config:
+        env_file: Путь к файлу .env.
+        env_file_encoding: Кодировка файла .env.
+    """
     admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     allowed_hosts: set[HttpUrl] = set()
@@ -15,4 +30,12 @@ class Settings(BaseSettings):
 
 @lru_cache()
 def get_settings():
+    """
+    Функция для получения настроек приложения.
+
+    Эта функция возвращает объект настроек приложения. Она использует декоратор lru_cache для кэширования результатов.
+
+    Returns:
+        Settings: Объект настроек приложения.
+    """
     return Settings()
