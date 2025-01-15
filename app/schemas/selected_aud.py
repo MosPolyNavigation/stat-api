@@ -3,6 +3,16 @@ from datetime import datetime
 
 
 class SelectedAuditoryBase(BaseModel):
+    """
+    Базовый класс для выбранной аудитории.
+
+    Этот класс содержит поля, которые необходимы для выбранной аудитории.
+
+    Attributes:
+        user_id: Уникальный идентификатор пользователя.
+        auditory_id: Идентификатор выбранной аудитории.
+        success: Статус выбора аудитории.
+    """
     user_id: str = Field(title="id",
                          description="Unique user id",
                          min_length=36,
@@ -17,9 +27,22 @@ class SelectedAuditoryBase(BaseModel):
 
 
 class SelectedAuditoryIn(SelectedAuditoryBase):
+    """
+    Класс для входных данных выбранной аудитории.
+
+    Этот класс наследуется от SelectedAuditoryBase и не содержит дополнительных полей.
+    """
     pass
 
 
 class SelectedAuditoryOut(SelectedAuditoryBase):
+    """
+    Класс для выходных данных выбранной аудитории.
+
+    Этот класс наследуется от SelectedAuditoryBase и содержит дополнительное поле visit_date.
+
+    Attributes:
+        visit_date: Дата, когда пользователь выбрал аудиторию.
+    """
     visit_date: datetime = Field(description="Date when user selected auditory")
     model_config = ConfigDict(from_attributes=True)
