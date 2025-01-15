@@ -7,6 +7,21 @@ from .user_id import UserId
 
 
 class StartWay(Base):
+    """
+    Класс для отслеживания начатых маршрутов.
+
+    Этот класс представляет таблицу "started_ways" в базе данных.
+
+    Attributes:
+        id: Идентификатор.
+        user_id: Идентификатор пользователя.
+        visit_date: Дата посещения.
+        start_id: Идентификатор начала пути.
+        end_id: Идентификатор конца пути.
+        user: Связь с таблицей "user_ids".
+        start: Связь с таблицей "auditories" для начала пути.
+        end: Связь с таблицей "auditories" для конца пути.
+    """
     __tablename__ = "started_ways"
 
     id: int = Column(Integer, primary_key=True, index=True)

@@ -7,6 +7,20 @@ from .user_id import UserId
 
 
 class SelectAuditory(Base):
+    """
+    Класс для выбранной аудитории.
+
+    Этот класс представляет таблицу "selected_auditories" в базе данных.
+
+    Attributes:
+        id: Идентификатор выбранной аудитории.
+        user_id: Идентификатор пользователя.
+        visit_date: Дата посещения.
+        auditory_id: Идентификатор аудитории.
+        success: Успешность выбора аудитории.
+        user: Связь с таблицей "user_ids".
+        auditory: Связь с таблицей "auditories".
+    """
     __tablename__ = "selected_auditories"
 
     id: int = Column(Integer, primary_key=True, index=True)
