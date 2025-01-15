@@ -13,6 +13,7 @@ router = APIRouter(
 
 @router.get(
     "/user-id",
+    description="Эндпоинт для получения уникального идентификатора пользователя",
     response_model=UserId,
     responses={
         500: {
@@ -47,6 +48,7 @@ async def get_uuid(db: Session = Depends(get_db)):
 
 @router.get(
     "/site",
+    description="Эндпоинт для получения посещений сайта",
     response_model=Page[SiteStatOut],
     responses={
         500: {
@@ -94,6 +96,7 @@ async def get_sites(
 
 @router.get(
     "/auds",
+    description="Эндпоинт для получения выбранных аудиторий",
     response_model=Page[SelectedAuditoryOut],
     responses={
         500: {
@@ -141,6 +144,7 @@ async def get_auds(
 
 @router.get(
     "/ways",
+    description="Эндпоинт для получения начатых путей",
     response_model=Page[StartWayOut],
     responses={
         500: {
@@ -188,6 +192,7 @@ async def get_ways(
 
 @router.get(
     "/plans",
+    description="Эндпоинт для получения смененных планов",
     response_model=Page[ChangePlanOut],
     responses={
         500: {
@@ -235,6 +240,7 @@ async def get_plans(
 
 @router.get(
     "/stat",
+    description="Эндпоинт для получения статистики по выбранному эндпоинту",
     response_model=Statistics,
     responses={
         500: {
