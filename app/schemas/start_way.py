@@ -11,11 +11,13 @@ class StartWayBase(BaseModel):
     start_id: str = Field(title="start-of-way",
                           description="Auditory where user starts way",
                           max_length=50,
-                          min_length=1)
+                          min_length=1,
+                          pattern=r"(!?[abvn]d?(-\w+)*)")
     end_id: str = Field(title="end-of-way",
                         description="Auditory where user ends way",
                         max_length=50,
-                        min_length=1)
+                        min_length=1,
+                        pattern=r"(!?[abvn]d?(-\w+)*)")
 
 
 class StartWayIn(StartWayBase):
