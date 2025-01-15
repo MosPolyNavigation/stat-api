@@ -7,6 +7,14 @@ SessionLocal = sessionmaker(autoflush=True, autocommit=False, bind=engine)
 
 
 def get_db():
+    """
+    Функция для получения сессии базы данных.
+
+    Эта функция создает сессию базы данных и возвращает ее. После использования сессии она закрывается.
+
+    Yields:
+        Session: Сессия базы данных.
+    """
     db = SessionLocal()
     try:
         yield db
