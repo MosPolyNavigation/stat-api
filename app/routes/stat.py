@@ -37,6 +37,18 @@ router = APIRouter(
     }
 )
 async def add_site_stat(data: SiteStatIn = Body(), db: Session = Depends(get_db)):
+    """
+    Эндпоинт для добавления статистики посещений сайта.
+
+    Этот эндпоинт добавляет статистику посещений сайта в базу данных.
+
+    Args:
+        data: Данные статистики сайта.
+        db: Сессия базы данных.
+
+    Returns:
+        Status: Статус добавления нового объекта в базу данных.
+    """
     return await insert_site_stat(db, data)
 
 
@@ -83,6 +95,20 @@ async def add_selected_aud(
         data: SelectedAuditoryIn = Body(),
         db: Session = Depends(get_db),
 ):
+    """
+    Эндпоинт для добавления выбора аудитории.
+
+    Этот эндпоинт добавляет выбор аудитории в базу данных.
+
+    Args:
+        request: Запрос.
+        response: Ответ.
+        data: Данные выбора аудитории.
+        db: Сессия базы данных.
+
+    Returns:
+        Status: Статус добавления нового объекта в базу данных.
+    """
     state = request.app.state
     if check_user(state, data.user_id) < 1:
         response.status_code = 429
@@ -122,6 +148,18 @@ async def add_started_way(
         data: StartWayIn = Body(),
         db: Session = Depends(get_db)
 ):
+    """
+    Эндпоинт для добавления начатого пути.
+
+    Этот эндпоинт добавляет начатый путь в базу данных.
+
+    Args:
+        data: Данные начатого пути.
+        db: Сессия базы данных.
+
+    Returns:
+        Status: Статус добавления нового объекта в базу данных.
+    """
     return await insert_start_way(db, data)
 
 
@@ -157,4 +195,16 @@ async def add_changed_plan(
         data: ChangePlanIn = Body(),
         db: Session = Depends(get_db)
 ):
+    """
+    Эндпоинт для добавления смены плана.
+
+    Этот эндпоинт добавляет смену плана в базу данных.
+
+    Args:
+        data: Данные смены плана.
+        db: Сессия базы данных.
+
+    Returns:
+        Status: Статус добавления нового объекта в базу данных.
+    """
     return await insert_changed_plan(db, data)

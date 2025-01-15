@@ -7,6 +7,19 @@ from .user_id import UserId
 
 
 class ChangePlan(Base):
+    """
+    Класс для хранения смены плана.
+
+    Этот класс представляет таблицу "changed_plans" в базе данных.
+
+    Attributes:
+        id: Идентификатор смененного плана.
+        user_id: Идентификатор пользователя.
+        visit_date: Дата посещения.
+        plan_id: Идентификатор плана.
+        user: Связь с таблицей "user_ids".
+        plan: Связь с таблицей "plans".
+    """
     __tablename__ = "changed_plans"
 
     id: int = Column(Integer, primary_key=True, index=True)

@@ -39,14 +39,46 @@ async def token_auth_middleware(request: Request, call_next):
 
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
+    """
+    Обработчик исключений SQLAlchemy.
+
+    Этот обработчик вызывается, когда происходит исключение SQLAlchemy. Он возвращает JSON ответ с кодом статуса 500 и сообщением об ошибке.
+
+    Args:
+        _: Объект запроса (не используется в функции).
+        exc: Исключение SQLAlchemy.
+
+    Returns:
+        JSONResponse: JSON ответ с кодом статуса 500 и сообщением об ошибке.
+    """
     return JSONResponse(status_code=500, content={"status": str(exc)})
 
 
 @app.exception_handler(LookupException)
 async def lookup_exception_handler(_, exc: LookupException):
+    """
+    Обработчик исключений LookupException.
+
+    Этот обработчик вызывается, когда происходит исключение LookupException. Он возвращает JSON ответ с кодом статуса 404 и сообщением об ошибке.
+
+    Args:
+        _: Объект запроса (не используется в функции).
+        exc: Исключение LookupException.
+
+    Returns:
+        JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
+    """
     return JSONResponse(status_code=404, content={"status": str(exc)})
 
 
 @app.get("/healthcheck")
 async def healthcheck():
+    """
+    Обработчик GET запроса к эндпоинту "/healthcheck". Нужен для хостинга, чтобы тот проверял, работает ли сервер
+
+    Этот обработчик вызывается, когда происходит GET запрос к эндпоинту "/healthcheck". Он возвращает JSON ответ с кодом статуса 200 и текущим временем.
+
+    Returns:
+        JSONResponse: JSON ответ с кодом статуса 200 и текущим временем.
+    """
     return JSONResponse(status_code=200, content={"current_time": str(datetime.now())})

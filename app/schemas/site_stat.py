@@ -4,6 +4,15 @@ from typing import Optional
 
 
 class SiteStatBase(BaseModel):
+    """
+    Базовый класс для статистики сайта.
+
+    Этот класс содержит поля, которые необходимы для статистики сайта.
+
+    Attributes:
+        user_id: Уникальный идентификатор пользователя.
+        endpoint: Путь, посещенный пользователем.
+    """
     user_id: str = Field(title="id",
                          description="Unique user id",
                          min_length=36,
@@ -16,9 +25,22 @@ class SiteStatBase(BaseModel):
 
 
 class SiteStatIn(SiteStatBase):
+    """
+    Класс для входных данных статистики сайта.
+
+    Этот класс наследуется от SiteStatBase и не содержит дополнительных полей.
+    """
     pass
 
 
 class SiteStatOut(SiteStatBase):
+    """
+    Класс для выходных данных статистики сайта.
+
+    Этот класс наследуется от SiteStatBase и содержит дополнительное поле visit_date.
+
+    Attributes:
+        visit_date: Дата, когда пользователь посетил этот путь.
+    """
     visit_date: datetime = Field(description="Date when user visited this endpoint")
     model_config = ConfigDict(from_attributes=True)

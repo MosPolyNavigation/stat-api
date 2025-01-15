@@ -8,6 +8,18 @@ def filter_by_user(
         data_model: Any,
         params: schemas.Filter
 ) -> Select:
+    """
+    Функция для фильтрации по пользователю.
+
+    Эта функция фильтрует данные по пользователю.
+
+    Args:
+        data_model: Модель данных.
+        params: Параметры фильтрации.
+
+    Returns:
+        Select: Запрос с фильтром по пользователю.
+    """
     query = Select(data_model)
     if params.user_id is not None:
         query = query.filter_by(user_id=params.user_id)
@@ -15,6 +27,17 @@ def filter_by_user(
 
 
 def filter_by_date(params: schemas.FilterQuery) -> tuple[Select, Optional[tuple[datetime, datetime]]]:
+    """
+    Функция для фильтрации по дате.
+
+    Эта функция фильтрует данные по дате.
+
+    Args:
+        params: Параметры фильтрации.
+
+    Returns:
+        tuple[Select, Optional[tuple[datetime, datetime]]]: Запрос с фильтром по дате и границы даты.
+    """
     model = params.model
     query = Select(model.user_id)
     borders: Optional[tuple[datetime, datetime]] = None
