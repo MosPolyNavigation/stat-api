@@ -6,6 +6,18 @@ from .user_id import UserId
 
 
 class SiteStat(Base):
+    """
+    Класс для статистики посещений сайта.
+
+    Этот класс представляет таблицу "site_statistics" в базе данных.
+
+    Attributes:
+        id: Идентификатор.
+        user_id: Идентификатор пользователя.
+        visit_date: Дата посещения.
+        endpoint: Путь, посещенный пользователем.
+        user: Связь с таблицей "user_ids".
+    """
     __tablename__ = "site_statistics"
 
     id: int = Column(Integer, primary_key=True, index=True)

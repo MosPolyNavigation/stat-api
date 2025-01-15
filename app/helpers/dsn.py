@@ -2,8 +2,12 @@ from pydantic.networks import AnyUrl, UrlConstraints
 
 
 class SqliteDsn(AnyUrl):
-    """A type that will accept any sqlite URL.
+    """
+    Класс для SQLite URL.
 
-    * Host not required
+    Этот класс представляет тип, который будет принимать любой SQLite URL.
+
+    Attributes:
+        _constraints: Ограничения для URL.
     """
     _constraints = UrlConstraints(allowed_schemes=['sqlite'])

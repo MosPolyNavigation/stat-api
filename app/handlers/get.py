@@ -5,6 +5,18 @@ from app import schemas, models
 
 
 async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
+    """
+    Функция для получения статистики по эндпоинту.
+
+    Эта функция получает статистику по эндпоинту.
+
+    Args:
+        db: Сессия базы данных.
+        params: Параметры фильтрации.
+
+    Returns:
+        schemas.Statistics: Статистика по эндпоинту.
+    """
     query, borders = filter_by_date(params)
     all_visits = len(db.execute(query).scalars().all())
     unique_query = Select(func.count(models.UserId.user_id)).filter(column("user_id").in_(query))

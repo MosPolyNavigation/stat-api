@@ -31,6 +31,17 @@ router = APIRouter(
     }
 )
 async def get_uuid(db: Session = Depends(get_db)):
+    """
+    Эндпоинт для получения уникального идентификатора пользователя.
+
+    Этот эндпоинт возвращает новый уникальный идентификатор пользователя.
+
+    Args:
+        db: Сессия базы данных.
+
+    Returns:
+        UserId: Новый уникальный идентификатор пользователя.
+    """
     return await create_user_id(db)
 
 
@@ -66,6 +77,18 @@ async def get_sites(
     query: Filter = Depends(),
     db: Session = Depends(get_db)
 ) -> Page[SiteStatOut]:
+    """
+    Эндпоинт для получения посещений сайта.
+
+    Этот эндпоинт возвращает список найденных данных.
+
+    Args:
+        query: Параметры фильтрации.
+        db: Сессия базы данных.
+
+    Returns:
+        Page[SiteStatOut]: Страница с найденными данными.
+    """
     return paginate(db, filter_by_user(models.SiteStat, query))
 
 
@@ -101,6 +124,18 @@ async def get_auds(
     query: Filter = Depends(),
     db: Session = Depends(get_db)
 ) -> Page[SelectedAuditoryOut]:
+    """
+    Эндпоинт для получения выбранных аудиторий.
+
+    Этот эндпоинт возвращает список найденных данных.
+
+    Args:
+        query: Параметры фильтрации.
+        db: Сессия базы данных.
+
+    Returns:
+        Page[SelectedAuditoryOut]: Страница с найденными данными.
+    """
     return paginate(db, filter_by_user(models.SelectAuditory, query))
 
 
@@ -136,6 +171,18 @@ async def get_ways(
     query: Filter = Depends(),
     db: Session = Depends(get_db)
 ) -> Page[StartWayOut]:
+    """
+    Эндпоинт для получения начатых путей.
+
+    Этот эндпоинт возвращает список найденных данных.
+
+    Args:
+        query: Параметры фильтрации.
+        db: Сессия базы данных.
+
+    Returns:
+        Page[StartWayOut]: Страница с найденными данными.
+    """
     return paginate(db, filter_by_user(models.StartWay, query))
 
 
@@ -171,6 +218,18 @@ async def get_plans(
     query: Filter = Depends(),
     db: Session = Depends(get_db)
 ) -> Page[ChangePlanOut]:
+    """
+    Эндпоинт для получения смененных планов.
+
+    Этот эндпоинт возвращает список найденных данных.
+
+    Args:
+        query: Параметры фильтрации.
+        db: Сессия базы данных.
+
+    Returns:
+        Page[ChangePlanOut]: Страница с найденными данными.
+    """
     return paginate(db, filter_by_user(models.ChangePlan, query))
 
 
@@ -202,4 +261,16 @@ async def get_stat(
     query: FilterQuery = Depends(),
     db: Session = Depends(get_db)
 ):
+    """
+    Эндпоинт для получения статистики по выбранному эндпоинту.
+
+    Этот эндпоинт возвращает статистику.
+
+    Args:
+        query: Параметры фильтрации.
+        db: Сессия базы данных.
+
+    Returns:
+        Statistics: Статистика.
+    """
     return await get_endpoint_stats(db, query)
