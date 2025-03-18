@@ -1,5 +1,7 @@
 from fastapi import Depends, APIRouter, UploadFile, File, Form, Response
+from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
+from app.helpers.errors import LookupException
 from fastapi_pagination import Page
 from app.database import get_db
 from app.schemas import *
@@ -130,3 +132,14 @@ async def get_reviews(
         Page[ReviewOut]: Страница с найденными данными.
     """
     return paginate(db, filter_by_user(models.Review, query))
+
+
+@router.get("/image/{image_path}")
+async def get_image(
+        image_path: str
+) -> FileResponse:
+    base_path = "static"
+    image_path = path.join(base_path, image_path)
+    if not path.exists(image_path):
+        raise LookupException("Image")
+    return FileResponse(image_path)
