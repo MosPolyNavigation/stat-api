@@ -12,6 +12,7 @@ router = APIRouter(
     "/site",
     description="Эндпоинт для добавления статистики посещений сайта",
     response_model=status.Status,
+    tags=["stat"],
     responses={
         500: {
             'model': status.Status,
@@ -57,6 +58,7 @@ async def add_site_stat(data: SiteStatIn = Body(), db: Session = Depends(get_db)
     "/select-aud",
     description="Эндпоинт для добавления выбора аудитории",
     response_model=Status,
+    tags=["stat"],
     responses={
         500: {
             'model': Status,
@@ -122,6 +124,7 @@ async def add_selected_aud(
     "/start-way",
     description="Эндпоинт для добавления начатого пути",
     response_model=status.Status,
+    tags=["stat"],
     responses={
         500: {
             'model': status.Status,
@@ -170,6 +173,7 @@ async def add_started_way(
     "/change-plan",
     description="Эндпоинт для добавления смены плана",
     response_model=status.Status,
+    tags=["stat"],
     responses={
         500: {
             'model': status.Status,
