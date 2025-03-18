@@ -15,6 +15,7 @@ router = APIRouter(
     "/user-id",
     description="Эндпоинт для получения уникального идентификатора пользователя",
     response_model=UserId,
+    tags=["get"],
     responses={
         500: {
             'model': Status,
@@ -50,6 +51,7 @@ async def get_uuid(db: Session = Depends(get_db)):
     "/site",
     description="Эндпоинт для получения посещений сайта",
     response_model=Page[SiteStatOut],
+    tags=["get"],
     responses={
         500: {
             'model': Status,
@@ -98,6 +100,7 @@ async def get_sites(
     "/auds",
     description="Эндпоинт для получения выбранных аудиторий",
     response_model=Page[SelectedAuditoryOut],
+    tags=["get"],
     responses={
         500: {
             'model': Status,
@@ -146,6 +149,7 @@ async def get_auds(
     "/ways",
     description="Эндпоинт для получения начатых путей",
     response_model=Page[StartWayOut],
+    tags=["get"],
     responses={
         500: {
             'model': Status,
@@ -194,6 +198,7 @@ async def get_ways(
     "/plans",
     description="Эндпоинт для получения смененных планов",
     response_model=Page[ChangePlanOut],
+    tags=["get"],
     responses={
         500: {
             'model': Status,
@@ -242,6 +247,7 @@ async def get_plans(
     "/stat",
     description="Эндпоинт для получения статистики по выбранному эндпоинту",
     response_model=Statistics,
+    tags=["get"],
     responses={
         500: {
             'model': Status,

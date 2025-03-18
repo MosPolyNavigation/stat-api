@@ -6,3 +6,4 @@ from .select_auditory import *
 from .site_stat import *
 from .start_way import *
 from .user_id import *
+from .review import *
