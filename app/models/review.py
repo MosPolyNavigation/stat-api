@@ -23,7 +23,8 @@ class Review(Base):
         user_id: Идентификатор пользователя.
         text: Отзыв пользователя.
         problem: Вид проблемы, с которой столкнулся пользователь.
-        image_path: Путь до прикрепленного изображения.
+        image_id: Id изображения в директории статических объектов.
+        image_ext: Расширение файла.
         user: Связь с таблицей "user_ids".
     """
     __tablename__ = "reviews"
@@ -32,6 +33,7 @@ class Review(Base):
     user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
     text: str = Column(Text, nullable=False)
     problem: Problem = Column(Enum(Problem), nullable=False)
-    image_path: Optional[str] = Column(String(255), nullable=True)
+    image_id: Optional[str] = Column(String(255), nullable=True)
+    image_ext: Optional[str] = Column(String(4), nullable=True)
 
     user: Mapped["UserId"] = relationship()

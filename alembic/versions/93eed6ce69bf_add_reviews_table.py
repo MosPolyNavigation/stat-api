@@ -25,7 +25,8 @@ def upgrade() -> None:
     sa.Column('user_id', sa.String(length=36), nullable=False),
     sa.Column('text', sa.Text(), nullable=False),
     sa.Column('problem', sa.Enum('PLAN', 'WORK', 'WAY', 'OTHER', name='problem'), nullable=False),
-    sa.Column('image_path', sa.String(length=255), nullable=True),
+    sa.Column('image_id', sa.String(length=255), nullable=True),
+    sa.Column('image_ext', sa.String(length=4), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['user_ids.user_id'], ),
     sa.PrimaryKeyConstraint('id')
     )

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, ConfigDict
 from app.models.review import Problem
 from typing import Optional
 
@@ -12,7 +12,8 @@ class ReviewOut(BaseModel):
         user_id: Уникальный идентификатор пользователя.
         problem: Тип проблемы, с которой столкнулся пользователь.
         text: Содержимое отзыва пользователя.
-        image_uri: Ссылка на картинку, загруженную пользователем.
+        image_id: Путь до картинку, загруженную пользователем.
+        image_ext: Расширение файла.
     """
     user_id: str = Field(title="id",
                          description="Unique user id",
@@ -23,4 +24,6 @@ class ReviewOut(BaseModel):
                              description="User problem")
     text: str = Field(title="text",
                       description="User review")
-    image_uri: Optional[str] = Field(title="User screenshot")
+    image_id: Optional[str] = Field(title="User screenshot")
+    image_ext: Optional[str] = Field(title="User screenshot")
+    model_config = ConfigDict(from_attributes=True)
