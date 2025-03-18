@@ -4,18 +4,37 @@ from app.helpers.errors import LookupException
 from fastapi_pagination import add_pagination
 from app.config import Settings, get_settings
 from fastapi.responses import JSONResponse
+from app.routes import get, stat, review
 from fastapi import FastAPI, Request
 from app.state import AppState
-from app.routes import get
-from app.routes import stat
+from os import path, makedirs
 from datetime import datetime
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "stat",
+        "description": "Эндпоинты для внесения статистики"
+    },
+    {
+        "name": "get",
+        "description": "Эндпоинты для получения статистики"
+    },
+    {
+        "name": "review",
+        "description": "Эндпоинты для работы с отзывами"
+    }
+]
+
+app = FastAPI(openapi_tags=tags_metadata)
 add_pagination(app)
 app.state = AppState()
 
 app.include_router(get.router)
 app.include_router(stat.router)
+app.include_router(review.router)
+
+if not path.exists("static"):
+    makedirs("static")
 
 settings = get_settings()
 
