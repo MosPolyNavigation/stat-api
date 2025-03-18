@@ -113,7 +113,7 @@ async def add_review(
         }
     }
 )
-async def get_plans(
+async def get_reviews(
     query: Filter = Depends(),
     db: Session = Depends(get_db)
 ) -> Page[ReviewOut]:
