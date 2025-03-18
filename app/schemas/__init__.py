@@ -6,3 +6,4 @@ from .start_way import *
 from .statistics import *
 from .status import *
 from .user_id import *
+from .review import *

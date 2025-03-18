@@ -6,15 +6,15 @@ from typing import Optional
 from enum import Enum as stdEnum
 
 class Problem(str, stdEnum):
-    PLAN = "Неточность на плане"
-    WORK = "Работа приложения"
-    WAY = "Неправильный маршрут"
-    OTHER = "Другое"
+    PLAN = "plan"
+    WORK = "work"
+    WAY = "way"
+    OTHER = "other"
 
 
 class Review(Base):
     """
-    Класс для выбранной аудитории.
+    Класс для отзыва.
 
     Этот класс представляет таблицу "reviews" в базе данных.
 
@@ -29,9 +29,9 @@ class Review(Base):
     __tablename__ = "reviews"
 
     id: int = Column(Integer, primary_key=True, index=True)
-    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=True)
+    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
     text: str = Column(Text, nullable=False)
     problem: Problem = Column(Enum(Problem), nullable=False)
     image_path: Optional[str] = Column(String(255), nullable=True)
 
-    user: Mapped[Optional["UserId"]] = relationship()
+    user: Mapped["UserId"] = relationship()
