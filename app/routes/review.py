@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, UploadFile, File, Form
+from fastapi import Depends, APIRouter, UploadFile, File, Form, Response
 from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_pagination import Page
 from app.database import get_db
@@ -36,6 +36,15 @@ router = APIRouter(
                 }
             }
         },
+        415: {
+            'model': status.Status,
+            'description': "Unsupported Media Type",
+            'content': {
+                "application/json": {
+                    "example": {"status": "This endpoint accepts only images"}
+                }
+            }
+        },
         200: {
             'model': Status,
             "description": "Status of adding new object to db"
@@ -43,6 +52,7 @@ router = APIRouter(
     }
 )
 async def add_review(
+        response: Response,
         image: Optional[UploadFile] = File(default=None,
                                            description="User image with problem"),
         user_id: str = Form(title="id",
@@ -55,16 +65,23 @@ async def add_review(
                                 json_schema_extra={"type": "string", "pattern": r"way|other|plan|work"}),
         text: str = Form(title="text",
                          description="User review"),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
 ):
     base_path = "static"
-    image_ext = path.splitext(image.filename)[-1]
-    image_name = uuid.uuid4().hex
-    image_path = path.join(base_path, image_name + image_ext)
-    async with aiofiles.open(image_path, "wb") as file:
-        contents = await image.read()
-        await file.write(contents)
-    return await insert_review(db, image_name, user_id, problem, text)
+    if image is not None and image.content_type.split("/")[0] == "image":
+        image_ext = path.splitext(image.filename)[-1]
+        image_id = uuid.uuid4().hex
+        image_path = path.join(base_path, image_id + image_ext)
+        async with aiofiles.open(image_path, "wb") as file:
+            contents = await image.read()
+            await file.write(contents)
+    elif image is not None and image.content_type.split("/")[0] != "image":
+        response.status_code = 415
+        return Status(status="This endpoint accepts only images")
+    else:
+        image_id = None
+        image_ext = None
+    return await insert_review(db, image_id, image_ext, user_id, problem, text)
 
 @router.get(
     "/get",
