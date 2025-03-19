@@ -1,4 +1,5 @@
 from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi.responses import JSONResponse
 from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
 from app.database import get_db
@@ -286,3 +287,32 @@ async def get_stat(
         Statistics: Статистика.
     """
     return await get_endpoint_stats(db, query)
+
+@router.get(
+    "/popular",
+    tags=["get"],
+    responses={
+        500: {
+            'model': Status,
+            'description': "Server side error",
+            'content': {
+                "application/json": {
+                    "example": {"status": "Some error"}
+                }
+            }
+        },
+        200: {
+            'description': 'Popular auditories in descending order',
+            'content': {
+                'application/json': {
+                    "example": ["a-100","a-101","a-103","a-102"]
+                }
+            }
+        }
+    }
+)
+async def get_popular(
+        db: Session = Depends(get_db)
+) -> JSONResponse:
+    data = await get_popular_auds(db)
+    return JSONResponse(data, status_code=200)
