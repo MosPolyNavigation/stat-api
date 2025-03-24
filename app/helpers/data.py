@@ -513,3 +513,10 @@ v-507
 v-508
 v-509
 v-510"""
+
+problems = """
+way
+other
+plan
+work
+"""

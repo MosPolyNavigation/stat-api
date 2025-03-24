@@ -1,15 +1,10 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum
+from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum, DateTime
 from sqlalchemy.orm import Mapped, relationship
+from datetime import datetime
+from typing import Optional
 from .base import Base
 from .user_id import UserId
-from typing import Optional
-from enum import Enum as stdEnum
-
-class Problem(str, stdEnum):
-    PLAN = "plan"
-    WORK = "work"
-    WAY = "way"
-    OTHER = "other"
+from .problem import Problem
 
 
 class Review(Base):
@@ -22,18 +17,19 @@ class Review(Base):
         id: Идентификатор выбранной аудитории.
         user_id: Идентификатор пользователя.
         text: Отзыв пользователя.
-        problem: Вид проблемы, с которой столкнулся пользователь.
-        image_id: Id изображения в директории статических объектов.
-        image_ext: Расширение файла.
+        problem_id: Вид проблемы, с которой столкнулся пользователь.
+        image_name: Id изображения в директории статических объектов.
         user: Связь с таблицей "user_ids".
+        problem: Связь с таблицей "problem".
     """
     __tablename__ = "reviews"
 
     id: int = Column(Integer, primary_key=True, index=True)
     user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
     text: str = Column(Text, nullable=False)
-    problem: Problem = Column(Enum(Problem), nullable=False)
-    image_id: Optional[str] = Column(String(255), nullable=True)
-    image_ext: Optional[str] = Column(String(4), nullable=True)
+    problem_id: Mapped["Problem"] = Column(ForeignKey("problems.id"), nullable=False)
+    image_name: Optional[str] = Column(String(255), nullable=True)
+    creation_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
 
     user: Mapped["UserId"] = relationship()
+    problem: Mapped["Problem"] = relationship()
