@@ -4,6 +4,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_pagination import Page
 from app.config import get_settings
 from app.database import get_db
+from app.helpers.path import sanitize_image_filename, secure_image_path
 from app.schemas import *
 from app.handlers import *
 from os import path
@@ -182,7 +183,7 @@ async def get_image(
         image_path: str
 ) -> FileResponse:
     base_path = get_settings().static_files
-    image_path = path.join(base_path, image_path)
-    if not path.exists(image_path):
+    sanitized_path = secure_image_path(base_path, image_path)
+    if sanitized_path is None:
         raise LookupException("Image")
     return FileResponse(image_path)
