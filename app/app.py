@@ -25,6 +25,10 @@ tags_metadata = [
     }
 ]
 
+settings = get_settings()
+if not path.exists(settings.static_files):
+    makedirs(settings.static_files)
+
 app = FastAPI(openapi_tags=tags_metadata)
 add_pagination(app)
 app.state = AppState()
@@ -32,11 +36,6 @@ app.state = AppState()
 app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
-
-if not path.exists("static"):
-    makedirs("static")
-
-settings = get_settings()
 
 app.add_middleware(
     CORSMiddleware,
