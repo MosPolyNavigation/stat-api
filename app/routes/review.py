@@ -2,7 +2,9 @@ from fastapi import Depends, APIRouter, UploadFile, File, Form, Response
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_pagination import Page
+from app.config import get_settings
 from app.database import get_db
+from app.helpers.path import sanitize_image_filename, secure_image_path
 from app.schemas import *
 from app.handlers import *
 from os import path
@@ -68,11 +70,12 @@ async def add_review(
                          description="User review"),
         db: Session = Depends(get_db),
 ):
-    base_path = "static"
+    base_path = get_settings().static_files
     if image is not None and image.content_type.split("/")[0] == "image":
         image_ext = path.splitext(image.filename)[-1]
         image_id = uuid.uuid4().hex
-        image_path = path.join(base_path, image_id + image_ext)
+        image_name = image_id + image_ext
+        image_path = path.join(base_path, image_name)
         async with aiofiles.open(image_path, "wb") as file:
             contents = await image.read()
             await file.write(contents)
@@ -80,9 +83,8 @@ async def add_review(
         response.status_code = 415
         return Status(status="This endpoint accepts only images")
     else:
-        image_id = None
-        image_ext = None
-    return await insert_review(db, image_id, image_ext, user_id, problem, text)
+        image_name = None
+    return await insert_review(db, image_name, user_id, problem, text)
 
 @router.get(
     "/get",
@@ -180,8 +182,8 @@ async def get_reviews(
 async def get_image(
         image_path: str
 ) -> FileResponse:
-    base_path = "static"
-    image_path = path.join(base_path, image_path)
-    if not path.exists(image_path):
+    base_path = get_settings().static_files
+    sanitized_path = secure_image_path(base_path, image_path)
+    if sanitized_path is None:
         raise LookupException("Image")
     return FileResponse(image_path)
