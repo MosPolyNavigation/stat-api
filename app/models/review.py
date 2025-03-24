@@ -27,7 +27,7 @@ class Review(Base):
     id: int = Column(Integer, primary_key=True, index=True)
     user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
     text: str = Column(Text, nullable=False)
-    problem_id: Mapped["Problem"] = Column(ForeignKey("problems.id"), nullable=False)
+    problem_id: str = Column(ForeignKey("problems.id"), nullable=False)
     image_name: Optional[str] = Column(String(255), nullable=True)
     creation_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
 

@@ -72,7 +72,8 @@ async def add_review(
     if image is not None and image.content_type.split("/")[0] == "image":
         image_ext = path.splitext(image.filename)[-1]
         image_id = uuid.uuid4().hex
-        image_path = path.join(base_path, image_id + image_ext)
+        image_name = image_id + image_ext
+        image_path = path.join(base_path, image_name)
         async with aiofiles.open(image_path, "wb") as file:
             contents = await image.read()
             await file.write(contents)
@@ -80,9 +81,8 @@ async def add_review(
         response.status_code = 415
         return Status(status="This endpoint accepts only images")
     else:
-        image_id = None
-        image_ext = None
-    return await insert_review(db, image_id, image_ext, user_id, problem, text)
+        image_name = None
+    return await insert_review(db, image_name, user_id, problem, text)
 
 @router.get(
     "/get",

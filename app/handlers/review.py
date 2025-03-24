@@ -5,8 +5,7 @@ from app.helpers.errors import LookupException
 
 async def insert_review(
         db: Session,
-        image_id: str,
-        image_ext: str,
+        image_name: str,
         user_id: str,
         problem: schemas.Problem,
         text: str
@@ -15,10 +14,9 @@ async def insert_review(
     if user is None:
         raise LookupException("User")
     item = models.Review(
-        image_id=image_id,
-        image_ext=image_ext,
+        image_name=image_name,
         user=user,
-        problem=problem,
+        problem_id=problem.__str__(),
         text=text
     )
     db.add(item)
