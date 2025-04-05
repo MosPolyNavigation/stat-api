@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         env_file_encoding: Кодировка файла .env.
     """
     admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-    sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///data/app.db")
+    sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: set[HttpUrl] = set()
     allowed_methods: set[str] = set(["PUT", "POST", "GET"])

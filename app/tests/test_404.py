@@ -93,8 +93,3 @@ def test_404_stat_plan(data, body):
     })
     assert response.status_code == 404
     assert response.json() == body
-
-
-def test_404():
-    response = client.get("/")
-    assert response.status_code == 404

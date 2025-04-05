@@ -1,0 +1,6 @@
+.env
+.envrc
+app.db
+/.direnv/
+/static/
+/db-data/

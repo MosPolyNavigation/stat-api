@@ -5,3 +5,4 @@
 /**/.env
 /.direnv
 /static/
+/db-data/
