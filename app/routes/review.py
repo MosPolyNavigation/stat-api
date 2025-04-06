@@ -1,3 +1,4 @@
+import os
 from fastapi import Depends, APIRouter, UploadFile, File, Form, Response
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
@@ -182,7 +183,7 @@ async def get_reviews(
 async def get_image(
         image_path: str
 ) -> FileResponse:
-    base_path = get_settings().static_files
+    base_path = os.path.join(get_settings().static_files, "images")
     sanitized_path = secure_image_path(base_path, image_path)
     if sanitized_path is None:
         raise LookupException("Image")
