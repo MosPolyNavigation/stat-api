@@ -28,6 +28,8 @@ tags_metadata = [
 settings = get_settings()
 if not path.exists(path.join(settings.static_files, "images")):
     makedirs(path.join(settings.static_files, "images"))
+if not path.exists(path.join(settings.static_files, "web")):
+    makedirs(path.join(settings.static_files, "web"))
 
 app = FastAPI(openapi_tags=tags_metadata)
 add_pagination(app)
