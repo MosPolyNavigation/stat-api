@@ -31,7 +31,12 @@ if not path.exists(path.join(settings.static_files, "images")):
 if not path.exists(path.join(settings.static_files, "web")):
     makedirs(path.join(settings.static_files, "web"))
 
-app = FastAPI(openapi_tags=tags_metadata)
+app = FastAPI(
+    openapi_tags=tags_metadata,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None
+)
 add_pagination(app)
 app.state = AppState()
 
