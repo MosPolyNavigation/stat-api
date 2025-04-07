@@ -5,7 +5,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_pagination import Page
 from app.config import get_settings
 from app.database import get_db
-from app.helpers.path import sanitize_image_filename, secure_image_path
+from app.helpers.path import secure_image_path
 from app.schemas import *
 from app.handlers import *
 from os import path
@@ -71,7 +71,7 @@ async def add_review(
                          description="User review"),
         db: Session = Depends(get_db),
 ):
-    base_path = get_settings().static_files
+    base_path = path.join(get_settings().static_files, "images")
     if image is not None and image.content_type.split("/")[0] == "image":
         image_ext = path.splitext(image.filename)[-1]
         image_id = uuid.uuid4().hex
