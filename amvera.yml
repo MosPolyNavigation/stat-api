@@ -1,11 +1,7 @@
-meta:
-  environment: python
-  toolchain:
-    name: pip
-    version: 3.12
 build:
-  requirementsPath: requirements.txt
+  skip: yes
+
 run:
-  command: uvicorn main:app --workers 4 --host 0.0.0.0 --port 80
+  image: ghcr.io/sidecuter/statapi:latest
   persistenceMount: /data
-  containerPort: 80
+  containerPort: 8080
