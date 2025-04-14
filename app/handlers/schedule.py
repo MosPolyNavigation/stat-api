@@ -1,7 +1,7 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from helpers.get_graph import parse_data, get_graph
+from app.helpers.get_graph import parse_data, get_graph
 import app.globals as globals
 
 async def fetch_cur_data():

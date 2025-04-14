@@ -1,5 +1,5 @@
 from pydantic import ValidationError
-from schemas import RoomDto, PlanData, RoomData, RoomType
+from app.schemas import RoomDto, PlanData, RoomData, RoomType
 from typing import Optional
 
 

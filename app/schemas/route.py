@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import List
-from schemas.graph import VertexType
+from .graph import VertexType
 
 
 class RouteOut(BaseModel):

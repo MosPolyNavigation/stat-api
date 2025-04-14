@@ -1,4 +1,4 @@
-from schemas import DataDto, PlanData, LocationData, CorpusData, RoomData, LocationDto, CorpusDto, PlanDto, \
+from app.schemas import DataDto, PlanData, LocationData, CorpusData, RoomData, LocationDto, CorpusDto, PlanDto, \
     Graph, DataEntry
 from typing import List
 from .parser import fill_room_data

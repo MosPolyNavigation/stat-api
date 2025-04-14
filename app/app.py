@@ -1,5 +1,5 @@
 from fastapi.middleware.cors import CORSMiddleware
-from handlers.schedule import lifespan
+from .handlers.schedule import lifespan
 from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
 from .config import Settings, get_settings
