@@ -1,14 +1,15 @@
-from sqlalchemy.exc import SQLAlchemyError
 from fastapi.middleware.cors import CORSMiddleware
-from app.helpers.errors import LookupException
+from .handlers.schedule import lifespan
+from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
-from app.config import Settings, get_settings
+from .config import Settings, get_settings
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
-from app.routes import get, stat, review
+from sqlalchemy.exc import SQLAlchemyError
+from .routes import get, stat, review
 from fastapi import FastAPI, Request
-from app.state import AppState
+from .state import AppState
 from os import path, makedirs
-from datetime import datetime
 
 tags_metadata = [
     {
@@ -26,16 +27,25 @@ tags_metadata = [
 ]
 
 settings = get_settings()
-if not path.exists(settings.static_files):
-    makedirs(settings.static_files)
+if not path.exists(path.join(settings.static_files, "images")):
+    makedirs(path.join(settings.static_files, "images"))
+if not path.exists(path.join(settings.static_files, "web")):
+    makedirs(path.join(settings.static_files, "web"))
 
-app = FastAPI(openapi_tags=tags_metadata)
+app = FastAPI(
+    openapi_tags=tags_metadata,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
+    lifespan=lifespan
+)
 add_pagination(app)
 app.state = AppState()
 
 app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
+app.mount("/", StaticFiles(directory=path.join(settings.static_files, "web"), html=True), "front")
 
 app.add_middleware(
     CORSMiddleware,
@@ -94,16 +104,3 @@ async def lookup_exception_handler(_, exc: LookupException):
         JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
     """
     return JSONResponse(status_code=404, content={"status": str(exc)})
-
-
-@app.get("/healthcheck")
-async def healthcheck():
-    """
-    Обработчик GET запроса к эндпоинту "/healthcheck". Нужен для хостинга, чтобы тот проверял, работает ли сервер
-
-    Этот обработчик вызывается, когда происходит GET запрос к эндпоинту "/healthcheck". Он возвращает JSON ответ с кодом статуса 200 и текущим временем.
-
-    Returns:
-        JSONResponse: JSON ответ с кодом статуса 200 и текущим временем.
-    """
-    return JSONResponse(status_code=200, content={"current_time": str(datetime.now())})

@@ -91,3 +91,7 @@ class FilterQuery(FilterBase):
             return models.SiteStat
         else:
             raise ValueError("no such target")
+
+class FilterRoute(BaseModel):
+    to: str = Field()
+    from_: str = Field(...)

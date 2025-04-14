@@ -1,0 +1,7 @@
+build:
+  skip: yes
+
+run:
+  image: ghcr.io/sidecuter/statapi:latest
+  persistenceMount: /data
+  containerPort: 8080
