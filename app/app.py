@@ -1,13 +1,14 @@
 from fastapi.middleware.cors import CORSMiddleware
-from app.helpers.errors import LookupException
+from handlers.schedule import lifespan
+from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
-from app.config import Settings, get_settings
+from .config import Settings, get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from app.routes import get, stat, review
+from .routes import get, stat, review
 from fastapi import FastAPI, Request
-from app.state import AppState
+from .state import AppState
 from os import path, makedirs
 
 tags_metadata = [
@@ -33,9 +34,10 @@ if not path.exists(path.join(settings.static_files, "web")):
 
 app = FastAPI(
     openapi_tags=tags_metadata,
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None,
+    lifespan=lifespan
 )
 add_pagination(app)
 app.state = AppState()

@@ -2,6 +2,7 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi.responses import JSONResponse
 from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
+from app.handlers.schedule import graph
 from app.database import get_db
 from app.schemas import *
 from app.handlers import *
@@ -316,3 +317,36 @@ async def get_popular(
 ) -> JSONResponse:
     data = await get_popular_auds(db)
     return JSONResponse(data, status_code=200)
+
+@router.get(
+    "/route",
+    tags=["get"],
+    response_model=RouteOut
+)
+async def get_route(
+    query: FilterRoute
+):
+    from_v = next((x for x in graph["BS"].vertexes if x.id == query.from_), None)
+    to_v = next((x for x in graph["BS"].vertexes if x.id == query.to), None)
+    if from_v is None and to_v is None:
+        return JSONResponse(Status(status="You are trying to get a route along non-existent vertex"), 404)
+    try:
+        route = Route(from_=query.from_, to=query.to, graph=graph["BS"])
+        data = RouteOut(
+            from_=route.from_,
+            to=route.to,
+            steps=[StepOut(
+                plan=x.plan.id,
+                distance=x.distance,
+                way=[WayOut(
+                    id=v.id,
+                    x=v.x,
+                    y=v.y,
+                    type=v.type
+                ) for v in x.way]
+            ) for x in route.steps],
+            fullDistance=route.fullDistance
+        )
+        return data
+    except:
+        return JSONResponse(Status(status="The requested route is impossible"), 400)
