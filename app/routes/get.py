@@ -2,11 +2,11 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi.responses import JSONResponse
 from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
-from app.handlers.schedule import graph
 from app.database import get_db
 from app.schemas import *
 from app.handlers import *
 from app import models
+import app.globals as globals
 
 router = APIRouter(
     prefix="/api/get"
@@ -324,14 +324,15 @@ async def get_popular(
     response_model=RouteOut
 )
 async def get_route(
-    query: FilterRoute
+    query: FilterRoute = Depends()
 ):
-    from_v = next((x for x in graph["BS"].vertexes if x.id == query.from_), None)
-    to_v = next((x for x in graph["BS"].vertexes if x.id == query.to), None)
+    graph_bs = globals.global_graph["BS"]
+    from_v = next((x for x in graph_bs.vertexes if x.id == query.from_), None)
+    to_v = next((x for x in graph_bs.vertexes if x.id == query.to), None)
     if from_v is None and to_v is None:
         return JSONResponse(Status(status="You are trying to get a route along non-existent vertex"), 404)
     try:
-        route = Route(from_=query.from_, to=query.to, graph=graph["BS"])
+        route = Route(from_=query.from_, to=query.to, graph=graph_bs)
         data = RouteOut(
             from_=route.from_,
             to=route.to,

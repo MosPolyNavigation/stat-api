@@ -33,17 +33,17 @@ class VertexType(str):
 
 class Vertex(BaseModel):
     id: str
-    x: int
-    y: int
+    x: float
+    y: float
     type: VertexType
-    neighborData: List[Tuple[str, int]]
+    neighborData: List[Tuple[str, float]]
     plan: PlanData
 
 
 class Step:
     plan: PlanData
     way: List[Vertex]
-    distance: int
+    distance: float
 
     def __init__(self, plan: PlanData, first_vertex: Vertex):
         self.plan = plan
@@ -54,14 +54,14 @@ class Step:
 @dataclasses.dataclass
 class ShortestWay:
     way: List[Vertex]
-    distance: int
+    distance: float
 
 
 class Graph:
     location: LocationData
     plans: List[PlanData]
     corpuses: List[CorpusData]
-    vertexex: List["Vertex"]
+    vertexes: List["Vertex"]
 
     def __init__(self, location: LocationData, plans: List[PlanData], corpuses: List[CorpusData]):
         self.location = location
@@ -72,7 +72,7 @@ class Graph:
         self.__add_crossings()
 
     def __fill_vertexes_by_raw_vertexes(self):
-        plans_of_loc = [x for x in self.plans if x.corpus.location == self.location]
+        plans_of_loc = [plan for plan in self.plans if plan.corpus.location == self.location]
         vertexes = []
         for plan in plans_of_loc:
             for raw_vertex in plan.graph:
@@ -84,7 +84,6 @@ class Graph:
                     neighborData=raw_vertex.neighborData,
                     plan=plan
                 ))
-            plan.graph = []
         self.vertexes = vertexes
 
     def __add_stairs(self):
@@ -97,7 +96,7 @@ class Graph:
                     self.__add_neighbor_both(stair1_vertex, stair2_vertex, 1085, 916)
 
     def find_vertex_by_id(self, id: str):
-        return next((x for x in self.vertexes if x.id == id))
+        return next((vertex for vertex in self.vertexes if vertex.id == id))
 
     @staticmethod
     def __add_neighbor_both(vertex1: Vertex, vertex2: Vertex, distance1to2: int, distance2to1: int):
@@ -126,7 +125,7 @@ class Graph:
                 'crossing' in vertex.id
             )
         filtered_vertexes = [x for x in self.vertexes if is_vertex_need_check(x)]
-        distances: Dict[str, int] = dict()
+        distances: Dict[str, float] = dict()
         ways: Dict[str, List[str]] = dict()
         for vertex in filtered_vertexes:
             distances[vertex.id] = sys.maxsize
@@ -141,16 +140,17 @@ class Graph:
 
             current_vertex_distance = distances.get(current_vertex_id)
             for neighbor_id, distance_to_neighbor in self.find_vertex_by_id(current_vertex_id).neighborData:
-                if not self.find_vertex_by_id(neighbor_id) in filtered_vertexes:
+                if not (self.find_vertex_by_id(neighbor_id) in filtered_vertexes):
                     continue
                 iterations[1] += 1
                 distance_between_current_and_neighbor = distance_to_neighbor
                 neighbor_distance = distances.get(neighbor_id)
 
-                if current_vertex_distance + distance_between_current_and_neighbor < neighbor_distance:
+                if (current_vertex_distance + distance_between_current_and_neighbor) < neighbor_distance:
                     distances[neighbor_id] = current_vertex_distance + distance_between_current_and_neighbor
-                    way_to_relaxing_vertex = ways.get(current_vertex_id)
+                    way_to_relaxing_vertex = [x for x in ways.get(current_vertex_id)]
                     way_to_relaxing_vertex.append(current_vertex_id)
+                    ways[neighbor_id] = way_to_relaxing_vertex
 
             finals.add(current_vertex_id)
             if current_vertex_id == id_vertex2:
@@ -158,7 +158,7 @@ class Graph:
             min_distance = sys.maxsize
             next_vertex_id = ''
             for id, distance in distances.items():
-                if distance < min_distance and not id in finals:
+                if distance < min_distance and (not id in finals):
                     min_distance = distance
                     next_vertex_id = id
             if min_distance == sys.maxsize:
@@ -169,7 +169,7 @@ class Graph:
         return ShortestWay(way=[self.find_vertex_by_id(vertex_id) for vertex_id in ways.get(id_vertex2)], distance=distances.get(id_vertex2))
 
     @staticmethod
-    def get_distance_between2_vertexes(vertex1: Vertex, vertex2_id: str) -> int:
+    def get_distance_between2_vertexes(vertex1: Vertex, vertex2_id: str) -> float:
         return next((note for note in vertex1.neighborData if note[0] == vertex2_id))[1]
 
 
@@ -178,7 +178,7 @@ class Route:
     to: str
     from_: str
     activeStep: int
-    fullDistance: int
+    fullDistance: float
     graph: Graph
 
     def __init__(self, from_: str, to: str, graph: Graph):

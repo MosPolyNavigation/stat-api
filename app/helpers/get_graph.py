@@ -1,6 +1,6 @@
-from schemas import DataDto, PlanData, LocationData, CorpusData, RoomData, LocationDto, CorpusDto, PlanDto, RoomDto, \
+from schemas import DataDto, PlanData, LocationData, CorpusData, RoomData, LocationDto, CorpusDto, PlanDto, \
     Graph, DataEntry
-from typing import Tuple, List
+from typing import List
 from .parser import fill_room_data
 import httpx
 

@@ -1,5 +1,5 @@
-from typing import Optional, List, Tuple
-from pydantic import BaseModel
+from typing import Optional, List, Tuple, Any
+from pydantic import BaseModel, Field
 
 
 class DataDto(BaseModel):
@@ -10,19 +10,19 @@ class DataDto(BaseModel):
 
 
 class LocationDto(BaseModel):
-    id: str
-    title: str
-    short: str
-    available: bool
-    address: str
-    crossings: Optional[List[Tuple[str, str, int]]]
+    id: str = Field()
+    title: str = Field()
+    short: str = Field()
+    available: bool = Field()
+    address: str = Field()
+    crossings: Optional[List[Tuple[str, str, float]]] = Field(default=None)
 
 class CorpusDto(BaseModel):
     id: str
     locationId: str
     title: str
     available: bool
-    stairs: Optional[List[str]]
+    stairs: Optional[List[List[str]]] = Field(default=None)
 
 
 class PlanDto(BaseModel):
@@ -38,17 +38,17 @@ class PlanDto(BaseModel):
 
 class NearestDto(BaseModel):
     enter: str
-    wm: Optional[str]
-    ww: Optional[str]
-    ws: Optional[str]
+    wm: Optional[str] = Field(default=None)
+    ww: Optional[str] = Field(default=None)
+    ws: Optional[str] = Field(default=None)
 
 
 class GraphDto(BaseModel):
     id: str
-    x: int
-    y: int
+    x: float
+    y: float
     type: str
-    neighborData: List[Tuple[str, int]]
+    neighborData: List[Tuple[str, float]]
 
 
 class RoomDto(BaseModel):
@@ -56,6 +56,6 @@ class RoomDto(BaseModel):
     planId: str
     type: str
     available: bool
-    numberOrTitle: Optional[str]
-    tabletText: Optional[str]
-    addInfo: Optional[str]
+    numberOrTitle: Optional[str] = Field(default=None)
+    tabletText: Optional[str] = Field(default=None)
+    addInfo: Optional[str] = Field(default=None)

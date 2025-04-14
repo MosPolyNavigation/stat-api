@@ -94,4 +94,4 @@ class FilterQuery(FilterBase):
 
 class FilterRoute(BaseModel):
     to: str = Field()
-    from_: str = Field(alias="from")
+    from_: str = Field(...)
