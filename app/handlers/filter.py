@@ -26,7 +26,9 @@ def filter_by_user(
     return query
 
 
-def filter_by_date(params: schemas.FilterQuery) -> tuple[Select, Optional[tuple[datetime, datetime]]]:
+def filter_by_date(
+    params: schemas.FilterQuery
+) -> tuple[Select, Optional[tuple[datetime, datetime]]]:
     """
     Функция для фильтрации по дате.
 
@@ -36,7 +38,7 @@ def filter_by_date(params: schemas.FilterQuery) -> tuple[Select, Optional[tuple[
         params: Параметры фильтрации.
 
     Returns:
-        tuple[Select, Optional[tuple[datetime, datetime]]]: Запрос с фильтром по дате и границы даты.
+        Запрос с фильтром по дате и границы даты.
     """
     model = params.model
     query = Select(model.user_id)
@@ -54,5 +56,10 @@ def filter_by_date(params: schemas.FilterQuery) -> tuple[Select, Optional[tuple[
             datetime.combine(params.start_date, end_time)
         )
     if borders is not None:
-        query = query.filter(and_(model.visit_date >= borders[0], model.visit_date <= borders[1]))
+        query = query.filter(
+            and_(
+                model.visit_date >= borders[0],
+                model.visit_date <= borders[1]
+            )
+        )
     return query, borders

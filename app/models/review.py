@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Text, Enum, DateTime
+from sqlalchemy import ForeignKey, Text, DateTime
 from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy import Column, Integer, String
 from datetime import datetime
 from typing import Optional
-from .base import Base
-from .user_id import UserId
-from .problem import Problem
+from app.models.base import Base
+from app.models.user_id import UserId
+from app.models.problem import Problem
 
 
 class Review(Base):
@@ -24,12 +25,32 @@ class Review(Base):
     """
     __tablename__ = "reviews"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    user_id: str = Column(ForeignKey("user_ids.user_id"), nullable=False)
-    text: str = Column(Text, nullable=False)
-    problem_id: str = Column(ForeignKey("problems.id"), nullable=False)
-    image_name: Optional[str] = Column(String(255), nullable=True)
-    creation_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
+    id: int = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+    user_id: str = Column(
+        ForeignKey("user_ids.user_id"),
+        nullable=False
+    )
+    text: str = Column(
+        Text,
+        nullable=False
+    )
+    problem_id: str = Column(
+        ForeignKey("problems.id"),
+        nullable=False
+    )
+    image_name: Optional[str] = Column(
+        String(255),
+        nullable=True
+    )
+    creation_date: datetime = Column(
+        DateTime,
+        default=datetime.now,
+        nullable=False
+    )
 
     user: Mapped["UserId"] = relationship()
     problem: Mapped["Problem"] = relationship()

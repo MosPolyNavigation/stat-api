@@ -20,7 +20,9 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
     """
     query, borders = filter_by_date(params)
     all_visits = len(db.execute(query).scalars().all())
-    unique_query = Select(func.count(models.UserId.user_id)).filter(column("user_id").in_(query))
+    unique_query = Select(
+        func.count(models.UserId.user_id)
+    ).filter(column("user_id").in_(query))
     visitor_count = db.execute(unique_query).scalar()
     if borders is not None:
         unique_query = unique_query.filter(and_(
@@ -35,14 +37,25 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
         period=borders
     )
 
+
 def get_popular_auds_query():
     """
         Query in basis:
         ```sql
-            SELECT ID from
-              (SELECT auditory_id as ID, count(*) as CNT from selected_auditories where success=1 group by auditory_id UNION ALL
-              SELECT start_id as ID, count(*)*3 as CNT from started_ways group by start_id UNION ALL
-              SELECT end_id as ID, count(*)*3 as CNT from started_ways group by end_id) as tr
+            SELECT ID from (
+              SELECT auditory_id as ID, count(*) as CNT
+              from selected_auditories
+              where success=1
+              group by auditory_id
+              UNION ALL
+              SELECT start_id as ID, count(*)*3 as CNT
+              from started_ways
+              group by start_id
+              UNION ALL
+              SELECT end_id as ID, count(*)*3 as CNT
+              from started_ways
+              group by end_id
+            ) as tr
             GROUP BY ID
             ORDER BY SUM(CNT) DESC;
         ```
@@ -66,6 +79,7 @@ def get_popular_auds_query():
         ).alias('tr')
     )
 
+
 async def get_popular_auds(db: Session):
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID)
@@ -73,6 +87,7 @@ async def get_popular_auds(db: Session):
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
     return db.execute(query).scalars().all()
+
 
 async def get_popular_auds_with_count(db: Session):
     tr = get_popular_auds_query()

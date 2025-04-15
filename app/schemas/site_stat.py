@@ -37,10 +37,13 @@ class SiteStatOut(SiteStatBase):
     """
     Класс для выходных данных статистики сайта.
 
-    Этот класс наследуется от SiteStatBase и содержит дополнительное поле visit_date.
+    Этот класс наследуется от SiteStatBase
+    и содержит дополнительное поле visit_date.
 
     Attributes:
         visit_date: Дата, когда пользователь посетил этот путь.
     """
-    visit_date: datetime = Field(description="Date when user visited this endpoint")
+    visit_date: datetime = Field(
+        description="Date when user visited this endpoint"
+    )
     model_config = ConfigDict(from_attributes=True)

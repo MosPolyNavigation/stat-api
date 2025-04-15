@@ -7,14 +7,13 @@ class RouteOut(BaseModel):
     to: str = Field()
     from_: str = Field(serialization_alias="from")
     steps: List["StepOut"] = Field()
-    fullDistance: float = Field()
+    fullDistance: int = Field()
 
 
 class StepOut(BaseModel):
     plan: str = Field()
     way: List["WayOut"] = Field()
     distance: float = Field()
-    pass
 
 
 class WayOut(BaseModel):

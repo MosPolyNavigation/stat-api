@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import Optional
 from . import PlanData
 
+
 class RoomData(BaseModel):
     id: str
     type: Optional["RoomType"]
@@ -46,7 +47,8 @@ class RoomType(str):
         def validate(value: str) -> RoomType:
             if value not in cls.allowed_values:
                 raise ValueError(
-                    f"Invalid value '{value}'. Allowed: {sorted(cls.allowed_values)}"
+                    f"Invalid value '{value}'. Allowed: \
+{sorted(cls.allowed_values)}"
                 )
             return cls(value)
         return core_schema.no_info_after_validator_function(

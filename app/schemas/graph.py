@@ -1,9 +1,13 @@
+from itertools import pairwise
 from pydantic import BaseModel
-from pydantic_core import core_schema
 from typing import List, Tuple, Dict
+from pydantic_core import core_schema
 from . import LocationData, PlanData, CorpusData, RoomData
 import dataclasses
-import sys
+import math
+import time
+import heapq
+
 
 @dataclasses.dataclass
 class DataEntry:
@@ -14,7 +18,15 @@ class DataEntry:
 
 
 class VertexType(str):
-    allowed_values = {"hallway","entrancesToAu","stair","crossing","crossingSpace","lift"}
+    allowed_values = {
+        "hallway",
+        "entrancesToAu",
+        "stair",
+        "crossing",
+        "crossingSpace",
+        "lift"
+    }
+
     @classmethod
     def __get_pydantic_core_schema__(
         cls, _a, _b
@@ -22,7 +34,8 @@ class VertexType(str):
         def validate(value: str) -> VertexType:
             if value not in cls.allowed_values:
                 raise ValueError(
-                    f"Invalid value '{value}'. Allowed: {sorted(cls.allowed_values)}"
+                    f"Invalid value '{value}'. Allowed: \
+{sorted(cls.allowed_values)}"
                 )
             return cls(value)
         return core_schema.no_info_after_validator_function(
@@ -39,6 +52,9 @@ class Vertex(BaseModel):
     neighborData: List[Tuple[str, float]]
     plan: PlanData
 
+    def __hash__(self):
+        return hash((self.id, self.x, self.y, self.type))
+
 
 class Step:
     plan: PlanData
@@ -54,16 +70,21 @@ class Step:
 @dataclasses.dataclass
 class ShortestWay:
     way: List[Vertex]
-    distance: float
+    distance: int
 
 
 class Graph:
     location: LocationData
     plans: List[PlanData]
     corpuses: List[CorpusData]
-    vertexes: List["Vertex"]
+    vertexes: Dict[str, "Vertex"]
 
-    def __init__(self, location: LocationData, plans: List[PlanData], corpuses: List[CorpusData]):
+    def __init__(
+        self,
+        location: LocationData,
+        plans: List[PlanData],
+        corpuses: List[CorpusData]
+    ):
         self.location = location
         self.plans = plans
         self.corpuses = corpuses
@@ -71,35 +92,49 @@ class Graph:
         self.__add_stairs()
         self.__add_crossings()
 
+
     def __fill_vertexes_by_raw_vertexes(self):
-        plans_of_loc = [plan for plan in self.plans if plan.corpus.location == self.location]
-        vertexes = []
+        plans_of_loc = [
+            plan for plan in self.plans
+            if plan.corpus.location == self.location
+        ]
+        vertexes = dict()
         for plan in plans_of_loc:
             for raw_vertex in plan.graph:
-                vertexes.append(Vertex(
+                vertexes[raw_vertex.id] = Vertex(
                     id=raw_vertex.id,
                     x=raw_vertex.x,
                     y=raw_vertex.y,
                     type=VertexType(raw_vertex.type),
                     neighborData=raw_vertex.neighborData,
                     plan=plan
-                ))
+                )
         self.vertexes = vertexes
 
     def __add_stairs(self):
-        corpuses_of_loc = [x for x in self.corpuses if x.location == self.location]
+        corpuses_of_loc = [
+            x for x in self.corpuses if x.location == self.location
+        ]
         for corpus in corpuses_of_loc:
             for stairs_group in corpus.stairs:
-                for stair_index in range(1, len(stairs_group)):
-                    stair1_vertex = self.find_vertex_by_id(stairs_group[stair_index - 1])
-                    stair2_vertex = self.find_vertex_by_id(stairs_group[stair_index])
-                    self.__add_neighbor_both(stair1_vertex, stair2_vertex, 1085, 916)
+                for stair_id1, stair_id2 in pairwise(stairs_group):
+                    stair1_vertex = self.find_vertex_by_id(stair_id1)
+                    stair2_vertex = self.find_vertex_by_id(stair_id2)
+                    self.__add_neighbor_both(
+                        stair1_vertex, stair2_vertex,
+                        1085, 916
+                    )
 
-    def find_vertex_by_id(self, id: str):
-        return next((vertex for vertex in self.vertexes if vertex.id == id))
+    def find_vertex_by_id(self, id_: str) -> Vertex:
+        return self.vertexes[id_]
 
     @staticmethod
-    def __add_neighbor_both(vertex1: Vertex, vertex2: Vertex, distance1to2: int, distance2to1: int):
+    def __add_neighbor_both(
+        vertex1: Vertex,
+        vertex2: Vertex,
+        distance1to2: int,
+        distance2to1: int
+    ):
         vertex1.neighborData.append((vertex2.id, distance1to2))
         vertex2.neighborData.append((vertex1.id, distance2to1))
 
@@ -113,64 +148,70 @@ class Graph:
                 distance
             )
 
-    def get_shortest_way_from_to(self, id_vertex1: str, id_vertex2: str):
-        def is_vertex_need_check(vertex: Vertex) -> bool:
-            return (vertex.type == 'hallway' or
-                    vertex.type == 'lift' or
-                vertex.type == 'stair' or
-                vertex.type == 'corpusTransition' or
-                vertex.type == 'crossingSpace' or
-                vertex.id == id_vertex1 or
-                vertex.id == id_vertex2 or
-                'crossing' in vertex.id
-            )
-        filtered_vertexes = [x for x in self.vertexes if is_vertex_need_check(x)]
-        distances: Dict[str, float] = dict()
-        ways: Dict[str, List[str]] = dict()
-        for vertex in filtered_vertexes:
-            distances[vertex.id] = sys.maxsize
-            ways[vertex.id] = list()
-        distances[id_vertex1] = 0
-        finals = set()
-        current_vertex_id = id_vertex1
-        iterations = [0, 0]
-        is_end_vertex_in_finals = False
-        while len(finals) != len(filtered_vertexes) and not is_end_vertex_in_finals:
-            iterations[0] += 1
+    def get_shortest_way_from_to(
+        self,
+        start: str,
+        end: str
+    ) -> ShortestWay:
+        st_time = time.time()
+        allowed_types = {'hallway', 'lift', 'stair', 'corpusTransition', 'crossingSpace'}
 
-            current_vertex_distance = distances.get(current_vertex_id)
-            for neighbor_id, distance_to_neighbor in self.find_vertex_by_id(current_vertex_id).neighborData:
-                if not (self.find_vertex_by_id(neighbor_id) in filtered_vertexes):
-                    continue
-                iterations[1] += 1
-                distance_between_current_and_neighbor = distance_to_neighbor
-                neighbor_distance = distances.get(neighbor_id)
+        # Фильтрация вершин через словарь
+        valid_ids = {k for k, v in self.vertexes.items()
+                     if v.type in allowed_types
+                     or k in {start, end}
+                     or 'crossing' in k}
 
-                if (current_vertex_distance + distance_between_current_and_neighbor) < neighbor_distance:
-                    distances[neighbor_id] = current_vertex_distance + distance_between_current_and_neighbor
-                    way_to_relaxing_vertex = [x for x in ways.get(current_vertex_id)]
-                    way_to_relaxing_vertex.append(current_vertex_id)
-                    ways[neighbor_id] = way_to_relaxing_vertex
+        distances = {vid: math.inf for vid in valid_ids}
+        previous: Dict[str, str | None] = {vid: None for vid in valid_ids}
+        distances[start] = 0
 
-            finals.add(current_vertex_id)
-            if current_vertex_id == id_vertex2:
-                is_end_vertex_in_finals = True
-            min_distance = sys.maxsize
-            next_vertex_id = ''
-            for id, distance in distances.items():
-                if distance < min_distance and (not id in finals):
-                    min_distance = distance
-                    next_vertex_id = id
-            if min_distance == sys.maxsize:
+        heap = [(0, start)]
+        visited = set()
+
+        while heap:
+            curr_dist, current_id = heapq.heappop(heap)
+
+            if current_id == end:
                 break
-            current_vertex_id = next_vertex_id
-        for id, way in ways.items():
-            way.append(id)
-        return ShortestWay(way=[self.find_vertex_by_id(vertex_id) for vertex_id in ways.get(id_vertex2)], distance=distances.get(id_vertex2))
+
+            if current_id in visited:
+                continue
+
+            visited.add(current_id)
+
+            current = self.vertexes[current_id]
+            for neighbor, dist in current.neighborData:
+                if neighbor not in valid_ids:
+                    continue
+
+                new_dist = curr_dist + dist
+                if new_dist < distances[neighbor]:
+                    distances[neighbor] = new_dist
+                    previous[neighbor] = current_id
+                    heapq.heappush(heap, (math.floor(new_dist), neighbor))
+
+        # Восстановление пути
+        path = []
+        current = end
+        while current is not None:
+            path.append(current)
+            current = previous.get(current)
+        end_time = time.time()
+        e_time = end_time - st_time
+        print(f"The task took {e_time:.4f} seconds to complete.")
+        return ShortestWay(
+            way=[self.vertexes[vid] for vid in reversed(path) if vid],
+            distance=math.floor(distances.get(end, math.inf))
+        )
 
     @staticmethod
-    def get_distance_between2_vertexes(vertex1: Vertex, vertex2_id: str) -> float:
-        return next((note for note in vertex1.neighborData if note[0] == vertex2_id))[1]
+    def get_distance_between2_vertexes(
+        vertex1: Vertex, vertex2_id: str
+    ) -> float:
+        return next(
+            note for note in vertex1.neighborData if note[0] == vertex2_id
+        )[1]
 
 
 class Route:
@@ -178,7 +219,7 @@ class Route:
     to: str
     from_: str
     activeStep: int
-    fullDistance: float
+    fullDistance: int
     graph: Graph
 
     def __init__(self, from_: str, to: str, graph: Graph):
@@ -192,7 +233,7 @@ class Route:
         way_and_distance = graph.get_shortest_way_from_to(self.from_, self.to)
         self.fullDistance = way_and_distance.distance
 
-        way = [x for x in way_and_distance.way]
+        way = way_and_distance.way
         first_vertex = way.pop(0)
         self.steps = [Step(plan=first_vertex.plan, first_vertex=first_vertex)]
         for way_vertex in way:
@@ -207,10 +248,17 @@ class Route:
                 self.steps.append(Step(way_vertex.plan, way_vertex))
         first_step = self.steps[0]
         if len(first_step.way) == 1:
-            first_step.way.insert(0, graph.find_vertex_by_id(first_step.way[0].neighborData[0][0]))
+            first_step.way.insert(
+                0,
+                graph.find_vertex_by_id(
+                    first_step.way[0].neighborData[0][0]
+                )
+            )
             first_step.distance = first_step.way[0].neighborData[0][1]
         last_step = self.steps[-1]
         if last_step and len(last_step.way) == 1:
-            last_step.way.append(graph.find_vertex_by_id(last_step.way[0].neighborData[0][0]))
+            last_step.way.append(
+                graph.find_vertex_by_id(last_step.way[0].neighborData[0][0])
+            )
             last_step.distance = last_step.way[0].neighborData[0][1]
         self.steps = [x for x in self.steps if len(x.way) > 1]

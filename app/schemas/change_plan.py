@@ -12,23 +12,28 @@ class ChangePlanBase(BaseModel):
         user_id: Уникальный идентификатор пользователя.
         plan_id: Идентификатор измененного плана.
     """
-    user_id: str = Field(title="id",
-                         description="Unique user id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
-    plan_id: str = Field(title="Changed-plan",
-                         description="Changed plan by user",
-                         max_length=4,
-                         min_length=3,
-                         pattern=r"([ABVN]D?-\d)")
+    user_id: str = Field(
+        title="id",
+        description="Unique user id",
+        min_length=36,
+        max_length=36,
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+    )
+    plan_id: str = Field(
+        title="Changed-plan",
+        description="Changed plan by user",
+        max_length=4,
+        min_length=3,
+        pattern=r"([ABVN]D?-\d)"
+    )
 
 
 class ChangePlanIn(ChangePlanBase):
     """
     Класс для входных данных изменения плана.
 
-    Этот класс наследуется от ChangePlanBase и не содержит дополнительных полей.
+    Этот класс наследуется от ChangePlanBase
+    и не содержит дополнительных полей.
     """
     pass
 
@@ -37,7 +42,8 @@ class ChangePlanOut(ChangePlanBase):
     """
     Класс для выходных данных изменения плана.
 
-    Этот класс наследуется от ChangePlanBase и содержит дополнительное поле visit_date.
+    Этот класс наследуется от ChangePlanBase
+    и содержит дополнительное поле visit_date.
 
     Attributes:
         visit_date: Дата, когда пользователь изменил план.
