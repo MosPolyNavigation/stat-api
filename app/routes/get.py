@@ -346,7 +346,79 @@ async def get_popular(
             'description': "Route from one auditory to another",
             'content': {
                 'application/json': {
-                    'example': {}
+                    'example': {
+                        "to": "a-101",
+                        "from": "a-100",
+                        "steps": [
+                            {
+                                "plan": "A-1",
+                                "way": [
+                                    {
+                                        "id": "a-100",
+                                        "x": 1567,
+                                        "y": 1857,
+                                        "type": "entrancesToAu"
+                                    },
+                                    {
+                                        "id": "a-1_16",
+                                        "x": 1460,
+                                        "y": 1857,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1-stair-2",
+                                        "x": 1460,
+                                        "y": 1703,
+                                        "type": "stair"
+                                    },
+                                    {
+                                        "id": "a-1_41",
+                                        "x": 1451,
+                                        "y": 1531,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1_10",
+                                        "x": 1441,
+                                        "y": 1530,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1_15",
+                                        "x": 1374,
+                                        "y": 1530,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1_18",
+                                        "x": 1267,
+                                        "y": 1530,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1_19",
+                                        "x": 1189,
+                                        "y": 1530,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-1_20",
+                                        "x": 1080,
+                                        "y": 1530,
+                                        "type": "hallway"
+                                    },
+                                    {
+                                        "id": "a-101",
+                                        "x": 1080,
+                                        "y": 1581,
+                                        "type": "entrancesToAu"
+                                    }
+                                ],
+                                "distance": 855.29
+                            }
+                        ],
+                        "fullDistance": 855
+                    }
                 }
             }
         },
