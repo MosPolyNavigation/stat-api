@@ -1,6 +1,6 @@
 from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi import Depends, APIRouter, Response
 from fastapi.responses import JSONResponse
-from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
 from sqlalchemy.orm import Session
 from app.database import get_db
@@ -340,18 +340,57 @@ async def get_popular(
 @router.get(
     "/route",
     tags=["get"],
-    response_model=RouteOut
+    responses={
+        200: {
+            'model': RouteOut,
+            'description': "Route from one auditory to another",
+            'content': {
+                'application/json': {
+                    'example': {}
+                }
+            }
+        },
+        400: {
+            'model': Status,
+            'description': "Route from one auditory to another",
+            'content': {
+                'application/json': {
+                    'example': {
+                        'status': 'The requested route is impossible'
+                    }
+                }
+            }
+        },
+        404: {
+            'model': Status,
+            'description': "Route from one auditory to another",
+            'content': {
+                'application/json': {
+                    'example': {
+                        'status': 'You are trying to get a route along non-existent vertex'
+                    }
+                }
+            }
+        }
+    }
 )
 async def get_route(
+    response: Response,
     query: FilterRoute = Depends()
 ):
-    graph_bs = globals.global_graph["BS"]
+    try:
+        graph_bs = globals.global_graph["BS"]
+    except KeyError:
+        response.status_code = 500
+        return Status(
+            status="No graphs loaded"
+        )
     from_v = next((x for x in graph_bs.vertexes if x.id == query.from_), None)
     to_v = next((x for x in graph_bs.vertexes if x.id == query.to), None)
     if from_v is None and to_v is None:
-        return JSONResponse(Status(
-            status="You are trying to get a route along non-existent vertex"),
-            404
+        response.status_code = 404
+        return Status(
+            status="You are trying to get a route along non-existent vertex"
         )
     try:
         route = Route(from_=query.from_, to=query.to, graph=graph_bs)
@@ -372,8 +411,7 @@ async def get_route(
         )
         return data
     except:
-        return JSONResponse(
-            Status(
-                status="The requested route is impossible"
-            ), 400
+        response.status_code = 400
+        return Status(
+            status="The requested route is impossible"
         )
