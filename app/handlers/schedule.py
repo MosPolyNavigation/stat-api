@@ -10,6 +10,7 @@ async def fetch_cur_data():
         data = await parse_data()
         globals.global_graph["BS"] = await get_graph(data, "BS")
     except Exception as e:
+        print(e)
         print("Data parsing failed. No graphs loaded")
 
 
