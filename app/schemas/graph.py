@@ -4,6 +4,7 @@ from typing import List, Tuple, Dict
 from . import LocationData, PlanData, CorpusData, RoomData
 import dataclasses
 import sys
+import math
 
 
 @dataclasses.dataclass
@@ -64,7 +65,7 @@ class Step:
 @dataclasses.dataclass
 class ShortestWay:
     way: List[Vertex]
-    distance: float
+    distance: int
 
 
 class Graph:
@@ -145,7 +146,7 @@ class Graph:
                 distance
             )
 
-    def get_shortest_way_from_to(self, id_vertex1: str, id_vertex2: str):
+    def get_shortest_way_from_to(self, id_vertex1: str, id_vertex2: str) -> ShortestWay:
         def is_vertex_need_check(vertex: Vertex) -> bool:
             return (vertex.type == 'hallway' or
                     vertex.type == 'lift' or
@@ -207,7 +208,8 @@ class Graph:
             way=[self.find_vertex_by_id(
                 vertex_id
             ) for vertex_id in ways.get(id_vertex2)],
-            distance=dstncs.get(id_vertex2))
+            distance=math.floor(dstncs.get(id_vertex2))
+        )
 
     @staticmethod
     def get_distance_between2_vertexes(
@@ -223,7 +225,7 @@ class Route:
     to: str
     from_: str
     activeStep: int
-    fullDistance: float
+    fullDistance: int
     graph: Graph
 
     def __init__(self, from_: str, to: str, graph: Graph):
