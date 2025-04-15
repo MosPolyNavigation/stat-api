@@ -6,8 +6,11 @@ import app.globals as globals
 
 
 async def fetch_cur_data():
-    data = await parse_data()
-    globals.global_graph["BS"] = await get_graph(data, "BS")
+    try:
+        data = await parse_data()
+        globals.global_graph["BS"] = await get_graph(data, "BS")
+    except:
+        print("Data parsing failed. No graphs loaded")
 
 
 @asynccontextmanager
