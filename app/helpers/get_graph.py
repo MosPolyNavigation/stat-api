@@ -40,7 +40,7 @@ def parse_plan(plan: PlanDto, corpuses: List[CorpusData]) -> PlanData:
         wayToSvg=plan.wayToSvg,
         graph=plan.graph,
         floor=int(plan.floor),
-        entrances=plan.entrances
+        entrances=plan.entrances or []
     )
 
 

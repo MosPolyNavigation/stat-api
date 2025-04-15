@@ -31,14 +31,14 @@ class PlanDto(BaseModel):
     corpusId: str
     floor: str
     available: bool
-    wayToSvg: str
+    wayToSvg: str = Field(default="")
     graph: List["GraphDto"]
-    entrances: List[Tuple[str, str]]
+    entrances: Optional[List[Tuple[str, str]]] = Field(default=[])
     nearest: "NearestDto"
 
 
 class NearestDto(BaseModel):
-    enter: str
+    enter: str = Field(default="")
     wm: Optional[str] = Field(default=None)
     ww: Optional[str] = Field(default=None)
     ws: Optional[str] = Field(default=None)
