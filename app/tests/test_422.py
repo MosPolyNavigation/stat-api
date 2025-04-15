@@ -24,7 +24,8 @@ def test_422_stat(endpoint):
 ])
 def test_422_get_protected(endpoint):
     response = client.get(endpoint, params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+        "api_key":
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
         "page": -1
     })
     assert response.status_code == 422

@@ -1,7 +1,16 @@
 from fastapi import Depends, APIRouter, Response, Body, Request
+from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas import *
-from app.handlers import *
+from app.schemas import Status
+from app.schemas import StartWayIn
+from app.schemas import SiteStatIn
+from app.schemas import ChangePlanIn
+from app.schemas import SelectedAuditoryIn
+from app.handlers import check_user
+from app.handlers import insert_site_stat
+from app.handlers import insert_start_way
+from app.handlers import insert_changed_plan
+from app.handlers import insert_aud_selection
 
 router = APIRouter(
     prefix="/api/stat"
@@ -11,11 +20,11 @@ router = APIRouter(
 @router.put(
     "/site",
     description="Эндпоинт для добавления статистики посещений сайта",
-    response_model=status.Status,
+    response_model=Status,
     tags=["stat"],
     responses={
         500: {
-            'model': status.Status,
+            'model': Status,
             'description': "Server side error",
             'content': {
                 "application/json": {
@@ -24,7 +33,7 @@ router = APIRouter(
             }
         },
         404: {
-            'model': status.Status,
+            'model': Status,
             'description': "Item not found",
             'content': {
                 "application/json": {
@@ -38,7 +47,10 @@ router = APIRouter(
         }
     }
 )
-async def add_site_stat(data: SiteStatIn = Body(), db: Session = Depends(get_db)):
+async def add_site_stat(
+    data: SiteStatIn = Body(),
+    db: Session = Depends(get_db)
+):
     """
     Эндпоинт для добавления статистики посещений сайта.
 
@@ -87,7 +99,10 @@ async def add_site_stat(data: SiteStatIn = Body(), db: Session = Depends(get_db)
             "description": "Too many requests",
             'content': {
                 "application/json": {
-                    "example": {"status": "Too many requests for this user within one second"}
+                    "example": {
+                        "status":
+                            "Too many requests for this user within one second"
+                    }
                 }
             }
         }
@@ -116,18 +131,20 @@ async def add_selected_aud(
     state = request.app.state
     if check_user(state, data.user_id) < 1:
         response.status_code = 429
-        return Status(status="Too many requests for this user within one second")
+        return Status(
+            status="Too many requests for this user within one second"
+        )
     return await insert_aud_selection(db, data)
 
 
 @router.put(
     "/start-way",
     description="Эндпоинт для добавления начатого пути",
-    response_model=status.Status,
+    response_model=Status,
     tags=["stat"],
     responses={
         500: {
-            'model': status.Status,
+            'model': Status,
             'description': "Server side error",
             'content': {
                 "application/json": {
@@ -136,7 +153,7 @@ async def add_selected_aud(
             }
         },
         404: {
-            'model': status.Status,
+            'model': Status,
             'description': "Item not found",
             'content': {
                 "application/json": {
@@ -172,11 +189,11 @@ async def add_started_way(
 @router.put(
     "/change-plan",
     description="Эндпоинт для добавления смены плана",
-    response_model=status.Status,
+    response_model=Status,
     tags=["stat"],
     responses={
         500: {
-            'model': status.Status,
+            'model': Status,
             'description': "Server side error",
             'content': {
                 "application/json": {
@@ -185,7 +202,7 @@ async def add_started_way(
             }
         },
         404: {
-            'model': status.Status,
+            'model': Status,
             'description': "Item not found",
             'content': {
                 "application/json": {

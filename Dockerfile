@@ -1,9 +1,11 @@
-FROM python:3.12
+FROM alpine:latest
+
+RUN apk add python3 uv
 
 WORKDIR /app
 
 COPY . .
 
-RUN python3 -m pip install -r requirements.txt
+RUN uv -n sync --frozen
 
-CMD ["python3", "main.py"]
+CMD ["uv", "run", "main.py"]
