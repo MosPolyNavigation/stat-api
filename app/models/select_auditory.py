@@ -23,11 +23,29 @@ class SelectAuditory(Base):
     """
     __tablename__ = "selected_auditories"
 
-    id: int = Column(Integer, primary_key=True, index=True)
-    user_id: Mapped[str] = Column(ForeignKey("user_ids.user_id"), nullable=False)
-    visit_date: datetime = Column(DateTime, default=datetime.now(), nullable=False)
-    auditory_id: Mapped[str] = Column(ForeignKey("auditories.id"), nullable=False)
-    success: bool = Column(Boolean, default=False, nullable=False)
+    id: int = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+    user_id: Mapped[str] = Column(
+        ForeignKey("user_ids.user_id"),
+        nullable=False
+    )
+    visit_date: datetime = Column(
+        DateTime,
+        default=datetime.now,
+        nullable=False
+    )
+    auditory_id: Mapped[str] = Column(
+        ForeignKey("auditories.id"),
+        nullable=False
+    )
+    success: bool = Column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
 
     user: Mapped["UserId"] = relationship()
     auditory: Mapped["Auditory"] = relationship()

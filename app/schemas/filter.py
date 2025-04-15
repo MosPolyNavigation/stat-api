@@ -24,17 +24,20 @@ class Filter(FilterBase):
     """
     Класс для фильтра.
 
-    Этот класс наследуется от FilterBase и содержит дополнительное поле user_id.
+    Этот класс наследуется от FilterBase
+    и содержит дополнительное поле user_id.
 
     Attributes:
         user_id: Уникальный идентификатор пользователя.
     """
-    user_id: Optional[str] = Field(default=None,
-                                   title="id",
-                                   description="Unique user id",
-                                   min_length=36,
-                                   max_length=36,
-                                   pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+    user_id: Optional[str] = Field(
+        default=None,
+        title="id",
+        description="Unique user id",
+        min_length=36,
+        max_length=36,
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+    )
 
 
 class TargetEnum(str, Enum):
@@ -59,7 +62,8 @@ class FilterQuery(FilterBase):
     """
     Класс для фильтра запроса.
 
-    Этот класс наследуется от FilterBase и содержит дополнительные поля target, start_date и end_date.
+    Этот класс наследуется от FilterBase
+    и содержит дополнительные поля target, start_date и end_date.
 
     Attributes:
         target: Цель фильтрации.
@@ -67,19 +71,26 @@ class FilterQuery(FilterBase):
         end_date: Дата, на которой заканчивается фильтрация.
     """
     target: TargetEnum = Field(description="Target info")
-    start_date: Optional[date] = Field(default=None, description="Date from which filtering begins")
-    end_date: Optional[date] = Field(default=None, description="Date on which filtering ends")
+    start_date: Optional[date] = Field(
+        default=None, description="Date from which filtering begins"
+    )
+    end_date: Optional[date] = Field(
+        default=None, description="Date on which filtering ends"
+    )
 
     @computed_field
     @property
-    def model(self) -> Type[models.ChangePlan | models.StartWay | models.SelectAuditory | models.SiteStat]:
+    def model(self) -> Type[models.ChangePlan |
+                            models.StartWay |
+                            models.SelectAuditory |
+                            models.SiteStat]:
         """
         Свойство для получения модели.
 
         Это свойство возвращает модель в зависимости от цели фильтрации.
 
         Returns:
-            Type[models.ChangePlan | models.StartWay | models.SelectAuditory | models.SiteStat]: Модель.
+            Модель.
         """
         if self.target is TargetEnum.plans:
             return models.ChangePlan
@@ -91,6 +102,7 @@ class FilterQuery(FilterBase):
             return models.SiteStat
         else:
             raise ValueError("no such target")
+
 
 class FilterRoute(BaseModel):
     to: str = Field()

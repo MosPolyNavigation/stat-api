@@ -11,6 +11,7 @@ from .base import client
 ])
 def test_403(endpoint):
     response = client.get(endpoint, params={
-        "api_key": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde1"
+        "api_key":
+            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcde1"
     })
     assert response.status_code == 403

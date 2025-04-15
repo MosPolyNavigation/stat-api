@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple, Any
+from typing import Optional, List, Tuple
 from pydantic import BaseModel, Field
 
 
@@ -16,6 +16,7 @@ class LocationDto(BaseModel):
     available: bool = Field()
     address: str = Field()
     crossings: Optional[List[Tuple[str, str, float]]] = Field(default=None)
+
 
 class CorpusDto(BaseModel):
     id: str

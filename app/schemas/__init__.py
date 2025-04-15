@@ -7,7 +7,8 @@ from .statistics import Statistics
 from .status import Status
 from .user_id import UserId
 from .review import ReviewOut, Problem
-from .dto import DataDto, GraphDto, LocationDto, CorpusDto, PlanDto, RoomDto, NearestDto
+from .dto import DataDto, GraphDto, LocationDto, \
+    CorpusDto, PlanDto, RoomDto, NearestDto
 from .location_data import LocationData
 from .corpus_data import CorpusData
 from .plan_data import PlanData

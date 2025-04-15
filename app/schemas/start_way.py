@@ -43,7 +43,8 @@ class StartWayOut(StartWayBase):
     """
     Класс для выходных данных начала пути.
 
-    Этот класс наследуется от StartWayBase и содержит дополнительное поле visit_date.
+    Этот класс наследуется от StartWayBase
+    и содержит дополнительное поле visit_date.
 
     Attributes:
         visit_date: Дата, когда пользователь создал путь.

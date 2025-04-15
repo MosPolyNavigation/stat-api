@@ -1,29 +1,38 @@
-import os
 from fastapi import Depends, APIRouter, UploadFile, File, Form, Response
 from fastapi.responses import FileResponse
 from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi_pagination import Page
+from sqlalchemy.orm import Session
 from app.config import get_settings
 from app.database import get_db
+from typing import Optional
+from app.models import Review
+from app.schemas import Filter
+from app.schemas import Status
+from app.schemas import Problem
+from app.schemas import ReviewOut
+from app.handlers import insert_review
+from app.handlers import filter_by_user
+from app.helpers.errors import LookupException
 from app.helpers.path import secure_image_path
-from app.schemas import *
-from app.handlers import *
-from os import path
 import aiofiles
 import uuid
+import os
+
 
 router = APIRouter(
     prefix="/api/review"
 )
 
+
 @router.post(
     "/add",
     description="Эндпоинт для добавления отзывов",
-    response_model=status.Status,
+    response_model=Status,
     tags=["review"],
     responses={
         500: {
-            'model': status.Status,
+            'model': Status,
             'description': "Server side error",
             'content': {
                 "application/json": {
@@ -32,7 +41,7 @@ router = APIRouter(
             }
         },
         404: {
-            'model': status.Status,
+            'model': Status,
             'description': "Item not found",
             'content': {
                 "application/json": {
@@ -41,7 +50,7 @@ router = APIRouter(
             }
         },
         415: {
-            'model': status.Status,
+            'model': Status,
             'description': "Unsupported Media Type",
             'content': {
                 "application/json": {
@@ -57,26 +66,35 @@ router = APIRouter(
 )
 async def add_review(
         response: Response,
-        image: Optional[UploadFile] = File(default=None,
-                                           description="User image with problem"),
-        user_id: str = Form(title="id",
-                            description="Unique user id",
-                            min_length=36,
-                            max_length=36,
-                            pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"),
-        problem: Problem = Form(title="problem",
-                                description="User problem",
-                                json_schema_extra={"type": "string", "pattern": r"way|other|plan|work"}),
+        image: Optional[UploadFile] = File(
+            default=None,
+            description="User image with problem"
+        ),
+        user_id: str = Form(
+            title="id",
+            description="Unique user id",
+            min_length=36,
+            max_length=36,
+            pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        ),
+        problem: Problem = Form(
+            title="problem",
+            description="User problem",
+            json_schema_extra={
+                "type": "string",
+                "pattern": r"way|other|plan|work"
+            }
+        ),
         text: str = Form(title="text",
                          description="User review"),
         db: Session = Depends(get_db),
 ):
-    base_path = path.join(get_settings().static_files, "images")
+    base_path = os.path.join(get_settings().static_files, "images")
     if image is not None and image.content_type.split("/")[0] == "image":
-        image_ext = path.splitext(image.filename)[-1]
+        image_ext = os.path.splitext(image.filename)[-1]
         image_id = uuid.uuid4().hex
         image_name = image_id + image_ext
-        image_path = path.join(base_path, image_name)
+        image_path = os.path.join(base_path, image_name)
         async with aiofiles.open(image_path, "wb") as file:
             contents = await image.read()
             await file.write(contents)
@@ -86,6 +104,7 @@ async def add_review(
     else:
         image_name = None
     return await insert_review(db, image_name, user_id, problem, text)
+
 
 @router.get(
     "/get",
@@ -133,7 +152,7 @@ async def get_reviews(
     Returns:
         Page[ReviewOut]: Страница с найденными данными.
     """
-    return paginate(db, filter_by_user(models.Review, query))
+    return paginate(db, filter_by_user(Review, query))
 
 
 @router.get(
@@ -143,7 +162,7 @@ async def get_reviews(
     tags=["review"],
     responses={
         500: {
-            'model': status.Status,
+            'model': Status,
             'description': "Server side error",
             'content': {
                 "application/json": {
@@ -152,7 +171,7 @@ async def get_reviews(
             }
         },
         404: {
-            'model': status.Status,
+            'model': Status,
             'description': "Item not found",
             'content': {
                 "application/json": {

@@ -21,7 +21,13 @@ depends_on: Union[str, Sequence[str], None] = None
 def data_upgrades():
     auditories = sa.sql.table("auditories", sa.sql.column('id', sa.String))
 
-    op.bulk_insert(auditories, list(map(lambda x: {'id': x}, list(set(auds.split('\n'))))))
+    op.bulk_insert(
+        auditories,
+        list(map(
+            lambda x: {'id': x},
+            list(set(auds.split('\n')))
+        ))
+    )
 
 
 def data_drop():

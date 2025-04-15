@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import List, Tuple
 
+
 class LocationData(BaseModel):
     id: str
     title: str

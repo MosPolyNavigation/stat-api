@@ -1,4 +1,5 @@
-from app.schemas import DataDto, PlanData, LocationData, CorpusData, RoomData, LocationDto, CorpusDto, PlanDto, \
+from app.schemas.dto import DataDto, LocationDto, CorpusDto, PlanDto
+from app.schemas import PlanData, LocationData, CorpusData, RoomData, \
     Graph, DataEntry
 from typing import List
 from .parser import fill_room_data
@@ -18,7 +19,10 @@ def parse_location(location: LocationDto) -> LocationData:
     )
 
 
-def parse_corpus(corpus: CorpusDto, locations: List[LocationData]) -> CorpusData:
+def parse_corpus(
+    corpus: CorpusDto,
+    locations: List[LocationData]
+) -> CorpusData:
     return CorpusData(
         id=corpus.id,
         title=corpus.title,
@@ -50,7 +54,9 @@ async def fetch_data(url) -> DataDto:
 async def parse_data() -> DataEntry:
     data = await fetch_data(dataUrl)
     locations: List[LocationData] = list(map(parse_location, data.locations))
-    corpuses: List[CorpusData] = [parse_corpus(x, locations) for x in data.corpuses]
+    corpuses: List[CorpusData] = [
+        parse_corpus(x, locations) for x in data.corpuses
+    ]
     plans: List[PlanData] = [parse_plan(x, corpuses) for x in data.plans]
     rooms: List[RoomData] = [lv for lv in [fill_room_data(
         x, next((v for v in plans if v.id == x.planId))
@@ -58,6 +64,7 @@ async def parse_data() -> DataEntry:
     return DataEntry(
         Locations=locations, Corpuses=corpuses, Plans=plans, Rooms=rooms
     )
+
 
 async def get_graph(data: DataEntry, loc_id: str):
     locations, corpuses, plans = data.Locations, data.Corpuses, data.Plans

@@ -2,9 +2,26 @@ from fastapi_pagination.ext.sqlalchemy import paginate
 from fastapi.responses import JSONResponse
 from fastapi import Depends, APIRouter
 from fastapi_pagination import Page
+from sqlalchemy.orm import Session
 from app.database import get_db
-from app.schemas import *
-from app.handlers import *
+from app.schemas import Route
+from app.schemas import Status
+from app.schemas import UserId
+from app.schemas import Filter
+from app.schemas import WayOut
+from app.schemas import StepOut
+from app.schemas import RouteOut
+from app.schemas import Statistics
+from app.schemas import FilterRoute
+from app.schemas import SiteStatOut
+from app.schemas import StartWayOut
+from app.schemas import FilterQuery
+from app.schemas import ChangePlanOut
+from app.schemas import SelectedAuditoryOut
+from app.handlers import filter_by_user
+from app.handlers import create_user_id
+from app.handlers import get_popular_auds
+from app.handlers import get_endpoint_stats
 from app import models
 import app.globals as globals
 
@@ -15,7 +32,7 @@ router = APIRouter(
 
 @router.get(
     "/user-id",
-    description="Эндпоинт для получения уникального идентификатора пользователя",
+    description="Эндпоинт для получения уникального id пользователя",
     response_model=UserId,
     tags=["get"],
     responses={
@@ -289,6 +306,7 @@ async def get_stat(
     """
     return await get_endpoint_stats(db, query)
 
+
 @router.get(
     "/popular",
     tags=["get"],
@@ -306,7 +324,7 @@ async def get_stat(
             'description': 'Popular auditories in descending order',
             'content': {
                 'application/json': {
-                    "example": ["a-100","a-101","a-103","a-102"]
+                    "example": ["a-100", "a-101", "a-103", "a-102"]
                 }
             }
         }
@@ -317,6 +335,7 @@ async def get_popular(
 ) -> JSONResponse:
     data = await get_popular_auds(db)
     return JSONResponse(data, status_code=200)
+
 
 @router.get(
     "/route",
@@ -330,7 +349,10 @@ async def get_route(
     from_v = next((x for x in graph_bs.vertexes if x.id == query.from_), None)
     to_v = next((x for x in graph_bs.vertexes if x.id == query.to), None)
     if from_v is None and to_v is None:
-        return JSONResponse(Status(status="You are trying to get a route along non-existent vertex"), 404)
+        return JSONResponse(Status(
+            status="You are trying to get a route along non-existent vertex"),
+            404
+        )
     try:
         route = Route(from_=query.from_, to=query.to, graph=graph_bs)
         data = RouteOut(
@@ -350,4 +372,8 @@ async def get_route(
         )
         return data
     except:
-        return JSONResponse(Status(status="The requested route is impossible"), 400)
+        return JSONResponse(
+            Status(
+                status="The requested route is impossible"
+            ), 400
+        )

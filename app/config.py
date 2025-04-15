@@ -8,7 +8,8 @@ class Settings(BaseSettings):
     """
     Класс настроек приложения.
 
-    Этот класс содержит настройки приложения, которые могут быть загружены из файла .env.
+    Этот класс содержит настройки приложения,
+    которые могут быть загружены из файла .env.
 
     Attributes:
         admin_key: Административный ключ.
@@ -24,9 +25,11 @@ class Settings(BaseSettings):
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: set[HttpUrl] = set()
-    allowed_methods: set[str] = set(["PUT", "POST", "GET"])
+    allowed_methods: set[str] = {"PUT", "POST", "GET"}
 
-    model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
+    model_config = SettingsConfigDict(
+        env_file='.env', env_file_encoding='utf-8'
+    )
 
 
 @lru_cache()
@@ -34,7 +37,8 @@ def get_settings():
     """
     Функция для получения настроек приложения.
 
-    Эта функция возвращает объект настроек приложения. Она использует декоратор lru_cache для кэширования результатов.
+    Эта функция возвращает объект настроек приложения.
+    Она использует декоратор lru_cache для кэширования результатов.
 
     Returns:
         Settings: Объект настроек приложения.
