@@ -457,9 +457,9 @@ async def get_route(
         return Status(
             status="No graphs loaded"
         )
-    from_v = next((x for x in graph_bs.vertexes if x.id == query.from_), None)
-    to_v = next((x for x in graph_bs.vertexes if x.id == query.to), None)
-    if from_v is None and to_v is None:
+    from_v = graph_bs.vertexes.get(query.from_, None)
+    to_v = graph_bs.vertexes.get(query.to, None)
+    if from_v is None or to_v is None:
         response.status_code = 404
         return Status(
             status="You are trying to get a route along non-existent vertex"
@@ -482,7 +482,8 @@ async def get_route(
             fullDistance=route.fullDistance
         )
         return data
-    except:
+    except Exception as e:
+        print(e)
         response.status_code = 400
         return Status(
             status="The requested route is impossible"
