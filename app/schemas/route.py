@@ -14,7 +14,6 @@ class StepOut(BaseModel):
     plan: str = Field()
     way: List["WayOut"] = Field()
     distance: float = Field()
-    pass
 
 
 class WayOut(BaseModel):
