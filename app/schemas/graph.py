@@ -125,8 +125,8 @@ class Graph:
                         1085, 916
                     )
 
-    def find_vertex_by_id(self, id: str) -> Vertex:
-        return self.vertexes[id]
+    def find_vertex_by_id(self, id_: str) -> Vertex:
+        return self.vertexes[id_]
 
     @staticmethod
     def __add_neighbor_both(

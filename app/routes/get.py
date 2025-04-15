@@ -23,7 +23,7 @@ from app.handlers import create_user_id
 from app.handlers import get_popular_auds
 from app.handlers import get_endpoint_stats
 from app import models
-import app.globals as globals
+import app.globals as globals_
 
 router = APIRouter(
     prefix="/api/get"
@@ -451,7 +451,7 @@ async def get_route(
     query: FilterRoute = Depends()
 ):
     try:
-        graph_bs = globals.global_graph["BS"]
+        graph_bs = globals_.global_graph["BS"]
     except KeyError:
         response.status_code = 500
         return Status(
