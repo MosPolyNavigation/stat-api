@@ -38,7 +38,7 @@ def parse_plan(plan: PlanDto, corpuses: List[CorpusData]) -> PlanData:
         corpus=next((v for v in corpuses if v.id == plan.corpusId)),
         available=plan.available,
         wayToSvg=plan.wayToSvg,
-        graph=plan.graph,
+        graph=plan.graph or [],
         floor=int(plan.floor),
         entrances=plan.entrances or []
     )
