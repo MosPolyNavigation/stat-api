@@ -1,17 +1,7 @@
 services:
-  migrate:
-    image: ghcr.io/sidecuter/statapi:latest
-    depends_on:
-      - database
-    environment:
-      SQLALCHEMY_DATABASE_URL: postgresql+psycopg2://statapi:test@172.16.0.11:5432/statapi
-    networks:
-      front-tier:
-        ipv4_address: 172.16.0.12
-    command: ["alembic", "upgrade", "head"]
   server:
     environment:
-      SQLALCHEMY_DATABASE_URL: postgresql+psycopg2://statapi:test@172.16.0.11:5432/statapi
+      SQLALCHEMY_DATABASE_URL: sqlite:////app/static/app.db
       STATIC_FILES: /app/static
       ALLOWED_HOSTS: '["http://localhost:3000"]'
       ALLOWED_METHODS: '["GET","PUT","POST"]'
@@ -21,28 +11,3 @@ services:
       - "8080:8080"
     volumes:
       - ./static:/app/static
-    networks:
-      front-tier:
-        ipv4_address: 172.16.0.10
-    depends_on:
-      - migrate
-  database:
-    image: postgres:13.3
-    environment:
-      POSTGRES_DB: "statapi"
-      POSTGRES_USER: "statapi"
-      POSTGRES_PASSWORD: "test"
-    ports:
-      - "5432:5432"
-    volumes:
-      - ./db-data:/var/lib/postgresql/data
-    networks:
-      front-tier:
-        ipv4_address: 172.16.0.11
-
-networks:
-  front-tier:
-    ipam:
-      driver: default
-      config:
-        - subnet: "172.16.0.0/24"
