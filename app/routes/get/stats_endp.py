@@ -42,7 +42,7 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт возвращает статистику.
 
         Args:
-            query: Параметры фильтрации.
+            query: Параметры фильтрации;
             db: Сессия базы данных.
 
         Returns:

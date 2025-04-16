@@ -14,7 +14,7 @@ def filter_by_user(
     Эта функция фильтрует данные по пользователю.
 
     Args:
-        data_model: Модель данных.
+        data_model: Модель данных;
         params: Параметры фильтрации.
 
     Returns:

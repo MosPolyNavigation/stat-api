@@ -27,7 +27,6 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт возвращает список найденных данных.
 
         Args:
-            query: Параметры фильтрации.
             db: Сессия базы данных.
 
         Returns:

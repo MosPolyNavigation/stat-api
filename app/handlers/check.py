@@ -10,7 +10,7 @@ def check_user(state: AppState, user_id) -> float:
     и возвращает время, прошедшее с последней проверки.
 
     Args:
-        state: Состояние приложения.
+        state: Состояние приложения;
         user_id: Идентификатор пользователя.
 
     Returns:

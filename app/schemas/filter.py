@@ -47,9 +47,9 @@ class TargetEnum(str, Enum):
     Этот класс содержит возможные цели фильтрации.
 
     Attributes:
-        site: Цель фильтрации для сайта.
-        auds: Цель фильтрации для аудитории.
-        ways: Цель фильтрации для путей.
+        site: Цель фильтрации для сайта;
+        auds: Цель фильтрации для аудитории;
+        ways: Цель фильтрации для путей;
         plans: Цель фильтрации для планов.
     """
     site = 'site'
@@ -66,9 +66,9 @@ class FilterQuery(FilterBase):
     и содержит дополнительные поля target, start_date и end_date.
 
     Attributes:
-        target: Цель фильтрации.
-        start_date: Дата, с которой начинается фильтрация.
-        end_date: Дата, на которой заканчивается фильтрация.
+        target: Цель фильтрации;
+        start_date: дата, с которой начинается фильтрация;
+        end_date: дата, на которой заканчивается фильтрация.
     """
     target: TargetEnum = Field(description="Target info")
     start_date: Optional[date] = Field(

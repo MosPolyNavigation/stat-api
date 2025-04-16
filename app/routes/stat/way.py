@@ -47,7 +47,7 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт добавляет начатый путь в базу данных.
 
         Args:
-            data: Данные начатого пути.
+            data: Данные начатого пути;
             db: Сессия базы данных.
 
         Returns:

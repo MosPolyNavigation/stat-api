@@ -61,9 +61,9 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт добавляет выбор аудитории в базу данных.
 
         Args:
-            request: Запрос.
-            response: Ответ.
-            data: Данные выбора аудитории.
+            request: Запрос;
+            response: Ответ;
+            data: Данные выбора аудитории;
             db: Сессия базы данных.
 
         Returns:

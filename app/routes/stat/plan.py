@@ -47,10 +47,10 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт добавляет смену плана в базу данных.
 
         Args:
-            data: Данные смены плана.
+            data: Данные смены плана;
             db: Сессия базы данных.
 
         Returns:
-            Status: Статус добавления нового объекта в базу данных.
+            Статус добавления нового объекта в базу данных.
         """
         return await insert_changed_plan(db, data)
