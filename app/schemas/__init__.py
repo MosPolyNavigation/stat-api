@@ -9,8 +9,6 @@ from .user_id import UserId
 from .review import ReviewOut, Problem
 from .dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
-from .location_data import LocationData
-from .corpus_data import CorpusData
-from .plan_data import PlanData
+from .data import LocationData, CorpusData, PlanData
 from .graph import Graph, Vertex, Step, DataEntry, Route
 from .route import RouteOut, StepOut, WayOut
