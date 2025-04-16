@@ -11,7 +11,7 @@ class UserId(Base):
     Этот класс представляет таблицу "user_ids" в базе данных.
 
     Attributes:
-        user_id: Уникальный идентификатор пользователя.
+        user_id: Уникальный идентификатор пользователя;
         creation_date: Дата создания.
     """
     __tablename__ = "user_ids"

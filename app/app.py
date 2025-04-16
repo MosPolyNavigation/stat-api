@@ -94,7 +94,7 @@ async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
     Он возвращает JSON ответ с кодом статуса 500 и сообщением об ошибке.
 
     Args:
-        _: Объект запроса (не используется в функции).
+        _: Объект запроса (не используется в функции);
         exc: Исключение SQLAlchemy.
 
     Returns:
@@ -112,7 +112,7 @@ async def lookup_exception_handler(_, exc: LookupException):
     Он возвращает JSON ответ с кодом статуса 404 и сообщением об ошибке.
 
     Args:
-        _: Объект запроса (не используется в функции).
+        _: Объект запроса (не используется в функции);
         exc: Исключение LookupException.
 
     Returns:

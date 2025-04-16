@@ -27,10 +27,10 @@ def register_endpoint(router: APIRouter):
         Этот эндпоинт возвращает список найденных данных.
 
         Args:
-            query: Параметры фильтрации.
+            query: Параметры фильтрации;
             db: Сессия базы данных.
 
         Returns:
-            Page[ChangePlanOut]: Страница с найденными данными.
+            Страница с найденными данными.
         """
         return paginate(db, filter_by_user(models.ChangePlan, query))

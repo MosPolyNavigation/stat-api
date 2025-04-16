@@ -12,11 +12,11 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
     Эта функция получает статистику по эндпоинту.
 
     Args:
-        db: Сессия базы данных.
+        db: Сессия базы данных;
         params: Параметры фильтрации.
 
     Returns:
-        schemas.Statistics: Статистика по эндпоинту.
+        Статистика по эндпоинту.
     """
     query, borders = filter_by_date(params)
     all_visits = len(db.execute(query).scalars().all())

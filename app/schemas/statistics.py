@@ -10,9 +10,9 @@ class Statistics(BaseModel):
     Этот класс содержит поля, которые необходимы для статистики.
 
     Attributes:
-        unique_visitors: Количество уникальных посетителей.
-        visitor_count: Количество посетителей.
-        all_visits: Общее количество посещений.
+        unique_visitors: Количество уникальных посетителей;
+        visitor_count: Количество посетителей;
+        all_visits: Общее количество посещений;
         period: Период, за который собрана статистика.
     """
     unique_visitors: int
