@@ -2,7 +2,7 @@ from itertools import pairwise
 from pydantic import BaseModel
 from typing import List, Tuple, Dict
 from pydantic_core import core_schema
-from . import LocationData, PlanData, CorpusData, RoomData
+from . import LocationData, PlanData, CorpusData
 import dataclasses
 import math
 import time
@@ -14,7 +14,6 @@ class DataEntry:
     Locations: List[LocationData]
     Corpuses: List[CorpusData]
     Plans: List[PlanData]
-    Rooms: List[RoomData]
 
 
 class VertexType(str):

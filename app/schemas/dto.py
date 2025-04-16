@@ -32,7 +32,7 @@ class PlanDto(BaseModel):
     floor: str
     available: bool
     wayToSvg: str = Field(default="")
-    graph: List["GraphDto"]
+    graph: Optional[List["GraphDto"]] = Field(default=[])
     entrances: Optional[List[Tuple[str, str]]] = Field(default=[])
     nearest: "NearestDto"
 

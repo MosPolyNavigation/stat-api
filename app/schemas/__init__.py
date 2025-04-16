@@ -12,6 +12,5 @@ from .dto import DataDto, GraphDto, LocationDto, \
 from .location_data import LocationData
 from .corpus_data import CorpusData
 from .plan_data import PlanData
-from .room_data import RoomData, RoomType
 from .graph import Graph, Vertex, Step, DataEntry, Route
 from .route import RouteOut, StepOut, WayOut

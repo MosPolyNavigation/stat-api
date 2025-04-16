@@ -1,8 +1,6 @@
 from app.schemas.dto import DataDto, LocationDto, CorpusDto, PlanDto
-from app.schemas import PlanData, LocationData, CorpusData, RoomData, \
-    Graph, DataEntry
+from app.schemas import PlanData, LocationData, CorpusData, Graph, DataEntry
 from typing import List
-from .parser import fill_room_data
 import httpx
 
 dataUrl = 'https://mospolynavigation.github.io/polyna-preprocess/locationsV2.json'
@@ -38,7 +36,7 @@ def parse_plan(plan: PlanDto, corpuses: List[CorpusData]) -> PlanData:
         corpus=next((v for v in corpuses if v.id == plan.corpusId)),
         available=plan.available,
         wayToSvg=plan.wayToSvg,
-        graph=plan.graph,
+        graph=plan.graph or [],
         floor=int(plan.floor),
         entrances=plan.entrances or []
     )
@@ -58,11 +56,8 @@ async def parse_data() -> DataEntry:
         parse_corpus(x, locations) for x in data.corpuses
     ]
     plans: List[PlanData] = [parse_plan(x, corpuses) for x in data.plans]
-    rooms: List[RoomData] = [lv for lv in [fill_room_data(
-        x, next((v for v in plans if v.id == x.planId))
-    ) for x in data.rooms] if lv is not None]
     return DataEntry(
-        Locations=locations, Corpuses=corpuses, Plans=plans, Rooms=rooms
+        Locations=locations, Corpuses=corpuses, Plans=plans
     )
 
 
