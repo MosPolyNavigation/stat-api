@@ -10,7 +10,7 @@ try:
 except FileNotFoundError:
     pass
 
-from app.app import app
+from app.tests.app import app
 from app.models import Base
 from app.database import engine, get_db
 from app.helpers.data import auds, plans

@@ -16,7 +16,7 @@ async def fetch_cur_data():
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler({'apscheduler.timezone': 'Europe/Moscow'})
     scheduler.add_job(fetch_cur_data, "interval", minutes=10)
     await fetch_cur_data()
     scheduler.start()
