@@ -13,7 +13,7 @@ async def create_user_id(db: Session) -> schemas.UserId:
         db: Сессия базы данных.
 
     Returns:
-        schemas.UserId: Созданный уникальный идентификатор пользователя.
+        Созданный уникальный идентификатор пользователя.
     """
     item = models.UserId()
     db.add(item)

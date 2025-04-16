@@ -11,7 +11,7 @@ class UserId(BaseModel):
     уникального идентификатора пользователя.
 
     Attributes:
-        user_id: Уникальный идентификатор пользователя.
+        user_id: Уникальный идентификатор пользователя;
         creation_date: Дата создания.
     """
     user_id: str = Field(title="User-id",

@@ -14,11 +14,11 @@ async def insert_site_stat(
     Эта функция добавляет посещение сайта в базу данных.
 
     Args:
-        db: Сессия базы данных.
+        db: Сессия базы данных;
         data: Данные посещения сайта.
 
     Returns:
-        schemas.Status: Статус операции.
+        Статус операции.
     """
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -40,11 +40,11 @@ async def insert_aud_selection(
     Эта функция добавляет выбранную аудитории в базу данных.
 
     Args:
-        db: Сессия базы данных.
+        db: Сессия базы данных;
         data: Данные выбранной аудитории.
 
     Returns:
-        schemas.Status: Статус операции.
+        Статус операции.
     """
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -76,11 +76,11 @@ async def insert_start_way(
     Эта функция добавляет начатый пути в базу данных.
 
     Args:
-        db: Сессия базы данных.
+        db: Сессия базы данных;
         data: Данные начатого пути.
 
     Returns:
-        schemas.Status: Статус операции.
+        Статус операции.
     """
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -113,11 +113,11 @@ async def insert_changed_plan(
     Эта функция добавляет смененный план в базу данных.
 
     Args:
-        db: Сессия базы данных.
+        db: Сессия базы данных;
         data: Данные смененный плана.
 
     Returns:
-        schemas.Status: Статус операции.
+        Статус операции.
     """
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)

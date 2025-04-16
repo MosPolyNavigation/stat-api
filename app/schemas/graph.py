@@ -91,7 +91,6 @@ class Graph:
         self.__add_stairs()
         self.__add_crossings()
 
-
     def __fill_vertexes_by_raw_vertexes(self):
         plans_of_loc = [
             plan for plan in self.plans
@@ -153,7 +152,13 @@ class Graph:
         end: str
     ) -> ShortestWay:
         st_time = time.time()
-        allowed_types = {'hallway', 'lift', 'stair', 'corpusTransition', 'crossingSpace'}
+        allowed_types = {
+            'hallway',
+            'lift',
+            'stair',
+            'corpusTransition',
+            'crossingSpace'
+        }
 
         # Фильтрация вершин через словарь
         valid_ids = {k for k, v in self.vertexes.items()
