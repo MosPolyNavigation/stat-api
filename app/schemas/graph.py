@@ -55,20 +55,22 @@ class Vertex(BaseModel):
         return hash((self.id, self.x, self.y, self.type))
 
 
-class Step:
-    plan: PlanData
-    way: List[Vertex]
-    distance: float
-
-    def __init__(self, plan: PlanData, first_vertex: Vertex):
-        self.plan = plan
-        self.way = [first_vertex]
-        self.distance = 0
+class VertexOut(BaseModel):
+    id: str
+    x: float
+    y: float
+    type: VertexType
+    neighborData: List[Tuple[str, float]]
 
 
 @dataclasses.dataclass
 class ShortestWay:
     way: List[Vertex]
+    distance: int
+
+
+class ShortestWayOut(BaseModel):
+    way: List[VertexOut]
     distance: int
 
 
@@ -216,53 +218,3 @@ class Graph:
         return next(
             note for note in vertex1.neighborData if note[0] == vertex2_id
         )[1]
-
-
-class Route:
-    steps: List["Step"]
-    to: str
-    from_: str
-    activeStep: int
-    fullDistance: int
-    graph: Graph
-
-    def __init__(self, from_: str, to: str, graph: Graph):
-        self.from_ = from_
-        self.to = to
-        self.graph = graph
-        self.__build_way_and_get_steps()
-
-    def __build_way_and_get_steps(self):
-        graph = self.graph
-        way_and_distance = graph.get_shortest_way_from_to(self.from_, self.to)
-        self.fullDistance = way_and_distance.distance
-
-        way = way_and_distance.way
-        first_vertex = way.pop(0)
-        self.steps = [Step(plan=first_vertex.plan, first_vertex=first_vertex)]
-        for way_vertex in way:
-            last_step = self.steps[-1]
-            if way_vertex.plan == last_step.plan:
-                last_step.distance += graph.get_distance_between2_vertexes(
-                    last_step.way[-1],
-                    way_vertex.id
-                )
-                last_step.way.append(way_vertex)
-            else:
-                self.steps.append(Step(way_vertex.plan, way_vertex))
-        first_step = self.steps[0]
-        if len(first_step.way) == 1:
-            first_step.way.insert(
-                0,
-                graph.find_vertex_by_id(
-                    first_step.way[0].neighborData[0][0]
-                )
-            )
-            first_step.distance = first_step.way[0].neighborData[0][1]
-        last_step = self.steps[-1]
-        if last_step and len(last_step.way) == 1:
-            last_step.way.append(
-                graph.find_vertex_by_id(last_step.way[0].neighborData[0][0])
-            )
-            last_step.distance = last_step.way[0].neighborData[0][1]
-        self.steps = [x for x in self.steps if len(x.way) > 1]

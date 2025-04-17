@@ -49,8 +49,8 @@ def test_get_popular():
 
 def test_get_route():
     globals_.global_graph["BS"] = pickle.loads(graph_b)
-    response = client.get("/api/get/route?from_=a-100&to=a-101")
+    response = client.get("/api/get/route?from_p=a-100&to_p=a-101&loc=campus_BS")
     assert response.status_code == 200
     json_data = response.json()
-    assert len(json_data["steps"]) == 1
-    assert json_data["fullDistance"] == 855
+    assert len(json_data["way"]) == 10
+    assert json_data["distance"] == 855
