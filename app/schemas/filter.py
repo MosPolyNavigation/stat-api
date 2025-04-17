@@ -104,6 +104,27 @@ class FilterQuery(FilterBase):
             raise ValueError("no such target")
 
 
+class LocationEnum(str, Enum):
+    """
+    Enum класс для целей фильтрации.
+
+    Этот класс содержит возможные цели фильтрации.
+
+    Attributes:
+        BS: Выбрать корпус на большой семеновской;
+        AV: Выбрать корпус на большой автозаводской;
+        PR: Выбрать корпус на прянишникова;
+        M: Выбрать корпус на михалковской;
+        PK: Выбрать корпус на Павла Корчагина.
+    """
+    BS = 'campus_BS'
+    AV = 'campus_AV'
+    PR = 'campus_PR'
+    M = 'campus_M'
+    PK = 'campus_PK'
+
+
 class FilterRoute(BaseModel):
-    to: str = Field()
-    from_: str = Field(...)
+    to_p: str = Field()
+    from_p: str = Field(...)
+    loc: LocationEnum

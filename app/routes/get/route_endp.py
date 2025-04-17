@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Response
 import app.globals as globals_
-from app.schemas import Status, WayOut, StepOut, RouteOut, Route, FilterRoute
+from app.schemas import Status, FilterRoute
+from app.schemas.graph import ShortestWayOut, VertexOut
 
 
 def register_endpoint(router: APIRouter):
@@ -9,82 +10,78 @@ def register_endpoint(router: APIRouter):
         tags=["get"],
         responses={
             200: {
-                'model': RouteOut,
+                'model': ShortestWayOut,
                 'description': "Route from one auditory to another",
                 'content': {
                     'application/json': {
                         'example': {
-                            "to": "a-101",
-                            "from": "a-100",
-                            "steps": [
+                            "way": [
                                 {
-                                    "plan": "A-1",
-                                    "way": [
-                                        {
-                                            "id": "a-100",
-                                            "x": 1567,
-                                            "y": 1857,
-                                            "type": "entrancesToAu"
-                                        },
-                                        {
-                                            "id": "a-1_16",
-                                            "x": 1460,
-                                            "y": 1857,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1-stair-2",
-                                            "x": 1460,
-                                            "y": 1703,
-                                            "type": "stair"
-                                        },
-                                        {
-                                            "id": "a-1_41",
-                                            "x": 1451,
-                                            "y": 1531,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1_10",
-                                            "x": 1441,
-                                            "y": 1530,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1_15",
-                                            "x": 1374,
-                                            "y": 1530,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1_18",
-                                            "x": 1267,
-                                            "y": 1530,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1_19",
-                                            "x": 1189,
-                                            "y": 1530,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-1_20",
-                                            "x": 1080,
-                                            "y": 1530,
-                                            "type": "hallway"
-                                        },
-                                        {
-                                            "id": "a-101",
-                                            "x": 1080,
-                                            "y": 1581,
-                                            "type": "entrancesToAu"
-                                        }
-                                    ],
-                                    "distance": 855.29
+                                    "id": "a-109",
+                                    "x": 884,
+                                    "y": 1480,
+                                    "type": "entrancesToAu",
+                                    "neighborData": [
+                                        [
+                                            "a-1_22",
+                                            50
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "id": "a-1_22",
+                                    "x": 884,
+                                    "y": 1530,
+                                    "type": "hallway",
+                                    "neighborData": [
+                                        [
+                                            "a-1_21",
+                                            6
+                                        ],
+                                        [
+                                            "a-1_23",
+                                            100
+                                        ],
+                                        [
+                                            "a-109",
+                                            50
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "id": "a-1_21",
+                                    "x": 890,
+                                    "y": 1530,
+                                    "type": "hallway",
+                                    "neighborData": [
+                                        [
+                                            "a-1_20",
+                                            190
+                                        ],
+                                        [
+                                            "a-1_22",
+                                            6
+                                        ],
+                                        [
+                                            "a-102",
+                                            51
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "id": "a-102",
+                                    "x": 890,
+                                    "y": 1581,
+                                    "type": "entrancesToAu",
+                                    "neighborData": [
+                                        [
+                                            "a-1_21",
+                                            51
+                                        ]
+                                    ]
                                 }
                             ],
-                            "fullDistance": 855
+                            "distance": 107
                         }
                     }
                 }
@@ -118,37 +115,32 @@ def register_endpoint(router: APIRouter):
             query: FilterRoute = Depends()
     ):
         try:
-            graph_bs = globals_.global_graph["BS"]
+            graph_bs = globals_.global_graph[query.loc.removeprefix("campus_")]
         except KeyError:
             response.status_code = 500
             return Status(
                 status="No graphs loaded"
             )
-        from_v = graph_bs.vertexes.get(query.from_, None)
-        to_v = graph_bs.vertexes.get(query.to, None)
+        from_v = graph_bs.vertexes.get(query.from_p, None)
+        to_v = graph_bs.vertexes.get(query.to_p, None)
         if from_v is None or to_v is None:
             response.status_code = 404
             return Status(
                 status="You are trying to get a route along non-existent vertex"
             )
         try:
-            route = Route(from_=query.from_, to=query.to, graph=graph_bs)
-            data = RouteOut(
-                from_=route.from_,
-                to=route.to,
-                steps=[StepOut(
-                    plan=x.plan.id,
-                    distance=x.distance,
-                    way=[WayOut(
-                        id=v.id,
-                        x=v.x,
-                        y=v.y,
-                        type=v.type
-                    ) for v in x.way]
-                ) for x in route.steps],
-                fullDistance=route.fullDistance
+            graph = graph_bs
+            s_w = graph.get_shortest_way_from_to(query.from_p, query.to_p)
+            return ShortestWayOut(
+                way=[VertexOut(
+                    id=x.id,
+                    type=x.type,
+                    x=x.x,
+                    y=x.y,
+                    neighborData=x.neighborData
+                ) for x in s_w.way],
+                distance=s_w.distance
             )
-            return data
         except Exception as e:
             print(e)
             response.status_code = 400
