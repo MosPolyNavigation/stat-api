@@ -2,6 +2,6 @@ build:
   skip: yes
 
 run:
-  image: ghcr.io/sidecuter/statapi:latest
+  image: ghcr.io/MosPolyNavigation/statapi:latest
   persistenceMount: /data
   containerPort: 8080
