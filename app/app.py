@@ -34,9 +34,9 @@ if not path.exists(path.join(settings.static_files, "web")):
 
 app = FastAPI(
     openapi_tags=tags_metadata,
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=None,
+    # docs_url=None,
+    # redoc_url=None,
+    # openapi_url=None,
     lifespan=lifespan
 )
 add_pagination(app)
