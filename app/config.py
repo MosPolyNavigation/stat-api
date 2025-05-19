@@ -1,7 +1,8 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import PostgresDsn, HttpUrl
+from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
+from pydantic import PostgresDsn, HttpUrl, field_validator
 from app.helpers.dsn import SqliteDsn
 from functools import lru_cache
+from typing import Annotated
 
 
 class Settings(BaseSettings):
@@ -24,8 +25,18 @@ class Settings(BaseSettings):
     admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
-    allowed_hosts: set[HttpUrl] = set()
-    allowed_methods: set[str] = {"PUT", "POST", "GET"}
+    allowed_hosts: Annotated[set[str], NoDecode] = set()
+    allowed_methods: Annotated[set[str], NoDecode] = {"PUT", "POST", "GET"}
+
+    @field_validator('allowed_hosts', mode='before')
+    @classmethod
+    def decode_allowed_hosts(cls, v: str) -> set[str]:
+        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+
+    @field_validator('allowed_methods', mode='before')
+    @classmethod
+    def decode_allowed_methods(cls, v: str) -> set[str]:
+        return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     model_config = SettingsConfigDict(
         env_file='.env', env_file_encoding='utf-8'
