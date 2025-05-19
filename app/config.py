@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
-    allowed_hosts: Annotated[set[str], NoDecode] = set()
-    allowed_methods: Annotated[set[str], NoDecode] = {"PUT", "POST", "GET"}
+    allowed_hosts: Annotated[set[str], NoDecode] = ""
+    allowed_methods: Annotated[set[str], NoDecode] = "PUT,POST,GET"
 
     @field_validator('allowed_hosts', mode='before')
     @classmethod
