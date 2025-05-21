@@ -45,10 +45,15 @@ app.state = AppState()
 app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
+
+CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
+PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
+FRONT_DIR = path.join(PROJECT_DIR, "dist")
+
 app.mount(
     "/",
     StaticFiles(
-        directory=path.join(settings.static_files, "web"),
+        directory=FRONT_DIR,
         html=True
     ),
     "front"
