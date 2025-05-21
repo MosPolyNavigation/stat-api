@@ -45,17 +45,6 @@ jobs:
               mv -v "$file" "$new_name"
             fi
           done
-      - name: Inject meta tags into index.html
-        run: |
-          if [ ! -f dist/index.html ]; then
-            echo "dist/index.html не найден!"
-            exit 1
-          fi
-
-          # Добавляем мета-теги перед <title>
-          sed -i 's|<title>|<meta name="yandex-verification" content="${{ secrets.YANDEX_KEY }}" \/>\
-            <meta name="google-site-verification" content="${{ secrets.GOOGLE_KEY }}" \/>\
-            <title>|' dist/index.html
       - name: Create artifact
         uses: actions/upload-artifact@v4
         with:
