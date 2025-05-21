@@ -1,6 +1,6 @@
 name: Docker prod
 on:
-  workflow_distpatch:
+  workflow_dispatch:
   
 permissions:
     packages: write
