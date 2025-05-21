@@ -1,8 +1,8 @@
 name: Docker prod
 on:
   push:
-    branches:
-      - master
+    tags:
+      - "v*.*.*"
   
 permissions:
     packages: write
