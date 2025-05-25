@@ -1,8 +1,8 @@
 name: Docker prod
 on:
   push:
-    tags:
-      - "front-update/*"
+    branches:
+      - master
   workflow_dispatch:
   
 permissions:
@@ -99,8 +99,5 @@ jobs:
 
       - name: Push to hosting
         run: |
-          git fetch origin
-          git checkout --track origin/master
-          git pull origin master
           git remote add amvera ${{ secrets.AMVERA_REMOTE }}
           git push amvera master
