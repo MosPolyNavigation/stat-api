@@ -27,10 +27,15 @@ tags_metadata = [
 ]
 
 settings = get_settings()
-if not path.exists(path.join(settings.static_files, "images")):
-    makedirs(path.join(settings.static_files, "images"))
-if not path.exists(path.join(settings.static_files, "web")):
-    makedirs(path.join(settings.static_files, "web"))
+CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
+PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
+FRONT_DIR = path.join(PROJECT_DIR, "dist")
+STATIC_DIR = path.join(settings.static_files, "images")
+
+if not path.exists(STATIC_DIR):
+    makedirs(STATIC_DIR)
+if not path.exists(FRONT_DIR):
+    makedirs(FRONT_DIR)
 
 app = FastAPI(
     openapi_tags=tags_metadata,
@@ -45,11 +50,6 @@ app.state = AppState()
 app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
-
-CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
-PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
-FRONT_DIR = path.join(PROJECT_DIR, "dist")
-
 app.mount(
     "/",
     StaticFiles(
