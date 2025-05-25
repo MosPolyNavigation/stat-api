@@ -95,6 +95,7 @@ jobs:
 
       - name: Push to hosting
         run: |
+          git clone https://github.com/MosPolyNavigation/stat-api .
           git remote add amvera ${{ secrets.AMVERA_REMOTE }}
           
           # Получаем последние данные
@@ -105,4 +106,4 @@ jobs:
           git reset --hard origin/master
 
           # Теперь пушим в amvera
-          git push --force amvera master
+          git push amvera master
