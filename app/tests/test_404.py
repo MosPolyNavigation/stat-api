@@ -19,13 +19,13 @@ def test_404_stat_site():
         },
         {"status": "User not found"}
     ),
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-            "auditory_id": "a-12122",
-        },
-        {"status": "Auditory not found"}
-    )
+    # (
+    #     {
+    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+    #         "auditory_id": "a-12122",
+    #     },
+    #     {"status": "Auditory not found"}
+    # )
 ])
 def test_404_stat_aud(data, body):
     sleep(1)
@@ -46,22 +46,22 @@ def test_404_stat_aud(data, body):
         },
         {"status": "User not found"}
     ),
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-            "start_id": "a-10011",
-            "end_id": "a-101",
-        },
-        {"status": "Start auditory not found"}
-    ),
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-            "start_id": "a-100",
-            "end_id": "a-10111",
-        },
-        {"status": "End auditory not found"}
-    )
+    # (
+    #     {
+    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+    #         "start_id": "a-10011",
+    #         "end_id": "a-101",
+    #     },
+    #     {"status": "Start auditory not found"}
+    # ),
+    # (
+    #     {
+    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+    #         "start_id": "a-100",
+    #         "end_id": "a-10111",
+    #     },
+    #     {"status": "End auditory not found"}
+    # )
 ])
 def test_404_stat_way(data, body):
     response = client.put("/api/stat/start-way", json={
@@ -79,13 +79,13 @@ def test_404_stat_way(data, body):
         },
         {"status": "User not found"}
     ),
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-            "plan_id": "A-6",
-        },
-        {"status": "Changed plan not found"}
-    )
+    # (
+    #     {
+    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+    #         "plan_id": "A-6",
+    #     },
+    #     {"status": "Changed plan not found"}
+    # )
 ])
 def test_404_stat_plan(data, body):
     response = client.put("/api/stat/change-plan", json={

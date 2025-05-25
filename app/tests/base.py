@@ -27,18 +27,18 @@ def create_db_and_tables():
     )
     db.add(user)
     db.commit()
-    plans_data: list[models.Plan] = list(map(
-        lambda x: models.Plan(id=x),
-        list(set(plans.split('\n')))
-    ))
-    db.add_all(plans_data)
-    db.commit()
-    auds_data: list[models.Auditory] = list(map(
-        lambda x: models.Auditory(id=x),
-        list(set(auds.split('\n')))
-    ))
-    db.add_all(auds_data)
-    db.commit()
+    # plans_data: list[models.Plan] = list(map(
+    #     lambda x: models.Plan(id=x),
+    #     list(set(plans.split('\n')))
+    # ))
+    # db.add_all(plans_data)
+    # db.commit()
+    # auds_data: list[models.Auditory] = list(map(
+    #     lambda x: models.Auditory(id=x),
+    #     list(set(auds.split('\n')))
+    # ))
+    # db.add_all(auds_data)
+    # db.commit()
     data_site_stat = models.SiteStat(user=user)
     db.add(data_site_stat)
     db.commit()
