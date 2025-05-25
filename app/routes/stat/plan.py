@@ -27,7 +27,7 @@ def register_endpoint(router: APIRouter):
                 'description': "Item not found",
                 'content': {
                     "application/json": {
-                        "example": {"status": "Changed plan not found"}
+                        "example": {"status": "User not found"}
                     }
                 }
             },
