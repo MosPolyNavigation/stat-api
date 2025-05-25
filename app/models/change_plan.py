@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 from app.models.base import Base
-from app.models.plan import Plan
+# from app.models.plan import Plan
 from app.models.user_id import UserId
 
 
@@ -37,9 +37,10 @@ class ChangePlan(Base):
         nullable=False
     )
     plan_id: str = Column(
-        ForeignKey("plans.id"),
+        # ForeignKey("plans.id"),
+        String,
         nullable=False
     )
 
     user: Mapped["UserId"] = relationship()
-    plan: Mapped["Plan"] = relationship()
+    # plan: Mapped["Plan"] = relationship()

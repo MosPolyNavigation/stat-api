@@ -49,16 +49,16 @@ async def insert_aud_selection(
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
     ).scalar_one_or_none()
-    auditory = db.execute(
-        Select(models.Auditory).filter_by(id=data.auditory_id)
-    ).scalar_one_or_none()
+    # auditory = db.execute(
+    #     Select(models.Auditory).filter_by(id=data.auditory_id)
+    # ).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
-    if auditory is None:
-        raise LookupException("Auditory")
+    # if auditory is None:
+    #     raise LookupException("Auditory")
     item = models.SelectAuditory(
         user=user,
-        auditory=auditory,
+        auditory_id=data.auditory_id,
         success=data.success
     )
     db.add(item)
@@ -85,19 +85,23 @@ async def insert_start_way(
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
     ).scalar_one_or_none()
-    start = db.execute(
-        Select(models.Auditory).filter_by(id=data.start_id)
-    ).scalar_one_or_none()
-    end = db.execute(
-        Select(models.Auditory).filter_by(id=data.end_id)
-    ).scalar_one_or_none()
+    # start = db.execute(
+    #     Select(models.Auditory).filter_by(id=data.start_id)
+    # ).scalar_one_or_none()
+    # end = db.execute(
+    #     Select(models.Auditory).filter_by(id=data.end_id)
+    # ).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
-    if start is None:
-        raise LookupException("Start auditory")
-    if end is None:
-        raise LookupException("End auditory")
-    item = models.StartWay(user=user, start=start, end=end)
+    # if start is None:
+    #     raise LookupException("Start auditory")
+    # if end is None:
+    #     raise LookupException("End auditory")
+    item = models.StartWay(
+        user=user,
+        start_id=data.start_id,
+        end_id=data.end_id
+    )
     db.add(item)
     db.commit()
     return schemas.Status()
@@ -122,14 +126,17 @@ async def insert_changed_plan(
     user = db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
     ).scalar_one_or_none()
-    plan = db.execute(
-        Select(models.Plan).filter_by(id=data.plan_id)
-    ).scalar_one_or_none()
+    # plan = db.execute(
+    #     Select(models.Plan).filter_by(id=data.plan_id)
+    # ).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
-    if plan is None:
-        raise LookupException("Changed plan")
-    item = models.ChangePlan(user=user, plan=plan)
+    # if plan is None:
+    #     raise LookupException("Changed plan")
+    item = models.ChangePlan(
+        user=user,
+        plan_id=data.plan_id
+    )
     db.add(item)
     db.commit()
     return schemas.Status()
