@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, String
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
-from .auditory import Auditory
+# from .auditory import Auditory
 from .base import Base
 from .user_id import UserId
 
@@ -38,7 +38,8 @@ class SelectAuditory(Base):
         nullable=False
     )
     auditory_id: Mapped[str] = Column(
-        ForeignKey("auditories.id"),
+        # ForeignKey("auditories.id"),
+        String,
         nullable=False
     )
     success: bool = Column(
@@ -48,4 +49,4 @@ class SelectAuditory(Base):
     )
 
     user: Mapped["UserId"] = relationship()
-    auditory: Mapped["Auditory"] = relationship()
+    # auditory: Mapped["Auditory"] = relationship()
