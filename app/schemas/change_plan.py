@@ -22,9 +22,9 @@ class ChangePlanBase(BaseModel):
     plan_id: str = Field(
         title="Changed-plan",
         description="Changed plan by user",
-        max_length=4,
-        min_length=3,
-        pattern=r"([ABVN]D?-\d)"
+        max_length=50,
+        min_length=1,
+        # pattern=r"([ABVN]D?-\d)"
     )
 
 
