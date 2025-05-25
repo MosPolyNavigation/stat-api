@@ -1,7 +1,8 @@
 name: Docker prod
 on:
-  tags:
-    - "front-update/*"
+  push:
+    tags:
+      - "front-update/*"
   workflow_dispatch:
   
 permissions:
