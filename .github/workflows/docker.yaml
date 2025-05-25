@@ -84,14 +84,10 @@ jobs:
           docker push $IMAGE_ID:latest
   
   release:
-    name: Push changes to release branch
+    name: Push changes to hosting
     needs: [push, prepare]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
-      - uses: actions/checkout@v4
-
       - name: Setup Git
         run: |
           git config --global user.name "GitHub Actions"
@@ -100,8 +96,13 @@ jobs:
       - name: Push to hosting
         run: |
           git remote add amvera ${{ secrets.AMVERA_REMOTE }}
+          
+          # Получаем последние данные
           git fetch origin
-          git fetch amvera
+          
+          # Переключаемся на master и обновляем его до origin/master
           git checkout master
           git reset --hard origin/master
-          git push amvera master
+
+          # Теперь пушим в amvera
+          git push --force amvera master
