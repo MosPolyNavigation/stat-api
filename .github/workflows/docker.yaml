@@ -100,4 +100,8 @@ jobs:
       - name: Push to hosting
         run: |
           git remote add amvera ${{ secrets.AMVERA_REMOTE }}
+          git fetch origin
+          git fetch amvera
+          git checkout master
+          git reset --hard origin/master
           git push amvera master
