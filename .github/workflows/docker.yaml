@@ -95,15 +95,13 @@ jobs:
 
       - name: Push to hosting
         run: |
-          git clone https://github.com/MosPolyNavigation/stat-api .
-          git remote add amvera ${{ secrets.AMVERA_REMOTE }}
-          
-          # Получаем последние данные
-          git fetch origin
-          
-          # Переключаемся на master и обновляем его до origin/master
-          git checkout master
-          git reset --hard origin/master
+          CURRENT_DATE=$(date +'%Y-%m-%d-%H')
+          git clone ${{ secrets.AMVERA_REMOTE }} .
+
+          echo $CURRENT_DATE > update_time.txt
+          git add update_time.txt
+
+          git commit -m "Updated at $CURRENT_DATE"
 
           # Теперь пушим в amvera
-          git push amvera master
+          git push origin master
