@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from app.state import AppState
 from app.schemas import UserIdCheck, Status
 from app.models import UserId
+from app.helpers.errors import LookupException
 
 
 def check_user(state: AppState, user_id) -> float:
