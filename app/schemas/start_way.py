@@ -11,7 +11,8 @@ class StartWayBase(BaseModel):
     Attributes:
         user_id: Уникальный идентификатор пользователя;
         start_id: Идентификатор начала пути;
-        end_id: Идентификатор конца пути.
+        end_id: Идентификатор конца пути;
+        status: Успешно ли был построен маршрут.
     """
     user_id: str = Field(
         title="id",
@@ -33,6 +34,11 @@ class StartWayBase(BaseModel):
         max_length=50,
         min_length=1,
         # pattern=r"(!?[abvn]d?(-\w+)*)"
+    )
+
+    success: bool = Field(
+        title="Selection-status",
+        description="Status of auditory selection"
     )
 
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, DateTime, ForeignKey, String
+from sqlalchemy import Column, Integer, DateTime, ForeignKey, String, Boolean
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from datetime import datetime
 from .base import Base
@@ -20,7 +20,8 @@ class StartWay(Base):
         end_id: Идентификатор конца пути;
         user: Связь с таблицей "user_ids";
         start: Связь с таблицей "auditories" для начала пути;
-        end: Связь с таблицей "auditories" для конца пути.
+        end: Связь с таблицей "auditories" для конца пути;
+        status: Успешно ли был построен маршрут.
     """
     __tablename__ = "started_ways"
 
@@ -46,6 +47,12 @@ class StartWay(Base):
     end_id: Mapped[str] = mapped_column(
         # ForeignKey("auditories.id"),
         String,
+        nullable=False
+    )
+
+    success: bool = Column(
+        Boolean,
+        default=False,
         nullable=False
     )
 
