@@ -100,7 +100,8 @@ async def insert_start_way(
     item = models.StartWay(
         user=user,
         start_id=data.start_id,
-        end_id=data.end_id
+        end_id=data.end_id,
+        status=data.status
     )
     db.add(item)
     db.commit()
