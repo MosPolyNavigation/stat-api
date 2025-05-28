@@ -5,8 +5,8 @@ from .site_stat import SiteStatIn, SiteStatOut
 from .start_way import StartWayIn, StartWayOut
 from .statistics import Statistics
 from .status import Status
-from .user_id import UserId
 from .review import ReviewOut, Problem
+from .user_id import UserId, UserIdCheck
 from .dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
 from .data import LocationData, CorpusData, PlanData
