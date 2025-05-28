@@ -2,7 +2,7 @@ from app.helpers.errors import LookupException
 from app.config import Settings, get_settings
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from app.routes import get, stat, review
+from app.routes import get, stat, review, check
 from fastapi import FastAPI, Request
 from app.state import AppState
 
@@ -14,6 +14,7 @@ app.state = AppState()
 app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
+app.include_router(check.router)
 
 
 @app.middleware("http")
