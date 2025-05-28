@@ -51,16 +51,6 @@ jobs:
               --head $BRANCH_NAME
 
             gh pr merge --merge --delete-branch $BRANCH_NAME
-
-            git checkout master
-            git pull origin master
-
-            # Создаём тег
-            TAG_NAME="front-update/$CURRENT_DATE"
-            git tag -a $TAG_NAME -m "Submodule 'web' updated at $CURRENT_DATE"
-
-            # Пушим тег на GitHub
-            git push origin $TAG_NAME
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
