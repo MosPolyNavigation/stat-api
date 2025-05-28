@@ -94,3 +94,17 @@ def test_404_stat_plan(data, body):
     })
     assert response.status_code == 404
     assert response.json() == body
+
+
+@pytest.mark.parametrize("data, body", [
+    (
+        {
+            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1"
+        },
+        {"status": "User not found"}
+    ),
+])
+def test_404_check_user_id(data, body):
+    response = client.get("/api/check/user-id", params=data)
+    assert response.status_code == 404
+    assert response.json() == body
