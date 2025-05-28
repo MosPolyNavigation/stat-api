@@ -42,7 +42,8 @@ def test_404_stat_aud(data, body):
         {
             "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1",
             "start_id": "a-100",
-            "end_id": "a-101"
+            "end_id": "a-101",
+            "success": True
         },
         {"status": "User not found"}
     ),

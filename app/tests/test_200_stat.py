@@ -6,7 +6,7 @@ from time import sleep
 @pytest.mark.parametrize("endpoint, data", [
     ("/api/stat/site", {}),
     ("/api/stat/select-aud", {"auditory_id": "a-100", "success": True}),
-    ("/api/stat/start-way", {"start_id": "a-100", "end_id": "a-101"}),
+    ("/api/stat/start-way", {"start_id": "a-100", "end_id": "a-101", "success": True}),
     ("/api/stat/change-plan", {"plan_id": "A-0"})
 ])
 def test_200_stat(endpoint, data):
