@@ -97,7 +97,7 @@ jobs:
 
       - name: Push to hosting
         run: |
-          CURRENT_DATE=$(date +'%Y-%m-%d-%H')
+          CURRENT_DATE=$(date +'%Y-%m-%d-%H-%M')
           git clone ${{ secrets.AMVERA_REMOTE }} .
 
           echo $CURRENT_DATE > update_time.txt

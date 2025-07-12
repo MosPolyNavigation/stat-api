@@ -35,7 +35,7 @@ jobs:
             exit 0
           else
             echo "Changes detected. Updating..."
-            CURRENT_DATE=$(date +'%Y-%m-%d-%H')
+            CURRENT_DATE=$(date +'%Y-%m-%d-%H-%M')
             BRANCH_NAME="update/$CURRENT_DATE"
 
             git checkout -b $BRANCH_NAME
