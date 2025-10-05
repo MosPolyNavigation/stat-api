@@ -27,8 +27,9 @@ class UserOut(BaseModel):
     is_active: bool
 
     # Позволяет работать с ORM-моделями
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True
+    }
 
 
 def verify_password(plain_password, hashed_password):
