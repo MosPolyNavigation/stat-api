@@ -15,7 +15,8 @@ dependencies = [
     "uuid",
     "uvicorn",
     "pydantic-settings",
-    "apscheduler"
+    "apscheduler",
+    "pwdlib"
 ]
 
 [dependency-groups]

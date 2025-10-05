@@ -6,7 +6,7 @@ from .config import Settings, get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check
+from .routes import get, stat, review, check, auth
 from fastapi import FastAPI, Request
 from .state import AppState
 from os import path, makedirs
@@ -51,6 +51,7 @@ app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
 app.include_router(check.router)
+app.include_router(auth.router)
 app.mount(
     "/",
     StaticFiles(
