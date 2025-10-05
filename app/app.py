@@ -6,8 +6,8 @@ from .config import Settings, get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check
-from fastapi import FastAPI, Request
+from .routes import get, stat, review, check, auth
+from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
 
@@ -51,6 +51,7 @@ app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
 app.include_router(check.router)
+app.include_router(auth.router)
 app.mount(
     "/",
     StaticFiles(
@@ -125,3 +126,18 @@ async def lookup_exception_handler(_, exc: LookupException):
         JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
     """
     return JSONResponse(status_code=404, content={"status": str(exc)})
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException):
+    """
+    Обработчик всех HTTPException в проекте.
+
+    Args:
+        _: объект запроса;
+        exc: исключение HTTPException.
+
+    Returns:
+        JSONResponse: JSON ответ с кодом ошибки и сообщением
+    """
+    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
