@@ -7,6 +7,7 @@ from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
 from app.models.user import User
+from app.helpers.auth_utils import get_current_user, get_current_active_user
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -38,7 +39,7 @@ def verify_password(plain_password, hashed_password):
     Метод автоматически определяет алгоритм, использованный при хэшировании."""
     return password_hash.verify(plain_password, hashed_password)
 
-# Пока что нигде не используется
+# Пока что нигде не используется (создание пароля)
 # def get_password_hash(password):
 #     """Создание хэша пароля"""
 #     return password_hash.hash(password)
@@ -65,29 +66,6 @@ def create_token(user: User, db: Session):
     db.commit()
     db.refresh(user)
     return token
-
-
-async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)],
-    db: Session = Depends(get_db)
-):
-    """Получить пользователя по токену"""
-    user = db.query(User).filter(User.token == token).first()
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверные данные для аутентификации",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    db.refresh(user)
-    return user
-
-
-async def get_current_active_user(current_user: Annotated[User, Depends(get_current_user)]):
-    """Проверить, активен ли пользователь"""
-    if not current_user.is_active:
-        raise HTTPException(status_code=400, detail="Неактивный пользователь")
-    return current_user
 
 
 
