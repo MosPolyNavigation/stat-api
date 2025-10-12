@@ -5,22 +5,7 @@ from app import models
 from enum import Enum
 
 
-class FilterBase(BaseModel):
-    """
-    Базовый класс для фильтра.
-
-    Этот класс содержит поле api_key, которое необходимо для сбора статистики.
-
-    Attributes:
-        api_key: Api ключ для сбора статистики.
-    """
-    api_key: str = Field(min_length=64,
-                         max_length=64,
-                         description="Api key for statistics gathering",
-                         pattern=r"[a-f0-9]{64}")
-
-
-class Filter(FilterBase):
+class Filter(BaseModel):
     """
     Класс для фильтра.
 
@@ -58,7 +43,7 @@ class TargetEnum(str, Enum):
     plans = 'plans'
 
 
-class FilterQuery(FilterBase):
+class FilterQuery(BaseModel):
     """
     Класс для фильтра запроса.
 
