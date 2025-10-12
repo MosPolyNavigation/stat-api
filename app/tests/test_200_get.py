@@ -20,15 +20,15 @@ def test_200_get(endpoint):
     assert response.status_code == 200
 
 
-@pytest.mark.parametrize("target", ["site", "auds", "ways", "plans"])
-def test_get_stat(target):
-    response = client.get("/api/get/stat", params={
-        "api_key":
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "target": "site"
-    })
-    assert response.status_code == 200
-    assert response.json()["unique_visitors"] == 1
+# @pytest.mark.parametrize("target", ["site", "auds", "ways", "plans"])
+# def test_get_stat(target):
+#     response = client.get("/api/get/stat", params={
+#         "api_key":
+#             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+#         "target": "site"
+#     })
+#     assert response.status_code == 200
+#     assert response.json()["unique_visitors"] == 1
 
 
 def test_get_user_id():

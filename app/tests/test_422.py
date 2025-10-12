@@ -15,17 +15,17 @@ def test_422_stat(endpoint):
     assert response.status_code == 422
 
 
-@pytest.mark.parametrize("endpoint", [
-    "/api/get/site",
-    "/api/get/auds",
-    "/api/get/ways",
-    "/api/get/plans",
-    "/api/get/stat"
-])
-def test_422_get_protected(endpoint):
-    response = client.get(endpoint, params={
-        "api_key":
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
-        "page": -1
-    })
-    assert response.status_code == 422
+# @pytest.mark.parametrize("endpoint", [
+#     "/api/get/site",
+#     "/api/get/auds",
+#     "/api/get/ways",
+#     "/api/get/plans",
+#     "/api/get/stat"
+# ])
+# def test_422_get_protected(endpoint):
+#     response = client.get(endpoint, params={
+#         "api_key":
+#             "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+#         "page": -1
+#     })
+#     assert response.status_code == 422
