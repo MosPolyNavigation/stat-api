@@ -1,13 +1,13 @@
 import uuid
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
 from app.models.user import User
-from app.helpers.auth_utils import get_current_user, get_current_active_user
+from app.helpers.auth_utils import get_current_active_user
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -17,27 +17,28 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 class Token(BaseModel):
     """Схема ответа при выдаче токена"""
+
     access_token: str
     token_type: str
 
 
 class UserOut(BaseModel):
     """Схема для возврата информации о пользователе"""
+
     id: int
     login: str
     is_active: bool
 
     # Позволяет работать с ORM-моделями
-    model_config = {
-        "from_attributes": True
-    }
+    model_config = {"from_attributes": True}
 
 
-def verify_password(plain_password, hashed_password):
+def verify_password(plain_password: str, hashed_password: str):
     """проверка введённого пароля"""
     """метод verify проверяет, совпадает ли введённый пароль с хэшированным.
     Метод автоматически определяет алгоритм, использованный при хэшировании."""
     return password_hash.verify(plain_password, hashed_password)
+
 
 # Пока что нигде не используется (создание пароля)
 # def get_password_hash(password):
@@ -45,12 +46,12 @@ def verify_password(plain_password, hashed_password):
 #     return password_hash.hash(password)
 
 
-def get_user_by_login(db, login):
+def get_user_by_login(db: Session, login: str):
     """Получить пользователя по логину"""
-    return db.query(User).filter(User.login == login).first()
+    return db.query(User).filter_by(login=login).first()
 
 
-def authenticate_user(db, login, password):
+def authenticate_user(db: Session, login: str, password: str):
     """проверка, существует ли пользователь и правильный ли пароль"""
     user = get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
@@ -68,9 +69,9 @@ def create_token(user: User, db: Session):
     return token
 
 
-
 def register_endpoint(router: APIRouter):
     """Эндпоинт для аутентификации и выдачи токена пользователя"""
+
     @router.post(
         "/token",
         description="Эндпоинт для получения токена аутентификации",
@@ -83,16 +84,14 @@ def register_endpoint(router: APIRouter):
     ):
         user = authenticate_user(db, form_data.username, form_data.password)
         if not user:
-            raise HTTPException(
-                status_code=400,
-                detail="Некорректный логин или пароль"
-            )
+            raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
 
         # Создание токена (UUID)
         access_token = create_token(user, db)
         return Token(access_token=access_token, token_type="bearer")
 
     """Эндпоинт для получения данных пользователя по токену"""
+
     @router.get(
         "/me",
         description="Эндпоинт для получения данных текущего пользователя по токену",
@@ -100,8 +99,8 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def read_users_me(
-            current_user: Annotated[User, Depends(get_current_active_user)],
-            db: Session = Depends(get_db)
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        db: Session = Depends(get_db),
     ):
         """Возвращает актуальные данные текущего пользователя"""
         db.refresh(current_user)
