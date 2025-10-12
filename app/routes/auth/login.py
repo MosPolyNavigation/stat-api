@@ -22,18 +22,7 @@ class Token(BaseModel):
     token_type: str
 
 
-class UserOut(BaseModel):
-    """Схема для возврата информации о пользователе"""
-
-    id: int
-    login: str
-    is_active: bool
-
-    # Позволяет работать с ORM-моделями
-    model_config = {"from_attributes": True}
-
-
-def verify_password(plain_password: str, hashed_password: str):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     """проверка введённого пароля"""
     """метод verify проверяет, совпадает ли введённый пароль с хэшированным.
     Метод автоматически определяет алгоритм, использованный при хэшировании."""
