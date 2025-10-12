@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.handlers import get_endpoint_stats
 from app.schemas import Statistics, Status, FilterQuery
+from app.helpers.permissions import require_rights
 
 
 def register_endpoint(router: APIRouter):
@@ -30,11 +31,13 @@ def register_endpoint(router: APIRouter):
                     }
                 }
             }
-        }
+        },
+
     )
     async def get_stat(
             query: FilterQuery = Depends(),
-            db: Session = Depends(get_db)
+            db: Session = Depends(get_db),
+            _: bool = Depends(require_rights("stats", "view"))
     ):
         """
         Эндпоинт для получения статистики по выбранному эндпоинту.
@@ -43,7 +46,8 @@ def register_endpoint(router: APIRouter):
 
         Args:
             query: Параметры фильтрации;
-            db: Сессия базы данных.
+            db: Сессия базы данных;
+            _: параметр для авторизации.
 
         Returns:
             Statistics: Статистика.

@@ -520,3 +520,45 @@ other
 plan
 work
 """
+
+goals: dict[int, str] = {
+    1: "stats",
+    2: "dashboards",
+    3: "users",
+    4: "roles",
+    5: "tables",
+    6: "resources",
+    7: "tasks"
+}
+
+rights: dict[int, str] = {
+    1: "view",
+    2: "create",
+    3: "edit",
+    4: "delete"
+}
+
+roles: dict[int, str] = {
+    1: "admin"
+}
+
+roles_rights_goals: list[tuple[int, int, int]] = [
+    (1, 1, 1),
+    (1, 1, 2),
+    (1, 1, 3),
+    (1, 2, 3),
+    (1, 3, 3),
+    (1, 4, 3),
+    (1, 1, 4),
+    (1, 2, 4),
+    (1, 3, 4),
+    (1, 4, 4),
+    (1, 1, 5),
+    (1, 3, 5),
+    (1, 1, 6),
+    (1, 2, 6),
+    (1, 3, 6),
+    (1, 4, 6),
+    (1, 1, 7),
+    (1, 3, 7)
+]
