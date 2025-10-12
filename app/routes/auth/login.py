@@ -1,5 +1,5 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -40,7 +40,7 @@ def get_user_by_login(db: Session, login: str) -> Optional[User]:
     return db.execute(select(User).filter_by(login=login)).scalar()
 
 
-def authenticate_user(db: Session, login: str, password: str):
+def authenticate_user(db: Session, login: str, password: str) -> Optional[User]:
     """проверка, существует ли пользователь и правильный ли пароль"""
     user = get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
@@ -48,7 +48,7 @@ def authenticate_user(db: Session, login: str, password: str):
     return user
 
 
-def create_token(user: User, db: Session):
+def create_token(user: User, db: Session) -> str:
     """Создать токен для пользователя (просто UUID)"""
     token = str(uuid.uuid4())
     user.token = token
