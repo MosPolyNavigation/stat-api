@@ -1,4 +1,5 @@
 import os
+from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 from app.config import get_settings
 from fastapi.testclient import TestClient
@@ -13,7 +14,7 @@ except FileNotFoundError:
 from app.tests.app import app
 from app.models import Base
 from app.database import engine, get_db
-from app.helpers.data import auds, plans
+from app.helpers.data import goals, roles, rights, roles_rights_goals
 from app import models
 
 add_pagination(app)
@@ -52,6 +53,28 @@ def create_db_and_tables():
     db.commit()
     data_change_plan = models.ChangePlan(user=user, plan_id="A-0")
     db.add(data_change_plan)
+    db.commit()
+    data_goals: list[models.Goal] = list([models.Goal(id=i, name=name) for i, name in goals.items()])
+    data_roles: list[models.Role] = list([models.Role(id=i, name=name) for i, name in roles.items()])
+    data_rights: list[models.Right] = list([models.Right(id=i, name=name) for i, name in rights.items()])
+    db.add_all(data_goals)
+    db.add_all(data_roles)
+    db.add_all(data_rights)
+    db.commit()
+    data_role_right_goals: list[models.RoleRightGoal] = list(
+        [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2]) for x in roles_rights_goals]
+    )
+    db.add_all(data_role_right_goals)
+    data_user: models.User = models.User(
+        id=1,
+        login="admin",
+        hash=PasswordHash.recommended().hash("sidecuter"),
+        token="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
+    )
+    db.add(data_user)
+    db.commit()
+    data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
+    db.add(data_user_roles)
     db.commit()
 
 
