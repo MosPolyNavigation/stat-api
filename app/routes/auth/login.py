@@ -35,9 +35,9 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 #     return password_hash.hash(password)
 
 
-def get_user_by_login(db: Session, login: str):
+def get_user_by_login(db: Session, login: str) -> Optional[User]:
     """Получить пользователя по логину"""
-    return db.query(User).filter_by(login=login).first()
+    return db.execute(select(User).filter_by(login=login)).scalar()
 
 
 def authenticate_user(db: Session, login: str, password: str):
