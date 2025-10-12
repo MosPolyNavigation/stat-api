@@ -1,13 +1,16 @@
 import uuid
-from typing import Annotated
+from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
+from app.handlers import gather_rights_by_role
 from app.models.user import User
 from app.helpers.auth_utils import get_current_active_user
+from app.schemas import UserOut
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -22,18 +25,7 @@ class Token(BaseModel):
     token_type: str
 
 
-class UserOut(BaseModel):
-    """Схема для возврата информации о пользователе"""
-
-    id: int
-    login: str
-    is_active: bool
-
-    # Позволяет работать с ORM-моделями
-    model_config = {"from_attributes": True}
-
-
-def verify_password(plain_password: str, hashed_password: str):
+def verify_password(plain_password: str, hashed_password: str) -> bool:
     """проверка введённого пароля"""
     """метод verify проверяет, совпадает ли введённый пароль с хэшированным.
     Метод автоматически определяет алгоритм, использованный при хэшировании."""
@@ -46,12 +38,12 @@ def verify_password(plain_password: str, hashed_password: str):
 #     return password_hash.hash(password)
 
 
-def get_user_by_login(db: Session, login: str):
+def get_user_by_login(db: Session, login: str) -> Optional[User]:
     """Получить пользователя по логину"""
-    return db.query(User).filter_by(login=login).first()
+    return db.execute(select(User).filter_by(login=login)).scalar()
 
 
-def authenticate_user(db: Session, login: str, password: str):
+def authenticate_user(db: Session, login: str, password: str) -> Optional[User]:
     """проверка, существует ли пользователь и правильный ли пароль"""
     user = get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
@@ -59,7 +51,7 @@ def authenticate_user(db: Session, login: str, password: str):
     return user
 
 
-def create_token(user: User, db: Session):
+def create_token(user: User, db: Session) -> str:
     """Создать токен для пользователя (просто UUID)"""
     token = str(uuid.uuid4())
     user.token = token
@@ -104,7 +96,9 @@ def register_endpoint(router: APIRouter):
     ):
         """Возвращает актуальные данные текущего пользователя"""
         db.refresh(current_user)
-        return current_user
+        result = UserOut(login=current_user.login, is_active=current_user.is_active)
+        result.rights_by_goals = gather_rights_by_role(db, current_user)
+        return result
 
     # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
     # @router.post(
