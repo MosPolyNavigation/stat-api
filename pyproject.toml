@@ -8,6 +8,7 @@ dependencies = [
     "alembic",
     "fastapi-pagination",
     "fastapi",
+    "strawberry-graphql",
     "httpx",
     "python-dotenv",
     "python-multipart",

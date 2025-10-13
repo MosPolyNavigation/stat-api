@@ -20,7 +20,6 @@ def test_422_stat(endpoint):
     "/api/get/auds",
     "/api/get/ways",
     "/api/get/plans",
-    "/api/get/stat"
 ])
 def test_422_get_protected(endpoint):
     response = client.get(endpoint, params={
