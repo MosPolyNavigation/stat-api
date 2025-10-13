@@ -11,3 +11,4 @@ from .dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
 from .data import LocationData, CorpusData, PlanData
 from .graph import Graph, Vertex, DataEntry
+from .user import UserOut

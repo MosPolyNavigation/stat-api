@@ -17,7 +17,7 @@ dependencies = [
     "uvicorn",
     "pydantic-settings",
     "apscheduler",
-    "pwdlib"
+    "pwdlib[argon2]",
 ]
 
 [dependency-groups]

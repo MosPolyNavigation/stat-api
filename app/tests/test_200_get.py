@@ -13,10 +13,7 @@ from .base import client
     "/api/get/plans"
 ])
 def test_200_get(endpoint):
-    response = client.get(endpoint, params={
-        "api_key":
-            "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-    })
+    response = client.get(endpoint, headers={"Authorization": "Bearer 11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"})
     assert response.status_code == 200
 
 
