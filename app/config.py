@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
-from pydantic import PostgresDsn, field_validator
+from pydantic import PostgresDsn, HttpUrl, field_validator
 from app.helpers.dsn import SqliteDsn
 from functools import lru_cache
 from typing import Annotated
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     которые могут быть загружены из файла .env.
 
     Attributes:
+        admin_key: Административный ключ.
         sqlalchemy_database_url: URL базы данных SQLAlchemy.
         allowed_hosts: Разрешенные хосты.
         allowed_methods: Разрешенные методы.
@@ -21,6 +22,7 @@ class Settings(BaseSettings):
         env_file: Путь к файлу .env.
         env_file_encoding: Кодировка файла .env.
     """
+    admin_key: str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: Annotated[set[str], NoDecode] = ""

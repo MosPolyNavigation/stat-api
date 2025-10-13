@@ -5,7 +5,6 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 from app.handlers import filter_by_user
-from app.helpers.permissions import require_rights
 from app.schemas import SelectedAuditoryOut, Filter
 from app.routes.get.generate_resp import generate_resp
 
@@ -20,8 +19,7 @@ def register_endpoint(router: APIRouter):
     )
     async def get_auds(
         query: Filter = Depends(),
-        db: Session = Depends(get_db),
-        _: bool = Depends(require_rights("stats", "view"))
+        db: Session = Depends(get_db)
     ) -> Page[SelectedAuditoryOut]:
         """
         Эндпоинт для получения выбранных аудиторий.
@@ -30,8 +28,7 @@ def register_endpoint(router: APIRouter):
 
         Args:
             query: Параметры фильтрации;
-            db: Сессия базы данных;
-            _: Параметр для авторизации.
+            db: Сессия базы данных.
 
         Returns:
             Page[SelectedAuditoryOut]: Страница с найденными данными.
