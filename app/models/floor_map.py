@@ -21,9 +21,9 @@ class FloorMap(Base):
     __tablename__ = "floor_map"
 
     id: int = Column(Integer, primary_key=True, autoincrement=True)
-    floor: int = Column(Integer, nullable=False)
-    campus: str = Column(String, nullable=False)
-    corpus: str = Column(String, nullable=False)
+    floor: int = Column(Integer)
+    campus: str = Column(String)
+    corpus: str = Column(String)
     file_name: str = Column(String, nullable=False)
     file_extension: str = Column(String, nullable=False)
     file_path: str = Column(String, nullable=False)

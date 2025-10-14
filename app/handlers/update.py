@@ -23,7 +23,7 @@ async def update_floor_map(
         update(models.FloorMap)
         .where(models.FloorMap.id == id)
         .values(file_path=file_path)
-        )
+    )
 
     db.execute(querry)
     db.commit()
