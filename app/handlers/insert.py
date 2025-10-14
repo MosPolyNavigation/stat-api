@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import Select
 from app import schemas, models
 from app.helpers.errors import LookupException
+from os import path
 
 
 async def insert_site_stat(
@@ -141,3 +142,42 @@ async def insert_changed_plan(
     db.add(item)
     db.commit()
     return schemas.Status()
+
+
+async def insert_floor_map(
+    db: Session,
+    full_file_name: str,
+    file_path: str,
+    campus: str,
+    corpus: str,
+    floor: int
+):
+    """
+    Функция для добавления карты этажа.
+
+    Эта функция добавляет карту этажа в базу данных.
+
+    Args:
+        db: Сессия базы данных;
+        full_file_name: Имя файла с расширением;
+        file_path: Путь, по которому сохранен файл;
+        campus: Кампус, в котором распологается этаж;
+        corpus: Корпус, в котором распологается этаж;
+        floor: Номер этажа, в котором распологается этаж.
+
+    Returns:
+        Статус операции.
+    """
+    file_name, file_extension = path.splitext(full_file_name)
+
+    item = models.FloorMap(
+        floor=floor,
+        campus=campus,
+        corpus=corpus,
+        file_path=file_path,
+        file_name=file_name.lower(),
+        file_extension=file_extension.lower()
+    )
+
+    db.add(item)
+    db.commit()

@@ -14,3 +14,4 @@ from .start_way import StartWay
 from .user import User
 from .user_id import UserId
 from .user_role import UserRole
+from .floor_map import FloorMap
