@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, Body
+from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.schemas import UserIdCheck, Status
