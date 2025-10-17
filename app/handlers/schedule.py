@@ -6,7 +6,6 @@ from app.schemas import DataEntry
 import app.globals as globals_
 
 
-
 async def fetch_cur_data():
     try:
         data: DataEntry = await parse_data()
