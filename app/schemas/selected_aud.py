@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 class SelectedAuditoryBase(BaseModel):
@@ -39,19 +38,3 @@ class SelectedAuditoryIn(SelectedAuditoryBase):
     и не содержит дополнительных полей.
     """
     pass
-
-
-class SelectedAuditoryOut(SelectedAuditoryBase):
-    """
-    Класс для выходных данных выбранной аудитории.
-
-    Этот класс наследуется от SelectedAuditoryBase
-    и содержит дополнительное поле visit_date.
-
-    Attributes:
-        visit_date: Дата, когда пользователь выбрал аудиторию.
-    """
-    visit_date: datetime = Field(
-        description="Date when user selected auditory"
-    )
-    model_config = ConfigDict(from_attributes=True)

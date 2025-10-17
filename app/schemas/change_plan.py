@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 class ChangePlanBase(BaseModel):
@@ -36,17 +35,3 @@ class ChangePlanIn(ChangePlanBase):
     и не содержит дополнительных полей.
     """
     pass
-
-
-class ChangePlanOut(ChangePlanBase):
-    """
-    Класс для выходных данных изменения плана.
-
-    Этот класс наследуется от ChangePlanBase
-    и содержит дополнительное поле visit_date.
-
-    Attributes:
-        visit_date: Дата, когда пользователь изменил план.
-    """
-    visit_date: datetime = Field(description="Date when user changed plan")
-    model_config = ConfigDict(from_attributes=True)

@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, ConfigDict
-from datetime import datetime
+from pydantic import BaseModel, Field
 
 
 class StartWayBase(BaseModel):
@@ -49,17 +48,3 @@ class StartWayIn(StartWayBase):
     Этот класс наследуется от StartWayBase и не содержит дополнительных полей.
     """
     pass
-
-
-class StartWayOut(StartWayBase):
-    """
-    Класс для выходных данных начала пути.
-
-    Этот класс наследуется от StartWayBase
-    и содержит дополнительное поле visit_date.
-
-    Attributes:
-        visit_date: Дата, когда пользователь создал путь.
-    """
-    visit_date: datetime = Field(description="Date when user created way")
-    model_config = ConfigDict(from_attributes=True)
