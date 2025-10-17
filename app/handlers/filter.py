@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from sqlalchemy import Select, and_
+from sqlalchemy import Select
 from typing import Any, Optional
 from app import schemas
 

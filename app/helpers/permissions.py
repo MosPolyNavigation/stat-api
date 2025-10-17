@@ -3,7 +3,7 @@ from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import User, RoleRightGoal, Right, Goal, UserRole
-from app.helpers.auth_utils import get_current_active_user, get_current_user
+from app.helpers.auth_utils import get_current_active_user
 
 
 def require_rights(goal_name: str, *rights: str):

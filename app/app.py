@@ -6,7 +6,7 @@ from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth
+from .routes import get, stat, review, check, auth, graphql
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
@@ -23,6 +23,14 @@ tags_metadata = [
     {
         "name": "review",
         "description": "Эндпоинты для работы с отзывами"
+    },
+    {
+        "name": "graphql",
+        "description": "Эндпоинт для запросов graphql"
+    },
+    {
+        "name": "auth",
+        "description": "Эндпоинты для аутентификации и авторизации"
     }
 ]
 
@@ -52,6 +60,7 @@ app.include_router(stat.router)
 app.include_router(review.router)
 app.include_router(check.router)
 app.include_router(auth.router)
+app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
 app.mount(
     "/",
     StaticFiles(
