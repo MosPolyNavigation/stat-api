@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session, selectinload
 from strawberry.extensions import QueryDepthLimiter
 from strawberry.fastapi import GraphQLRouter
 from strawberry.types import Info
-from app import models
+from app import models, schemas
+from app.handlers import get_endpoint_stats
 from app.database import get_db
 
 
@@ -72,6 +73,16 @@ class SiteStatType:
     visit_date: datetime
     endpoint: Optional[str]
     user: Optional[UserIdType]
+
+
+@strawberry.type
+class EndpointStatisticsType:
+    unique_visitors: int
+    all_visitors: int
+    all_visits: int
+    visitor_count: int
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
 
 
 def _validated_limit(limit: Optional[int]) -> Optional[int]:
@@ -152,6 +163,20 @@ def _to_site_stat(model: models.SiteStat) -> SiteStatType:
         user=_to_user(model.user)
     )
 
+
+def _to_endpoint_statistics(model: schemas.Statistics) -> EndpointStatisticsType:
+    period_start = None
+    period_end = None
+    if model.period is not None:
+        period_start, period_end = model.period
+    return EndpointStatisticsType(
+        unique_visitors=model.unique_visitors,
+        all_visitors=model.visitor_count,
+        all_visits=model.all_visits,
+        visitor_count=model.visitor_count,
+        period_start=period_start,
+        period_end=period_end
+    )
 
 async def resolve_change_plans(
     info: Info,
@@ -319,6 +344,22 @@ async def resolve_problems(
     return [ProblemType(id=record.id) for record in records]
 
 
+async def resolve_endpoint_statistics(
+    info: Info,
+    endpoint: str,
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None
+) -> EndpointStatisticsType:
+    session: Session = info.context["db"]
+    params = schemas.FilterQuery(
+        target=endpoint,
+        start_date=start_date.date() if start_date else None,
+        end_date=end_date.date() if end_date else None
+    )
+    stats = await get_endpoint_stats(session, params)
+    return _to_endpoint_statistics(stats)
+
+
 @strawberry.type
 class Query:
     change_plans: list[ChangePlanType] = strawberry.field(
@@ -349,6 +390,11 @@ class Query:
         resolver=resolve_problems,
         description="Получить список проблем."
     )
+    endpoint_statistics: EndpointStatisticsType = strawberry.field(
+        resolver=resolve_endpoint_statistics,
+        description="Endpoint statistics for the requested target."
+    )
+
 
 
 async def get_context(
@@ -369,3 +415,4 @@ def register_endpoint(router: APIRouter) -> None:
         context_getter=get_context
     )
     router.include_router(graphql_router, prefix="/stat")
+
