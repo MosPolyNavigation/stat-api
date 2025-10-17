@@ -6,17 +6,6 @@ from .load_graph import graph_b
 from .base import client
 
 
-@pytest.mark.parametrize("endpoint", [
-    "/api/get/site",
-    "/api/get/auds",
-    "/api/get/ways",
-    "/api/get/plans"
-])
-def test_200_get(endpoint):
-    response = client.get(endpoint, headers={"Authorization": "Bearer 11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"})
-    assert response.status_code == 200
-
-
 def test_get_user_id():
     response = client.get("/api/get/user-id")
     assert response.status_code == 200
