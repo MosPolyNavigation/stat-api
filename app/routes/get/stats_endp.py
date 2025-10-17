@@ -1,5 +1,4 @@
-from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, date
 from typing import Optional
 import strawberry
 from fastapi import APIRouter, Depends
@@ -11,6 +10,7 @@ from strawberry.types import Info
 from app import models, schemas
 from app.handlers import get_endpoint_stats
 from app.database import get_db
+from app.schemas.filter import TargetEnum
 
 
 @strawberry.type
@@ -78,11 +78,9 @@ class SiteStatType:
 @strawberry.type
 class EndpointStatisticsType:
     unique_visitors: int
-    all_visitors: int
     all_visits: int
     visitor_count: int
-    period_start: Optional[datetime] = None
-    period_end: Optional[datetime] = None
+    period: date
 
 
 def _validated_limit(limit: Optional[int]) -> Optional[int]:
@@ -165,17 +163,11 @@ def _to_site_stat(model: models.SiteStat) -> SiteStatType:
 
 
 def _to_endpoint_statistics(model: schemas.Statistics) -> EndpointStatisticsType:
-    period_start = None
-    period_end = None
-    if model.period is not None:
-        period_start, period_end = model.period
     return EndpointStatisticsType(
         unique_visitors=model.unique_visitors,
-        all_visitors=model.visitor_count,
-        all_visits=model.all_visits,
         visitor_count=model.visitor_count,
-        period_start=period_start,
-        period_end=period_end
+        all_visits=model.all_visits,
+        period=model.period,
     )
 
 async def resolve_change_plans(
@@ -349,15 +341,15 @@ async def resolve_endpoint_statistics(
     endpoint: str,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None
-) -> EndpointStatisticsType:
+) -> list[EndpointStatisticsType]:
     session: Session = info.context["db"]
     params = schemas.FilterQuery(
-        target=endpoint,
+        target=TargetEnum[endpoint],
         start_date=start_date.date() if start_date else None,
         end_date=end_date.date() if end_date else None
     )
     stats = await get_endpoint_stats(session, params)
-    return _to_endpoint_statistics(stats)
+    return [_to_endpoint_statistics(stat) for stat in stats]
 
 
 @strawberry.type
@@ -390,7 +382,7 @@ class Query:
         resolver=resolve_problems,
         description="Получить список проблем."
     )
-    endpoint_statistics: EndpointStatisticsType = strawberry.field(
+    endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
         description="Endpoint statistics for the requested target."
     )
