@@ -1,7 +1,7 @@
 from sqlalchemy import Select, func, union_all, select, case, String
 from sqlalchemy.orm import Session, aliased
+from typing import Dict
 from datetime import date
-
 from .filter import filter_by_date
 from app import schemas, models
 
@@ -115,3 +115,25 @@ async def get_popular_auds_with_count(db: Session):
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
     return db.execute(query).fetchall()
+
+
+async def get_all_floor_maps(db: Session) -> Dict[str, Dict[str, Dict[int, str]]]:
+    maps = db.query(models.FloorMap).all()
+
+    result: Dict[str, Dict[str, Dict[int, str]]] = {}
+
+    for floor_map in maps:
+        campus = floor_map.campus
+        corpus = floor_map.corpus
+        floor = floor_map.floor
+        file_path = floor_map.file_path
+
+        if campus not in result:
+            result[campus] = {}
+
+        if corpus not in result[campus]:
+            result[campus][corpus] = {}
+
+        result[campus][corpus][floor] = file_path
+
+    return result
