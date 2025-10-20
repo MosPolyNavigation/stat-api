@@ -1,5 +1,5 @@
 from datetime import datetime, time
-from sqlalchemy import Select, and_
+from sqlalchemy import Select
 from typing import Any, Optional
 from app import schemas
 
@@ -28,7 +28,7 @@ def filter_by_user(
 
 def filter_by_date(
     params: schemas.FilterQuery
-) -> tuple[Select, Optional[tuple[datetime, datetime]]]:
+) -> Optional[tuple[datetime, datetime]]:
     """
     Функция для фильтрации по дате.
 
@@ -40,8 +40,6 @@ def filter_by_date(
     Returns:
         Запрос с фильтром по дате и границы даты.
     """
-    model = params.model
-    query = Select(model.user_id)
     borders: Optional[tuple[datetime, datetime]] = None
     start_time = time(0, 0, 0)
     end_time = time(23, 59, 59)
@@ -55,11 +53,4 @@ def filter_by_date(
             datetime.combine(params.start_date, start_time),
             datetime.combine(params.start_date, end_time)
         )
-    if borders is not None:
-        query = query.filter(
-            and_(
-                model.visit_date >= borders[0],
-                model.visit_date <= borders[1]
-            )
-        )
-    return query, borders
+    return borders

@@ -2,11 +2,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from .handlers.schedule import lifespan
 from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
-from .config import Settings, get_settings
+from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth
+from .routes import get, stat, review, check, auth, graphql
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
@@ -23,6 +23,14 @@ tags_metadata = [
     {
         "name": "review",
         "description": "Эндпоинты для работы с отзывами"
+    },
+    {
+        "name": "graphql",
+        "description": "Эндпоинт для запросов graphql"
+    },
+    {
+        "name": "auth",
+        "description": "Эндпоинты для аутентификации и авторизации"
     }
 ]
 
@@ -52,6 +60,7 @@ app.include_router(stat.router)
 app.include_router(review.router)
 app.include_router(check.router)
 app.include_router(auth.router)
+app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
 app.mount(
     "/",
     StaticFiles(
@@ -66,30 +75,6 @@ app.add_middleware(
     allow_origins=settings.allowed_hosts,
     allow_methods=settings.allowed_methods
 )
-
-
-@app.middleware("http")
-async def token_auth_middleware(request: Request, call_next):
-    if request.scope['path'] in [
-        "/api/get/site",
-        "/api/get/auds",
-        "/api/get/ways",
-        "/api/get/plans",
-        "/api/get/stat",
-        "/api/review/get"
-    ]:
-        token = request.query_params.get('api_key')
-        if not token:
-            return JSONResponse(
-                status_code=403,
-                content={"status": "no api_key"}
-            )
-        if token != Settings().admin_key:
-            return JSONResponse(
-                status_code=403,
-                content={"status": "Specified api_key is not present in app"}
-            )
-    return await call_next(request)
 
 
 @app.exception_handler(SQLAlchemyError)
