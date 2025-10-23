@@ -14,12 +14,11 @@ def register_endpoint(router: APIRouter):
 
     @router.patch(
         "/{user_id}",
-        description="Редактирование пользователя (смена логина, пароля или статуса)",
+        description="Редактирование пользователя (смена пароля или статуса)",
         dependencies=[Depends(require_rights("users", "edit"))]
     )
     async def update_user(
         user_id: int,
-        login: str | None = Form(None, description="Новый логин"),
         password: str | None = Form(None, description="Новый пароль"),
         is_active: bool | None = Form(None, description="Активен ли пользователь"),
         db: Session = Depends(get_db)
@@ -32,23 +31,10 @@ def register_endpoint(router: APIRouter):
                 detail="Пользователь не найден"
             )
 
-        # Проверяем, если логин уже занят другим пользователем
-        if login and login != user.login:
-            existing = db.query(User).filter(User.login == login).first()
-            if existing:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Пользователь с таким логином уже существует"
-                )
-
         # Флаги изменений
         changes = []
 
         # Обновляем данные
-        if login and login != user.login:
-            user.login = login
-            changes.append("логин")
-
         if password:
             user.hash = password_hash.hash(password)
             changes.append("пароль")
@@ -62,8 +48,7 @@ def register_endpoint(router: APIRouter):
                 "message": "Изменений не было",
                 "user": UserOut(
                     login=user.login,
-                    is_active=user.is_active,
-                    rights_by_goals=None
+                    is_active=user.is_active
                 )
             }
 

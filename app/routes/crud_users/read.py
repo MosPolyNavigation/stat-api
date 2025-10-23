@@ -1,9 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from fastapi_pagination import Page
+from fastapi_pagination.ext.sqlalchemy import paginate
 from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserOut
 from app.helpers.permissions import require_rights
+from app.routes.get.generate_resp import generate_resp
 
 
 def register_endpoint(router: APIRouter):
@@ -12,52 +15,39 @@ def register_endpoint(router: APIRouter):
     @router.get(
         "",
         description="Получение списка пользователей с пагинацией",
-        status_code=status.HTTP_200_OK,
-        dependencies=[Depends(require_rights("users", "view"))]
+        response_model=Page[UserOut],
+        dependencies=[Depends(require_rights("users", "view"))],
+        responses=generate_resp(Page[UserOut])
     )
-    async def read_users(
-        page: int = Query(1, ge=1, description="Номер страницы"),
-        limit: int = Query(10, ge=1, le=100, description="Количество пользователей на странице"),
-        db: Session = Depends(get_db)
-    ):
-        total_users = db.query(User).count()
-        offset = (page - 1) * limit
-        users = db.query(User).offset(offset).limit(limit).all()
+    async def read_users(db: Session = Depends(get_db)) -> Page[UserOut]:
+        """
+        Эндпоинт для получения списка пользователей с пагинацией.
 
-        if not users:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Пользователи не найдены"
-            )
+        Args:
+            query: Параметры пагинации
+            db: Сессия базы данных
 
-        user_list = []
-        for u in users:
-            user_list.append(UserOut(
-                login=u.login,
-                is_active=u.is_active,
-            ))
-
-        return {
-            "page": page,
-            "limit": limit,
-            "total": total_users,
-            "pages": (total_users + limit - 1) // limit,
-            "items": user_list
-        }
+        Returns:
+            Страница с найденными пользователями
+        """
+        return paginate(db.query(User))
 
     "Эндпоинты для просмотра определённого пользователя"
 
     @router.get(
         "/{user_id}",
         description="Получение данных конкретного пользователя",
-        status_code=status.HTTP_200_OK,
-        dependencies=[Depends(require_rights("users", "view"))]
+        response_model=UserOut,
+        dependencies=[Depends(require_rights("users", "view"))],
     )
-    async def read_user(user_id: int, db: Session = Depends(get_db)):
+    async def read_user(user_id: int, db: Session = Depends(get_db)) -> UserOut:
+        """
+        Эндпоинт для получения одного пользователя по ID.
+        """
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+                status_code=404,
                 detail="Пользователь не найден"
             )
 
