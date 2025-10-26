@@ -18,12 +18,13 @@ dependencies = [
     "pydantic-settings",
     "apscheduler",
     "pwdlib[argon2]",
+    "argparse",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest>=8.3.5",
+    "pytest",
 ]
 lint = [
-    "flake8>=7.2.0",
+    "flake8",
 ]
