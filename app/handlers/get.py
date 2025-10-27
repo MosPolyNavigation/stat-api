@@ -43,7 +43,6 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery) -> list[s
             .where(params.model.visit_date >= borders[0])
             .where(params.model.visit_date < borders[1])
         )
-    print(query.__str__())
     rows = db.execute(query).fetchall()
     stats = [
         schemas.Statistics(
