@@ -2,7 +2,7 @@ from itertools import pairwise
 from pydantic import BaseModel
 from typing import List, Tuple, Dict
 from pydantic_core import core_schema
-from . import LocationData, PlanData, CorpusData
+from app.schemas import LocationData, PlanData, CorpusData
 import dataclasses
 import math
 import time

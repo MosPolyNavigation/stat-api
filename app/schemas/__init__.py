@@ -7,8 +7,8 @@ from .statistics import Statistics
 from .status import Status
 from .review import Problem
 from .user_id import UserId, UserIdCheck
-from .dto import DataDto, GraphDto, LocationDto, \
+from app.schemas.graph.dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
-from .data import LocationData, CorpusData, PlanData
-from .graph import Graph, Vertex, DataEntry
+from app.schemas.graph.data import LocationData, CorpusData, PlanData
+from app.schemas.graph.graph import Graph, Vertex, DataEntry
 from .user import UserOut
