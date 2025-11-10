@@ -1,9 +1,9 @@
 from collections import defaultdict
 from sqlalchemy import Boolean, Column, Integer, String, Select
 from sqlalchemy.orm import Mapped, relationship, Session, joinedload
-from app.models.role_right_goal import RoleRightGoal
-from app.models.user_role import UserRole
-from .base import Base
+from app.models.auth.role_right_goal import RoleRightGoal
+from app.models.auth.user_role import UserRole
+from app.models.base import Base
 
 
 class User(Base):

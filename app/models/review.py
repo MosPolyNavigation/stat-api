@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String
 from datetime import datetime
 from typing import Optional
 from app.models.base import Base
-from app.models.user_id import UserId
+from app.models.stat.user_id import UserId
 from app.models.problem import Problem
 
 

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
-from app.models.user import User
+from app.models.auth.user import User
 from app.helpers.auth_utils import get_current_active_user
 from app.schemas import UserOut
 

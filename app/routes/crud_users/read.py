@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
 from app.database import get_db
-from app.models.user import User
+from app.models.auth.user import User
 from app.schemas.user import UserOut
 from app.helpers.permissions import require_rights
 from app.routes.get.generate_resp import generate_resp

@@ -3,8 +3,8 @@ from pwdlib import PasswordHash
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models.user import User
-from app.models.user_role import UserRole
+from app.models.auth.user import User
+from app.models.auth.user_role import UserRole
 
 password_hash = PasswordHash.recommended()
 
