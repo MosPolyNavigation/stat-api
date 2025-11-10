@@ -1,8 +1,8 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, String, Boolean
 from sqlalchemy.orm import Mapped, relationship, mapped_column
 from datetime import datetime
-from .base import Base
-from .user_id import UserId
+from app.models.base import Base
+from app.models.stat.user_id import UserId
 # from .auditory import Auditory
 
 
