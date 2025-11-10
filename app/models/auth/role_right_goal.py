@@ -1,7 +1,6 @@
-from __future__ import annotations
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
-from .base import Base
+from app.models.base import Base
 
 
 class RoleRightGoal(Base):

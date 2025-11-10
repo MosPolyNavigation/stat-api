@@ -2,7 +2,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.database import get_db
-from app.models import User, RoleRightGoal, Right, Goal, UserRole
+from app.models import User, Goal
 from app.helpers.auth_utils import get_current_active_user
 
 
@@ -28,25 +28,10 @@ def require_rights(goal_name: str, *rights: str):
             )
 
         # Получаем роли пользователя
-        user_roles = db.query(UserRole).filter(UserRole.user_id == current_user.id).all()
-        if not user_roles:
-            raise HTTPException(
-                status_code=401,
-                detail="У пользователя нет назначенных ролей"
-            )
+        user_rights_by_goal = current_user.get_rights(db)
+        user_rights = user_rights_by_goal[goal.name]
 
-        role_ids = [ur.role_id for ur in user_roles]
-
-        # Получаем все права пользователя для этой цели
-        user_rights = (
-            db.query(Right.name)
-            .join(RoleRightGoal, RoleRightGoal.right_id == Right.id)
-            .filter(RoleRightGoal.goal_id == goal.id)
-            .filter(RoleRightGoal.role_id.in_(role_ids))
-            .all()
-        )
-
-        user_rights_set = {r.name for r in user_rights}
+        user_rights_set = {r for r in user_rights}
 
         # Проверяем наличие всех нужных прав
         missing_rights = [r for r in rights if r not in user_rights_set]

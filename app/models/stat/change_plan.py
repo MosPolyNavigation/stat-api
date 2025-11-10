@@ -3,7 +3,7 @@ from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 from app.models.base import Base
 # from app.models.plan import Plan
-from app.models.user_id import UserId
+from app.models.stat.user_id import UserId
 
 
 class ChangePlan(Base):

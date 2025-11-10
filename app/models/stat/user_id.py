@@ -1,7 +1,7 @@
 from sqlalchemy import Column, String, DateTime
 from datetime import datetime
 from uuid import uuid4
-from .base import Base
+from app.models.base import Base
 
 
 class UserId(Base):

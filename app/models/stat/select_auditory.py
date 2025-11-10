@@ -2,8 +2,8 @@ from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean, String
 from sqlalchemy.orm import Mapped, relationship
 from datetime import datetime
 # from .auditory import Auditory
-from .base import Base
-from .user_id import UserId
+from app.models.base import Base
+from app.models.stat.user_id import UserId
 
 
 class SelectAuditory(Base):

@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from typing import List, Tuple
-from .dto import GraphDto
+from app.schemas.graph.dto import GraphDto
 
 
 class LocationData(BaseModel):

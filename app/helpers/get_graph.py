@@ -1,4 +1,4 @@
-from app.schemas.dto import DataDto, LocationDto, CorpusDto, PlanDto
+from app.schemas.graph.dto import DataDto, LocationDto, CorpusDto, PlanDto
 from app.schemas import PlanData, LocationData, CorpusData, Graph, DataEntry
 from typing import List
 import httpx
