@@ -6,4 +6,3 @@ from .get import get_endpoint_stats, get_popular_auds, \
 from .insert import insert_aud_selection, insert_site_stat, \
     insert_start_way, insert_changed_plan
 from .review import insert_review
-from .gather_rights import gather_rights_by_role

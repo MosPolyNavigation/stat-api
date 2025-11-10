@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
-from app.handlers import gather_rights_by_role
 from app.models.user import User
 from app.helpers.auth_utils import get_current_active_user
 from app.schemas import UserOut
@@ -97,7 +96,7 @@ def register_endpoint(router: APIRouter):
         """Возвращает актуальные данные текущего пользователя"""
         db.refresh(current_user)
         result = UserOut(login=current_user.login, is_active=current_user.is_active)
-        result.rights_by_goals = gather_rights_by_role(db, current_user)
+        result.rights_by_goals = current_user.get_rights(db)
         return result
 
     # # Создал для того, чтобы проверить /me с активным/неактивным пользователем

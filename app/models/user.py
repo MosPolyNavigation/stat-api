@@ -1,6 +1,8 @@
-from __future__ import annotations
-from sqlalchemy import Boolean, Column, Integer, String
-from sqlalchemy.orm import Mapped, relationship
+from collections import defaultdict
+from sqlalchemy import Boolean, Column, Integer, String, Select
+from sqlalchemy.orm import Mapped, relationship, Session, joinedload
+from app.models.role_right_goal import RoleRightGoal
+from app.models.user_role import UserRole
 from .base import Base
 
 
@@ -25,3 +27,31 @@ class User(Base):
         return (
             f"User(id={self.id!r}, login={self.login!r}, is_active={self.is_active!r})"
         )
+
+    def get_rights(self, db: Session) -> dict[str, list[str]]:
+        role_right_goals = (
+            db.execute(
+                Select(RoleRightGoal)
+                .join(UserRole, RoleRightGoal.role_id == UserRole.role_id)
+                .filter(UserRole.user_id == self.id)
+                .options(
+                    joinedload(RoleRightGoal.right),
+                    joinedload(RoleRightGoal.goal)
+                )
+            ).scalars().all()
+        )
+
+        # Группируем права по целям
+        rights_by_goal = defaultdict(list)
+        seen = set()
+
+        for rrg in role_right_goals:
+            goal_name = rrg.goal.name
+            right_name = rrg.right.name
+            key = (goal_name, right_name)
+            if key not in seen:
+                rights_by_goal[goal_name].append(right_name)
+                seen.add(key)
+
+        # Преобразуем defaultdict в обычный dict
+        return dict(rights_by_goal)
