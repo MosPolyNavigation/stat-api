@@ -23,5 +23,13 @@ class Role(Base):
         cascade="all, delete-orphan",
     )
 
+    # Строит словарь прав роли в формате: { "goal_name": ["right1", "right2", ...] }
+    @property
+    def rights_by_goals(self):
+        result = {}
+        for rrg in self.role_right_goals:
+            result.setdefault(rrg.goal.name, []).append(rrg.right.name)
+        return result
+
     def __repr__(self) -> str:
         return f"Role(id={self.id!r}, name={self.name!r})"
