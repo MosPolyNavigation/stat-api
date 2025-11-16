@@ -3,8 +3,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from strawberry import Info
 from typing import Optional
-from app.models import Problem
 from .filter_handlers import _validated_limit
+from .permissions import ensure_stats_view_permission
+from app.models import Problem
 
 
 @strawberry.type
@@ -23,7 +24,7 @@ async def resolve_problems(
         problem_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[ProblemType]:
-    session: Session = info.context["db"]
+    session: Session = ensure_stats_view_permission(info)
     statement = select(Problem).order_by(Problem.id)
     if problem_id:
         statement = statement.where(Problem.id == problem_id)

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session, selectinload
 from strawberry import Info
 from typing import Optional
 from .filter_handlers import _validated_limit
+from .permissions import ensure_stats_view_permission
 from .user_id import UserIdType, _to_user_id
 from app.models import StartWay
 
@@ -38,7 +39,7 @@ async def resolve_start_ways(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[StartWayType]:
-    session: Session = info.context["db"]
+    session: Session = ensure_stats_view_permission(info)
     statement = (
         select(StartWay)
         .options(selectinload(StartWay.user))
