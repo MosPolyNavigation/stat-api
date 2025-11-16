@@ -5,6 +5,10 @@ from typing import Optional
 class UserOut(BaseModel):
     """Схема для возврата информации о пользователе"""
 
+    id: int = Field(
+        title="id",
+        description="User ID"
+    )
     login: str = Field(
         title="login",
         description="User login",

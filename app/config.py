@@ -37,7 +37,7 @@ class Settings(BaseSettings):
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     model_config = SettingsConfigDict(
-        env_file='.env', env_file_encoding='utf-8'
+        env_file='.env', env_file_encoding='utf-8', extra='ignore'
     )
 
 
