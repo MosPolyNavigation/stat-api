@@ -4,8 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 from strawberry import Info
 from typing import Optional
-
 from .filter_handlers import _validated_limit
+from .permissions import ensure_stats_view_permission
 from .user_id import UserIdType, _to_user_id
 from app.models import SelectAuditory
 
@@ -37,7 +37,7 @@ async def resolve_select_auditories(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[SelectAuditoryType]:
-    session: Session = info.context["db"]
+    session: Session = ensure_stats_view_permission(info)
     statement = (
         select(SelectAuditory)
         .options(selectinload(SelectAuditory.user))

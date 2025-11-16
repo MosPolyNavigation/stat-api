@@ -6,6 +6,7 @@ from strawberry import Info
 from typing import Optional
 from app.models import UserId
 from app.routes.graphql.filter_handlers import _validated_limit
+from app.routes.graphql.permissions import ensure_stats_view_permission
 
 
 @strawberry.type
@@ -28,7 +29,7 @@ async def resolve_user_ids(
         user_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[UserIdType]:
-    session: Session = info.context["db"]
+    session: Session = ensure_stats_view_permission(info)
     statement = select(UserId).order_by(
         UserId.creation_date.desc()
     )

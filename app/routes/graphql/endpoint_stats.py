@@ -3,6 +3,7 @@ import strawberry
 from sqlalchemy.orm import Session
 from strawberry import Info
 from typing import Optional
+from .permissions import ensure_stats_view_permission
 from app.handlers import get_endpoint_stats
 from app.schemas import Statistics, FilterQuery
 from app.schemas.filter import TargetEnum
@@ -61,7 +62,7 @@ async def resolve_endpoint_statistics(
     if end_date is not None:
         effective_end_date = min(end_date, today_plus_one)
 
-    session: Session = info.context["db"]
+    session: Session = ensure_stats_view_permission(info)
     params = FilterQuery(
         target=TargetEnum(endpoint),
         start_date=effective_start_date,

@@ -55,3 +55,17 @@ class User(Base):
 
         # Преобразуем defaultdict в обычный dict
         return dict(rights_by_goal)
+
+    def is_capable(self, db: Session, goal: str, right: str) -> bool:
+
+        if not goal or not right:
+            raise ValueError("goal and right must be provided for capability checks")
+        if not self.is_active:
+            raise PermissionError("Inactive user cannot execute actions")
+
+        rights_by_goal = self.get_rights(db)
+        goal_rights = rights_by_goal.get(goal)
+        if goal_rights is None:
+            return False
+        return right in goal_rights
+
