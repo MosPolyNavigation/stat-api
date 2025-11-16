@@ -47,6 +47,7 @@ def register_endpoint(router: APIRouter):
             return {
                 "message": "Изменений не было",
                 "user": UserOut(
+                    id=user.id,
                     login=user.login,
                     is_active=user.is_active
                 )
@@ -61,6 +62,7 @@ def register_endpoint(router: APIRouter):
         return {
             "message": message,
             "user": UserOut(
+                id=user.id,
                 login=user.login,
                 is_active=user.is_active
             )

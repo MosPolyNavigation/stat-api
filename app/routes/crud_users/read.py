@@ -52,6 +52,7 @@ def register_endpoint(router: APIRouter):
             )
 
         return UserOut(
+            id=user.id,
             login=user.login,
             is_active=user.is_active
         )

@@ -46,6 +46,7 @@ def register_endpoint(router: APIRouter):
 
         # Возвращаем данные по схеме
         return UserOut(
+            id=new_user.id,
             login=new_user.login,
             is_active=new_user.is_active
         )
