@@ -22,6 +22,13 @@ def register_endpoint(router: APIRouter):
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
+        # Проверка, нельзя удалить роль, если она назначена какому-нибудь пользователю
+        if role.user_roles:
+            raise HTTPException(
+                status_code=400,
+                detail="Нельзя удалить роль, пока она назначена пользователям"
+            )
+
         db.delete(role)
         db.commit()
 
