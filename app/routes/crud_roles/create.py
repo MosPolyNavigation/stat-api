@@ -1,0 +1,94 @@
+from fastapi import APIRouter, Depends, Form, HTTPException, status
+from sqlalchemy.orm import Session
+from app.database import get_db
+from app.models.auth.role import Role
+from app.models.auth.role_right_goal import RoleRightGoal
+from app.models.auth.goal import Goal
+from app.models.auth.right import Right
+from app.helpers.permissions import require_rights
+from app.schemas.role import RoleOut
+from app.models.auth.user import User
+from app.helpers.auth_utils import get_current_user
+import json
+
+
+def register_endpoint(router: APIRouter):
+    "Эндпоинт для создания роли"
+
+    @router.post(
+        "",
+        description="Создание роли",
+        response_model=RoleOut,
+        status_code=status.HTTP_201_CREATED,
+        dependencies=[Depends(require_rights("roles", "create"))]
+    )
+    async def create_role(
+        name: str = Form(...),
+        # JSON-строка с правами роли (отправляется через form-data как текст),
+        # пример: {"users":["view","edit"],"roles":["view"]}
+        rights_by_goals: str = Form(...),
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+    ):
+        # Конвертируем JSON-строку из form-data в dict
+        try:
+            rights_by_goals = json.loads(rights_by_goals)
+        except json.JSONDecodeError:
+            raise HTTPException(400, "rights_by_goals должен быть валидным JSON")
+
+        # Проверяем существует ли роль
+        existing = db.query(Role).filter(Role.name == name).first()
+        if existing:
+            raise HTTPException(
+                status_code=400,
+                detail="Роль с таким именем уже существует"
+            )
+
+        # Права текущего пользователя
+        user_rights = current_user.get_rights(db)
+
+        # Проверка прав
+        for goal_name, rights in rights_by_goals.items():
+            if goal_name not in user_rights:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Нет прав на цель: {goal_name}"
+                )
+            for r in rights:
+                if r not in user_rights[goal_name]:
+                    raise HTTPException(
+                        status_code=403,
+                        detail=f"Нет права '{r}' на цель '{goal_name}'"
+                    )
+
+        # Создаём роль
+        new_role = Role(name=name)
+        db.add(new_role)
+        db.commit()
+        db.refresh(new_role)
+
+        # Заполняем role_right_goal
+        for goal_name, rights in rights_by_goals.items():
+            goal = db.query(Goal).filter_by(name=goal_name).first()
+            if not goal:
+                raise HTTPException(400, f"Цель '{goal_name}' не найдена")
+
+            for r in rights:
+                right = db.query(Right).filter_by(name=r).first()
+                if not right:
+                    raise HTTPException(400, f"Право '{r}' не найдено")
+
+                db.add(RoleRightGoal(
+                    role_id=new_role.id,
+                    goal_id=goal.id,
+                    right_id=right.id
+                ))
+
+        db.commit()
+
+        # Формируем корректную структуру прав для схемы RoleOut
+        return RoleOut(
+            id=new_role.id,
+            name=new_role.name,
+            rights_by_goals=rights_by_goals
+        )
