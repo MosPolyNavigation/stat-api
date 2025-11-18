@@ -8,7 +8,7 @@ from app.models.nav.location import Location
 class Corpus(Base):
     __tablename__ = "corpuses"
     id: int = Column(Integer, primary_key=True)
-    id_sys: str = Column(String(7), nullable=False)
+    id_sys: str = Column(String(7), nullable=False, unique=True)
     loc_id: int = Column(ForeignKey("locations.id"), nullable=False)
     name: str = Column(String(20), nullable=False)
     ready: bool = Column(Boolean, nullable=False)

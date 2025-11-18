@@ -9,7 +9,7 @@ from app.models.nav.types import Type
 class Auditory(Base):
     __tablename__ = "auditories"
     id: int = Column(Integer, primary_key=True)
-    id_sys: String = Column(String(50), nullable=False)
+    id_sys: String = Column(String(50), nullable=False, unique=True)
     type_id: int = Column(ForeignKey("types.id"), nullable=False)
     ready: bool = Column(Boolean, nullable=False, default=False)
     plan_id: int = Column(ForeignKey("plans.id"), nullable=False)
