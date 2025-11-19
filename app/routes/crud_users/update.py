@@ -1,4 +1,6 @@
+from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Form, status
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
 from app.database import get_db
@@ -24,7 +26,7 @@ def register_endpoint(router: APIRouter):
         db: Session = Depends(get_db)
     ):
         # Проверяем, существует ли пользователь
-        user = db.query(User).filter(User.id == user_id).first()
+        user: Union[User, None] = db.execute(Select(User).filter(User.id == user_id)).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

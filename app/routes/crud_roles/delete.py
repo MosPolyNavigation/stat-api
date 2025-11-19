@@ -1,4 +1,6 @@
+from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.helpers.permissions import require_rights
@@ -18,7 +20,7 @@ def register_endpoint(router: APIRouter):
         role_id: int,
         db: Session = Depends(get_db)
     ):
-        role = db.query(Role).filter(Role.id == role_id).first()
+        role: Union[Role, None] = db.execute(Select(Role).filter(Role.id == role_id)).scalar_one_or_none()
         if not role:
             raise HTTPException(404, "Роль не найдена")
 

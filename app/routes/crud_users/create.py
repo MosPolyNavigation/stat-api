@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Form, status
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from pwdlib import PasswordHash
+from typing import Union
 from app.database import get_db
 from app.models.auth.user import User
 from app.helpers.permissions import require_rights
@@ -20,13 +22,13 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(require_rights("users", "create"))]
     )
     async def create_user(
-        login: str = Form(..., description="Логин пользователя"),
-        password: str = Form(..., description="Пароль пользователя"),
-        is_active: bool = Form(True, description="Активен ли пользователь"),
-        db: Session = Depends(get_db)
+            login: str = Form(..., description="Логин пользователя"),
+            password: str = Form(..., description="Пароль пользователя"),
+            is_active: bool = Form(True, description="Активен ли пользователь"),
+            db: Session = Depends(get_db)
     ):
         # Проверяем, существует ли пользователь
-        existing = db.query(User).filter(User.login == login).first()
+        existing: Union[User, None] = db.execute(Select(User).filter(User.login == login)).scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,

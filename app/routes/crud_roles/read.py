@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from sqlalchemy import Select
 from sqlalchemy.orm import Session, joinedload
-
+from typing import Union
 from app.database import get_db
 from app.helpers.permissions import require_rights
 from app.routes.get.generate_resp import generate_resp
-
 from app.models.auth.role import Role
 from app.models.auth.role_right_goal import RoleRightGoal
 from app.schemas.role import RoleOut
@@ -21,7 +21,7 @@ def build_rights_by_goals(role: Role) -> dict:
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинты для просмотра ролей"
+    # Эндпоинты для просмотра ролей
 
     @router.get(
         "",
@@ -34,14 +34,14 @@ def register_endpoint(router: APIRouter):
         """Эндпоинт для получения списка ролей с пагинацией"""
 
         # Загружаем роли вместе с привязанными целями и правами
-        roles_query = db.query(Role).options(
+        roles_query = Select(Role).options(
             joinedload(Role.role_right_goals)
             .joinedload(RoleRightGoal.goal),
             joinedload(Role.role_right_goals)
             .joinedload(RoleRightGoal.right),
         )
 
-        return paginate(roles_query)
+        return paginate(db, roles_query)
 
     @router.get(
         "/{role_id}",
@@ -50,22 +50,23 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(require_rights("roles", "view"))]
     )
     async def read_role(
-        role_id: int,
-        db: Session = Depends(get_db)
+            role_id: int,
+            db: Session = Depends(get_db)
     ):
         """Эндпоинт для получения конкретной роли"""
 
         # Загружаем роль с её правами и целями
-        role = (
-            db.query(Role)
-            .options(
-                joinedload(Role.role_right_goals)
-                .joinedload(RoleRightGoal.goal),
-                joinedload(Role.role_right_goals)
-                .joinedload(RoleRightGoal.right),
-            )
-            .filter(Role.id == role_id)
-            .first()
+        role: Union[Role, None] = (
+            db.execute(
+                Select(Role)
+                .options(
+                    joinedload(Role.role_right_goals)
+                    .joinedload(RoleRightGoal.goal),
+                    joinedload(Role.role_right_goals)
+                    .joinedload(RoleRightGoal.right),
+                )
+                .filter(Role.id == role_id))
+            .scalar_one_or_none()
         )
 
         if not role:

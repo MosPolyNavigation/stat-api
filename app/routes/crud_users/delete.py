@@ -1,4 +1,6 @@
+from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.auth.user import User
@@ -15,7 +17,7 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(require_rights("users", "delete"))]
     )
     async def delete_user(user_id: int, db: Session = Depends(get_db)):
-        user = db.query(User).filter(User.id == user_id).first()
+        user: Union[User, None] = db.execute(Select(User).filter(User.id == user_id)).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
