@@ -1,8 +1,8 @@
 """Create tables for navigation data
 
-Revision ID: c0afa518c854
+Revision ID: 4acb0863f0c4
 Revises: 54cc0e9009ab
-Create Date: 2025-11-18 23:35:01.064676
+Create Date: 2025-11-19 14:49:24.141425
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'c0afa518c854'
+revision: str = '4acb0863f0c4'
 down_revision: Union[str, None] = '54cc0e9009ab'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -97,7 +97,9 @@ def upgrade() -> None:
     sa.Column('text_from_sign', sa.String(length=200), nullable=True),
     sa.Column('additional_info', sa.String(length=200), nullable=True),
     sa.Column('comments', sa.String(length=200), nullable=True),
-    sa.Column('link', sa.String(length=30), nullable=True),
+    sa.Column('link', sa.String(length=255), nullable=True),
+    sa.Column('photo_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['photo_id'], ['statics.id'], ),
     sa.ForeignKeyConstraint(['plan_id'], ['plans.id'], ),
     sa.ForeignKeyConstraint(['type_id'], ['types.id'], ),
     sa.PrimaryKeyConstraint('id'),
