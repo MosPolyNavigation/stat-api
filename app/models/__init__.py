@@ -14,4 +14,10 @@ from app.models.stat.start_way import StartWay
 from app.models.auth.user import User
 from app.models.stat.user_id import UserId
 from app.models.auth.user_role import UserRole
-from .floor_map import FloorMap
+from app.models.nav.floor import Floor
+from app.models.nav.static import Static
+from app.models.nav.plan import Plan
+from app.models.nav.auditory import Auditory
+from app.models.nav.corpus import Corpus
+from app.models.nav.types import Type
+from app.models.nav.location import Location

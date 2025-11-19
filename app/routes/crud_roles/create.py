@@ -1,4 +1,6 @@
+from typing import Union
 from fastapi import APIRouter, Depends, Form, HTTPException, status
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.auth.role import Role
@@ -37,7 +39,7 @@ def register_endpoint(router: APIRouter):
             raise HTTPException(400, "rights_by_goals должен быть валидным JSON")
 
         # Проверяем существует ли роль
-        existing = db.query(Role).filter(Role.name == name).first()
+        existing: Union[Role, None] = db.execute(Select(Role).filter(Role.name == name)).scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=400,
@@ -69,12 +71,12 @@ def register_endpoint(router: APIRouter):
 
         # Заполняем role_right_goal
         for goal_name, rights in rights_by_goals.items():
-            goal = db.query(Goal).filter_by(name=goal_name).first()
+            goal: Union[Goal, None] = db.execute(Select(Goal).filter_by(name=goal_name)).scalar_one_or_none()
             if not goal:
                 raise HTTPException(400, f"Цель '{goal_name}' не найдена")
 
             for r in rights:
-                right = db.query(Right).filter_by(name=r).first()
+                right: Union[Right, None] = db.execute(Select(Right).filter_by(name=r)).scalar_one_or_none()
                 if not right:
                     raise HTTPException(400, f"Право '{r}' не найдено")
 

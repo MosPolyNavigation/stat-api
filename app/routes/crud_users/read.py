@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import Select
 from sqlalchemy.orm import Session
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import paginate
+from typing import Union
 from app.database import get_db
 from app.models.auth.user import User
 from app.schemas.user import UserOut
@@ -10,7 +12,7 @@ from app.routes.get.generate_resp import generate_resp
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинты для просмотра пользователей"
+    # Эндпоинты для просмотра пользователей
 
     @router.get(
         "",
@@ -24,13 +26,12 @@ def register_endpoint(router: APIRouter):
         Эндпоинт для получения списка пользователей с пагинацией.
 
         Args:
-            query: Параметры пагинации
             db: Сессия базы данных
 
         Returns:
             Страница с найденными пользователями
         """
-        return paginate(db.query(User))
+        return paginate(db, Select(User))
 
     "Эндпоинты для просмотра определённого пользователя"
 
@@ -44,7 +45,7 @@ def register_endpoint(router: APIRouter):
         """
         Эндпоинт для получения одного пользователя по ID.
         """
-        user = db.query(User).filter(User.id == user_id).first()
+        user: Union[User, None] = db.execute(Select(User).filter(User.id == user_id)).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=404,

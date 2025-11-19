@@ -75,7 +75,8 @@ app.mount(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_hosts,
-    allow_methods=settings.allowed_methods
+    allow_methods=settings.allowed_methods,
+    allow_headers=settings.allowed_headers
 )
 
 

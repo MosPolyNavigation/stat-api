@@ -70,8 +70,8 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def login(
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-        db: Session = Depends(get_db)
+            form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+            db: Session = Depends(get_db)
     ):
         user = authenticate_user(db, form_data.username, form_data.password)
         if not user:
@@ -90,12 +90,16 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def read_users_me(
-        current_user: Annotated[User, Depends(get_current_active_user)],
-        db: Session = Depends(get_db),
+            current_user: Annotated[User, Depends(get_current_active_user)],
+            db: Session = Depends(get_db),
     ):
         """Возвращает актуальные данные текущего пользователя"""
         db.refresh(current_user)
-        result = UserOut(login=current_user.login, is_active=current_user.is_active)
+        result = UserOut(
+            id=current_user.id,
+            login=current_user.login,
+            is_active=current_user.is_active
+        )
         result.rights_by_goals = current_user.get_rights(db)
         return result
 
