@@ -24,7 +24,8 @@ class Settings(BaseSettings):
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: Annotated[set[str], NoDecode] = ""
-    allowed_methods: Annotated[set[str], NoDecode] = "PUT,POST,GET"
+    allowed_methods: Annotated[set[str], NoDecode] = "*,"
+    allowed_headers: Annotated[set[str], NoDecode] = "Authorization,"
 
     @field_validator('allowed_hosts', mode='before')
     @classmethod
@@ -34,6 +35,11 @@ class Settings(BaseSettings):
     @field_validator('allowed_methods', mode='before')
     @classmethod
     def decode_allowed_methods(cls, v: str) -> set[str]:
+        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+
+    @field_validator('allowed_headers', mode='before')
+    @classmethod
+    def decode_allowed_headers(cls, v: str) -> set[str]:
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     model_config = SettingsConfigDict(
