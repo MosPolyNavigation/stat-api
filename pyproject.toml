@@ -19,6 +19,7 @@ dependencies = [
     "apscheduler",
     "pwdlib[argon2]",
     "argparse",
+    "transliterate",
 ]
 
 [dependency-groups]
