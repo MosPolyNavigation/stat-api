@@ -16,7 +16,7 @@ def av(aud: str):
     groups = match.groupdict()
     nums = f"-{groups['cor']}{groups['num']}"
     sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
-    return f"av{nums}{sub}"
+    return f"av{nums}{sub}".lower()
 
 
 def pr(aud: str):
@@ -27,7 +27,7 @@ def pr(aud: str):
     groups = match.groupdict()
     nums = f"-{groups['cor']}{groups['num']}"
     sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
-    return f"pr{nums}{sub}"
+    return f"pr{nums}{sub}".lower()
 
 
 def m(aud: str):
@@ -38,7 +38,7 @@ def m(aud: str):
     groups = match.groupdict()
     nums = f"-{groups['cor']}{groups['num']}" if groups['cor'] and groups['num'] else ""
     sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
-    return f"m{nums}{sub}"
+    return f"m{nums}{sub}".lower()
 
 
 def pk(aud: str):
@@ -49,7 +49,7 @@ def pk(aud: str):
     groups = match.groupdict()
     nums = f"-{groups['num']}"
     sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
-    return f"pk{nums}{sub}"
+    return f"pk{nums}{sub}".lower()
 
 
 def bs(aud: str):
@@ -61,7 +61,7 @@ def bs(aud: str):
     cor = translit(groups['cor'], 'ru', reversed=True)
     nums = f"-{groups['num']}" if groups['num'] else ""
     sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
-    return f"{cor}{nums}{sub}"
+    return f"{cor}{nums}{sub}".lower()
 
 
 LOCATION_NAMES = [
