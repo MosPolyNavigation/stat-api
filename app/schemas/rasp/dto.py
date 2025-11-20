@@ -7,7 +7,7 @@ class AuditoryDto(BaseModel):
     color: str
 
 
-class LessonDto(BaseModel):
+class VarietyDto(BaseModel):
     sbj: str
     teacher: str
     dts: str
@@ -30,9 +30,11 @@ class GroupDto(BaseModel):
     evening: int
     comment: str
 
+type LessonDto = list[VarietyDto]
+type DayDto = dict[str, LessonDto]
 
 class Dto(BaseModel):
     status: str
-    grid: dict[str, dict[str, list[LessonDto]]]
+    grid: dict[str, DayDto]
     group: GroupDto
     isSession: bool
