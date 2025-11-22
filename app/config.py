@@ -21,7 +21,7 @@ class Settings(BaseSettings):
         env_file: Путь к файлу .env.
         env_file_encoding: Кодировка файла .env.
     """
-    sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite:///app.db")
+    sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite+aiosqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: Annotated[set[str], NoDecode] = ""
     allowed_methods: Annotated[set[str], NoDecode] = "*,"
