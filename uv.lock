@@ -774,7 +774,7 @@ requires-dist = [
     { name = "python-multipart" },
     { name = "sqlalchemy" },
     { name = "strawberry-graphql" },
-    { name = "transliterate", specifier = ">=1.10.2" },
+    { name = "transliterate" },
     { name = "uuid" },
     { name = "uvicorn" },
 ]

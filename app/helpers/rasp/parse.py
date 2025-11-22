@@ -1,4 +1,6 @@
+import asyncio
 from datetime import date
+from typing import Union
 from app.helpers.rasp.canonize import is_valid, canonize
 from app.helpers.rasp.get_schedule import get_schedule
 from app.schemas.rasp.dto import Dto, DayDto, LessonDto, VarietyDto
@@ -11,6 +13,20 @@ filter_reg = re.compile(
     re.IGNORECASE)
 
 numToDay = {"1": "monday", "2": "tuesday", "3": "wednesday", "4": "thursday", "5": "friday", "6": "saturday"}
+
+
+class AsyncQueueIterator:
+    def __init__(self, queue: asyncio.Queue):
+        self.queue = queue
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        item: Union[tuple[str, Union[Dto, None]], None] = await self.queue.get()
+        if item is None:
+            raise StopAsyncIteration
+        return item
 
 
 def parse_variety(day: str, lesson: str, variety_dto: VarietyDto, group_name: str, schedule: Schedule):
@@ -67,10 +83,24 @@ def parse_dto(group: str, dto: Dto, schedule: Schedule):
 
 async def parse() -> Schedule:
     schedule: Schedule = {}
-    async for group, dto in get_schedule():
-        if not dto:
-            continue
-        parse_dto(group, dto, schedule)
+    queue = asyncio.Queue()
+
+    async def loader():
+        async for group, dto in get_schedule():
+            await queue.put((group, dto))
+        await queue.put(None)
+
+    async def parser():
+        async for group, dto in AsyncQueueIterator(queue):
+            if not dto:
+                continue
+            print(f"Парсим расписание для группы {group}")
+            parse_dto(group, dto, schedule)
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(loader())
+        tg.create_task(parser())
+
     for aud in schedule.values():
         aud.rasp.merge()
     return schedule

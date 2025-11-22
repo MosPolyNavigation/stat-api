@@ -45,6 +45,7 @@ async def get_schedule() -> AsyncGenerator[tuple[str, Union[Dto, None]], None]:
             yield key, None
             continue
         async with httpx.AsyncClient(timeout=30) as client:
+            print(f"Получаем расписание для группы {key}")
             r = await client.get(
                 f'{dataUrl}{key}',
                 headers={'User-Agent': USER_AGENT, "Referer": "https://rasp.dmami.ru"})
