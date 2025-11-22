@@ -12,7 +12,7 @@ dependencies = [
     "httpx",
     "python-dotenv",
     "python-multipart",
-    "sqlalchemy",
+    "sqlalchemy[asyncio]",
     "uuid",
     "uvicorn",
     "pydantic-settings",
@@ -20,6 +20,8 @@ dependencies = [
     "pwdlib[argon2]",
     "argparse",
     "transliterate",
+    "aiosqlite",
+    "asyncpg",
 ]
 
 [dependency-groups]
