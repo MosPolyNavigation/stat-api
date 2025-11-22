@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Body, Request, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.schemas import Status, SelectedAuditoryIn
@@ -53,7 +53,7 @@ def register_endpoint(router: APIRouter):
             request: Request,
             response: Response,
             data: SelectedAuditoryIn = Body(),
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_db),
     ):
         """
         Эндпоинт для добавления выбора аудитории.

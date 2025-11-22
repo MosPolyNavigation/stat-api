@@ -1,7 +1,8 @@
 from datetime import datetime
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional
 from .filter_handlers import _validated_limit
@@ -39,7 +40,7 @@ async def resolve_start_ways(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[StartWayType]:
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = ensure_stats_view_permission(info)
     statement = (
         select(StartWay)
         .options(selectinload(StartWay.user))
@@ -54,5 +55,5 @@ async def resolve_start_ways(
         return []
     if validated_limit is not None:
         statement = statement.limit(validated_limit)
-    records = session.execute(statement).scalars().all()
+    records = (await session.execute(statement)).scalars().all()
     return [_to_start_way(record) for record in records]

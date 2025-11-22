@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Body, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.handlers import insert_changed_plan
@@ -39,7 +39,7 @@ def register_endpoint(router: APIRouter):
     )
     async def add_changed_plan(
             data: ChangePlanIn = Body(),
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
         """
         Эндпоинт для добавления смены плана.

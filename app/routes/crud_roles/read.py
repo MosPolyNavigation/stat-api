@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page
-from fastapi_pagination.ext.sqlalchemy import paginate
+from fastapi_pagination.ext.sqlalchemy import apaginate
 from sqlalchemy import Select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
 from typing import Union
 from app.database import get_db
 from app.helpers.permissions import require_rights
@@ -30,7 +31,7 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(require_rights("roles", "view"))],
         responses=generate_resp(Page[RoleOut])
     )
-    async def read_roles(db: Session = Depends(get_db)):
+    async def read_roles(db: AsyncSession = Depends(get_db)):
         """Эндпоинт для получения списка ролей с пагинацией"""
 
         # Загружаем роли вместе с привязанными целями и правами
@@ -41,7 +42,7 @@ def register_endpoint(router: APIRouter):
             .joinedload(RoleRightGoal.right),
         )
 
-        return paginate(db, roles_query)
+        return await apaginate(db, roles_query)
 
     @router.get(
         "/{role_id}",
@@ -51,13 +52,13 @@ def register_endpoint(router: APIRouter):
     )
     async def read_role(
             role_id: int,
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
         """Эндпоинт для получения конкретной роли"""
 
         # Загружаем роль с её правами и целями
         role: Union[Role, None] = (
-            db.execute(
+            (await db.execute(
                 Select(Role)
                 .options(
                     joinedload(Role.role_right_goals)
@@ -66,7 +67,7 @@ def register_endpoint(router: APIRouter):
                     .joinedload(RoleRightGoal.right),
                 )
                 .filter(Role.id == role_id))
-            .scalar_one_or_none()
+             ).scalar_one_or_none()
         )
 
         if not role:

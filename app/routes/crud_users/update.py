@@ -1,7 +1,7 @@
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy import Select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from app.database import get_db
 from app.models.auth.user import User
@@ -23,10 +23,10 @@ def register_endpoint(router: APIRouter):
         user_id: int,
         password: str | None = Form(None, description="Новый пароль"),
         is_active: bool | None = Form(None, description="Активен ли пользователь"),
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db)
     ):
         # Проверяем, существует ли пользователь
-        user: Union[User, None] = db.execute(Select(User).filter(User.id == user_id)).scalar_one_or_none()
+        user: Union[User, None] = (await db.execute(Select(User).filter(User.id == user_id))).scalar_one_or_none()
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -55,8 +55,8 @@ def register_endpoint(router: APIRouter):
                 )
             }
 
-        db.commit()
-        db.refresh(user)
+        await db.commit()
+        await db.refresh(user)
 
         # Формируем сообщение об успешных изменениях
         message = f"Успешно изменены поля: {', '.join(changes)}"

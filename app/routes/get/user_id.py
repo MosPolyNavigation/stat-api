@@ -1,5 +1,5 @@
 from fastapi import Depends, APIRouter
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.handlers import create_user_id
 from app.schemas import UserId, Status
@@ -27,7 +27,7 @@ def register_endpoint(router: APIRouter):
             }
         }
     )
-    async def get_uuid(db: Session = Depends(get_db)):
+    async def get_uuid(db: AsyncSession = Depends(get_db)):
         """
         Эндпоинт для получения уникального идентификатора пользователя.
 

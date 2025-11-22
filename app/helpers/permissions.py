@@ -1,6 +1,7 @@
+from sqlalchemy import Select
 from typing import Annotated
 from fastapi import Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User, Goal
 from app.helpers.auth_utils import get_current_active_user
@@ -17,10 +18,10 @@ def require_rights(goal_name: str, *rights: str):
     """
     async def check_rights(
         current_user: Annotated[User, Depends(get_current_active_user)],
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
     ):
         # Находим цель по имени
-        goal = db.query(Goal).filter(Goal.name == goal_name).first()
+        goal = (await db.execute(Select(Goal).filter(Goal.name == goal_name))).scalar_one()
         if not goal:
             raise HTTPException(
                 status_code=404,
@@ -28,7 +29,8 @@ def require_rights(goal_name: str, *rights: str):
             )
 
         # Получаем роли пользователя
-        user_rights_by_goal = current_user.get_rights(db)
+        user_rights_by_goal = await current_user.get_rights(db)
+        await db.close()
         user_rights = user_rights_by_goal[goal.name]
 
         user_rights_set = {r for r in user_rights}

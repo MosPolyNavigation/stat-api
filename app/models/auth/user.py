@@ -1,6 +1,7 @@
 from collections import defaultdict
 from sqlalchemy import Boolean, Column, Integer, String, Select
-from sqlalchemy.orm import Mapped, relationship, Session, joinedload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Mapped, relationship, joinedload
 from app.models.auth.role_right_goal import RoleRightGoal
 from app.models.auth.user_role import UserRole
 from app.models.base import Base
@@ -28,9 +29,9 @@ class User(Base):
             f"User(id={self.id!r}, login={self.login!r}, is_active={self.is_active!r})"
         )
 
-    def get_rights(self, db: Session) -> dict[str, list[str]]:
+    async def get_rights(self, db: AsyncSession) -> dict[str, list[str]]:
         role_right_goals = (
-            db.execute(
+            (await db.execute(
                 Select(RoleRightGoal)
                 .join(UserRole, RoleRightGoal.role_id == UserRole.role_id)
                 .filter(UserRole.user_id == self.id)
@@ -38,7 +39,7 @@ class User(Base):
                     joinedload(RoleRightGoal.right),
                     joinedload(RoleRightGoal.goal)
                 )
-            ).scalars().all()
+            )).scalars().all()
         )
 
         # Группируем права по целям
@@ -56,14 +57,14 @@ class User(Base):
         # Преобразуем defaultdict в обычный dict
         return dict(rights_by_goal)
 
-    def is_capable(self, db: Session, goal: str, right: str) -> bool:
+    async def is_capable(self, db: AsyncSession, goal: str, right: str) -> bool:
 
         if not goal or not right:
             raise ValueError("goal and right must be provided for capability checks")
         if not self.is_active:
             raise PermissionError("Inactive user cannot execute actions")
 
-        rights_by_goal = self.get_rights(db)
+        rights_by_goal = await self.get_rights(db)
         goal_rights = rights_by_goal.get(goal)
         if goal_rights is None:
             return False

@@ -1,7 +1,7 @@
 from datetime import datetime
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 from typing import Optional
 from app.models import UserId
@@ -29,7 +29,7 @@ async def resolve_user_ids(
         user_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[UserIdType]:
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = ensure_stats_view_permission(info)
     statement = select(UserId).order_by(
         UserId.creation_date.desc()
     )
@@ -40,5 +40,5 @@ async def resolve_user_ids(
         return []
     if validated_limit is not None:
         statement = statement.limit(validated_limit)
-    records = session.execute(statement).scalars().all()
+    records = (await session.execute(statement)).scalars().all()
     return [_to_user_id(record) for record in records if record is not None]

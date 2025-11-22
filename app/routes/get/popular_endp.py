@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import Status
 from app.database import get_db
 from app.handlers import get_popular_auds
@@ -31,7 +31,7 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def get_popular(
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ) -> JSONResponse:
         data = await get_popular_auds(db)
         return JSONResponse(data, status_code=200)

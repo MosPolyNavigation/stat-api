@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from datetime import datetime, timedelta
 from app.state import AppState
@@ -30,10 +30,10 @@ def check_user(state: AppState, user_id) -> float:
     return delta.total_seconds()
 
 
-def check_user_id(db: Session, data: UserIdCheck) -> Status:
-    user = db.execute(
+async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
+    user = (await db.execute(
         Select(UserId).filter_by(user_id=data.user_id)
-    ).scalar_one_or_none()
+    )).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
     return Status()

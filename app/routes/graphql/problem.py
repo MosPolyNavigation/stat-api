@@ -1,6 +1,6 @@
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 from typing import Optional
 from .filter_handlers import _validated_limit
@@ -24,7 +24,7 @@ async def resolve_problems(
         problem_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[ProblemType]:
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = ensure_stats_view_permission(info)
     statement = select(Problem).order_by(Problem.id)
     if problem_id:
         statement = statement.where(Problem.id == problem_id)
@@ -33,5 +33,5 @@ async def resolve_problems(
         return []
     if validated_limit is not None:
         statement = statement.limit(validated_limit)
-    records = session.execute(statement).scalars().all()
+    records = (await session.execute(statement)).scalars().all()
     return [ProblemType(id=record.id) for record in records]

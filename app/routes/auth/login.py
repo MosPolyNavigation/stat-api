@@ -3,7 +3,7 @@ from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
@@ -37,26 +37,26 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 #     return password_hash.hash(password)
 
 
-def get_user_by_login(db: Session, login: str) -> Optional[User]:
+async def get_user_by_login(db: AsyncSession, login: str) -> Optional[User]:
     """Получить пользователя по логину"""
-    return db.execute(select(User).filter_by(login=login)).scalar()
+    return (await db.execute(select(User).filter_by(login=login))).scalar()
 
 
-def authenticate_user(db: Session, login: str, password: str) -> Optional[User]:
+async def authenticate_user(db: AsyncSession, login: str, password: str) -> Optional[User]:
     """проверка, существует ли пользователь и правильный ли пароль"""
-    user = get_user_by_login(db, login)
+    user = await get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
         return None
     return user
 
 
-def create_token(user: User, db: Session) -> str:
+async def create_token(user: User, db: AsyncSession) -> str:
     """Создать токен для пользователя (просто UUID)"""
     token = str(uuid.uuid4())
     user.token = token
     db.add(user)
-    db.commit()
-    db.refresh(user)
+    await db.commit()
+    await db.refresh(user)
     return token
 
 
@@ -71,15 +71,15 @@ def register_endpoint(router: APIRouter):
     )
     async def login(
             form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
-        user = authenticate_user(db, form_data.username, form_data.password)
+        user = await authenticate_user(db, form_data.username, form_data.password)
         if not user:
             raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
 
         # Создание токена (UUID)
         access_token = create_token(user, db)
-        return Token(access_token=access_token, token_type="bearer")
+        return Token(access_token=await access_token, token_type="bearer")
 
     """Эндпоинт для получения данных пользователя по токену"""
 
@@ -91,16 +91,16 @@ def register_endpoint(router: APIRouter):
     )
     async def read_users_me(
             current_user: Annotated[User, Depends(get_current_active_user)],
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_db),
     ):
         """Возвращает актуальные данные текущего пользователя"""
-        db.refresh(current_user)
+        await db.refresh(current_user)
         result = UserOut(
             id=current_user.id,
             login=current_user.login,
             is_active=current_user.is_active
         )
-        result.rights_by_goals = current_user.get_rights(db)
+        result.rights_by_goals = await current_user.get_rights(db)
         return result
 
     # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
@@ -111,7 +111,7 @@ def register_endpoint(router: APIRouter):
     # )
     # async def deactivate_user(
     #         current_user: Annotated[User, Depends(get_current_user)],
-    #         db: Session = Depends(get_db)
+    #         db: AsyncSession = Depends(get_db)
     # ):
     #     """Деактивирует текущего пользователя"""
     #     if not current_user.is_active:

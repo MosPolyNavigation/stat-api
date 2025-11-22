@@ -1,7 +1,7 @@
 from typing import Union
 from fastapi import APIRouter, Depends, Form, HTTPException, status
 from sqlalchemy import Select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.auth.role import Role
 from app.models.auth.role_right_goal import RoleRightGoal
@@ -29,7 +29,7 @@ def register_endpoint(router: APIRouter):
         # JSON-строка с правами роли (отправляется через form-data как текст),
         # пример: {"users":["view","edit"],"roles":["view"]}
         rights_by_goals: str = Form(...),
-        db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
     ):
         # Конвертируем JSON-строку из form-data в dict
@@ -39,7 +39,7 @@ def register_endpoint(router: APIRouter):
             raise HTTPException(400, "rights_by_goals должен быть валидным JSON")
 
         # Проверяем существует ли роль
-        existing: Union[Role, None] = db.execute(Select(Role).filter(Role.name == name)).scalar_one_or_none()
+        existing: Union[Role, None] = (await db.execute(Select(Role).filter(Role.name == name))).scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=400,
@@ -47,7 +47,7 @@ def register_endpoint(router: APIRouter):
             )
 
         # Права текущего пользователя
-        user_rights = current_user.get_rights(db)
+        user_rights = await current_user.get_rights(db)
 
         # Проверка прав
         for goal_name, rights in rights_by_goals.items():
@@ -66,17 +66,17 @@ def register_endpoint(router: APIRouter):
         # Создаём роль
         new_role = Role(name=name)
         db.add(new_role)
-        db.commit()
-        db.refresh(new_role)
+        await db.commit()
+        await db.refresh(new_role)
 
         # Заполняем role_right_goal
         for goal_name, rights in rights_by_goals.items():
-            goal: Union[Goal, None] = db.execute(Select(Goal).filter_by(name=goal_name)).scalar_one_or_none()
+            goal: Union[Goal, None] = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one_or_none()
             if not goal:
                 raise HTTPException(400, f"Цель '{goal_name}' не найдена")
 
             for r in rights:
-                right: Union[Right, None] = db.execute(Select(Right).filter_by(name=r)).scalar_one_or_none()
+                right: Union[Right, None] = (await db.execute(Select(Right).filter_by(name=r))).scalar_one_or_none()
                 if not right:
                     raise HTTPException(400, f"Право '{r}' не найдено")
 
@@ -86,7 +86,7 @@ def register_endpoint(router: APIRouter):
                     right_id=right.id
                 ))
 
-        db.commit()
+        await db.commit()
 
         # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(
