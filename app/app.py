@@ -42,11 +42,14 @@ settings = get_settings()
 CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
 PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
 FRONT_DIR = path.join(PROJECT_DIR, "dist")
+ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
 
 if not path.exists(STATIC_DIR):
     makedirs(STATIC_DIR)
 if not path.exists(FRONT_DIR):
+    makedirs(FRONT_DIR)
+if not path.exists(ADMIN_DIR):
     makedirs(FRONT_DIR)
 
 app = FastAPI(
@@ -68,6 +71,14 @@ app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql
 app.include_router(crud_users.router)
 app.include_router(crud_roles.router)
 app.include_router(jobs.router)
+app.mount(
+    "/admin/",
+    StaticFiles(
+        directory=ADMIN_DIR,
+        html=True
+    ),
+    "admin"
+)
 app.mount(
     "/",
     StaticFiles(
