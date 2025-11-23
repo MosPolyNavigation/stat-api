@@ -24,7 +24,7 @@ async def resolve_problems(
         problem_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[ProblemType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = select(Problem).order_by(Problem.id)
     if problem_id:
         statement = statement.where(Problem.id == problem_id)

@@ -36,7 +36,7 @@ async def resolve_change_plans(
     plan_id: Optional[str] = None,
     limit: Optional[int] = None
 ) -> list[ChangePlanType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(ChangePlan)
         .options(selectinload(ChangePlan.user))

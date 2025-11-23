@@ -38,7 +38,7 @@ async def resolve_select_auditories(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[SelectAuditoryType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(SelectAuditory)
         .options(selectinload(SelectAuditory.user))

@@ -40,7 +40,7 @@ async def resolve_start_ways(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[StartWayType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(StartWay)
         .options(selectinload(StartWay.user))

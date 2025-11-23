@@ -17,8 +17,8 @@ def _get_session_and_user(info: Info) -> Tuple[AsyncSession, User]:
     return session, current_user
 
 
-def ensure_stats_view_permission(info: Info) -> AsyncSession:
+async def ensure_stats_view_permission(info: Info) -> AsyncSession:
     session, current_user = _get_session_and_user(info)
-    if not current_user.is_capable(session, STATS_GOAL_NAME, VIEW_RIGHT_NAME):
+    if not await current_user.is_capable(session, STATS_GOAL_NAME, VIEW_RIGHT_NAME):
         raise GraphQLError("Недостаточно прав для просмотра статистики")
     return session

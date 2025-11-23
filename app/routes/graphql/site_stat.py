@@ -36,7 +36,7 @@ async def resolve_site_stats(
     endpoint: Optional[str] = None,
     limit: Optional[int] = None
 ) -> list[SiteStatType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(SiteStat)
         .options(selectinload(SiteStat.user))

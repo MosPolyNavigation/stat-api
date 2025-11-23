@@ -29,7 +29,7 @@ async def resolve_user_ids(
         user_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[UserIdType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = select(UserId).order_by(
         UserId.creation_date.desc()
     )

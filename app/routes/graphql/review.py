@@ -43,7 +43,7 @@ async def resolve_reviews(
         problem_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[ReviewType]:
-    session: AsyncSession = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(Review)
         .options(
