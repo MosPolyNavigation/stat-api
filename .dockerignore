@@ -8,4 +8,5 @@ app.db
 /**/.pytest_cache
 /**/.idea/
 /.github/
-
+/web/
+/admin-panel/

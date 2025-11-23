@@ -1,3 +1,6 @@
 [submodule "web"]
 	path = web
 	url = https://github.com/MosPolyNavigation/web.git
+[submodule "admin-panel"]
+	path = admin-panel
+	url = https://github.com/MosPolyNavigation/admin-panel.git
