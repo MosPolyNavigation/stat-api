@@ -6,7 +6,7 @@ from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles
+from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
@@ -31,6 +31,10 @@ tags_metadata = [
     {
         "name": "auth",
         "description": "Эндпоинты для аутентификации и авторизации"
+    },
+    {
+        "name": "jobs",
+        "description": "Эндпоинты для управления фоновыми задачами"
     }
 ]
 
@@ -63,6 +67,7 @@ app.include_router(auth.router)
 app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
 app.include_router(crud_users.router)
 app.include_router(crud_roles.router)
+app.include_router(jobs.router)
 app.mount(
     "/",
     StaticFiles(

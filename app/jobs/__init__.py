@@ -12,7 +12,7 @@ async def lifespan(_: FastAPI):
     scheduler.add_job(fetch_cur_data, "interval", minutes=10)
     scheduler.add_job(fetch_cur_rasp, "cron", hour=0, minute=0)
     await fetch_cur_data()
-    await fetch_cur_rasp()
+    # await fetch_cur_rasp()
     scheduler.start()
     yield
     scheduler.shutdown()
