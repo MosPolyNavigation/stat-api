@@ -4,3 +4,4 @@ from app.schemas.rasp.schedule import Schedule
 
 global_graph: Dict[str, Graph] = dict()
 global_rasp: Union[Schedule, None] = None
+locker: bool = False
