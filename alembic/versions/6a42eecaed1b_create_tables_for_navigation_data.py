@@ -1,8 +1,8 @@
 """Create tables for navigation data
 
-Revision ID: 4acb0863f0c4
+Revision ID: 6a42eecaed1b
 Revises: 54cc0e9009ab
-Create Date: 2025-11-19 14:49:24.141425
+Create Date: 2025-11-23 19:42:34.967922
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4acb0863f0c4'
+revision: str = '6a42eecaed1b'
 down_revision: Union[str, None] = '54cc0e9009ab'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -102,8 +102,13 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['photo_id'], ['statics.id'], ),
     sa.ForeignKeyConstraint(['plan_id'], ['plans.id'], ),
     sa.ForeignKeyConstraint(['type_id'], ['types.id'], ),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('id_sys')
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.bulk_insert(
+        sa.sql.table(
+            "floors", sa.sql.column('id', sa.Integer), sa.sql.column('name', sa.Integer)
+        ),
+        [{'id': x+2, 'name': x} for x in range(-1, 10)]
     )
     # ### end Alembic commands ###
 
