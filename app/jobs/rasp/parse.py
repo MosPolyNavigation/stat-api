@@ -105,5 +105,5 @@ async def parse(db: AsyncSession) -> Schedule:
 
     for aud in schedule.values():
         aud.rasp.merge()
-        aud.link = (await db.execute(Select(AuditoryModel.link).filter_by(id_sys=aud.id))).scalar_one_or_none()
+        aud.link = (await db.execute(Select(AuditoryModel.link).filter_by(id_sys=aud.id))).scalars().first()
     return schedule
