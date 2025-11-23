@@ -1,11 +1,14 @@
+import re
 import asyncio
 from datetime import date
+from sqlalchemy import Select
+from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Union
-from app.helpers.rasp.canonize import is_valid, canonize
-from app.helpers.rasp.get_schedule import get_schedule
+from app.jobs.rasp.canonize import is_valid, canonize
+from app.jobs.rasp.get_schedule import get_schedule
 from app.schemas.rasp.dto import Dto, DayDto, LessonDto, VarietyDto
 from app.schemas.rasp.schedule import Schedule, Variety, Auditory, Rasp
-import re
+from app.models.nav.auditory import Auditory as AuditoryModel
 
 filter_reg = re.compile(
     r'(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h'
@@ -81,7 +84,7 @@ def parse_dto(group: str, dto: Dto, schedule: Schedule):
         parse_day(day, dayDto, group, schedule)
 
 
-async def parse() -> Schedule:
+async def parse(db: AsyncSession) -> Schedule:
     schedule: Schedule = {}
     queue = asyncio.Queue()
 
@@ -94,7 +97,6 @@ async def parse() -> Schedule:
         async for group, dto in AsyncQueueIterator(queue):
             if not dto:
                 continue
-            print(f"Парсим расписание для группы {group}")
             parse_dto(group, dto, schedule)
 
     async with asyncio.TaskGroup() as tg:
@@ -103,4 +105,5 @@ async def parse() -> Schedule:
 
     for aud in schedule.values():
         aud.rasp.merge()
+        aud.link = (await db.execute(Select(AuditoryModel.link).filter_by(id_sys=aud.id))).scalar_one_or_none()
     return schedule
