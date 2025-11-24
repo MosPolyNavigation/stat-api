@@ -134,7 +134,7 @@ class TestCreateRole:
         rights = {
             "users": ["view", "create"],
             "roles": ["view"],
-            "stats": ["view", "create", "edit"]
+            "stats": ["view"]
         }
 
         response = client.post(
@@ -298,7 +298,7 @@ class TestUpdateRole:
         role_id = create_response.json()["id"]
 
         # Обновляем права
-        new_rights = {"users": ["view", "create"], "stats": ["view", "edit"]}
+        new_rights = {"users": ["view", "create"], "stats": ["view"]}
         response = client.patch(
             f"/api/roles/{role_id}",
             headers=ADMIN_HEADERS,
