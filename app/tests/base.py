@@ -64,6 +64,9 @@ def create_db_and_tables():
     data_role_right_goals: list[models.RoleRightGoal] = list(
         [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2]) for x in roles_rights_goals]
     )
+    # Добавляем админу недостающие права на stats для тестов
+    data_role_right_goals.append(models.RoleRightGoal(role_id=1, right_id=2, goal_id=1))  # stats-create
+    data_role_right_goals.append(models.RoleRightGoal(role_id=1, right_id=3, goal_id=1))  # stats-edit
     db.add_all(data_role_right_goals)
     data_user: models.User = models.User(
         id=1,
