@@ -1,3 +1,4 @@
+from sqlalchemy.orm import selectinload
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import Select
@@ -20,7 +21,10 @@ def register_endpoint(router: APIRouter):
         role_id: int,
         db: AsyncSession = Depends(get_db)
     ):
-        role: Union[Role, None] = (await db.execute(Select(Role).filter(Role.id == role_id))).scalar_one_or_none()
+        role: Union[Role, None] = (await db.execute(
+            Select(Role).filter(Role.id == role_id)
+            .options(selectinload(Role.user_roles))
+        )).scalar_one_or_none()
         if not role:
             raise HTTPException(404, "Роль не найдена")
 

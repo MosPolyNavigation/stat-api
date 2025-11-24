@@ -14,6 +14,28 @@ from app.helpers.auth_utils import get_current_user
 import json
 
 
+async def fill_role_right_goal(
+        db: AsyncSession,
+        rights_by_goals: dict[str, list[str]]
+) -> list[RoleRightGoal]:
+    role_right_goal: list[RoleRightGoal] = []
+    for goal_name, rights in rights_by_goals.items():
+        goal_id: Union[int, None] = (await db.execute(Select(Goal.id).filter_by(name=goal_name))).scalar_one_or_none()
+        if not goal_id:
+            raise HTTPException(400, f"Цель '{goal_name}' не найдена")
+
+        for r in rights:
+            right_id: Union[int, None] = (await db.execute(Select(Right.id).filter_by(name=r))).scalar_one_or_none()
+            if not right_id:
+                raise HTTPException(400, f"Право '{r}' не найдено")
+
+            role_right_goal.append(RoleRightGoal(
+                goal_id=goal_id,
+                right_id=right_id
+            ))
+    return role_right_goal
+
+
 def register_endpoint(router: APIRouter):
     "Эндпоинт для создания роли"
 
@@ -64,29 +86,10 @@ def register_endpoint(router: APIRouter):
                     )
 
         # Создаём роль
-        new_role = Role(name=name)
+        new_role = Role(name=name, role_right_goals=await fill_role_right_goal(db, rights_by_goals))
         db.add(new_role)
         await db.commit()
         await db.refresh(new_role)
-
-        # Заполняем role_right_goal
-        for goal_name, rights in rights_by_goals.items():
-            goal: Union[Goal, None] = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one_or_none()
-            if not goal:
-                raise HTTPException(400, f"Цель '{goal_name}' не найдена")
-
-            for r in rights:
-                right: Union[Right, None] = (await db.execute(Select(Right).filter_by(name=r))).scalar_one_or_none()
-                if not right:
-                    raise HTTPException(400, f"Право '{r}' не найдено")
-
-                db.add(RoleRightGoal(
-                    role_id=new_role.id,
-                    goal_id=goal.id,
-                    right_id=right.id
-                ))
-
-        await db.commit()
 
         # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(

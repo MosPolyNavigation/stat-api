@@ -8,7 +8,7 @@ from app.models.auth.role_right_goal import RoleRightGoal
 from app.models.auth.goal import Goal
 from app.models.auth.right import Right
 from app.models.auth.user import User
-from app.helpers.auth_utils import get_current_user
+from app.helpers.auth_utils import get_current_user_with_loaded_fields
 from app.helpers.permissions import require_rights
 from app.schemas.role import RoleOut
 import json
@@ -28,7 +28,7 @@ def register_endpoint(router: APIRouter):
             # JSON-строка с правами (нужно отправлять в формате form-data)
             rights_by_goals: str | None = Form(None),  # например {"users":["view", "edit"],"roles":["view"]}
             db: AsyncSession = Depends(get_db),
-            current_user: User = Depends(get_current_user)
+            current_user: User = Depends(get_current_user_with_loaded_fields)
     ):
         # Конвертируем JSON-строку из form-data в dict
         if rights_by_goals:
@@ -106,7 +106,6 @@ def register_endpoint(router: APIRouter):
                         detail=f"Цель '{goal_name}' не существует в системе"
                     )
 
-            # TODO: поменять остальные SqlAlchemy Query с версии v1.4 на версию v2.0
             # Удаляем старые привязки прав
             await db.execute(Delete(RoleRightGoal).filter_by(role_id=role_id))
 
@@ -129,7 +128,7 @@ def register_endpoint(router: APIRouter):
 
         # Формируем финальную структуру ответа
         # Новое поле может быть None (если клиент не передал права)
-        rights_final = rights_by_goals if rights_by_goals is not None else {}
+        rights_final = rights_by_goals if rights_by_goals else {}
 
         # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(
