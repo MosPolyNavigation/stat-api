@@ -2,7 +2,7 @@ from app.helpers.errors import LookupException
 from app.config import get_settings
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from app.routes import get, stat, review, check, auth, crud_users
+from app.routes import get, stat, review, check, auth, crud_users, crud_roles
 from fastapi import FastAPI, HTTPException, Request
 from app.state import AppState
 
@@ -17,6 +17,7 @@ app.include_router(review.router)
 app.include_router(check.router)
 app.include_router(auth.router)
 app.include_router(crud_users.router)
+app.include_router(crud_roles.router)
 
 
 @app.exception_handler(SQLAlchemyError)
