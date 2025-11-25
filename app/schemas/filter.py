@@ -143,9 +143,9 @@ class FilterSvobodnForPlan(FilterSvobodn):
     plan_id: str = Field()
 
 
-class FilterByCorpus(FilterSvobodn):
+class FilterSvobodnByCorpus(FilterSvobodn):
     corpus_id: str = Field()
 
 
-class FilterByLocation(FilterSvobodn):
+class FilterSvobodnByLocation(FilterSvobodn):
     loc_id: str = Field()
