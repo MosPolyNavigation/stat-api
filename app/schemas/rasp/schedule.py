@@ -62,3 +62,7 @@ class Auditory(BaseModel):
 
 
 type Schedule = dict[str, Auditory]
+type LessonOut = bool
+type DayOut = dict[str, LessonOut]
+type RaspOut = dict[str, DayOut | bool]
+type ScheduleOut = dict[str, RaspOut] | RaspOut

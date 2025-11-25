@@ -59,14 +59,22 @@ def filter_by_date(
 
 
 def filter_lesson(lesson: Lesson, filter_: FilterSvobodn) -> Lesson:
-    if filter_.start_date and filter_.end_date:
+    if filter_.end_date:
         lesson = list([variety for variety in lesson
                        if filter_.start_date <= variety.df
                        and filter_.end_date >= variety.dt])
-    elif filter_.start_date:
-        lesson = list([variety for variety in lesson if filter_.start_date <= variety.df])
+    elif len(lesson) > 1:
+        lowerest_end_date = lesson[0].df
+        lowerest_i = len(lesson)
+        for i, variant in enumerate(lesson[1:]):
+            if lowerest_end_date > variant.dt:
+                lowerest_i = i
+                lowerest_end_date = variant.dt
+        lesson = [lesson[lowerest_i],]
+    elif len(lesson) == 1:
+        lesson = list(*lesson) if lesson[0].df >= filter_.start_date else []
     else:
-        lesson = list(*lesson)
+        lesson = []
     return lesson
 
 

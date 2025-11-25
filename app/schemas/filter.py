@@ -125,8 +125,8 @@ class DayOfWeek(str, Enum):
 
 
 class FilterSvobodn(BaseModel):
-    start_date: Optional[date] = Field(
-        default=None, description="Date from which filtering begins"
+    start_date: date = Field(
+        description="Date from which filtering begins"
     )
     end_date: Optional[date] = Field(
         default=None, description="Date on which filtering ends"
