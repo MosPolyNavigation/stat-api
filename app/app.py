@@ -54,9 +54,10 @@ if not path.exists(STATIC_DIR):
 if not path.exists(FRONT_DIR):
     makedirs(FRONT_DIR)
 if not path.exists(ADMIN_DIR):
-    makedirs(FRONT_DIR)
+    makedirs(ADMIN_DIR)
 
 app = FastAPI(
+    version="0.2.0",
     openapi_tags=tags_metadata,
     # docs_url=None,
     # redoc_url=None,
