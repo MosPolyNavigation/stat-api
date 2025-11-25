@@ -5,14 +5,14 @@ from app.handlers.filter import filter_svobodn
 from app.helpers.svobodn import auditory_is_empty
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnForAud
-from app.schemas.rasp.schedule import Schedule
+from app.schemas.rasp.schedule import ScheduleOut
 import app.globals as globals_
 
 
 def register_endpoint(router: APIRouter):
     @router.get(
         "/by-aud",
-        response_model=Schedule | Status,
+        response_model=ScheduleOut | Status,
         tags=["free-aud"]
     )
     async def by_aud(

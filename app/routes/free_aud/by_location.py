@@ -9,7 +9,7 @@ from app.helpers.svobodn import auditory_is_empty
 from app.models import Plan, Corpus, Location
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnByLocation
-from app.schemas.rasp.schedule import Schedule
+from app.schemas.rasp.schedule import ScheduleOut
 from app.models.nav.auditory import Auditory
 import app.globals as globals_
 
@@ -17,7 +17,7 @@ import app.globals as globals_
 def register_endpoint(router: APIRouter):
     @router.get(
         "/by-loc",
-        response_model=Schedule | Status,
+        response_model=ScheduleOut | Status,
         tags=["free-aud"]
     )
     async def by_loc(
@@ -35,6 +35,7 @@ def register_endpoint(router: APIRouter):
             .join(Plan.corpus)
             .join(Corpus.locations)
             .filter(Location.id_sys == filter_.loc_id)
+            .filter(Auditory.type_id.in_([2, 6, 19, 21]))
         )).scalars().all()
 
-        return auditory_is_empty(schedule, list(*auditories), filter_)
+        return auditory_is_empty(schedule, list(auditories), filter_)

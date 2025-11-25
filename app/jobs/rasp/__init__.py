@@ -17,4 +17,5 @@ async def fetch_cur_rasp():
         logger.info("Schedule fetching finished successful")
         globals_.locker = False
     except Exception as e:
+        globals_.locker = False
         logger.warning(f"Schedule fetching failed with error: {e}")

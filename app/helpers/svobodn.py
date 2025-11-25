@@ -13,10 +13,20 @@ def svobodn_day(day: Day | None, filter_: FilterSvobodn) -> DayOut:
 
 
 def svobodn(schedule: Union[Auditory, None], filter_: FilterSvobodn) -> RaspOut:
+    days_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+    if not schedule:
+        if filter_.para:
+            lessons = {str(filter_.para): True}
+        else:
+            lessons = dict({str(num): True for num in range(1, 8)})
+        days = dict({day: lessons for day in days_names})
+        if filter_.day:
+            return {filter_.day.name: days.get(filter_.day.name)}
+        else:
+            return days
     if filter_.day:
-        return {filter_.day.name: svobodn_day(schedule.rasp[filter_.day.name], filter_)}
-    return dict({day: svobodn_day(schedule.rasp[day], filter_) for day in
-                 ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]})
+        return {filter_.day.name: svobodn_day(schedule.rasp.__dict__[filter_.day.name], filter_)}
+    return dict({day: svobodn_day(schedule.rasp.__dict__[day], filter_) for day in days_names})
 
 
 def auditory_is_empty(schedule: Schedule, auds: list[str], filter_: FilterSvobodn) -> ScheduleOut:
