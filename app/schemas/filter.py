@@ -135,14 +135,16 @@ class FilterSvobodn(BaseModel):
     para: Optional[int] = Field(default=None)
 
 
+class FilterSvobodnForAud(FilterSvobodn):
+    aud_id: str = Field()
+
+
 class FilterSvobodnForPlan(FilterSvobodn):
     plan_id: str = Field()
-    pass
 
 
 class FilterByCorpus(FilterSvobodn):
     corpus_id: str = Field()
-    pass
 
 
 class FilterByLocation(FilterSvobodn):
