@@ -2,6 +2,8 @@ from datetime import datetime, time
 from sqlalchemy import Select
 from typing import Any, Optional
 from app import schemas
+from app.schemas.filter import FilterSvobodn
+from app.schemas.rasp.schedule import Schedule, Auditory, Rasp, Day, Lesson
 
 
 def filter_by_user(
@@ -27,7 +29,7 @@ def filter_by_user(
 
 
 def filter_by_date(
-    params: schemas.FilterQuery
+        params: schemas.FilterQuery
 ) -> Optional[tuple[datetime, datetime]]:
     """
     Функция для фильтрации по дате.
@@ -54,3 +56,40 @@ def filter_by_date(
             datetime.combine(params.start_date, end_time)
         )
     return borders
+
+
+def filter_lesson(lesson: Lesson, filter_: FilterSvobodn) -> Lesson:
+    if filter_.start_date and filter_.end_date:
+        lesson = list([variety for variety in lesson
+                       if filter_.start_date <= variety.df
+                       and filter_.end_date >= variety.dt])
+    elif filter_.start_date:
+        lesson = list([variety for variety in lesson if filter_.start_date <= variety.df])
+    else:
+        lesson = list(*lesson)
+    return lesson
+
+
+def filter_day(day: Day, filter_: FilterSvobodn) -> Day:
+    if filter_.para:
+        d = {str(filter_.para): filter_lesson(day[str(filter_.para)], filter_)}
+    else:
+        d = dict({num: filter_lesson(lesson, filter_) for num, lesson in day})
+    return d
+
+
+def filter_auditory(aud: Auditory, filter_: FilterSvobodn) -> Auditory:
+    if filter_.day:
+        rasp_of_day = Rasp()
+        rasp_of_day[filter_.day.name] = filter_day(aud.rasp[filter_.day.name], filter_)
+        auditory = Auditory(id=aud.id, link=aud.link, rasp=rasp_of_day)
+    else:
+        rasp = Rasp()
+        for day in ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]:
+            rasp[day] = filter_day(aud.rasp[filter_.day.name], filter_)
+        auditory = Auditory(id=aud.id, link=aud.link, rasp=rasp)
+    return auditory
+
+
+def filter_svobodn(schedule: Schedule, filter_: FilterSvobodn) -> Schedule:
+    return dict({aud: filter_auditory(auditory, filter_) for aud, auditory in schedule if auditory})

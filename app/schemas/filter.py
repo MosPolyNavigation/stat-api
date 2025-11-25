@@ -113,3 +113,37 @@ class FilterRoute(BaseModel):
     to_p: str = Field()
     from_p: str = Field(...)
     loc: LocationEnum
+
+
+class DayOfWeek(str, Enum):
+    monday = 'monday'
+    tuesday = 'tuesday'
+    wednesday = "wednesday"
+    thursday = 'thursday'
+    friday = 'friday'
+    saturday = 'saturday'
+
+
+class FilterSvobodn(BaseModel):
+    start_date: Optional[date] = Field(
+        default=None, description="Date from which filtering begins"
+    )
+    end_date: Optional[date] = Field(
+        default=None, description="Date on which filtering ends"
+    )
+    day: Optional[DayOfWeek] = Field(default=None)
+    para: Optional[int] = Field(default=None)
+
+
+class FilterSvobodnForPlan(FilterSvobodn):
+    plan_id: str = Field()
+    pass
+
+
+class FilterByCorpus(FilterSvobodn):
+    corpus_id: str = Field()
+    pass
+
+
+class FilterByLocation(FilterSvobodn):
+    loc_id: str = Field()
