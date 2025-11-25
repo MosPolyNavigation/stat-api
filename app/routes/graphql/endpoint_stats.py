@@ -1,6 +1,6 @@
 from datetime import date, timedelta
 import strawberry
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 from typing import Optional
 from .permissions import ensure_stats_view_permission
@@ -62,7 +62,7 @@ async def resolve_endpoint_statistics(
     if end_date is not None:
         effective_end_date = min(end_date, today_plus_one)
 
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     params = FilterQuery(
         target=TargetEnum(endpoint),
         start_date=effective_start_date,

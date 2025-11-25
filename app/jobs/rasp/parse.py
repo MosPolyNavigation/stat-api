@@ -1,9 +1,14 @@
+import re
+import asyncio
 from datetime import date
-from app.helpers.rasp.canonize import is_valid, canonize
-from app.helpers.rasp.get_schedule import get_schedule
+from sqlalchemy import Select
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Union
+from app.jobs.rasp.canonize import is_valid, canonize
+from app.jobs.rasp.get_schedule import get_schedule
 from app.schemas.rasp.dto import Dto, DayDto, LessonDto, VarietyDto
 from app.schemas.rasp.schedule import Schedule, Variety, Auditory, Rasp
-import re
+from app.models.nav.auditory import Auditory as AuditoryModel
 
 filter_reg = re.compile(
     r'(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h'
@@ -11,6 +16,20 @@ filter_reg = re.compile(
     re.IGNORECASE)
 
 numToDay = {"1": "monday", "2": "tuesday", "3": "wednesday", "4": "thursday", "5": "friday", "6": "saturday"}
+
+
+class AsyncQueueIterator:
+    def __init__(self, queue: asyncio.Queue):
+        self.queue = queue
+
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        item: Union[tuple[str, Union[Dto, None]], None] = await self.queue.get()
+        if item is None:
+            raise StopAsyncIteration
+        return item
 
 
 def parse_variety(day: str, lesson: str, variety_dto: VarietyDto, group_name: str, schedule: Schedule):
@@ -65,12 +84,26 @@ def parse_dto(group: str, dto: Dto, schedule: Schedule):
         parse_day(day, dayDto, group, schedule)
 
 
-async def parse() -> Schedule:
+async def parse(db: AsyncSession) -> Schedule:
     schedule: Schedule = {}
-    async for group, dto in get_schedule():
-        if not dto:
-            continue
-        parse_dto(group, dto, schedule)
+    queue = asyncio.Queue()
+
+    async def loader():
+        async for group, dto in get_schedule():
+            await queue.put((group, dto))
+        await queue.put(None)
+
+    async def parser():
+        async for group, dto in AsyncQueueIterator(queue):
+            if not dto:
+                continue
+            parse_dto(group, dto, schedule)
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(loader())
+        tg.create_task(parser())
+
     for aud in schedule.values():
         aud.rasp.merge()
+        aud.link = (await db.execute(Select(AuditoryModel.link).filter_by(id_sys=aud.id))).scalars().first()
     return schedule

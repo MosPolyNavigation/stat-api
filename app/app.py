@@ -1,12 +1,12 @@
 from fastapi.middleware.cors import CORSMiddleware
-from .handlers.schedule import lifespan
+from app.jobs import lifespan
 from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
 from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles
+from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
@@ -31,6 +31,14 @@ tags_metadata = [
     {
         "name": "auth",
         "description": "Эндпоинты для аутентификации и авторизации"
+    },
+    {
+        "name": "jobs",
+        "description": "Эндпоинты для управления фоновыми задачами"
+    },
+    {
+        "name": "free-aud",
+        "description": "Эндпоинты для получения свободных аудиторий"
     }
 ]
 
@@ -38,11 +46,14 @@ settings = get_settings()
 CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
 PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
 FRONT_DIR = path.join(PROJECT_DIR, "dist")
+ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
 
 if not path.exists(STATIC_DIR):
     makedirs(STATIC_DIR)
 if not path.exists(FRONT_DIR):
+    makedirs(FRONT_DIR)
+if not path.exists(ADMIN_DIR):
     makedirs(FRONT_DIR)
 
 app = FastAPI(
@@ -63,6 +74,16 @@ app.include_router(auth.router)
 app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
 app.include_router(crud_users.router)
 app.include_router(crud_roles.router)
+app.include_router(jobs.router)
+app.include_router(free_aud.router)
+app.mount(
+    "/admin/",
+    StaticFiles(
+        directory=ADMIN_DIR,
+        html=True
+    ),
+    "admin"
+)
 app.mount(
     "/",
     StaticFiles(

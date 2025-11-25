@@ -1,13 +1,40 @@
 services:
   server:
     environment:
-      SQLALCHEMY_DATABASE_URL: sqlite:////app/static/app.db
+      SQLALCHEMY_DATABASE_URL: postgresql+asyncpg://statapi:test@172.16.0.11:5432/statapi
       STATIC_FILES: /app/static
-      ALLOWED_HOSTS: '["http://localhost:3000"]'
-      ALLOWED_METHODS: '["GET","PUT","POST"]'
-      ADMIN_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-    image: ghcr.io/sidecuter/statapi:latest
+      ALLOWED_HOSTS: 'http://localhost:3000'
+      ALLOWED_METHODS: '*,'
+      ALLOWED_HEADERS: "Authorization,"
+    build: .
     ports:
       - "8080:8080"
     volumes:
-      - ./static:/app/static
+      - app:/app/static
+    networks:
+      front-tier:
+        ipv4_address: 172.16.0.10
+  database:
+    image: postgres:13.3
+    environment:
+      POSTGRES_DB: "statapi"
+      POSTGRES_USER: "statapi"
+      POSTGRES_PASSWORD: "test"
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      front-tier:
+        ipv4_address: 172.16.0.11
+
+volumes:
+  app:
+  db-data:
+
+networks:
+  front-tier:
+    ipam:
+      driver: default
+      config:
+        - subnet: "172.16.0.0/24"

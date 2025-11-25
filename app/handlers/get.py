@@ -1,12 +1,13 @@
 from sqlalchemy import Select, func, union_all, select, case, String
-from sqlalchemy.orm import Session, aliased
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 from typing import Dict
 from datetime import date
 from .filter import filter_by_date
 from app import schemas, models
 
 
-async def get_endpoint_stats(db: Session, params: schemas.FilterQuery) -> list[schemas.Statistics]:
+async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> list[schemas.Statistics]:
     """
     Функция для получения статистики по эндпоинту.
 
@@ -43,7 +44,7 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery) -> list[s
             .where(params.model.visit_date >= borders[0])
             .where(params.model.visit_date < borders[1])
         )
-    rows = db.execute(query).fetchall()
+    rows = (await db.execute(query)).fetchall()
     stats = [
         schemas.Statistics(
             period=date.fromisoformat(row.period_str),
@@ -98,27 +99,28 @@ def get_popular_auds_query():
     )
 
 
-async def get_popular_auds(db: Session):
+async def get_popular_auds(db: AsyncSession):
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID)
              .select_from(tr)
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
-    return db.execute(query).scalars().all()
+    popular = (await db.execute(query)).scalars().all()
+    return popular
 
 
-async def get_popular_auds_with_count(db: Session):
+async def get_popular_auds_with_count(db: AsyncSession):
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID, func.sum(tr.c.CNT))
              .select_from(tr)
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
-    return db.execute(query).fetchall()
+    with_count = (await db.execute(query)).fetchall()
+    return with_count
 
 
-async def get_all_floor_maps(db: Session) -> Dict[str, Dict[str, Dict[int, str]]]:
-    maps = db.query(models.FloorMap).all()
-
+async def get_all_floor_maps(db: AsyncSession) -> Dict[str, Dict[str, Dict[int, str]]]:
+    maps = (await db.execute(Select(models.floor_map.FloorMap))).all()
     result: Dict[str, Dict[str, Dict[int, str]]] = {}
 
     for floor_map in maps:

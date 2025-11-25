@@ -1,7 +1,8 @@
 from datetime import datetime
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional
 from .filter_handlers import _validated_limit
@@ -42,7 +43,7 @@ async def resolve_reviews(
         problem_id: Optional[str] = None,
         limit: Optional[int] = None
 ) -> list[ReviewType]:
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(Review)
         .options(
@@ -60,5 +61,5 @@ async def resolve_reviews(
         return []
     if validated_limit is not None:
         statement = statement.limit(validated_limit)
-    records = session.execute(statement).scalars().all()
+    records = (await session.execute(statement)).scalars().all()
     return [_to_review(record) for record in records]

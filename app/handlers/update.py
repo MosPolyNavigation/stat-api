@@ -1,10 +1,10 @@
 from sqlalchemy import update
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app import models
 
 
 async def update_floor_map(
-    db: Session,
+    db: AsyncSession,
     id: int,
     file_path: str
 ):
@@ -25,5 +25,5 @@ async def update_floor_map(
         .values(file_path=file_path)
     )
 
-    db.execute(querry)
-    db.commit()
+    await db.execute(querry)
+    await db.commit()

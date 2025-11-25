@@ -10,4 +10,4 @@ class SqliteDsn(AnyUrl):
     Attributes:
         _constraints: Ограничения для URL.
     """
-    _constraints = UrlConstraints(allowed_schemes=['sqlite'])
+    _constraints = UrlConstraints(allowed_schemes=['sqlite', 'sqlite+aiosqlite'])

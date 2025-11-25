@@ -3,7 +3,7 @@ import uuid
 import aiofiles
 
 from typing import Optional
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import APIRouter, Response, UploadFile, File, Form, Depends
 
 from app.database import get_db
@@ -75,7 +75,7 @@ def register_endpoint(router: APIRouter):
             ),
             text: str = Form(title="text",
                              description="User review"),
-            db: Session = Depends(get_db),
+            db: AsyncSession = Depends(get_db),
     ):
         base_path = os.path.join(get_settings().static_files, "images")
         if image is not None and image.content_type.split("/")[0] == "image":

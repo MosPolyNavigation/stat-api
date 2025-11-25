@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from app import schemas, models
 from app.helpers.errors import LookupException
@@ -6,7 +6,7 @@ from os import path
 
 
 async def insert_site_stat(
-    db: Session,
+    db: AsyncSession,
     data: schemas.SiteStatIn
 ) -> schemas.Status:
     """
@@ -21,19 +21,19 @@ async def insert_site_stat(
     Returns:
         Статус операции.
     """
-    user = db.execute(
+    user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
-    ).scalar_one_or_none()
+    )).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
     item = models.SiteStat(user=user, endpoint=data.endpoint)
     db.add(item)
-    db.commit()
+    await db.commit()
     return schemas.Status()
 
 
 async def insert_aud_selection(
-    db: Session, data: schemas.SelectedAuditoryIn
+    db: AsyncSession, data: schemas.SelectedAuditoryIn
 ) -> schemas.Status:
     """
     Функция для добавления выбранной аудитории.
@@ -47,9 +47,9 @@ async def insert_aud_selection(
     Returns:
         Статус операции.
     """
-    user = db.execute(
+    user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
-    ).scalar_one_or_none()
+    )).scalar_one_or_none()
     # auditory = db.execute(
     #     Select(models.Auditory).filter_by(id=data.auditory_id)
     # ).scalar_one_or_none()
@@ -63,12 +63,12 @@ async def insert_aud_selection(
         success=data.success
     )
     db.add(item)
-    db.commit()
+    await db.commit()
     return schemas.Status()
 
 
 async def insert_start_way(
-    db: Session,
+    db: AsyncSession,
     data: schemas.StartWayIn
 ) -> schemas.Status:
     """
@@ -83,9 +83,9 @@ async def insert_start_way(
     Returns:
         Статус операции.
     """
-    user = db.execute(
+    user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
-    ).scalar_one_or_none()
+    )).scalar_one_or_none()
     # start = db.execute(
     #     Select(models.Auditory).filter_by(id=data.start_id)
     # ).scalar_one_or_none()
@@ -105,12 +105,12 @@ async def insert_start_way(
         success=data.success
     )
     db.add(item)
-    db.commit()
+    await db.commit()
     return schemas.Status()
 
 
 async def insert_changed_plan(
-    db: Session,
+    db: AsyncSession,
     data: schemas.ChangePlanIn
 ) -> schemas.Status:
     """
@@ -125,9 +125,9 @@ async def insert_changed_plan(
     Returns:
         Статус операции.
     """
-    user = db.execute(
+    user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
-    ).scalar_one_or_none()
+    )).scalar_one_or_none()
     # plan = db.execute(
     #     Select(models.Plan).filter_by(id=data.plan_id)
     # ).scalar_one_or_none()
@@ -140,12 +140,12 @@ async def insert_changed_plan(
         plan_id=data.plan_id
     )
     db.add(item)
-    db.commit()
+    await db.commit()
     return schemas.Status()
 
 
 async def insert_floor_map(
-    db: Session,
+    db: AsyncSession,
     full_file_name: str,
     file_path: str,
     campus: str,
@@ -180,4 +180,4 @@ async def insert_floor_map(
     )
 
     db.add(item)
-    db.commit()
+    await db.commit()

@@ -1,7 +1,8 @@
 from datetime import datetime
 import strawberry
 from sqlalchemy import select
-from sqlalchemy.orm import Session, selectinload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional
 from .filter_handlers import _validated_limit
@@ -37,7 +38,7 @@ async def resolve_select_auditories(
     success: Optional[bool] = None,
     limit: Optional[int] = None
 ) -> list[SelectAuditoryType]:
-    session: Session = ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_stats_view_permission(info)
     statement = (
         select(SelectAuditory)
         .options(selectinload(SelectAuditory.user))
@@ -52,5 +53,5 @@ async def resolve_select_auditories(
         return []
     if validated_limit is not None:
         statement = statement.limit(validated_limit)
-    records = session.execute(statement).scalars().all()
+    records = (await session.execute(statement)).scalars().all()
     return [_to_select_auditory(record) for record in records]

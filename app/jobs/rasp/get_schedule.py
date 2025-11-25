@@ -1,7 +1,7 @@
 import asyncio
-
 import httpx
 import json
+import logging
 import re
 from pydantic import ValidationError
 from typing import Any, Union, AsyncGenerator
@@ -9,8 +9,10 @@ from app.schemas.rasp.dto import Dto
 
 BASE_URL = "https://rasp.dmami.ru/"
 dataUrl = f'{BASE_URL}site/group?group='
-DEFAULT_DELAY = 0.1
+DEFAULT_DELAY = 0.001
 USER_AGENT = 'Mozilla/5.0 (compatible; schedule-extractor/1.2; +https://github.com/MosPolyNavigation/stat-api)'
+
+logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
 def extract_json_string(html: str) -> str:
@@ -56,9 +58,11 @@ async def get_schedule() -> AsyncGenerator[tuple[str, Union[Dto, None]], None]:
                 dto = Dto(**json_obj)
                 yield key, dto
             except ValidationError:
-                print(
-                    f"Ошибка парсинга расписания для группы {key}",
-                    f"из-за ошибки получения расписания: {json_obj['message']}"
+                logger.warning(
+                    (f"Ошибка парсинга расписания для группы {key}"
+                     f"из-за ошибки получения расписания: {json_obj['message']}")
                 )
                 yield key, None
+            except Exception as e:
+                logger.warning(f"Ошибка получения расписания: {e}")
             await asyncio.sleep(DEFAULT_DELAY)

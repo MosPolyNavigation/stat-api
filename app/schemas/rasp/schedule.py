@@ -58,6 +58,11 @@ class Rasp(BaseModel):
 class Auditory(BaseModel):
     id: str
     rasp: Rasp
+    link: Union[str, None] = Field(default=None)
 
 
 type Schedule = dict[str, Auditory]
+type LessonOut = bool
+type DayOut = dict[str, LessonOut]
+type RaspOut = dict[str, DayOut]
+type ScheduleOut = dict[str, RaspOut] | RaspOut

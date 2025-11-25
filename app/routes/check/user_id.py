@@ -1,5 +1,5 @@
 from fastapi import Depends, APIRouter
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas import UserIdCheck, Status
 from app.handlers.check import check_user_id
@@ -38,7 +38,7 @@ def register_endpoint(router: APIRouter):
     )
     async def check_uuid(
         data: UserIdCheck = Depends(),
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db)
     ):
         """
         Эндпоинт для проверки существования уникального идентификатора пользователя.
@@ -50,4 +50,4 @@ def register_endpoint(router: APIRouter):
         Returns:
             Statys: Статус проверки существования.
         """
-        return check_user_id(db, data)
+        return await check_user_id(db, data)

@@ -1,14 +1,14 @@
 from typing import Union
-from fastapi import APIRouter, Depends, Form, HTTPException, status
-from sqlalchemy import Select
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, Form, HTTPException
+from sqlalchemy import Select, Delete
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.auth.role import Role
 from app.models.auth.role_right_goal import RoleRightGoal
 from app.models.auth.goal import Goal
 from app.models.auth.right import Right
 from app.models.auth.user import User
-from app.helpers.auth_utils import get_current_user
+from app.helpers.auth_utils import get_current_user_with_loaded_fields
 from app.helpers.permissions import require_rights
 from app.schemas.role import RoleOut
 import json
@@ -27,8 +27,8 @@ def register_endpoint(router: APIRouter):
             name: str | None = Form(None),
             # JSON-строка с правами (нужно отправлять в формате form-data)
             rights_by_goals: str | None = Form(None),  # например {"users":["view", "edit"],"roles":["view"]}
-            db: Session = Depends(get_db),
-            current_user: User = Depends(get_current_user)
+            db: AsyncSession = Depends(get_db),
+            current_user: User = Depends(get_current_user_with_loaded_fields)
     ):
         # Конвертируем JSON-строку из form-data в dict
         if rights_by_goals:
@@ -41,7 +41,7 @@ def register_endpoint(router: APIRouter):
                 )
 
         # Получаем роль
-        role: Union[Role, None] = db.execute(Select(Role).filter(Role.id == role_id)).scalar_one_or_none()
+        role: Union[Role, None] = (await db.execute(Select(Role).filter(Role.id == role_id))).scalar_one_or_none()
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
@@ -56,8 +56,8 @@ def register_endpoint(router: APIRouter):
         # Обновление имени роли
         if name:
             # Проверка уникальности имени
-            exists: Union[Role, None] = db.execute(
-                Select(Role).filter(Role.name == name, Role.id != role.id)).scalar_one_or_none()
+            exists: Union[Role, None] = (await db.execute(
+                Select(Role).filter(Role.name == name, Role.id != role.id))).scalar_one_or_none()
             if exists:
                 raise HTTPException(
                     status_code=400,
@@ -66,7 +66,7 @@ def register_endpoint(router: APIRouter):
             role.name = name
 
         # Права текущего пользователя
-        user_rights = current_user.get_rights(db)
+        user_rights = await current_user.get_rights(db)
 
         # если передано обновление прав
         if rights_by_goals is not None:
@@ -90,8 +90,8 @@ def register_endpoint(router: APIRouter):
                         )
 
                     # Проверяем, что право существует в таблице прав
-                    right_obj: Union[Right, None] = db.execute(
-                        Select(Right).filter_by(name=right_name)).scalar_one_or_none()
+                    right_obj: Union[Right, None] = (await db.execute(
+                        Select(Right).filter_by(name=right_name))).scalar_one_or_none()
                     if not right_obj:
                         raise HTTPException(
                             status_code=400,
@@ -99,23 +99,22 @@ def register_endpoint(router: APIRouter):
                         )
 
                 # Проверяем, что цель существует
-                goal_obj = db.query(Goal).filter_by(name=goal_name).first()
+                goal_obj = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one_or_none()
                 if not goal_obj:
                     raise HTTPException(
                         status_code=400,
                         detail=f"Цель '{goal_name}' не существует в системе"
                     )
 
-            # TODO: поменять остальные SqlAlchemy Query с версии v1.4 на версию v2.0
             # Удаляем старые привязки прав
-            db.query(RoleRightGoal).filter_by(role_id=role_id).delete()
+            await db.execute(Delete(RoleRightGoal).filter_by(role_id=role_id))
 
             # Добавляем новые значения
             for goal_name, rights_list in rights_by_goals.items():
-                goal_obj = db.query(Goal).filter_by(name=goal_name).first()
+                goal_obj = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one()
 
                 for right_name in rights_list:
-                    right_obj = db.query(Right).filter_by(name=right_name).first()
+                    right_obj = (await db.execute(Select(Right).filter_by(name=right_name))).scalar_one()
 
                     db.add(RoleRightGoal(
                         role_id=role.id,
@@ -124,12 +123,12 @@ def register_endpoint(router: APIRouter):
                     ))
 
         # Сохраняем
-        db.commit()
-        db.refresh(role)
+        await db.commit()
+        await db.refresh(role)
 
         # Формируем финальную структуру ответа
         # Новое поле может быть None (если клиент не передал права)
-        rights_final = rights_by_goals if rights_by_goals is not None else {}
+        rights_final = rights_by_goals if rights_by_goals else {}
 
         # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(

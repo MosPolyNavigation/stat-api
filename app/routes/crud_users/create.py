@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy import Select
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from typing import Union
 from app.database import get_db
@@ -25,10 +25,10 @@ def register_endpoint(router: APIRouter):
             login: str = Form(..., description="Логин пользователя"),
             password: str = Form(..., description="Пароль пользователя"),
             is_active: bool = Form(True, description="Активен ли пользователь"),
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
         # Проверяем, существует ли пользователь
-        existing: Union[User, None] = db.execute(Select(User).filter(User.login == login)).scalar_one_or_none()
+        existing: Union[User, None] = (await db.execute(Select(User).filter(User.login == login))).scalar_one_or_none()
         if existing:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -43,8 +43,8 @@ def register_endpoint(router: APIRouter):
         )
 
         db.add(new_user)
-        db.commit()
-        db.refresh(new_user)
+        await db.commit()
+        await db.refresh(new_user)
 
         # Возвращаем данные по схеме
         return UserOut(
