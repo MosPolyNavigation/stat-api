@@ -6,7 +6,7 @@ from starlette.responses import Response
 from app.database import get_db
 from app.handlers.filter import filter_svobodn
 from app.helpers.svobodn import auditory_is_empty
-from app.models import Plan
+from app.models import Plan, Type
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnForPlan
 from app.schemas.rasp.schedule import ScheduleOut
@@ -33,7 +33,12 @@ def register_endpoint(router: APIRouter):
             Select(Auditory.id_sys)
             .join(Auditory.plans)
             .filter(Plan.id_sys == filter_.plan_id)
-            .filter(Auditory.type_id.in_([2, 6, 19, 21]))
+            .join(Auditory.typ)
+            .filter(Type.name.in_(
+                ["Лаборатория",
+                 "Учебная аудитория",
+                 "Пока не известно",
+                 "Клуб / секция / внеучебка"]))
         )).scalars().all()
 
         return auditory_is_empty(schedule, list(auditories), filter_)
