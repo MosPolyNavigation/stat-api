@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response
 import app.globals as globals_
 from app.schemas import Status, FilterRoute
-from app.schemas.graph import ShortestWayOut, VertexOut
+from app.schemas.graph.graph import ShortestWayOut, VertexOut
 
 
 def register_endpoint(router: APIRouter):

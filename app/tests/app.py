@@ -1,9 +1,9 @@
 from app.helpers.errors import LookupException
-from app.config import Settings, get_settings
+from app.config import get_settings
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from app.routes import get, stat, review, check
-from fastapi import FastAPI, Request
+from app.routes import get, stat, review, check, auth, crud_users, crud_roles
+from fastapi import FastAPI, HTTPException, Request
 from app.state import AppState
 
 settings = get_settings()
@@ -15,30 +15,9 @@ app.include_router(get.router)
 app.include_router(stat.router)
 app.include_router(review.router)
 app.include_router(check.router)
-
-
-@app.middleware("http")
-async def token_auth_middleware(request: Request, call_next):
-    if request.scope['path'] in [
-        "/api/get/site",
-        "/api/get/auds",
-        "/api/get/ways",
-        "/api/get/plans",
-        "/api/get/stat",
-        "/api/review/get"
-    ]:
-        token = request.query_params.get('api_key')
-        if not token:
-            return JSONResponse(
-                status_code=403,
-                content={"status": "no api_key"}
-            )
-        if token != Settings().admin_key:
-            return JSONResponse(
-                status_code=403,
-                content={"status": "Specified api_key is not present in app"}
-            )
-    return await call_next(request)
+app.include_router(auth.router)
+app.include_router(crud_users.router)
+app.include_router(crud_roles.router)
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -75,3 +54,18 @@ async def lookup_exception_handler(_, exc: LookupException):
         JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
     """
     return JSONResponse(status_code=404, content={"status": str(exc)})
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_: Request, exc: HTTPException):
+    """
+    Обработчик всех HTTPException в проекте.
+
+    Args:
+        _: объект запроса;
+        exc: исключение HTTPException.
+
+    Returns:
+        JSONResponse: JSON ответ с кодом ошибки и сообщением
+    """
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

@@ -1,0 +1,50 @@
+from pydantic import BaseModel, Field
+
+
+class StartWayBase(BaseModel):
+    """
+    Базовый класс для начала пути.
+
+    Этот класс содержит поля, которые необходимы для начала пути.
+
+    Attributes:
+        user_id: Уникальный идентификатор пользователя;
+        start_id: Идентификатор начала пути;
+        end_id: Идентификатор конца пути;
+        status: Успешно ли был построен маршрут.
+    """
+    user_id: str = Field(
+        title="id",
+        description="Unique user id",
+        min_length=36,
+        max_length=36,
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+    )
+    start_id: str = Field(
+        title="start-of-way",
+        description="Auditory where user starts way",
+        max_length=50,
+        min_length=1,
+        # pattern=r"(!?[abvn]d?(-\w+)*)"
+    )
+    end_id: str = Field(
+        title="end-of-way",
+        description="Auditory where user ends way",
+        max_length=50,
+        min_length=1,
+        # pattern=r"(!?[abvn]d?(-\w+)*)"
+    )
+
+    success: bool = Field(
+        title="Selection-status",
+        description="Status of auditory selection"
+    )
+
+
+class StartWayIn(StartWayBase):
+    """
+    Класс для входных данных начала пути.
+
+    Этот класс наследуется от StartWayBase и не содержит дополнительных полей.
+    """
+    pass

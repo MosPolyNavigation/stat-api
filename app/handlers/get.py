@@ -1,11 +1,13 @@
-from sqlalchemy import Select, and_, column, func, union_all
-from sqlalchemy.orm import Session, aliased
-
+from sqlalchemy import Select, func, union_all, select, case, String
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
+from typing import Dict
+from datetime import date
 from .filter import filter_by_date
 from app import schemas, models
 
 
-async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
+async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> list[schemas.Statistics]:
     """
     Функция для получения статистики по эндпоинту.
 
@@ -18,24 +20,41 @@ async def get_endpoint_stats(db: Session, params: schemas.FilterQuery):
     Returns:
         Статистика по эндпоинту.
     """
-    query, borders = filter_by_date(params)
-    all_visits = len(db.execute(query).scalars().all())
-    unique_query = Select(
-        func.count(models.UserId.user_id)
-    ).filter(column("user_id").in_(query))
-    visitor_count = db.execute(unique_query).scalar()
-    if borders is not None:
-        unique_query = unique_query.filter(and_(
-            models.UserId.creation_date >= borders[0],
-            models.UserId.creation_date <= borders[1]
-        ))
-    unique_visitors = db.execute(unique_query).scalar()
-    return schemas.Statistics(
-        unique_visitors=unique_visitors,
-        visitor_count=visitor_count,
-        all_visits=all_visits,
-        period=borders
+    borders = filter_by_date(params)
+    visit_date_expr = func.date(params.model.visit_date)
+    visit_date_out_expr = func.cast(visit_date_expr, String)
+    query = (
+        select(
+            visit_date_out_expr.label("period_str"),
+            func.count(params.model.user_id).label("all_visits"),
+            func.count(params.model.user_id.distinct()).label("visitor_count"),
+            func.count(
+                case(
+                    (func.date(models.UserId.creation_date) == visit_date_expr, models.UserId.user_id)
+                ).distinct()
+            ).label("unique_visits")
+        ).select_from(params.model)
+        .join(models.UserId, params.model.user_id == models.UserId.user_id)
+        .group_by(visit_date_out_expr)
+        .order_by(visit_date_out_expr)
     )
+    if borders is not None:
+        query = (
+            query
+            .where(params.model.visit_date >= borders[0])
+            .where(params.model.visit_date < borders[1])
+        )
+    rows = (await db.execute(query)).fetchall()
+    stats = [
+        schemas.Statistics(
+            period=date.fromisoformat(row.period_str),
+            all_visits=row.all_visits,
+            visitor_count=row.visitor_count,
+            unique_visitors=row.unique_visits
+        )
+        for row in rows
+    ]
+    return stats
 
 
 def get_popular_auds_query():
@@ -80,19 +99,42 @@ def get_popular_auds_query():
     )
 
 
-async def get_popular_auds(db: Session):
+async def get_popular_auds(db: AsyncSession):
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID)
              .select_from(tr)
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
-    return db.execute(query).scalars().all()
+    popular = (await db.execute(query)).scalars().all()
+    return popular
 
 
-async def get_popular_auds_with_count(db: Session):
+async def get_popular_auds_with_count(db: AsyncSession):
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID, func.sum(tr.c.CNT))
              .select_from(tr)
              .group_by(tr.c.ID)
              .order_by(func.sum(tr.c.CNT).desc()))
-    return db.execute(query).fetchall()
+    with_count = (await db.execute(query)).fetchall()
+    return with_count
+
+
+async def get_all_floor_maps(db: AsyncSession) -> Dict[str, Dict[str, Dict[int, str]]]:
+    maps = (await db.execute(Select(models.floor_map.FloorMap))).all()
+    result: Dict[str, Dict[str, Dict[int, str]]] = {}
+
+    for floor_map in maps:
+        campus = floor_map.campus
+        corpus = floor_map.corpus
+        floor = floor_map.floor
+        file_path = floor_map.file_path
+
+        if campus not in result:
+            result[campus] = {}
+
+        if corpus not in result[campus]:
+            result[campus][corpus] = {}
+
+        result[campus][corpus][floor] = file_path
+
+    return result

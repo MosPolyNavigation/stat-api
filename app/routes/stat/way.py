@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Body
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.handlers import insert_start_way
@@ -39,7 +39,7 @@ def register_endpoint(router: APIRouter):
     )
     async def add_started_way(
             data: StartWayIn = Body(),
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
         """
         Эндпоинт для добавления начатого пути.

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Body
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.handlers import insert_site_stat
@@ -39,7 +39,7 @@ def register_endpoint(router: APIRouter):
     )
     async def add_site_stat(
             data: SiteStatIn = Body(),
-            db: Session = Depends(get_db)
+            db: AsyncSession = Depends(get_db)
     ):
         """
         Эндпоинт для добавления статистики посещений сайта.

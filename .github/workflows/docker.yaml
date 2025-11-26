@@ -4,7 +4,6 @@ on:
     workflows: [Update submodule and create PR]
     types: [completed]
     branches: [master]
-  workflow_dispatch:
   
 permissions:
     packages: write
@@ -14,7 +13,7 @@ env:
   IMAGE_NAME: "statapi"
 
 jobs:
-  prepare:
+  prepare-web:
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Prepare dist for image
     runs-on: ubuntu-latest
@@ -57,8 +56,35 @@ jobs:
           path: ./dist
           retention-days: 1
 
+  prepare-panel:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    name: Prepare dist for image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'true'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Prepare front
+        working-directory: ./admin-panel
+        run: |
+          bun install --frozen
+          bun run build
+
+      - name: Create artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-panel
+          path: ./admin-panel/dist
+          retention-days: 1
+
   push:
-    needs: prepare
+    needs: [prepare-web, prepare-panel]
     name: Build and push a Docker image
     runs-on: ubuntu-latest
     steps:
@@ -87,7 +113,7 @@ jobs:
   
   release:
     name: Push changes to hosting
-    needs: [push, prepare]
+    needs: push
     runs-on: ubuntu-latest
     steps:
       - name: Setup Git

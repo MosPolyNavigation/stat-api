@@ -1,12 +1,12 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from app.config import get_settings
 
-engine = create_engine(str(get_settings().sqlalchemy_database_url))
-SessionLocal = sessionmaker(autoflush=True, autocommit=False, bind=engine)
+engine = create_async_engine(str(get_settings().sqlalchemy_database_url), future=True)
+AsyncSessionLocal = async_sessionmaker(autoflush=True, autocommit=False, bind=engine, class_=AsyncSession)
 
 
-def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Функция для получения сессии базы данных.
 
@@ -16,8 +16,5 @@ def get_db():
     Yields:
         Session: Сессия базы данных.
     """
-    db = SessionLocal()
-    try:
+    async with AsyncSessionLocal() as db:
         yield db
-    finally:
-        db.close()
