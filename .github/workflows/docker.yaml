@@ -90,11 +90,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download dist
+      - name: Download web dist
         uses: actions/download-artifact@v4
         with:
           name: dist
           path: ./dist
+
+      - name: Download admin panel dist
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-panel
+          path: ./dist-panel
       
       - name: Build image
         run: docker build . --file Dockerfile --tag $IMAGE_NAME --label "runnumber=${GITHUB_RUN_ID}"
