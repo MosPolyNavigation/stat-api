@@ -14,7 +14,7 @@ except FileNotFoundError:
 from app.tests.app import app
 from app.models import Base
 from app.database import engine, AsyncSessionLocal
-from app.helpers.data import goals, roles, rights, roles_rights_goals
+from app.helpers.data import goals, roles, rights, roles_rights_goals, review_status
 from app import models
 
 add_pagination(app)
@@ -28,6 +28,10 @@ async def create_db_and_tables():
             user_id="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec"
         )
         db.add(user)
+        review_statuses: list[models.ReviewStatus] = list([
+            models.ReviewStatus(id=id_, name=name) for id_, name in review_status.items()
+        ])
+        db.add_all(review_statuses)
         # await db.commit()
         # plans_data: list[models.Plan] = list(map(
         #     lambda x: models.Plan(id=x),

@@ -17,6 +17,14 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(require_rights("users", "delete"))]
     )
     async def delete_user(user_id: int, db: AsyncSession = Depends(get_db)):
+
+        # Запрет на удаление админского пользователя
+        if user_id == 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Нельзя удалить администратора (id=1)",
+            )
+
         user: Union[User, None] = (await db.execute(Select(User).filter(User.id == user_id))).scalar_one_or_none()
         if not user:
             raise HTTPException(
