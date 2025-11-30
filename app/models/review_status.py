@@ -17,6 +17,6 @@ class ReviewStatus(Base):
     # Все отзывы с данным статусом
     reviews: Mapped[list["Review"]] = relationship(
         "Review",
-        back_populates="status",
+        back_populates="review_status",
     )
 
