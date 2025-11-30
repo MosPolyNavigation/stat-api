@@ -532,3 +532,218 @@ class TestDeleteRole:
         """Ошибка валидации при невалидном ID"""
         response = client.delete("/api/roles/invalid", headers=ADMIN_HEADERS)
         assert response.status_code == 422
+
+
+class TestAssignRole:
+    """Тесты для POST /api/roles/assign - назначение роли пользователю"""
+
+    def test_200_assign_role_success(self):
+        """Успешное назначение роли пользователю"""
+        # Создаём новую роль для назначения
+        create_response = client.post(
+            "/api/roles",
+            headers=ADMIN_HEADERS,
+            data={
+                "name": unique_role_name("toassign"),
+                "rights_by_goals": json.dumps({"stats": ["view"]})
+            }
+        )
+        assert create_response.status_code == 201
+        role_id = create_response.json()["id"]
+
+        # Назначаем роль админ-пользователю (id=1)
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": str(role_id)
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert data["user_id"] == 1
+        assert data["role_id"] == role_id
+
+    def test_400_assign_role_already_assigned(self):
+        """Ошибка при попытке назначить уже назначенную роль"""
+        # Роль admin (ID=1) уже назначена пользователю admin (ID=1)
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert "detail" in data
+        assert "уже есть" in data["detail"].lower()
+
+    def test_404_assign_role_user_not_found(self):
+        """Ошибка 404 при попытке назначить роль несуществующему пользователю"""
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "99999",
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert "пользователь" in data["detail"].lower()
+
+    def test_404_assign_role_role_not_found(self):
+        """Ошибка 404 при попытке назначить несуществующую роль"""
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": "99999"
+            }
+        )
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert "роль" in data["detail"].lower()
+
+    def test_401_assign_role_no_token(self):
+        """Ошибка при отсутствии токена"""
+        response = client.post(
+            "/api/roles/assign",
+            data={
+                "user_id": "1",
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 401
+
+    def test_422_assign_role_missing_user_id(self):
+        """Ошибка валидации при отсутствии user_id"""
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 422
+
+    def test_422_assign_role_missing_role_id(self):
+        """Ошибка валидации при отсутствии role_id"""
+        response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1"
+            }
+        )
+        assert response.status_code == 422
+
+
+class TestUnassignRole:
+    """Тесты для POST /api/roles/unassign - удаление роли у пользователя"""
+
+    def test_200_unassign_role_success(self):
+        """Успешное удаление роли у пользователя"""
+        # Создаём новую роль
+        create_response = client.post(
+            "/api/roles",
+            headers=ADMIN_HEADERS,
+            data={
+                "name": unique_role_name("tounassign"),
+                "rights_by_goals": json.dumps({"stats": ["view"]})
+            }
+        )
+        assert create_response.status_code == 201
+        role_id = create_response.json()["id"]
+
+        # Назначаем роль пользователю
+        assign_response = client.post(
+            "/api/roles/assign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": str(role_id)
+            }
+        )
+        assert assign_response.status_code == 200
+
+        # Удаляем роль
+        response = client.post(
+            "/api/roles/unassign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": str(role_id)
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert data["user_id"] == 1
+        assert data["role_id"] == role_id
+
+    def test_404_unassign_role_not_assigned(self):
+        """Ошибка 404 при попытке удалить не назначенную роль"""
+        # Создаём новую роль, но не назначаем её
+        create_response = client.post(
+            "/api/roles",
+            headers=ADMIN_HEADERS,
+            data={
+                "name": unique_role_name("notassigned"),
+                "rights_by_goals": json.dumps({"stats": ["view"]})
+            }
+        )
+        role_id = create_response.json()["id"]
+
+        response = client.post(
+            "/api/roles/unassign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1",
+                "role_id": str(role_id)
+            }
+        )
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert "нет такой роли" in data["detail"].lower()
+
+    def test_401_unassign_role_no_token(self):
+        """Ошибка при отсутствии токена"""
+        response = client.post(
+            "/api/roles/unassign",
+            data={
+                "user_id": "1",
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 401
+
+    def test_422_unassign_role_missing_user_id(self):
+        """Ошибка валидации при отсутствии user_id"""
+        response = client.post(
+            "/api/roles/unassign",
+            headers=ADMIN_HEADERS,
+            data={
+                "role_id": "1"
+            }
+        )
+        assert response.status_code == 422
+
+    def test_422_unassign_role_missing_role_id(self):
+        """Ошибка валидации при отсутствии role_id"""
+        response = client.post(
+            "/api/roles/unassign",
+            headers=ADMIN_HEADERS,
+            data={
+                "user_id": "1"
+            }
+        )
+        assert response.status_code == 422
