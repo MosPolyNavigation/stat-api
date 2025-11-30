@@ -1,0 +1,49 @@
+{
+  "test-101": {
+    "id": "test-101",
+    "rasp": {
+      "monday": {
+        "1": [
+          {
+            "groupNames": ["221-011"],
+            "groupType": "study",
+            "discipline": "Математический анализ",
+            "teachers": ["Иванов И.И."],
+            "dt": "2025-06-30",
+            "df": "2025-02-01",
+            "dts": "01.02-30.06"
+          }
+        ],
+        "2": [
+          {
+            "groupNames": ["221-012"],
+            "groupType": "study",
+            "discipline": "Программирование",
+            "teachers": ["Петров П.П."],
+            "dt": "2025-06-30",
+            "df": "2025-02-01",
+            "dts": "01.02-30.06"
+          }
+        ]
+      },
+      "tuesday": {
+        "1": [
+          {
+            "groupNames": ["221-013"],
+            "groupType": "study",
+            "discipline": "Физика",
+            "teachers": ["Сидоров С.С."],
+            "dt": "2025-06-30",
+            "df": "2025-02-01",
+            "dts": "01.02-30.06"
+          }
+        ]
+      },
+      "wednesday": {},
+      "thursday": {},
+      "friday": {},
+      "saturday": {}
+    },
+    "link": null
+  }
+}
