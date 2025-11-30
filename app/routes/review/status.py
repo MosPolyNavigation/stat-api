@@ -16,6 +16,7 @@ def register_endpoint(router: APIRouter):
     @router.patch(
         "/{review_id}/status",
         description="Назначение статуса отзыву по ID статуса",
+        tags=["review"],
         status_code=status.HTTP_200_OK,
     )
     async def set_review_status(
@@ -60,6 +61,7 @@ def register_endpoint(router: APIRouter):
 
     @router.get(
         "/statuses",
+        tags=["review"],
         description="Список всех возможных статусов отзывов",
     )
     async def list_review_statuses(

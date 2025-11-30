@@ -18,6 +18,7 @@ def register_endpoint(router: APIRouter):
     @router.post(
         "/change-pass",
         description="Смена пароля текущего пользователя",
+        tags=["auth"],
         status_code=status.HTTP_200_OK,
     )
     async def change_own_password(
