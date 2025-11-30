@@ -4,6 +4,8 @@ from pwdlib import PasswordHash
 from app.config import get_settings
 from fastapi.testclient import TestClient
 from fastapi_pagination import add_pagination
+from pathlib import Path
+from pydantic import RootModel
 
 path = get_settings().sqlalchemy_database_url.path.removeprefix("/")
 try:
@@ -16,8 +18,14 @@ from app.models import Base
 from app.database import engine, AsyncSessionLocal
 from app.helpers.data import goals, roles, rights, roles_rights_goals, review_status
 from app import models
+from app.schemas.rasp.schedule import Auditory
+import app.globals as globals_
 
 add_pagination(app)
+
+
+class Schedule(RootModel[dict[str, Auditory]]):
+    pass
 
 
 async def create_db_and_tables():
@@ -80,7 +88,89 @@ async def create_db_and_tables():
         # await db.commit()
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
+
+        # Добавляем навигационные данные для тестов
+        # Location
+        test_location = models.Location(
+            id=1,
+            id_sys="AV",
+            name="Автозаводская",
+            short="АВ",
+            ready=True,
+            address="ул. Автозаводская, д. 16",
+            metro="Автозаводская",
+            crossings=None,
+            comments=None
+        )
+        db.add(test_location)
+
+        # Corpus
+        test_corpus = models.Corpus(
+            id=1,
+            id_sys="av-test",
+            loc_id=1,
+            name="Тестовый корпус",
+            ready=True,
+            stair_groups=None,
+            comments=None
+        )
+        db.add(test_corpus)
+
+        # Floor
+        test_floor = models.Floor(
+            id=1,
+            name=1
+        )
+        db.add(test_floor)
+
+        # Plan
+        test_plan = models.Plan(
+            id=1,
+            id_sys="test-plan-1",
+            cor_id=1,
+            floor_id=1,
+            ready=True,
+            entrances="[]",
+            graph="{}",
+            svg_id=None,
+            nearest_entrance=None,
+            nearest_man_wc=None,
+            nearest_woman_wc=None,
+            nearest_shared_wc=None
+        )
+        db.add(test_plan)
+
+        # Type
+        test_type = models.Type(
+            id=1,
+            name="Учебная аудитория"
+        )
+        db.add(test_type)
+
+        # Auditory
+        test_auditory = models.Auditory(
+            id=1,
+            id_sys="test-101",
+            type_id=1,
+            ready=True,
+            plan_id=1,
+            name="101",
+            text_from_sign=None,
+            additional_info=None,
+            comments=None,
+            link=None,
+            photo_id=None
+        )
+        db.add(test_auditory)
+
         await db.commit()
+
+    # Загружаем тестовое расписание в globals
+    schedule_path = Path(__file__).parent / "schedule_test.json"
+    json_text = schedule_path.read_text(encoding="utf-8")
+    schedule = Schedule.model_validate_json(json_text)
+    globals_.global_rasp = schedule.root
+    globals_.locker = False
 
 
 asyncio.run(create_db_and_tables())
