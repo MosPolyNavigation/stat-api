@@ -22,6 +22,16 @@ from .review import ReviewType, resolve_reviews
 from .select_auditory import SelectAuditoryType, resolve_select_auditories
 from .site_stat import SiteStatType, resolve_site_stats
 from .start_way import StartWayType, resolve_start_ways
+from .tg_bot import (
+    TgBotEventKindType,
+    TgBotEventStatisticType,
+    TgBotEventType,
+    TgBotUserType,
+    resolve_tg_bot_event_statistics,
+    resolve_tg_bot_event_types,
+    resolve_tg_bot_events,
+    resolve_tg_bot_users,
+)
 from .user_id import UserIdType, resolve_user_ids
 
 
@@ -58,6 +68,22 @@ class Query:
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
         description="Статистика по эндпоинтам для выбранной цели."
+    )
+    tg_bot_users: list[TgBotUserType] = strawberry.field(
+        resolver=resolve_tg_bot_users,
+        description="Пользователи Telegram-бота."
+    )
+    tg_bot_event_types: list[TgBotEventKindType] = strawberry.field(
+        resolver=resolve_tg_bot_event_types,
+        description="Справочник типов событий Telegram-бота."
+    )
+    tg_bot_events: list[TgBotEventType] = strawberry.field(
+        resolver=resolve_tg_bot_events,
+        description="События Telegram-бота."
+    )
+    tg_bot_event_statistics: list[TgBotEventStatisticType] = strawberry.field(
+        resolver=resolve_tg_bot_event_statistics,
+        description="Статистика событий Telegram-бота по типам."
     )
     nav_floors: list[NavFloorType] = strawberry.field(
         resolver=resolve_nav_floors,
