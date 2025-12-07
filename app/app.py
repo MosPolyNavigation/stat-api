@@ -6,7 +6,7 @@ from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud
+from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
 from os import path, makedirs
@@ -77,6 +77,7 @@ app.include_router(crud_users.router)
 app.include_router(crud_roles.router)
 app.include_router(jobs.router)
 app.include_router(free_aud.router)
+app.include_router(nav.router)
 app.mount(
     "/admin/",
     StaticFiles(
