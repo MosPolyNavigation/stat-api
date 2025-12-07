@@ -11,4 +11,5 @@ from app.schemas.graph.dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
 from app.schemas.graph.data import LocationData, CorpusData, PlanData
 from app.schemas.graph.graph import Graph, Vertex, DataEntry
-from .user import UserOut
+from .user import UserOut, UserUpdateResponse, UserDeleteResponse
+from .role import RoleOut, RoleActionResponse, RoleAssignmentResponse

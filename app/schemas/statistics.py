@@ -1,19 +1,13 @@
-from pydantic import BaseModel
+"""Схемы агрегированной статистики."""
+
 from datetime import date
+
+from pydantic import BaseModel
 
 
 class Statistics(BaseModel):
-    """
-    Класс для статистики.
+    """Статистика по периоду: пользователи и количество визитов."""
 
-    Этот класс содержит поля, которые необходимы для статистики.
-
-    Attributes:
-        unique_visitors: Количество уникальных посетителей;
-        visitor_count: Количество посетителей;
-        all_visits: Общее количество посещений;
-        period: Дата за которую собрана статистика.
-    """
     unique_visitors: int
     visitor_count: int
     all_visits: int

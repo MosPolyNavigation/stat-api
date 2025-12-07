@@ -1,82 +1,49 @@
-from pydantic import BaseModel, Field, computed_field
-from typing import Optional, Type
+"""Схемы фильтров для API и внутренних обработчиков."""
+
 from datetime import date
-from app import models
 from enum import Enum
+from typing import Optional, Type
+
+from pydantic import BaseModel, Field, computed_field
+
+from app import models
 
 
 class Filter(BaseModel):
-    """
-    Класс для фильтра.
+    """Базовый фильтр с необязательным user_id."""
 
-    Этот класс наследуется от FilterBase
-    и содержит дополнительное поле user_id.
-
-    Attributes:
-        user_id: Уникальный идентификатор пользователя.
-    """
     user_id: Optional[str] = Field(
         default=None,
         title="id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )
 
 
 class TargetEnum(str, Enum):
-    """
-    Enum класс для целей фильтрации.
+    """Список целей для сбора статистики."""
 
-    Этот класс содержит возможные цели фильтрации.
-
-    Attributes:
-        site: Цель фильтрации для сайта;
-        auds: Цель фильтрации для аудитории;
-        ways: Цель фильтрации для путей;
-        plans: Цель фильтрации для планов.
-    """
-    site = 'site'
-    auds = 'auds'
-    ways = 'ways'
-    plans = 'plans'
+    site = "site"
+    auds = "auds"
+    ways = "ways"
+    plans = "plans"
 
 
 class FilterQuery(BaseModel):
-    """
-    Класс для фильтра запроса.
+    """Фильтр статистики по цели и интервалу дат."""
 
-    Этот класс наследуется от FilterBase
-    и содержит дополнительные поля target, start_date и end_date.
-
-    Attributes:
-        target: Цель фильтрации;
-        start_date: дата, с которой начинается фильтрация;
-        end_date: дата, на которой заканчивается фильтрация.
-    """
     target: TargetEnum = Field(description="Target info")
-    start_date: Optional[date] = Field(
-        default=None, description="Date from which filtering begins"
-    )
-    end_date: Optional[date] = Field(
-        default=None, description="Date on which filtering ends"
-    )
+    start_date: Optional[date] = Field(default=None, description="Date from which filtering begins")
+    end_date: Optional[date] = Field(default=None, description="Date on which filtering ends")
 
     @computed_field
     @property
-    def model(self) -> Type[models.ChangePlan |
-                            models.StartWay |
-                            models.SelectAuditory |
-                            models.SiteStat]:
-        """
-        Свойство для получения модели.
-
-        Это свойство возвращает модель в зависимости от цели фильтрации.
-
-        Returns:
-            Модель.
-        """
+    def model(self) -> Type[
+        models.ChangePlan | models.StartWay | models.SelectAuditory | models.SiteStat
+    ]:
+        """Возвращает модель SQLAlchemy для выбранной цели статистики."""
         if self.target is TargetEnum.plans:
             return models.ChangePlan
         elif self.target is TargetEnum.ways:
@@ -90,62 +57,60 @@ class FilterQuery(BaseModel):
 
 
 class LocationEnum(str, Enum):
-    """
-    Enum класс для целей фильтрации.
+    """Список поддерживаемых кампусов."""
 
-    Этот класс содержит возможные цели фильтрации.
-
-    Attributes:
-        BS: Выбрать корпус на большой семеновской;
-        AV: Выбрать корпус на большой автозаводской;
-        PR: Выбрать корпус на прянишникова;
-        M: Выбрать корпус на михалковской;
-        PK: Выбрать корпус на Павла Корчагина.
-    """
-    BS = 'campus_BS'
-    AV = 'campus_AV'
-    PR = 'campus_PR'
-    M = 'campus_M'
-    PK = 'campus_PK'
+    BS = "campus_BS"
+    AV = "campus_AV"
+    PR = "campus_PR"
+    M = "campus_M"
+    PK = "campus_PK"
 
 
 class FilterRoute(BaseModel):
+    """Параметры построения маршрута."""
+
     to_p: str = Field()
     from_p: str = Field(...)
     loc: LocationEnum
 
 
 class DayOfWeek(str, Enum):
-    monday = 'monday'
-    tuesday = 'tuesday'
+    monday = "monday"
+    tuesday = "tuesday"
     wednesday = "wednesday"
-    thursday = 'thursday'
-    friday = 'friday'
-    saturday = 'saturday'
+    thursday = "thursday"
+    friday = "friday"
+    saturday = "saturday"
 
 
 class FilterSvobodn(BaseModel):
-    start_date: date = Field(
-        description="Date from which filtering begins"
-    )
-    end_date: Optional[date] = Field(
-        default=None, description="Date on which filtering ends"
-    )
+    """Фильтр для поиска свободных аудиторий."""
+
+    start_date: date = Field(description="Date from which filtering begins")
+    end_date: Optional[date] = Field(default=None, description="Date on which filtering ends")
     day: Optional[DayOfWeek] = Field(default=None)
     para: Optional[int] = Field(default=None)
 
 
 class FilterSvobodnForAud(FilterSvobodn):
+    """Фильтр свободности по конкретной аудитории."""
+
     aud_id: str = Field()
 
 
 class FilterSvobodnForPlan(FilterSvobodn):
+    """Фильтр свободности по плану корпуса."""
+
     plan_id: str = Field()
 
 
 class FilterSvobodnByCorpus(FilterSvobodn):
+    """Фильтр свободности по корпусу."""
+
     corpus_id: str = Field()
 
 
 class FilterSvobodnByLocation(FilterSvobodn):
+    """Фильтр свободности по локации."""
+
     loc_id: str = Field()

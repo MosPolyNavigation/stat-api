@@ -1,40 +1,25 @@
+"""Схемы выбора аудитории пользователем."""
+
 from pydantic import BaseModel, Field
 
 
-class SelectedAuditoryBase(BaseModel):
-    """
-    Базовый класс для выбранной аудитории.
+class SelectedAuditoryIn(BaseModel):
+    """Входные данные для фиксации выбора аудитории."""
 
-    Этот класс содержит поля, которые необходимы для выбранной аудитории.
-
-    Attributes:
-        user_id: Уникальный идентификатор пользователя;
-        auditory_id: Идентификатор выбранной аудитории;
-        success: Статус выбора аудитории.
-    """
     user_id: str = Field(
         title="id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )
     auditory_id: str = Field(
-        title="Selected-auditory",
-        description="Selected auditory by user",
+        title="Auditory-id",
+        description="Auditory id selected by user",
         max_length=50,
         min_length=1,
-        # pattern=r"(!?[abvn]d?(-\w+)*)"
     )
-    success: bool = Field(title="Selection-status",
-                          description="Status of auditory selection")
-
-
-class SelectedAuditoryIn(SelectedAuditoryBase):
-    """
-    Класс для входных данных выбранной аудитории.
-
-    Этот класс наследуется от SelectedAuditoryBase
-    и не содержит дополнительных полей.
-    """
-    pass
+    success: bool = Field(
+        title="Success",
+        description="Was route building successful",
+    )

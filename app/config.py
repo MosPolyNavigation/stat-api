@@ -1,61 +1,49 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
-from pydantic import PostgresDsn, field_validator
-from app.helpers.dsn import SqliteDsn
+"""Конфигурация приложения и загрузка переменных окружения."""
+
 from functools import lru_cache
 from typing import Annotated
 
+from pydantic import PostgresDsn, field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+from app.helpers.dsn import SqliteDsn
+
 
 class Settings(BaseSettings):
-    """
-    Класс настроек приложения.
+    """Настройки приложения, читаемые из переменных окружения или файла .env."""
 
-    Этот класс содержит настройки приложения,
-    которые могут быть загружены из файла .env.
-
-    Attributes:
-        sqlalchemy_database_url: URL базы данных SQLAlchemy.
-        allowed_hosts: Разрешенные хосты.
-        allowed_methods: Разрешенные методы.
-
-    Config:
-        env_file: Путь к файлу .env.
-        env_file_encoding: Кодировка файла .env.
-    """
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite+aiosqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: Annotated[set[str], NoDecode] = ""
     allowed_methods: Annotated[set[str], NoDecode] = "*,"
     allowed_headers: Annotated[set[str], NoDecode] = "Authorization,"
 
-    @field_validator('allowed_hosts', mode='before')
+    @field_validator("allowed_hosts", mode="before")
     @classmethod
-    def decode_allowed_hosts(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+    def decode_allowed_hosts(cls, raw: str) -> set[str]:
+        """Разбирает список доменов из строки окружения в набор строк."""
+        return {str(x.strip()) for x in raw.split(",") if x.strip()}
 
-    @field_validator('allowed_methods', mode='before')
+    @field_validator("allowed_methods", mode="before")
     @classmethod
-    def decode_allowed_methods(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+    def decode_allowed_methods(cls, raw: str) -> set[str]:
+        """Разбирает список HTTP-методов из строки окружения в набор строк."""
+        return {str(x.strip()) for x in raw.split(",") if x.strip()}
 
-    @field_validator('allowed_headers', mode='before')
+    @field_validator("allowed_headers", mode="before")
     @classmethod
-    def decode_allowed_headers(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+    def decode_allowed_headers(cls, raw: str) -> set[str]:
+        """Разбирает список заголовков из строки окружения в набор строк."""
+        return {str(x.strip()) for x in raw.split(",") if x.strip()}
 
     model_config = SettingsConfigDict(
-        env_file='.env', env_file_encoding='utf-8', extra='ignore'
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 
 @lru_cache()
-def get_settings():
-    """
-    Функция для получения настроек приложения.
-
-    Эта функция возвращает объект настроек приложения.
-    Она использует декоратор lru_cache для кэширования результатов.
-
-    Returns:
-        Settings: Объект настроек приложения.
-    """
+def get_settings() -> Settings:
+    """Возвращает кешированный экземпляр настроек."""
     return Settings()

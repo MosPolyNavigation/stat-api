@@ -1,45 +1,49 @@
+"""Главная точка входа FastAPI-приложения."""
+
+from os import makedirs, path
+
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from app.jobs import lifespan
-from .helpers.errors import LookupException
-from fastapi_pagination import add_pagination
-from .config import get_settings
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi_pagination import add_pagination
 from sqlalchemy.exc import SQLAlchemyError
-from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud
-from fastapi import FastAPI, Request, HTTPException
+
+from app.jobs import lifespan
+from .config import get_settings
+from .helpers.errors import LookupException
+from .routes import auth, check, crud_roles, crud_users, free_aud, get, graphql, jobs, review, stat
 from .state import AppState
-from os import path, makedirs
 
 tags_metadata = [
     {
         "name": "stat",
-        "description": "Эндпоинты для внесения статистики"
+        "description": "Статистика использования сервисов (выбор аудиторий, построение маршрутов, смена планов).",
     },
     {
         "name": "get",
-        "description": "Эндпоинты для получения статистики"
+        "description": "Публичные GET-эндпоинты: расписание, популярные аудитории и маршруты.",
     },
     {
         "name": "review",
-        "description": "Эндпоинты для работы с отзывами"
+        "description": "Работа с отзывами пользователей и загрузкой изображений.",
     },
     {
         "name": "graphql",
-        "description": "Эндпоинт для запросов graphql"
+        "description": "GraphQL API для выборки и фильтрации статистики.",
     },
     {
         "name": "auth",
-        "description": "Эндпоинты для аутентификации и авторизации"
+        "description": "Авторизация и выдача access-токенов.",
     },
     {
         "name": "jobs",
-        "description": "Эндпоинты для управления фоновыми задачами"
+        "description": "Запуск фоновых задач (обновление расписания, данных навигации).",
     },
     {
         "name": "free-aud",
-        "description": "Эндпоинты для получения свободных аудиторий"
-    }
+        "description": "Поиск свободных аудиторий по аудитории, плану, корпусу или локации.",
+    },
 ]
 
 settings = get_settings()
@@ -62,7 +66,7 @@ app = FastAPI(
     # docs_url=None,
     # redoc_url=None,
     # openapi_url=None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 add_pagination(app)
 app.state = AppState()
@@ -81,73 +85,45 @@ app.mount(
     "/admin/",
     StaticFiles(
         directory=ADMIN_DIR,
-        html=True
+        html=True,
     ),
-    "admin"
+    "admin",
 )
 app.mount(
     "/",
     StaticFiles(
         directory=FRONT_DIR,
-        html=True
+        html=True,
     ),
-    "front"
+    "front",
 )
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_hosts,
     allow_methods=settings.allowed_methods,
-    allow_headers=settings.allowed_headers
+    allow_headers=settings.allowed_headers,
 )
 
 
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
     """
-    Обработчик исключений SQLAlchemy.
+    Единый обработчик ошибок SQLAlchemy.
 
-    Этот обработчик вызывается, когда происходит исключение SQLAlchemy.
-    Он возвращает JSON ответ с кодом статуса 500 и сообщением об ошибке.
-
-    Args:
-        _: Объект запроса (не используется в функции);
-        exc: Исключение SQLAlchemy.
-
-    Returns:
-        JSONResponse: JSON ответ с кодом статуса 500 и сообщением об ошибке.
+    Возвращает JSON с текстом исключения и кодом 500,
+    чтобы скрыть детали базы данных от клиента.
     """
     return JSONResponse(status_code=500, content={"status": str(exc)})
 
 
 @app.exception_handler(LookupException)
 async def lookup_exception_handler(_, exc: LookupException):
-    """
-    Обработчик исключений LookupException.
-
-    Этот обработчик вызывается, когда происходит исключение LookupException.
-    Он возвращает JSON ответ с кодом статуса 404 и сообщением об ошибке.
-
-    Args:
-        _: Объект запроса (не используется в функции);
-        exc: Исключение LookupException.
-
-    Returns:
-        JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
-    """
+    """Преобразует LookupException в ответ 404 с понятным текстом."""
     return JSONResponse(status_code=404, content={"status": str(exc)})
 
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_: Request, exc: HTTPException):
-    """
-    Обработчик всех HTTPException в проекте.
-
-    Args:
-        _: объект запроса;
-        exc: исключение HTTPException.
-
-    Returns:
-        JSONResponse: JSON ответ с кодом ошибки и сообщением
-    """
+    """Унифицирует HTTPException: возвращает JSON с detail и кодом ошибки."""
     return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})

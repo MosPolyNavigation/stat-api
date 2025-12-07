@@ -1,5 +1,9 @@
+"""Подключение к базе данных и фабрика сессий SQLAlchemy."""
+
 from typing import AsyncGenerator
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+
 from app.config import get_settings
 
 engine = create_async_engine(str(get_settings().sqlalchemy_database_url), future=True)
@@ -8,13 +12,9 @@ AsyncSessionLocal = async_sessionmaker(autoflush=True, autocommit=False, bind=en
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
-    Функция для получения сессии базы данных.
+    Провайдер асинхронной сессии БД для зависимостей FastAPI.
 
-    Эта функция создает сессию базы данных и возвращает ее.
-    После использования сессии она закрывается.
-
-    Yields:
-        Session: Сессия базы данных.
+    Создает сессию, возвращает её через `yield` и корректно закрывает после использования.
     """
     async with AsyncSessionLocal() as db:
         yield db

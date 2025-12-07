@@ -1,18 +1,13 @@
+"""Базовый ответ с сообщением о результате операции."""
+
 from pydantic import BaseModel, Field
 
 
 class Status(BaseModel):
-    """
-    Класс для статуса выполнения запроса.
+    """Короткий статус операции без дополнительных данных."""
 
-    Этот класс содержит поле, которое уточняет,
-    каков статус выполнения отправленного запроса.
-
-    Attributes:
-        status: Статус процедуры.
-    """
     status: str = Field(
         title="Procedure-status",
         description="Status of procedure",
-        default="OK"
+        default="OK",
     )
