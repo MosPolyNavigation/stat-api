@@ -1,49 +1,45 @@
+"""Ручки авторизации и получения профиля текущего пользователя."""
+
 import uuid
 from typing import Annotated, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from pydantic import BaseModel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.models.auth.user import User
 from app.helpers.auth_utils import get_current_active_user
+from app.models.auth.user import User
 from app.schemas import UserOut
 
-# Будет использоваться рекомендуемый алгоритм хэширования паролей
+# Хешер паролей (использует безопасные настройки по умолчанию).
 password_hash = PasswordHash.recommended()
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 class Token(BaseModel):
-    """Схема ответа при выдаче токена"""
+    """Модель access-токена для ответа авторизации."""
 
     access_token: str
     token_type: str
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """проверка введённого пароля"""
-    """метод verify проверяет, совпадает ли введённый пароль с хэшированным.
-    Метод автоматически определяет алгоритм, использованный при хэшировании."""
+    """Проверяет, что пароль совпадает с хешем в базе."""
     return password_hash.verify(plain_password, hashed_password)
 
 
-# Пока что нигде не используется (создание пароля)
-# def get_password_hash(password):
-#     """Создание хэша пароля"""
-#     return password_hash.hash(password)
-
-
 async def get_user_by_login(db: AsyncSession, login: str) -> Optional[User]:
-    """Получить пользователя по логину"""
+    """Возвращает пользователя по логину или None."""
     return (await db.execute(select(User).filter_by(login=login))).scalar()
 
 
 async def authenticate_user(db: AsyncSession, login: str, password: str) -> Optional[User]:
-    """проверка, существует ли пользователь и правильный ли пароль"""
+    """Проверяет логин/пароль и возвращает пользователя при успехе."""
     user = await get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
         return None
@@ -51,7 +47,7 @@ async def authenticate_user(db: AsyncSession, login: str, password: str) -> Opti
 
 
 async def create_token(user: User, db: AsyncSession) -> str:
-    """Создать токен для пользователя (просто UUID)"""
+    """Создает и сохраняет новый токен для пользователя."""
     token = str(uuid.uuid4())
     user.token = token
     db.add(user)
@@ -61,68 +57,38 @@ async def create_token(user: User, db: AsyncSession) -> str:
 
 
 def register_endpoint(router: APIRouter):
-    """Эндпоинт для аутентификации и выдачи токена пользователя"""
+    """Регистрирует ручки `/token` и `/me`."""
 
     @router.post(
         "/token",
-        description="Эндпоинт для получения токена аутентификации",
+        description="Выдает bearer-токен по паре логин/пароль.",
         response_model=Token,
         tags=["auth"],
     )
     async def login(
-            form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: AsyncSession = Depends(get_db)
+        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        db: AsyncSession = Depends(get_db),
     ):
+        """Возвращает access_token или 400 при неверных данных."""
         user = await authenticate_user(db, form_data.username, form_data.password)
         if not user:
-            raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
+            raise HTTPException(status_code=400, detail="Неверный логин или пароль")
 
-        # Создание токена (UUID)
-        access_token = create_token(user, db)
-        return Token(access_token=await access_token, token_type="bearer")
-
-    """Эндпоинт для получения данных пользователя по токену"""
+        access_token = await create_token(user, db)
+        return Token(access_token=access_token, token_type="bearer")
 
     @router.get(
         "/me",
-        description="Эндпоинт для получения данных текущего пользователя по токену",
+        description="Возвращает данные текущего пользователя.",
         response_model=UserOut,
         tags=["auth"],
     )
     async def read_users_me(
-            current_user: Annotated[User, Depends(get_current_active_user)],
-            db: AsyncSession = Depends(get_db),
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        db: AsyncSession = Depends(get_db),
     ):
-        """Возвращает актуальные данные текущего пользователя"""
+        """Обновляет пользователя из БД и возвращает его данные и права."""
         await db.refresh(current_user)
-        result = UserOut(
-            id=current_user.id,
-            login=current_user.login,
-            is_active=current_user.is_active
-        )
+        result = UserOut(id=current_user.id, login=current_user.login, is_active=current_user.is_active)
         result.rights_by_goals = await current_user.get_rights(db)
         return result
-
-    # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
-    # @router.post(
-    #     "/deactivate",
-    #     description="Эндпоинт для деактивации текущего пользователя",
-    #     tags=["auth"],
-    # )
-    # async def deactivate_user(
-    #         current_user: Annotated[User, Depends(get_current_user)],
-    #         db: AsyncSession = Depends(get_db)
-    # ):
-    #     """Деактивирует текущего пользователя"""
-    #     if not current_user.is_active:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Пользователь уже неактивен"
-    #         )
-    #
-    #     current_user.is_active = False
-    #     db.add(current_user)
-    #     db.commit()
-    #     db.refresh(current_user)
-    #
-    #     return {"message": f"Пользователь {current_user.login} деактивирован", "is_active": current_user.is_active}

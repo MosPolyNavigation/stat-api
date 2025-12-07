@@ -1,8 +1,9 @@
+"""Маршруты валидации данных."""
+
 from fastapi import APIRouter
-from .user_id import register_endpoint as register_uuid
 
-router = APIRouter(
-    prefix="/api/check"
-)
+from .user_id import register_endpoint as register_user_id
 
-register_uuid(router)
+router = APIRouter(prefix="/api/check")
+
+register_user_id(router)

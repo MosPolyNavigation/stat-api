@@ -1,21 +1,19 @@
+"""CRUD-маршруты управления ролями и правами."""
+
 from fastapi import APIRouter
-from .create import register_endpoint as register_create_role
-from .read import register_endpoint as register_read_roles
-from .update import register_endpoint as register_update_role
-from .delete import register_endpoint as register_delete_role
 
-from .assign import register_endpoint as assign_role
-from .unassign import register_endpoint as unassign_role
+from .assign import register_endpoint as register_assign
+from .create import register_endpoint as register_create
+from .delete import register_endpoint as register_delete
+from .read import register_endpoint as register_read
+from .unassign import register_endpoint as register_unassign
+from .update import register_endpoint as register_update
 
-router = APIRouter(
-    prefix="/api/roles",
-    tags=["roles"]
-)
+router = APIRouter(prefix="/api/roles", tags=["roles"])
 
-register_create_role(router)
-register_read_roles(router)
-register_update_role(router)
-register_delete_role(router)
-
-assign_role(router)
-unassign_role(router)
+register_create(router)
+register_read(router)
+register_update(router)
+register_delete(router)
+register_assign(router)
+register_unassign(router)
