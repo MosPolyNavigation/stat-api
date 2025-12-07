@@ -1,26 +1,28 @@
-from sqlalchemy.ext.asyncio import AsyncSession
+"""Обработчики создания отзывов пользователей."""
+
 from sqlalchemy import Select
-from app import schemas, models
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app import models, schemas
 from app.helpers.errors import LookupException
 
 
 async def insert_review(
-        db: AsyncSession,
-        image_name: str,
-        user_id: str,
-        problem: schemas.Problem,
-        text: str
+    db: AsyncSession,
+    image_name: str | None,
+    user_id: str,
+    problem: schemas.Problem,
+    text: str,
 ) -> schemas.Status:
-    user = (await db.execute(
-        Select(models.UserId).filter_by(user_id=user_id)
-    )).scalar_one_or_none()
+    """Создает отзыв с текстом и опциональным изображением."""
+    user = (await db.execute(Select(models.UserId).filter_by(user_id=user_id))).scalar_one_or_none()
     if user is None:
         raise LookupException("User")
     item = models.Review(
         image_name=image_name,
         user=user,
-        problem_id=problem.__str__(),
-        text=text
+        problem_id=str(problem),
+        text=text,
     )
     db.add(item)
     await db.commit()

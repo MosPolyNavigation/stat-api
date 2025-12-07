@@ -1,14 +1,18 @@
+"""Модель пользователя и помощники для проверки прав."""
+
 from collections import defaultdict
-from sqlalchemy import Boolean, Column, Integer, String, Select
+
+from sqlalchemy import Boolean, Column, Integer, Select, String
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, relationship, joinedload
+from sqlalchemy.orm import Mapped, joinedload, relationship
+
 from app.models.auth.role_right_goal import RoleRightGoal
 from app.models.auth.user_role import UserRole
 from app.models.base import Base
 
 
 class User(Base):
-    """Сущность пользователя приложения."""
+    """Пользователь системы с токеном и статусом активности."""
 
     __tablename__ = "users"
 
@@ -24,26 +28,25 @@ class User(Base):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self) -> str:
-        return (
-            f"User(id={self.id!r}, login={self.login!r}, is_active={self.is_active!r})"
-        )
+    def __repr__(self) -> str:  # pragma: no cover - вспомогательный вывод
+        return f"User(id={self.id!r}, login={self.login!r}, is_active={self.is_active!r})"
 
     async def get_rights(self, db: AsyncSession) -> dict[str, list[str]]:
+        """Возвращает права пользователя, сгруппированные по целям."""
         role_right_goals = (
-            (await db.execute(
-                Select(RoleRightGoal)
-                .join(UserRole, RoleRightGoal.role_id == UserRole.role_id)
-                .filter(UserRole.user_id == self.id)
-                .options(
-                    joinedload(RoleRightGoal.right),
-                    joinedload(RoleRightGoal.goal)
+            (
+                await db.execute(
+                    Select(RoleRightGoal)
+                    .join(UserRole, RoleRightGoal.role_id == UserRole.role_id)
+                    .filter(UserRole.user_id == self.id)
+                    .options(joinedload(RoleRightGoal.right), joinedload(RoleRightGoal.goal))
                 )
-            )).scalars().all()
+            )
+            .scalars()
+            .all()
         )
 
-        # Группируем права по целям
-        rights_by_goal = defaultdict(list)
+        rights_by_goal: dict[str, list[str]] = defaultdict(list)
         seen = set()
 
         for rrg in role_right_goals:
@@ -54,11 +57,10 @@ class User(Base):
                 rights_by_goal[goal_name].append(right_name)
                 seen.add(key)
 
-        # Преобразуем defaultdict в обычный dict
         return dict(rights_by_goal)
 
     async def is_capable(self, db: AsyncSession, goal: str, right: str) -> bool:
-
+        """Проверяет наличие конкретного права у пользователя."""
         if not goal or not right:
             raise ValueError("goal and right must be provided for capability checks")
         if not self.is_active:
@@ -69,4 +71,3 @@ class User(Base):
         if goal_rights is None:
             return False
         return right in goal_rights
-

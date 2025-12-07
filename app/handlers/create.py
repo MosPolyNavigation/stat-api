@@ -1,19 +1,15 @@
+"""Обработчики создания базовых сущностей."""
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from app import schemas, models
+
+from app import models, schemas
 
 
 async def create_user_id(db: AsyncSession) -> schemas.UserId:
     """
-    Функция для создания уникального идентификатора пользователя.
+    Создает новую запись идентификатора пользователя.
 
-    Эта функция создает уникальный идентификатор пользователя
-    и добавляет его в базу данных.
-
-    Args:
-        db: Сессия базы данных.
-
-    Returns:
-        Созданный уникальный идентификатор пользователя.
+    Генерирует UUID на стороне базы, коммитит и возвращает свежую модель.
     """
     item = models.UserId()
     db.add(item)

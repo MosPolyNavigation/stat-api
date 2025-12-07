@@ -4,7 +4,6 @@ from app.models.stat.change_plan import ChangePlan
 from app.models.auth.goal import Goal
 from .problem import Problem
 from .review import Review
-from .review_status import ReviewStatus
 from app.models.auth.right import Right
 from app.models.auth.role import Role
 from app.models.auth.role_right_goal import RoleRightGoal

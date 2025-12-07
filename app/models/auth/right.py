@@ -1,11 +1,15 @@
+"""Отдельное право внутри цели доступа."""
+
 from __future__ import annotations
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, relationship
+
 from app.models.base import Base
 
 
 class Right(Base):
-    """Сущность права системы."""
+    """Право, которое может входить в одну или несколько ролей."""
 
     __tablename__ = "rights"
 
@@ -18,5 +22,5 @@ class Right(Base):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover - служебный вывод
         return f"Right(id={self.id!r}, name={self.name!r})"

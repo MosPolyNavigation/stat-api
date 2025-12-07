@@ -1,11 +1,15 @@
+"""Роли пользователей и их связи с правами."""
+
 from __future__ import annotations
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, relationship
+
 from app.models.base import Base
 
 
 class Role(Base):
-    """Сущность роли пользователя."""
+    """Роль пользователя, объединяющая права и цели."""
 
     __tablename__ = "roles"
 
@@ -23,13 +27,13 @@ class Role(Base):
         cascade="all, delete-orphan",
     )
 
-    # Строит словарь прав роли в формате: { "goal_name": ["right1", "right2", ...] }
     @property
     def rights_by_goals(self):
+        """Словарь вида {goal: [rights]} для удобства сериализации."""
         result = {}
         for rrg in self.role_right_goals:
             result.setdefault(rrg.goal.name, []).append(rrg.right.name)
         return result
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover - служебный вывод
         return f"Role(id={self.id!r}, name={self.name!r})"

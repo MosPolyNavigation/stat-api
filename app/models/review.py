@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Text, DateTime, text as text_
+from sqlalchemy import ForeignKey, Text, DateTime
 from sqlalchemy.orm import Mapped, relationship
 from sqlalchemy import Column, Integer, String
 from datetime import datetime
@@ -42,12 +42,6 @@ class Review(Base):
         ForeignKey("problems.id"),
         nullable=False
     )
-    # FK на статус
-    review_status_id: int = Column(
-        ForeignKey("review_statuses.id"),
-        nullable=False,
-        server_default=text_("1"),  # по умолчанию бэклог
-    )
     image_name: Optional[str] = Column(
         String(255),
         nullable=True
@@ -60,9 +54,3 @@ class Review(Base):
 
     user: Mapped["UserId"] = relationship()
     problem: Mapped["Problem"] = relationship()
-
-    # relation на статус
-    review_status: Mapped["ReviewStatus"] = relationship(
-        "ReviewStatus",
-        back_populates="reviews",
-    )

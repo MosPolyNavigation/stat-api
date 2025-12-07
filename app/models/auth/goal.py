@@ -1,11 +1,15 @@
+"""Цели доступа (группировка прав)."""
+
 from __future__ import annotations
+
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import Mapped, relationship
+
 from app.models.base import Base
 
 
 class Goal(Base):
-    """Сущность цели, на которую распространяются права."""
+    """Цель, к которой привязаны права (например, users, roles и т.п.)."""
 
     __tablename__ = "goals"
 
@@ -18,5 +22,5 @@ class Goal(Base):
         cascade="all, delete-orphan",
     )
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover - служебный вывод
         return f"Goal(id={self.id!r}, name={self.name!r})"
