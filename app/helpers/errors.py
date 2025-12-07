@@ -1,14 +1,11 @@
+"""Пользовательские исключения приложения."""
+
+
 class LookupException(Exception):
-    """
-    Класс для ошибок поиска.
+    """Ошибка отсутствия сущности в базе."""
 
-    Этот класс представляет исключение, которое возникает при неудачном поиске.
-
-    Attributes:
-        name: Имя, которое не было найдено.
-    """
     def __init__(self, name: str):
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} not found"
