@@ -22,3 +22,4 @@ from app.models.nav.auditory import Auditory
 from app.models.nav.corpus import Corpus
 from app.models.nav.types import Type
 from app.models.nav.location import Location
+from app.models.stat.tg_bot import TgEvent, TgEventType, TgUser

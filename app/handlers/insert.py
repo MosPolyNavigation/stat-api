@@ -181,3 +181,49 @@ async def insert_floor_map(
 
     db.add(item)
     await db.commit()
+
+
+async def insert_tg_event(
+    db: AsyncSession,
+    data: schemas.TgBotEventIn
+) -> schemas.Status:
+    """
+    Функция для добавления события телеграм-бота.
+
+    Функция сохраняет событие с привязкой к пользователю и типу события.
+    Если пользователи или типы отсутствуют, они создаются.
+
+    Args:
+        db: Сессия базы данных;
+        data: Данные события.
+
+    Returns:
+        Статус операции.
+    """
+    tg_user = (
+        await db.execute(
+            Select(models.TgUser).filter_by(tg_id=data.tg_id)
+        )
+    ).scalar_one_or_none()
+    if tg_user is None:
+        tg_user = models.TgUser(tg_id=data.tg_id)
+        db.add(tg_user)
+
+    event_type = (
+        await db.execute(
+            Select(models.TgEventType).filter_by(name=data.event_type)
+        )
+    ).scalar_one_or_none()
+    if event_type is None:
+        event_type = models.TgEventType(name=data.event_type)
+        db.add(event_type)
+
+    event = models.TgEvent(
+        time=data.time,
+        tg_user=tg_user,
+        event_type=event_type,
+        is_dod=data.is_dod
+    )
+    db.add(event)
+    await db.commit()
+    return schemas.Status()
