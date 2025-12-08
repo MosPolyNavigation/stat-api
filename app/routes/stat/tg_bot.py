@@ -21,15 +21,6 @@ def register_endpoint(router: APIRouter):
                     }
                 }
             },
-            404: {
-                'model': Status,
-                'description': "Объект не найден",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Не найдено"}
-                    }
-                }
-            },
             200: {
                 'model': Status,
                 "description": "Статус добавления записи в базу"
