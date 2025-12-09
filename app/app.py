@@ -1,3 +1,5 @@
+"""Инициализация FastAPI приложения, настройка Swagger и регистрация маршрутов."""
+
 from fastapi.middleware.cors import CORSMiddleware
 from app.jobs import lifespan
 from .helpers.errors import LookupException
@@ -14,31 +16,31 @@ from os import path, makedirs
 tags_metadata = [
     {
         "name": "stat",
-        "description": "Эндпоинты для внесения статистики"
+        "description": "Эндпоинты статистики использования сервисов, отраженные в Swagger."
     },
     {
         "name": "get",
-        "description": "Эндпоинты для получения статистики"
+        "description": "Запросы на получение справочной информации (маршруты, аудитории, карты)."
     },
     {
         "name": "review",
-        "description": "Эндпоинты для работы с отзывами"
+        "description": "Маршруты для работы с отзывами пользователей и проблемами."
     },
     {
         "name": "graphql",
-        "description": "Эндпоинт для запросов graphql"
+        "description": "GraphQL API, описанное в Swagger и доступное по /api/graphql."
     },
     {
         "name": "auth",
-        "description": "Эндпоинты для аутентификации и авторизации"
+        "description": "Авторизация и выдача токенов, используемые для защищенных Swagger-эндпоинтов."
     },
     {
         "name": "jobs",
-        "description": "Эндпоинты для управления фоновыми задачами"
+        "description": "Системные задачи (крон/фоны) для обновления расписаний и графов."
     },
     {
         "name": "free-aud",
-        "description": "Эндпоинты для получения свободных аудиторий"
+        "description": "Поиск свободных аудиторий согласно параметрам фильтра."
     }
 ]
 
@@ -106,17 +108,17 @@ app.add_middleware(
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
     """
-    Обработчик исключений SQLAlchemy.
+    Унифицированный обработчик ошибок SQLAlchemy для Swagger-эндпоинтов.
 
-    Этот обработчик вызывается, когда происходит исключение SQLAlchemy.
-    Он возвращает JSON ответ с кодом статуса 500 и сообщением об ошибке.
+    При любом исключении SQLAlchemy формируем консистентный JSON-ответ,
+    чтобы в документации было понятно, что сервис вернет код 500 и текст ошибки.
 
     Args:
-        _: Объект запроса (не используется в функции);
-        exc: Исключение SQLAlchemy.
+        _: Request объект, переданный фреймворком (не используется напрямую).
+        exc: Исключение SQLAlchemy, содержащее первичный текст ошибки.
 
     Returns:
-        JSONResponse: JSON ответ с кодом статуса 500 и сообщением об ошибке.
+        JSONResponse: Ответ с кодом 500 и полем `status`, понятным в Swagger.
     """
     return JSONResponse(status_code=500, content={"status": str(exc)})
 
@@ -124,17 +126,17 @@ async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
 @app.exception_handler(LookupException)
 async def lookup_exception_handler(_, exc: LookupException):
     """
-    Обработчик исключений LookupException.
+    Обработчик ошибок поиска доменных сущностей (LookupException).
 
-    Этот обработчик вызывается, когда происходит исключение LookupException.
-    Он возвращает JSON ответ с кодом статуса 404 и сообщением об ошибке.
+    Преобразует доменное исключение в предсказуемый 404 ответ,
+    чтобы Swagger описывал одинаковый формат ошибки.
 
     Args:
-        _: Объект запроса (не используется в функции);
-        exc: Исключение LookupException.
+        _: Request объект, не используется напрямую.
+        exc: Исключение LookupException с информацией о пропавшей сущности.
 
     Returns:
-        JSONResponse: JSON ответ с кодом статуса 404 и сообщением об ошибке.
+        JSONResponse: Ответ с кодом 404 и текстом статуса.
     """
     return JSONResponse(status_code=404, content={"status": str(exc)})
 
@@ -142,13 +144,13 @@ async def lookup_exception_handler(_, exc: LookupException):
 @app.exception_handler(HTTPException)
 async def http_exception_handler(_: Request, exc: HTTPException):
     """
-    Обработчик всех HTTPException в проекте.
+    Приведение стандартных HTTP исключений FastAPI к унифицированному ответу.
 
     Args:
-        _: объект запроса;
-        exc: исключение HTTPException.
+        _: Request, передается фреймворком, но не используется напрямую.
+        exc: HTTPException, поднятая в одном из обработчиков.
 
     Returns:
-        JSONResponse: JSON ответ с кодом ошибки и сообщением
+        JSONResponse: Ответ с исходным статус-кодом и текстом ошибки.
     """
     return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})

@@ -1,3 +1,5 @@
+"""Регистрация эндпоинтов поиска свободных аудиторий."""
+
 from fastapi import APIRouter
 from .by_auditory import register_endpoint as register_by_auditory
 from .by_plan import register_endpoint as register_by_plan

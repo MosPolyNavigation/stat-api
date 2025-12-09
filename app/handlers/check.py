@@ -1,3 +1,5 @@
+"""Вспомогательные проверки доступа и наличия пользователей."""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from datetime import datetime, timedelta
@@ -9,17 +11,16 @@ from app.helpers.errors import LookupException
 
 def check_user(state: AppState, user_id) -> float:
     """
-    Функция для проверки пользователя.
+    Считает количество секунд с последнего запроса пользователя.
 
-    Эта функция проверяет пользователя
-    и возвращает время, прошедшее с последней проверки.
+    Используется для защиты от частых обращений к защищенным Swagger-эндпоинтам.
 
     Args:
-        state: Состояние приложения;
+        state: Глобальное состояние приложения с метками времени обращений.
         user_id: Идентификатор пользователя.
 
     Returns:
-        float: Время, прошедшее с последней проверки.
+        float: Количество секунд с прошлого обращения текущего пользователя.
     """
     state.user_access.setdefault(
         user_id,
@@ -31,6 +32,16 @@ def check_user(state: AppState, user_id) -> float:
 
 
 async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
+    """
+    Проверяет существование переданного user_id.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+        data: Данные запроса с идентификатором пользователя.
+
+    Returns:
+        Status: Пустой статус при успешной проверке.
+    """
     user = (await db.execute(
         Select(UserId).filter_by(user_id=data.user_id)
     )).scalar_one_or_none()

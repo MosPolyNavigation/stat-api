@@ -1,3 +1,5 @@
+"""CRUD-эндпоинты просмотра ролей."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi_pagination import Page
 from fastapi_pagination.ext.sqlalchemy import apaginate
@@ -13,8 +15,16 @@ from app.models.auth.role_right_goal import RoleRightGoal
 from app.schemas.role import RoleOut
 
 
-# Преобразует связанные RoleRightGoal в структуру: { goal_name: [right1, right2] }
 def build_rights_by_goals(role: Role) -> dict:
+    """
+    Преобразует связи RoleRightGoal в структуру {goal: [rights]}.
+
+    Args:
+        role: Роль с загруженными связями.
+
+    Returns:
+        dict: Права, сгруппированные по целям.
+    """
     result = {}
     for rrg in role.role_right_goals:
         result.setdefault(rrg.goal.name, []).append(rrg.right.name)
@@ -22,7 +32,15 @@ def build_rights_by_goals(role: Role) -> dict:
 
 
 def register_endpoint(router: APIRouter):
-    # Эндпоинты для просмотра ролей
+    """
+    Регистрирует эндпоинты просмотра ролей (список и конкретная роль).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленными обработчиками.
+    """
 
     @router.get(
         "",
@@ -32,9 +50,16 @@ def register_endpoint(router: APIRouter):
         responses=generate_resp(Page[RoleOut])
     )
     async def read_roles(db: AsyncSession = Depends(get_db)):
-        """Эндпоинт для получения списка ролей с пагинацией"""
+        """
+        Возвращает список ролей с пагинацией.
 
-        # Загружаем роли вместе с привязанными целями и правами
+        Args:
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            Page[RoleOut]: Страница ролей.
+        """
+
         roles_query = Select(Role).options(
             joinedload(Role.role_right_goals)
             .joinedload(RoleRightGoal.goal),
@@ -54,9 +79,17 @@ def register_endpoint(router: APIRouter):
             role_id: int,
             db: AsyncSession = Depends(get_db)
     ):
-        """Эндпоинт для получения конкретной роли"""
+        """
+        Возвращает конкретную роль с перечнем прав.
 
-        # Загружаем роль с её правами и целями
+        Args:
+            role_id: Идентификатор роли.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            RoleOut: Найденная роль.
+        """
+
         role: Union[Role, None] = (
             (await db.execute(
                 Select(Role)
@@ -73,9 +106,10 @@ def register_endpoint(router: APIRouter):
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
-        # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(
             id=role.id,
             name=role.name,
             rights_by_goals=build_rights_by_goals(role)
         )
+
+    return router

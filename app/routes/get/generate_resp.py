@@ -1,9 +1,20 @@
+"""Генератор описаний ответов для Swagger."""
+
 from typing import Type, Any
 
 from app.schemas import Status
 
 
 def generate_resp(t: Type) -> dict[int, dict[str, Any]]:
+    """
+    Формирует словарь ответов Swagger для эндпоинтов получения данных.
+
+    Args:
+        t: Модель успешного ответа.
+
+    Returns:
+        dict[int, dict[str, Any]]: Описание ответов 200/403/500.
+    """
     return {
         500: {
             'model': Status,

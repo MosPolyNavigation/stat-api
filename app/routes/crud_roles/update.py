@@ -1,3 +1,5 @@
+"""CRUD-эндпоинт для безопасного обновления ролей."""
+
 from typing import Union
 from fastapi import APIRouter, Depends, Form, HTTPException
 from sqlalchemy import Select, Delete
@@ -15,7 +17,15 @@ import json
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для изменения данных роли"
+    """
+    Регистрирует эндпоинт частичного обновления роли.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
 
     @router.patch(
         "/{role_id}",
@@ -25,12 +35,23 @@ def register_endpoint(router: APIRouter):
     async def update_role(
             role_id: int,
             name: str | None = Form(None),
-            # JSON-строка с правами (нужно отправлять в формате form-data)
-            rights_by_goals: str | None = Form(None),  # например {"users":["view", "edit"],"roles":["view"]}
+            rights_by_goals: str | None = Form(None),
             db: AsyncSession = Depends(get_db),
             current_user: User = Depends(get_current_user_with_loaded_fields)
     ):
-        # Конвертируем JSON-строку из form-data в dict
+        """
+        Обновляет имя роли и/или набор прав с проверкой полномочий.
+
+        Args:
+            role_id: Идентификатор роли.
+            name: Новое имя роли.
+            rights_by_goals: JSON-строка с правами вида {"goal": ["right"]}.
+            db: Асинхронная сессия SQLAlchemy.
+            current_user: Пользователь, выполняющий операцию.
+
+        Returns:
+            RoleOut: Обновленная роль.
+        """
         if rights_by_goals:
             try:
                 rights_by_goals = json.loads(rights_by_goals)
@@ -40,12 +61,10 @@ def register_endpoint(router: APIRouter):
                     detail="rights_by_goals должен быть валидным JSON"
                 )
 
-        # Получаем роль
         role: Union[Role, None] = (await db.execute(Select(Role).filter(Role.id == role_id))).scalar_one_or_none()
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
-        # Запрещаем редактировать свою собственную роль
         user_role_ids = {ur.role_id for ur in current_user.user_roles}
         if role.id in user_role_ids:
             raise HTTPException(
@@ -53,9 +72,7 @@ def register_endpoint(router: APIRouter):
                 detail="Нельзя изменять роли, которыми вы обладаете"
             )
 
-        # Обновление имени роли
         if name:
-            # Проверка уникальности имени
             exists: Union[Role, None] = (await db.execute(
                 Select(Role).filter(Role.name == name, Role.id != role.id))).scalar_one_or_none()
             if exists:
@@ -65,23 +82,17 @@ def register_endpoint(router: APIRouter):
                 )
             role.name = name
 
-        # Права текущего пользователя
         user_rights = await current_user.get_rights(db)
 
-        # если передано обновление прав
         if rights_by_goals is not None:
 
-            # Проверяем, что пользователь не выдает прав выше своего уровня
             for goal_name, rights_list in rights_by_goals.items():
-
-                # Проверяем, что цель доступна
                 if goal_name not in user_rights:
                     raise HTTPException(
                         status_code=403,
                         detail=f"У вас нет прав на цель '{goal_name}'"
                     )
 
-                # Проверяем каждое право
                 for right_name in rights_list:
                     if right_name not in user_rights[goal_name]:
                         raise HTTPException(
@@ -89,7 +100,6 @@ def register_endpoint(router: APIRouter):
                             detail=f"У вас нет права '{right_name}' на цель '{goal_name}'"
                         )
 
-                    # Проверяем, что право существует в таблице прав
                     right_obj: Union[Right, None] = (await db.execute(
                         Select(Right).filter_by(name=right_name))).scalar_one_or_none()
                     if not right_obj:
@@ -98,7 +108,6 @@ def register_endpoint(router: APIRouter):
                             detail=f"Право '{right_name}' не существует в системе"
                         )
 
-                # Проверяем, что цель существует
                 goal_obj = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one_or_none()
                 if not goal_obj:
                     raise HTTPException(
@@ -106,10 +115,8 @@ def register_endpoint(router: APIRouter):
                         detail=f"Цель '{goal_name}' не существует в системе"
                     )
 
-            # Удаляем старые привязки прав
             await db.execute(Delete(RoleRightGoal).filter_by(role_id=role_id))
 
-            # Добавляем новые значения
             for goal_name, rights_list in rights_by_goals.items():
                 goal_obj = (await db.execute(Select(Goal).filter_by(name=goal_name))).scalar_one()
 
@@ -122,17 +129,15 @@ def register_endpoint(router: APIRouter):
                         right_id=right_obj.id
                     ))
 
-        # Сохраняем
         await db.commit()
         await db.refresh(role)
 
-        # Формируем финальную структуру ответа
-        # Новое поле может быть None (если клиент не передал права)
         rights_final = rights_by_goals if rights_by_goals else {}
 
-        # Формируем корректную структуру прав для схемы RoleOut
         return RoleOut(
             id=role.id,
             name=role.name,
             rights_by_goals=rights_final
         )
+
+    return router

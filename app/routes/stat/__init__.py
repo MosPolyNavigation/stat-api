@@ -1,3 +1,5 @@
+"""Регистрация статистических REST-эндпоинтов."""
+
 from fastapi import APIRouter
 from .site import register_endpoint as register_site
 from .aud import register_endpoint as register_aud

@@ -1,3 +1,5 @@
+"""Сбор статистики построения маршрутов."""
+
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,16 @@ from app.schemas import StartWayIn, Status
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/start-way` (Swagger tag `stat`).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.put(
         "/start-way",
         description="Эндпоинт для добавления начатого пути",
@@ -42,15 +54,15 @@ def register_endpoint(router: APIRouter):
             db: AsyncSession = Depends(get_db)
     ):
         """
-        Эндпоинт для добавления начатого пути.
-
-        Этот эндпоинт добавляет начатый путь в базу данных.
+        Добавляет запись о начале построения маршрута.
 
         Args:
-            data: Данные начатого пути;
-            db: Сессия базы данных.
+            data: Данные начатого пути.
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
             Status: Статус добавления нового объекта в базу данных.
         """
         return await insert_start_way(db, data)
+
+    return router

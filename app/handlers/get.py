@@ -1,3 +1,5 @@
+"""Запросы к БД для получения статистики и популярных аудиторий."""
+
 from sqlalchemy import Select, func, union_all, select, case, String
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
@@ -9,16 +11,17 @@ from app import schemas, models
 
 async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> list[schemas.Statistics]:
     """
-    Функция для получения статистики по эндпоинту.
+    Получает статистику посещений API по переданной модели (site_stat, plan и т.д.).
 
-    Эта функция получает статистику по эндпоинту.
+    Используется Swagger-эндпоинтами статистики; поддерживает фильтр по дате и агрегирует
+    общее количество посещений, количество уникальных пользователей и уникальных визитов.
 
     Args:
-        db: Сессия базы данных;
-        params: Параметры фильтрации.
+        db: Асинхронная сессия SQLAlchemy.
+        params: Параметры фильтра из Swagger с моделью и датами.
 
     Returns:
-        Статистика по эндпоинту.
+        list[schemas.Statistics]: Список агрегированных значений по датам.
     """
     borders = filter_by_date(params)
     visit_date_expr = func.date(params.model.visit_date)
@@ -59,7 +62,9 @@ async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> l
 
 def get_popular_auds_query():
     """
-        Query in basis:
+    Формирует общий запрос для вычисления популярности аудиторий.
+
+    Базовый SQL:
         ```sql
             SELECT ID from (
               SELECT auditory_id as ID, count(*) as CNT
@@ -78,6 +83,9 @@ def get_popular_auds_query():
             GROUP BY ID
             ORDER BY SUM(CNT) DESC;
         ```
+
+    Returns:
+        Aliased: Общий алиас для объединенных выборок.
     """
     return aliased(
         union_all(
@@ -100,6 +108,15 @@ def get_popular_auds_query():
 
 
 async def get_popular_auds(db: AsyncSession):
+    """
+    Возвращает список идентификаторов аудиторий, отсортированных по популярности.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        list[str]: Идентификаторы аудиторий в порядке убывания популярности.
+    """
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID)
              .select_from(tr)
@@ -110,6 +127,15 @@ async def get_popular_auds(db: AsyncSession):
 
 
 async def get_popular_auds_with_count(db: AsyncSession):
+    """
+    Возвращает популярность аудиторий вместе с накопленным весом.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        list[tuple[str, int]]: Пары (ID, суммарный вес популярности).
+    """
     tr = get_popular_auds_query()
     query = (Select(tr.c.ID, func.sum(tr.c.CNT))
              .select_from(tr)
@@ -120,6 +146,15 @@ async def get_popular_auds_with_count(db: AsyncSession):
 
 
 async def get_all_floor_maps(db: AsyncSession) -> Dict[str, Dict[str, Dict[int, str]]]:
+    """
+    Возвращает словарь с путями к планам этажей, сгруппированными по кампусу и корпусу.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        Dict[str, Dict[str, Dict[int, str]]]: Структура {кампус: {корпус: {этаж: путь_к_файлу}}}.
+    """
     maps = (await db.execute(Select(models.floor_map.FloorMap))).all()
     result: Dict[str, Dict[str, Dict[int, str]]] = {}
 

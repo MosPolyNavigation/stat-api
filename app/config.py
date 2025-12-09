@@ -1,3 +1,5 @@
+"""Чтение конфигурации приложения из переменных окружения и .env."""
+
 from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
 from pydantic import PostgresDsn, field_validator
 from app.helpers.dsn import SqliteDsn
@@ -7,20 +9,20 @@ from typing import Annotated
 
 class Settings(BaseSettings):
     """
-    Класс настроек приложения.
-
-    Этот класс содержит настройки приложения,
-    которые могут быть загружены из файла .env.
+    Настройки приложения, читаемые из окружения или файла .env.
 
     Attributes:
-        sqlalchemy_database_url: URL базы данных SQLAlchemy.
-        allowed_hosts: Разрешенные хосты.
-        allowed_methods: Разрешенные методы.
+        sqlalchemy_database_url: Строка подключения SQLAlchemy (sqlite или postgres).
+        static_files: Каталог для статики и карт.
+        allowed_hosts: Разрешенные источники для CORS.
+        allowed_methods: Разрешенные HTTP-методы для CORS.
+        allowed_headers: Разрешенные заголовки для CORS.
 
     Config:
-        env_file: Путь к файлу .env.
+        env_file: Имя файла .env.
         env_file_encoding: Кодировка файла .env.
     """
+
     sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite+aiosqlite:///app.db")
     static_files: str = "./static"
     allowed_hosts: Annotated[set[str], NoDecode] = ""
@@ -30,16 +32,19 @@ class Settings(BaseSettings):
     @field_validator('allowed_hosts', mode='before')
     @classmethod
     def decode_allowed_hosts(cls, v: str) -> set[str]:
+        """Преобразует строку разрешенных хостов в множество."""
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     @field_validator('allowed_methods', mode='before')
     @classmethod
     def decode_allowed_methods(cls, v: str) -> set[str]:
+        """Преобразует список методов в множество для CORS."""
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     @field_validator('allowed_headers', mode='before')
     @classmethod
     def decode_allowed_headers(cls, v: str) -> set[str]:
+        """Преобразует строку заголовков в множество."""
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     model_config = SettingsConfigDict(
@@ -50,12 +55,12 @@ class Settings(BaseSettings):
 @lru_cache()
 def get_settings():
     """
-    Функция для получения настроек приложения.
+    Возвращает кэшированный экземпляр настроек приложения.
 
-    Эта функция возвращает объект настроек приложения.
-    Она использует декоратор lru_cache для кэширования результатов.
+    Args:
+        None
 
     Returns:
-        Settings: Объект настроек приложения.
+        Settings: Конфигурация приложения, считанная из окружения.
     """
     return Settings()

@@ -1,3 +1,5 @@
+"""Регистрация REST-эндпоинтов группы `get`."""
+
 from fastapi import APIRouter
 from .user_id import register_endpoint as register_uuid
 from .popular_endp import register_endpoint as register_popular

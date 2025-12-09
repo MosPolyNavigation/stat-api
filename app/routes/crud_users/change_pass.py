@@ -1,3 +1,5 @@
+"""CRUD-эндпоинт для смены пароля другого пользователя."""
+
 from typing import Union
 
 from fastapi import APIRouter, Depends, HTTPException, Form, status
@@ -14,7 +16,15 @@ password_hash = PasswordHash.recommended()
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для изменения пароля чужого пользователя"
+    """
+    Регистрирует эндпоинт смены пароля пользователя администратором.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
 
     @router.post(
         "/{user_id}/change-pass",
@@ -27,6 +37,17 @@ def register_endpoint(router: APIRouter):
         new_password: str = Form(...),
         db: AsyncSession = Depends(get_db),
     ):
+        """
+        Меняет пароль указанного пользователя.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            new_password: Новый пароль.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            dict: Сообщение об успешной смене пароля.
+        """
         user: Union[User, None] = (
             await db.execute(
                 Select(User).filter(User.id == user_id)
@@ -46,3 +67,5 @@ def register_endpoint(router: APIRouter):
             "message": "Пароль пользователя успешно изменён",
             "user_id": user_id,
         }
+
+    return router
