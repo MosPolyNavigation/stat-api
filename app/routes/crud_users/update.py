@@ -1,3 +1,5 @@
+"""CRUD-эндпоинт для обновления данных пользователя."""
+
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy import Select
@@ -12,7 +14,15 @@ password_hash = PasswordHash.recommended()
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для изменения данных пользователя"
+    """
+    Регистрирует эндпоинт частичного обновления пользователя.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
 
     @router.patch(
         "/{user_id}",
@@ -25,7 +35,18 @@ def register_endpoint(router: APIRouter):
         is_active: bool | None = Form(None, description="Активен ли пользователь"),
         db: AsyncSession = Depends(get_db)
     ):
-        # Проверяем, существует ли пользователь
+        """
+        Обновляет пароль и/или статус пользователя.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            password: Новый пароль, если требуется изменить.
+            is_active: Новый статус активности.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            dict: Сообщение и актуальные данные пользователя.
+        """
         user: Union[User, None] = (await db.execute(Select(User).filter(User.id == user_id))).scalar_one_or_none()
         if not user:
             raise HTTPException(
@@ -33,10 +54,8 @@ def register_endpoint(router: APIRouter):
                 detail="Пользователь не найден"
             )
 
-        # Флаги изменений
         changes = []
 
-        # Обновляем данные
         if password:
             user.hash = password_hash.hash(password)
             changes.append("пароль")
@@ -58,7 +77,6 @@ def register_endpoint(router: APIRouter):
         await db.commit()
         await db.refresh(user)
 
-        # Формируем сообщение об успешных изменениях
         message = f"Успешно изменены поля: {', '.join(changes)}"
 
         return {
@@ -69,3 +87,5 @@ def register_endpoint(router: APIRouter):
                 is_active=user.is_active
             )
         }
+
+    return router

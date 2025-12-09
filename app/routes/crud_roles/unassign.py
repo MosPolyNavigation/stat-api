@@ -1,3 +1,5 @@
+"""Снятие роли с пользователя."""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -9,7 +11,13 @@ from app.models.auth.user_role import UserRole
 
 def register_endpoint(router: APIRouter):
     """
-    Эндпоинт для удаления роли у пользователя
+    Регистрирует эндпоинт `/unassign` (Swagger tag `roles`) для удаления роли.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
     """
 
     @router.post(
@@ -23,7 +31,17 @@ def register_endpoint(router: APIRouter):
         role_id: int = Form(...),
         db: AsyncSession = Depends(get_db)
     ):
-        # Проверяем связь user-role
+        """
+        Удаляет связь пользователь-роль.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            role_id: Идентификатор роли.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            dict: Сообщение об удалении роли у пользователя.
+        """
         existing: Union[UserRole, None] = (await db.execute(
             Select(UserRole).filter_by(user_id=user_id, role_id=role_id)
         )).scalar_one_or_none()
@@ -42,3 +60,5 @@ def register_endpoint(router: APIRouter):
             "user_id": user_id,
             "role_id": role_id
         }
+
+    return router

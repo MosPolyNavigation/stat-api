@@ -1,3 +1,5 @@
+"""Фильтры для расписания и статистики, используемые в swagger-эндпоинтах."""
+
 from datetime import datetime, time
 from sqlalchemy import Select
 from typing import Any, Optional
@@ -11,16 +13,16 @@ def filter_by_user(
         params: schemas.Filter
 ) -> Select:
     """
-    Функция для фильтрации по пользователю.
+    Строит Select с фильтром по user_id, если он передан в запросе.
 
-    Эта функция фильтрует данные по пользователю.
+    Используется Swagger-эндпоинтами статистики для точечного отбора данных.
 
     Args:
-        data_model: Модель данных;
-        params: Параметры фильтрации.
+        data_model: SQLAlchemy модель или выражение, к которому применяется фильтрация.
+        params: Параметры фильтра из Swagger (schemas.Filter).
 
     Returns:
-        Select: Запрос с фильтром по пользователю.
+        Select: Запрос, дополненный условием по user_id.
     """
     query = Select(data_model)
     if params.user_id is not None:
@@ -32,15 +34,16 @@ def filter_by_date(
         params: schemas.FilterQuery
 ) -> Optional[tuple[datetime, datetime]]:
     """
-    Функция для фильтрации по дате.
+    Определяет временные границы для фильтрации статистики по датам.
 
-    Эта функция фильтрует данные по дате.
+    Если указаны обе даты — задается закрытый интервал, если только начало —
+    строится граница внутри одного дня.
 
     Args:
-        params: Параметры фильтрации.
+        params: Параметры фильтра из Swagger (start_date/end_date).
 
     Returns:
-        Запрос с фильтром по дате и границы даты.
+        Optional[tuple[datetime, datetime]]: Пара времен начала и конца периода либо None.
     """
     borders: Optional[tuple[datetime, datetime]] = None
     start_time = time(0, 0, 0)
@@ -59,6 +62,16 @@ def filter_by_date(
 
 
 def filter_lesson(lesson: Lesson | None, filter_: FilterSvobodn) -> Lesson:
+    """
+    Оставляет только те варианты занятия, которые попадают в диапазон фильтра.
+
+    Args:
+        lesson: Список вариантов занятия для пары либо None.
+        filter_: Параметры фильтрации (даты или номер пары).
+
+    Returns:
+        Lesson: Отфильтрованный список вариантов занятия.
+    """
     if not lesson:
         return []
     elif filter_.end_date:
@@ -75,6 +88,16 @@ def filter_lesson(lesson: Lesson | None, filter_: FilterSvobodn) -> Lesson:
 
 
 def filter_day(day: Day | None, filter_: FilterSvobodn) -> Day:
+    """
+    Отфильтровывает пары внутри одного дня по номеру пары или датам.
+
+    Args:
+        day: Расписание на день или None.
+        filter_: Параметры фильтрации свободных аудиторий.
+
+    Returns:
+        Day: Словарь с номерами пар и списками доступных вариантов.
+    """
     if not day:
         return dict({str(num): [] for num in range(1, 8)})
     if filter_.para:
@@ -85,6 +108,16 @@ def filter_day(day: Day | None, filter_: FilterSvobodn) -> Day:
 
 
 def filter_auditory(aud: Auditory, filter_: FilterSvobodn) -> Auditory:
+    """
+    Применяет фильтр ко всем дням расписания выбранной аудитории.
+
+    Args:
+        aud: Данные аудитории с расписанием.
+        filter_: Параметры фильтрации свободных аудиторий.
+
+    Returns:
+        Auditory: Аудитория с расписанием, где сохранены только подходящие пары.
+    """
     if filter_.day:
         rasp_of_day = Rasp()
         rasp_of_day.__dict__[filter_.day.name] = filter_day(aud.rasp.__dict__[filter_.day.name], filter_)
@@ -98,4 +131,14 @@ def filter_auditory(aud: Auditory, filter_: FilterSvobodn) -> Auditory:
 
 
 def filter_svobodn(schedule: Schedule, filter_: FilterSvobodn) -> Schedule:
+    """
+    Применяет фильтр ко всему расписанию и возвращает только подходящие аудитории.
+
+    Args:
+        schedule: Полное расписание аудиторий.
+        filter_: Параметры фильтрации свободных аудиторий.
+
+    Returns:
+        Schedule: Расписание, в котором оставлены только удовлетворяющие фильтру аудитории.
+    """
     return dict({aud: filter_auditory(auditory, filter_) for aud, auditory in schedule.items() if auditory})

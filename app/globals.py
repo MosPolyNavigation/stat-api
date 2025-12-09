@@ -1,3 +1,5 @@
+"""Глобальные кэши для графов навигации и расписаний."""
+
 from .schemas import Graph
 from typing import Dict, Union
 from app.schemas.rasp.schedule import Schedule

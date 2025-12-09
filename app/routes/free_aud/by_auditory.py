@@ -1,3 +1,5 @@
+"""Эндпоинт поиска свободной конкретной аудитории."""
+
 from fastapi import APIRouter
 from fastapi.params import Depends
 from starlette.responses import Response
@@ -10,6 +12,16 @@ import app.globals as globals_
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/by-aud` (Swagger tag `free-aud`).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.get(
         "/by-aud",
         response_model=ScheduleOut | Status,
@@ -19,6 +31,16 @@ def register_endpoint(router: APIRouter):
         response: Response,
         filter_: FilterSvobodnForAud = Depends()
     ):
+        """
+        Возвращает информацию о свободности указанной аудитории.
+
+        Args:
+            response: Объект Response для управления статусами.
+            filter_: Параметры фильтра (день, пара, аудитория).
+
+        Returns:
+            ScheduleOut | Status: Свободные слоты или описание ошибки загрузки расписания.
+        """
         if globals_.locker:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
@@ -27,3 +49,5 @@ def register_endpoint(router: APIRouter):
         auditories = [filter_.aud_id,]
 
         return auditory_is_empty(schedule, auditories, filter_)
+
+    return router

@@ -1,3 +1,5 @@
+"""Эндпоинт для выдачи нового user_id."""
+
 from fastapi import Depends, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -6,6 +8,16 @@ from app.schemas import UserId, Status
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/user-id` (Swagger tag `get`) для генерации user_id.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.get(
         "/user-id",
         description="Эндпоинт для получения уникального id пользователя",
@@ -31,8 +43,6 @@ def register_endpoint(router: APIRouter):
         """
         Эндпоинт для получения уникального идентификатора пользователя.
 
-        Этот эндпоинт возвращает новый уникальный идентификатор пользователя.
-
         Args:
             db: Сессия базы данных.
 
@@ -40,3 +50,5 @@ def register_endpoint(router: APIRouter):
             UserId: Новый уникальный идентификатор пользователя.
         """
         return await create_user_id(db)
+
+    return router

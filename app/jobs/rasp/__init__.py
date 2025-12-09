@@ -1,3 +1,5 @@
+"""Плановая подгрузка и парсинг актуального расписания."""
+
 import logging
 import app.globals as globals_
 from app.database import AsyncSessionLocal
@@ -7,6 +9,12 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
 async def fetch_cur_rasp():
+    """
+    Загружает текущее расписание и кладет его в глобальный кэш.
+
+    Returns:
+        None: Обновляет глобальное состояние по завершении.
+    """
     try:
         if globals_.locker:
             return

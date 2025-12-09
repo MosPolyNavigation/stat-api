@@ -1,3 +1,5 @@
+"""Сбор статистики событий телеграм-бота."""
+
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -6,6 +8,16 @@ from app.schemas import Status, TgBotEventIn
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/tg-bot` (Swagger tag `stat`) для записи событий бота.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.put(
         "/tg-bot",
         description="Эндпоинт для записи событий телеграм-бота",
@@ -32,16 +44,15 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db)
     ):
         """
-        Приём события телеграм-бота.
-
-        Создаёт пользователя и тип события при их отсутствии,
-        затем сохраняет событие с привязками и меткой времени.
+        Принимает событие телеграм-бота и сохраняет его.
 
         Args:
-            data: Данные события;
-            db: Сессия базы данных.
+            data: Данные события.
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
             Status: Результат операции.
         """
         return await insert_tg_event(db, data)
+
+    return router

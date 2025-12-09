@@ -1,3 +1,5 @@
+"""Регистрация CRUD эндпоинтов для ролей и прав."""
+
 from fastapi import APIRouter
 from .create import register_endpoint as register_create_role
 from .read import register_endpoint as register_read_roles

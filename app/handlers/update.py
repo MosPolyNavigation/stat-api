@@ -1,3 +1,5 @@
+"""Обработчики обновления данных в базе."""
+
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from app import models
@@ -9,14 +11,17 @@ async def update_floor_map(
     file_path: str
 ):
     """
-    Функция для обновления карты этажа.
+    Обновляет путь к файлу схемы этажа.
 
-    Эта функция карту карту этажа в базе данных.
+    Используется в Swagger-эндпоинтах загрузки новых планов этажей.
 
     Args:
-        db: Сессия базы данных;
-        id: Идентификатор карты этажа;
-        file_path: Путь, по которому был сохранен файл.
+        db: Асинхронная сессия SQLAlchemy.
+        id: Идентификатор записи в таблице floor_maps.
+        file_path: Новый путь до файла изображения.
+
+    Returns:
+        None: Операция выполняется ради побочного эффекта commit.
     """
 
     querry = (

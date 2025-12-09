@@ -1,3 +1,5 @@
+"""Обработчики вставки статистики и связанных сущностей."""
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from app import schemas, models
@@ -10,16 +12,14 @@ async def insert_site_stat(
     data: schemas.SiteStatIn
 ) -> schemas.Status:
     """
-    Функция для добавления посещения сайта.
-
-    Эта функция добавляет посещение сайта в базу данных.
+    Фиксирует обращение к сайту или API от указанного пользователя.
 
     Args:
-        db: Сессия базы данных;
-        data: Данные посещения сайта.
+        db: Асинхронная сессия SQLAlchemy.
+        data: Данные о посещении (user_id, endpoint).
 
     Returns:
-        Статус операции.
+        schemas.Status: Пустой статус, если запись успешно добавлена.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -36,16 +36,14 @@ async def insert_aud_selection(
     db: AsyncSession, data: schemas.SelectedAuditoryIn
 ) -> schemas.Status:
     """
-    Функция для добавления выбранной аудитории.
-
-    Эта функция добавляет выбранную аудитории в базу данных.
+    Сохраняет выбор аудитории пользователем (успешный или нет).
 
     Args:
-        db: Сессия базы данных;
-        data: Данные выбранной аудитории.
+        db: Асинхронная сессия SQLAlchemy.
+        data: Входные данные о выбранной аудитории.
 
     Returns:
-        Статус операции.
+        schemas.Status: Пустой статус при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -72,16 +70,14 @@ async def insert_start_way(
     data: schemas.StartWayIn
 ) -> schemas.Status:
     """
-    Функция для добавления начатого пути.
-
-    Эта функция добавляет начатый пути в базу данных.
+    Добавляет попытку построения маршрута между аудиториями.
 
     Args:
-        db: Сессия базы данных;
-        data: Данные начатого пути.
+        db: Асинхронная сессия SQLAlchemy.
+        data: Входные данные о старте маршрута.
 
     Returns:
-        Статус операции.
+        schemas.Status: Пустой статус при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -114,16 +110,14 @@ async def insert_changed_plan(
     data: schemas.ChangePlanIn
 ) -> schemas.Status:
     """
-    Функция для добавления смененного плана.
-
-    Эта функция добавляет смененный план в базу данных.
+    Регистрирует выбор другого плана пользователем.
 
     Args:
-        db: Сессия базы данных;
-        data: Данные смененный плана.
+        db: Асинхронная сессия SQLAlchemy.
+        data: Данные о смене плана (user_id, plan_id).
 
     Returns:
-        Статус операции.
+        schemas.Status: Пустой статус при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -153,20 +147,18 @@ async def insert_floor_map(
     floor: int
 ):
     """
-    Функция для добавления карты этажа.
-
-    Эта функция добавляет карту этажа в базу данных.
+    Добавляет новую схему этажа в базу.
 
     Args:
-        db: Сессия базы данных;
-        full_file_name: Имя файла с расширением;
-        file_path: Путь, по которому сохранен файл;
-        campus: Кампус, в котором распологается этаж;
-        corpus: Корпус, в котором распологается этаж;
-        floor: Номер этажа, в котором распологается этаж.
+        db: Асинхронная сессия SQLAlchemy.
+        full_file_name: Имя файла вместе с расширением.
+        file_path: Относительный путь для публичной раздачи файла.
+        campus: Идентификатор кампуса в навигации.
+        corpus: Идентификатор корпуса в навигации.
+        floor: Номер этажа.
 
     Returns:
-        Статус операции.
+        None: Операция выполняется ради побочного эффекта commit.
     """
     file_name, file_extension = path.splitext(full_file_name)
 
@@ -188,17 +180,14 @@ async def insert_tg_event(
     data: schemas.TgBotEventIn
 ) -> schemas.Status:
     """
-    Функция для добавления события телеграм-бота.
-
-    Функция сохраняет событие с привязкой к пользователю и типу события.
-    Если пользователи или типы отсутствуют, они создаются.
+    Сохраняет событие из телеграм-бота и обеспечивает наличие связанных сущностей.
 
     Args:
-        db: Сессия базы данных;
-        data: Данные события.
+        db: Асинхронная сессия SQLAlchemy.
+        data: Данные события телеграм-бота.
 
     Returns:
-        Статус операции.
+        schemas.Status: Пустой статус при успешной записи.
     """
     tg_user = (
         await db.execute(

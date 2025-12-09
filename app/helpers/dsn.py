@@ -1,13 +1,14 @@
+"""Расширение типов Pydantic для поддержки SQLite DSN."""
+
 from pydantic.networks import AnyUrl, UrlConstraints
 
 
 class SqliteDsn(AnyUrl):
     """
-    Класс для SQLite URL.
-
-    Этот класс представляет тип, который будет принимать любой SQLite URL.
+    Валидирует DSN для SQLite и SQLite+aiosqlite.
 
     Attributes:
-        _constraints: Ограничения для URL.
+        _constraints: Допустимые схемы подключения.
     """
+
     _constraints = UrlConstraints(allowed_schemes=['sqlite', 'sqlite+aiosqlite'])

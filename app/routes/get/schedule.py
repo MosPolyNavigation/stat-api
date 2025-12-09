@@ -1,3 +1,5 @@
+"""Эндпоинт для выдачи расписания аудиторий."""
+
 from fastapi import APIRouter
 from starlette.responses import Response
 from typing import Union
@@ -7,6 +9,16 @@ import app.globals as globals_
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/schedule` (Swagger tag `get`) для получения расписания.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным эндпоинтом.
+    """
+
     @router.get(
         "/schedule",
         tags=["get"],
@@ -40,6 +52,16 @@ def register_endpoint(router: APIRouter):
             response: Response,
             auditory: Union[str, None] = None,
     ):
+        """
+        Возвращает расписание целиком или для конкретной аудитории.
+
+        Args:
+            response: Объект Response для управления статусом.
+            auditory: Идентификатор аудитории или None для полного расписания.
+
+        Returns:
+            Schedule | Auditory | Status: Расписание либо описание ошибки.
+        """
         if not globals_.global_rasp:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
@@ -50,3 +72,5 @@ def register_endpoint(router: APIRouter):
             return aud_schedule
         response.status_code = 404
         return Status(status="No schedule for specified auditory")
+
+    return router

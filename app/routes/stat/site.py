@@ -1,3 +1,5 @@
+"""Сбор статистики посещений сайта/API."""
+
 from fastapi import APIRouter, Depends, Body
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,16 @@ from app.schemas import SiteStatIn, Status
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/site` (Swagger tag `stat`) для фиксации посещений.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.put(
         "/site",
         description="Эндпоинт для добавления статистики посещений сайта",
@@ -42,15 +54,15 @@ def register_endpoint(router: APIRouter):
             db: AsyncSession = Depends(get_db)
     ):
         """
-        Эндпоинт для добавления статистики посещений сайта.
-
-        Этот эндпоинт добавляет статистику посещений сайта в базу данных.
+        Добавляет запись о посещении сайта или API.
 
         Args:
-            data: Данные статистики сайта;
-            db: Сессия базы данных.
+            data: Данные статистики сайта.
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
-            Status: Статус добавления нового объекта в базу данных.
+            Status: Результат записи.
         """
         return await insert_site_stat(db, data)
+
+    return router

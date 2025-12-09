@@ -1,3 +1,5 @@
+"""Регистрация CRUD эндпоинтов для пользователей."""
+
 from fastapi import APIRouter
 from .create import register_endpoint as register_create_user
 from .read import register_endpoint as register_read_users

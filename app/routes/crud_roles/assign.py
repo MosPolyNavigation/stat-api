@@ -1,3 +1,5 @@
+"""Назначение роли пользователю."""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Form
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,13 @@ from app.models.auth.user_role import UserRole
 
 def register_endpoint(router: APIRouter):
     """
-    Эндпоинт для привязки роли к пользователю
+    Регистрирует эндпоинт `/assign` (Swagger tag `roles`) для назначения роли.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
     """
 
     @router.post(
@@ -27,8 +35,19 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(get_current_user)
     ):
+        """
+        Назначает указанную роль пользователю.
 
-        # Проверяем, существует ли пользователь
+        Args:
+            user_id: Идентификатор пользователя.
+            role_id: Идентификатор роли.
+            db: Асинхронная сессия SQLAlchemy.
+            current_user: Пользователь, выполняющий операцию.
+
+        Returns:
+            dict: Сообщение об успешном назначении и идентификаторы сущностей.
+        """
+
         user: Union[User, None] = (await db.execute(
             Select(User).filter_by(id=user_id)
         )).scalar_one_or_none()
@@ -36,7 +55,6 @@ def register_endpoint(router: APIRouter):
         if not user:
             raise HTTPException(404, "Пользователь не найден")
 
-        # Проверяем, существует ли роль
         role: Union[Role, None] = (await db.execute(
             Select(Role).filter_by(id=role_id)
         )).scalar_one_or_none()
@@ -44,7 +62,6 @@ def register_endpoint(router: APIRouter):
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
-        # Проверяем, есть ли уже такая привязка
         existing: Union[UserRole, None] = (await db.execute(
             Select(UserRole).filter_by(user_id=user_id, role_id=role_id)
         )).scalar_one_or_none()
@@ -55,7 +72,6 @@ def register_endpoint(router: APIRouter):
                 detail="У пользователя уже есть эта роль"
             )
 
-        # Добавляем новую связь
         db.add(UserRole(user_id=user_id, role_id=role_id))
         await db.commit()
 
@@ -64,3 +80,5 @@ def register_endpoint(router: APIRouter):
             "user_id": user_id,
             "role_id": role_id
         }
+
+    return router

@@ -1,3 +1,5 @@
+"""Сбор статистики смены планов навигации."""
+
 from fastapi import APIRouter, Body, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,16 @@ from app.schemas import ChangePlanIn, Status
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/change-plan` (Swagger tag `stat`).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.put(
         "/change-plan",
         description="Эндпоинт для добавления смены плана",
@@ -42,15 +54,15 @@ def register_endpoint(router: APIRouter):
             db: AsyncSession = Depends(get_db)
     ):
         """
-        Эндпоинт для добавления смены плана.
-
-        Этот эндпоинт добавляет смену плана в базу данных.
+        Добавляет событие смены плана пользователем.
 
         Args:
-            data: Данные смены плана;
-            db: Сессия базы данных.
+            data: Данные смены плана.
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
-            Статус добавления нового объекта в базу данных.
+            Status: Результат записи.
         """
         return await insert_changed_plan(db, data)
+
+    return router

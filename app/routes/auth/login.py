@@ -1,3 +1,5 @@
+"""Эндпоинты аутентификации OAuth2 и выдачи токенов."""
+
 import uuid
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,32 +20,52 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 class Token(BaseModel):
-    """Схема ответа при выдаче токена"""
+    """Схема ответа при выдаче токена."""
 
     access_token: str
     token_type: str
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """проверка введённого пароля"""
-    """метод verify проверяет, совпадает ли введённый пароль с хэшированным.
-    Метод автоматически определяет алгоритм, использованный при хэшировании."""
+    """
+    Проверяет соответствие введенного пароля сохраненному хэшу.
+
+    Args:
+        plain_password: Пароль в открытом виде.
+        hashed_password: Хэш, сохраненный в базе.
+
+    Returns:
+        bool: True, если пароль корректен.
+    """
     return password_hash.verify(plain_password, hashed_password)
 
 
-# Пока что нигде не используется (создание пароля)
-# def get_password_hash(password):
-#     """Создание хэша пароля"""
-#     return password_hash.hash(password)
-
-
 async def get_user_by_login(db: AsyncSession, login: str) -> Optional[User]:
-    """Получить пользователя по логину"""
+    """
+    Возвращает пользователя по логину.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+        login: Логин пользователя.
+
+    Returns:
+        Optional[User]: Найденный пользователь или None.
+    """
     return (await db.execute(select(User).filter_by(login=login))).scalar()
 
 
 async def authenticate_user(db: AsyncSession, login: str, password: str) -> Optional[User]:
-    """проверка, существует ли пользователь и правильный ли пароль"""
+    """
+    Проверяет существование пользователя и валидность пароля.
+
+    Args:
+        db: Асинхронная сессия SQLAlchemy.
+        login: Логин пользователя.
+        password: Пароль в открытом виде.
+
+    Returns:
+        Optional[User]: Пользователь при успешной проверке или None.
+    """
     user = await get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
         return None
@@ -51,7 +73,16 @@ async def authenticate_user(db: AsyncSession, login: str, password: str) -> Opti
 
 
 async def create_token(user: User, db: AsyncSession) -> str:
-    """Создать токен для пользователя (просто UUID)"""
+    """
+    Генерирует новый токен (UUID) и сохраняет его у пользователя.
+
+    Args:
+        user: Пользователь, которому назначается токен.
+        db: Асинхронная сессия SQLAlchemy.
+
+    Returns:
+        str: Сгенерированный токен.
+    """
     token = str(uuid.uuid4())
     user.token = token
     db.add(user)
@@ -61,7 +92,15 @@ async def create_token(user: User, db: AsyncSession) -> str:
 
 
 def register_endpoint(router: APIRouter):
-    """Эндпоинт для аутентификации и выдачи токена пользователя"""
+    """
+    Регистрирует эндпоинты `/token` и `/me` (Swagger tag `auth`).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленными обработчиками.
+    """
 
     @router.post(
         "/token",
@@ -73,15 +112,22 @@ def register_endpoint(router: APIRouter):
             form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
             db: AsyncSession = Depends(get_db)
     ):
+        """
+        Выполняет аутентификацию пользователя и возвращает bearer-токен.
+
+        Args:
+            form_data: Форма OAuth2 с логином и паролем.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            Token: Сгенерированный токен доступа.
+        """
         user = await authenticate_user(db, form_data.username, form_data.password)
         if not user:
             raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
 
-        # Создание токена (UUID)
         access_token = create_token(user, db)
         return Token(access_token=await access_token, token_type="bearer")
-
-    """Эндпоинт для получения данных пользователя по токену"""
 
     @router.get(
         "/me",
@@ -93,7 +139,16 @@ def register_endpoint(router: APIRouter):
             current_user: Annotated[User, Depends(get_current_active_user)],
             db: AsyncSession = Depends(get_db),
     ):
-        """Возвращает актуальные данные текущего пользователя"""
+        """
+        Возвращает актуальные данные текущего пользователя и его права.
+
+        Args:
+            current_user: Авторизованный пользователь.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            UserOut: Данные пользователя и права, отраженные в Swagger.
+        """
         await db.refresh(current_user)
         result = UserOut(
             id=current_user.id,
@@ -103,26 +158,4 @@ def register_endpoint(router: APIRouter):
         result.rights_by_goals = await current_user.get_rights(db)
         return result
 
-    # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
-    # @router.post(
-    #     "/deactivate",
-    #     description="Эндпоинт для деактивации текущего пользователя",
-    #     tags=["auth"],
-    # )
-    # async def deactivate_user(
-    #         current_user: Annotated[User, Depends(get_current_user)],
-    #         db: AsyncSession = Depends(get_db)
-    # ):
-    #     """Деактивирует текущего пользователя"""
-    #     if not current_user.is_active:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Пользователь уже неактивен"
-    #         )
-    #
-    #     current_user.is_active = False
-    #     db.add(current_user)
-    #     db.commit()
-    #     db.refresh(current_user)
-    #
-    #     return {"message": f"Пользователь {current_user.login} деактивирован", "is_active": current_user.is_active}
+    return router

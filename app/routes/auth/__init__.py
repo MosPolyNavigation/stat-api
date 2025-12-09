@@ -1,3 +1,5 @@
+"""Регистрация эндпоинтов авторизации и смены пароля."""
+
 from fastapi import APIRouter
 from .login import register_endpoint as register_login
 from .change_pass import register_endpoint as register_change_pass

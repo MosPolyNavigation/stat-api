@@ -1,3 +1,5 @@
+"""Маршрут для получения кратчайшего пути между точками."""
+
 from fastapi import APIRouter, Depends, Response
 import app.globals as globals_
 from app.schemas import Status, FilterRoute
@@ -5,6 +7,16 @@ from app.schemas.graph.graph import ShortestWayOut, VertexOut
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/route` (Swagger tag `get`), возвращающий кратчайший путь.
+
+    Args:
+        router: Экземпляр APIRouter, в который добавляется эндпоинт.
+
+    Returns:
+        APIRouter: Тот же роутер с добавленным обработчиком.
+    """
+
     @router.get(
         "/route",
         tags=["get"],
@@ -114,6 +126,16 @@ def register_endpoint(router: APIRouter):
             response: Response,
             query: FilterRoute = Depends()
     ):
+        """
+        Строит кратчайший путь на графе между двумя вершинами.
+
+        Args:
+            response: Объект Response для управления статус-кодом.
+            query: Параметры запроса (from, to, loc).
+
+        Returns:
+            ShortestWayOut | Status: Результат расчета пути либо описание ошибки.
+        """
         try:
             graph_bs = globals_.global_graph[query.loc.removeprefix("campus_")]
         except KeyError:
@@ -147,3 +169,5 @@ def register_endpoint(router: APIRouter):
             return Status(
                 status="The requested route is impossible"
             )
+
+    return router

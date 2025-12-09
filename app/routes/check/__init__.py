@@ -1,3 +1,5 @@
+"""Регистрация проверочных эндпоинтов."""
+
 from fastapi import APIRouter
 from .user_id import register_endpoint as register_uuid
 

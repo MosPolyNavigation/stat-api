@@ -1,3 +1,5 @@
+"""CRUD-эндпоинт для создания пользователя (Swagger tag `users`)."""
+
 from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,15 @@ password_hash = PasswordHash.recommended()
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для создания нового пользователя"
+    """
+    Регистрирует эндпоинт создания пользователя.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
 
     @router.post(
         "",
@@ -27,7 +37,18 @@ def register_endpoint(router: APIRouter):
             is_active: bool = Form(True, description="Активен ли пользователь"),
             db: AsyncSession = Depends(get_db)
     ):
-        # Проверяем, существует ли пользователь
+        """
+        Создает нового пользователя с указанным логином и паролем.
+
+        Args:
+            login: Логин пользователя.
+            password: Пароль пользователя.
+            is_active: Признак активности.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            UserOut: Данные созданного пользователя.
+        """
         existing: Union[User, None] = (await db.execute(Select(User).filter(User.login == login))).scalar_one_or_none()
         if existing:
             raise HTTPException(
@@ -35,7 +56,6 @@ def register_endpoint(router: APIRouter):
                 detail="Пользователь с таким логином уже существует"
             )
 
-        # Создаем нового пользователя
         new_user = User(
             login=login,
             hash=password_hash.hash(password),
@@ -46,9 +66,10 @@ def register_endpoint(router: APIRouter):
         await db.commit()
         await db.refresh(new_user)
 
-        # Возвращаем данные по схеме
         return UserOut(
             id=new_user.id,
             login=new_user.login,
             is_active=new_user.is_active
         )
+
+    return router

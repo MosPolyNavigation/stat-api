@@ -1,3 +1,5 @@
+"""CRUD-эндпоинт для удаления роли."""
+
 from sqlalchemy.orm import selectinload
 from typing import Union
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -9,7 +11,15 @@ from app.models.auth.role import Role
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для удаления роли"
+    """
+    Регистрирует эндпоинт удаления роли.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
 
     @router.delete(
         "/{role_id}",
@@ -21,6 +31,16 @@ def register_endpoint(router: APIRouter):
         role_id: int,
         db: AsyncSession = Depends(get_db)
     ):
+        """
+        Удаляет роль, если она не назначена пользователям.
+
+        Args:
+            role_id: Идентификатор роли.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            dict: Сообщение об удалении роли.
+        """
         role: Union[Role, None] = (await db.execute(
             Select(Role).filter(Role.id == role_id)
             .options(selectinload(Role.user_roles))
@@ -28,7 +48,6 @@ def register_endpoint(router: APIRouter):
         if not role:
             raise HTTPException(404, "Роль не найдена")
 
-        # Проверка, нельзя удалить роль, если она назначена какому-нибудь пользователю
         if role.user_roles:
             raise HTTPException(
                 status_code=400,
@@ -39,3 +58,5 @@ def register_endpoint(router: APIRouter):
         await db.commit()
 
         return {"message": f"Роль {role_id} удалена", "role_id": role_id}
+
+    return router

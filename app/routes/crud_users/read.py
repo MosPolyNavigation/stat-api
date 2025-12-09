@@ -1,3 +1,5 @@
+"""CRUD-эндпоинты просмотра пользователей."""
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,7 +14,15 @@ from app.routes.get.generate_resp import generate_resp
 
 
 def register_endpoint(router: APIRouter):
-    # Эндпоинты для просмотра пользователей
+    """
+    Регистрирует эндпоинты чтения пользователей (список и конкретный пользователь).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленными обработчиками.
+    """
 
     @router.get(
         "",
@@ -23,17 +33,15 @@ def register_endpoint(router: APIRouter):
     )
     async def read_users(db: AsyncSession = Depends(get_db)) -> Page[UserOut]:
         """
-        Эндпоинт для получения списка пользователей с пагинацией.
+        Возвращает список пользователей с пагинацией.
 
         Args:
-            db: Сессия базы данных
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
-            Страница с найденными пользователями
+            Page[UserOut]: Страница результатов с пользователями.
         """
         return await apaginate(db, Select(User))
-
-    "Эндпоинты для просмотра определённого пользователя"
 
     @router.get(
         "/{user_id}",
@@ -43,7 +51,14 @@ def register_endpoint(router: APIRouter):
     )
     async def read_user(user_id: int, db: AsyncSession = Depends(get_db)) -> UserOut:
         """
-        Эндпоинт для получения одного пользователя по ID.
+        Возвращает пользователя по идентификатору.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            UserOut: Найденный пользователь.
         """
         user: Union[User, None] = (await db.execute(Select(User).filter(User.id == user_id))).scalar_one_or_none()
         if not user:
@@ -57,3 +72,5 @@ def register_endpoint(router: APIRouter):
             login=user.login,
             is_active=user.is_active
         )
+
+    return router

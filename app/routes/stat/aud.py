@@ -1,3 +1,5 @@
+"""Сбор статистики выбора аудиторий."""
+
 from fastapi import APIRouter, Depends, Body, Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +9,16 @@ from app.handlers import check_user, insert_aud_selection
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/select-aud` (Swagger tag `stat`) для фиксации выбора аудитории.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.put(
         "/select-aud",
         description="Эндпоинт для добавления выбора аудитории",
@@ -56,18 +68,16 @@ def register_endpoint(router: APIRouter):
             db: AsyncSession = Depends(get_db),
     ):
         """
-        Эндпоинт для добавления выбора аудитории.
-
-        Этот эндпоинт добавляет выбор аудитории в базу данных.
+        Добавляет выбор аудитории и защищает от частых повторных запросов.
 
         Args:
-            request: Запрос;
-            response: Ответ;
-            data: Данные выбора аудитории;
-            db: Сессия базы данных.
+            request: Текущий Request от FastAPI.
+            response: Объект Response для задания статуса.
+            data: Данные выбранной аудитории.
+            db: Асинхронная сессия SQLAlchemy.
 
         Returns:
-            Status: Статус добавления нового объекта в базу данных.
+            Status: Статус добавления записи.
         """
         state = request.app.state
         if check_user(state, data.user_id) < 1:
@@ -76,3 +86,5 @@ def register_endpoint(router: APIRouter):
                 status="Too many requests for this user within one second"
             )
         return await insert_aud_selection(db, data)
+
+    return router

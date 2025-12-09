@@ -1,3 +1,5 @@
+"""Фоновые задачи для загрузки графов навигации."""
+
 import logging
 from app.jobs.schedule.get_graph import parse_data, get_graph
 from app.schemas import DataEntry
@@ -7,6 +9,12 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
 async def fetch_cur_data():
+    """
+    Загружает актуальные данные навигации и обновляет глобальный кэш графов.
+
+    Returns:
+        None: Обновляет globals_.global_graph.
+    """
     try:
         logger.info("Starting graph fetching")
         data: DataEntry = await parse_data()

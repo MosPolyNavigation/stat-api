@@ -1,3 +1,5 @@
+"""Эндпоинт поиска свободных аудиторий по локации (кампусу)."""
+
 from fastapi import APIRouter
 from fastapi.params import Depends
 from sqlalchemy import Select
@@ -15,6 +17,16 @@ import app.globals as globals_
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/by-loc` (Swagger tag `free-aud`).
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным обработчиком.
+    """
+
     @router.get(
         "/by-loc",
         response_model=ScheduleOut | Status,
@@ -25,6 +37,17 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
         filter_: FilterSvobodnByLocation = Depends()
     ):
+        """
+        Возвращает свободные аудитории для выбранной локации (кампуса).
+
+        Args:
+            response: Объект Response для управления статусом.
+            db: Асинхронная сессия SQLAlchemy.
+            filter_: Параметры фильтрации (локация, день, пара).
+
+        Returns:
+            ScheduleOut | Status: Свободные аудитории либо описание ошибки загрузки расписания.
+        """
         if globals_.locker:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
@@ -44,3 +67,5 @@ def register_endpoint(router: APIRouter):
         )).scalars().all()
 
         return auditory_is_empty(schedule, list(auditories), filter_)
+
+    return router

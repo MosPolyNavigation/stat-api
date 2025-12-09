@@ -1,3 +1,5 @@
+"""Эндпоинт для получения популярных аудиторий."""
+
 from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,6 +9,16 @@ from app.handlers import get_popular_auds
 
 
 def register_endpoint(router: APIRouter):
+    """
+    Регистрирует эндпоинт `/popular` (Swagger tag `get`), возвращающий популярные аудитории.
+
+    Args:
+        router: Экземпляр APIRouter.
+
+    Returns:
+        APIRouter: Роутер с добавленным эндпоинтом.
+    """
+
     @router.get(
         "/popular",
         tags=["get"],
@@ -33,5 +45,16 @@ def register_endpoint(router: APIRouter):
     async def get_popular(
             db: AsyncSession = Depends(get_db)
     ) -> JSONResponse:
+        """
+        Возвращает список идентификаторов аудиторий по убыванию популярности.
+
+        Args:
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            JSONResponse: Ответ со списком аудиторий.
+        """
         data = await get_popular_auds(db)
         return JSONResponse(data, status_code=200)
+
+    return router
