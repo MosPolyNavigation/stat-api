@@ -1,4 +1,4 @@
-"""Обработчики создания базовых сущностей, используемые Swagger-эндпоинтами."""
+"""Обработчики создания базовых сущностей, используемые эндпоинтами API."""
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app import schemas, models

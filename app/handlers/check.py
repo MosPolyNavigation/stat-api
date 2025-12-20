@@ -13,7 +13,7 @@ def check_user(state: AppState, user_id) -> float:
     """
     Считает количество секунд с последнего запроса пользователя.
 
-    Используется для защиты от частых обращений к защищенным Swagger-эндпоинтам.
+    Используется для защиты от частых обращений к защищенным эндпоинтам.
 
     Args:
         state: Глобальное состояние приложения с метками времени обращений.
@@ -40,7 +40,7 @@ async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
         data: Данные запроса с идентификатором пользователя.
 
     Returns:
-        Status: Пустой статус при успешной проверке.
+        Status: Статус по умолчанию (OK) при успешной проверке.
     """
     user = (await db.execute(
         Select(UserId).filter_by(user_id=data.user_id)

@@ -1,4 +1,4 @@
-"""Загрузка и парсинг графов навигации для Swagger-эндпоинтов."""
+"""Загрузка и парсинг графов навигации для эндпоинтов приложения."""
 
 from app.schemas.graph.dto import DataDto, LocationDto, CorpusDto, PlanDto
 from app.schemas import PlanData, LocationData, CorpusData, Graph, DataEntry
@@ -10,13 +10,13 @@ dataUrl = 'https://mospolynavigation.github.io/polyna-preprocess/locationsV2.jso
 
 def parse_location(location: LocationDto) -> LocationData:
     """
-    Преобразует DTO локации в доменную модель LocationData.
+    Преобразует DTO локации в объект LocationData.
 
     Args:
         location: DTO локации из внешнего сервиса.
 
     Returns:
-        LocationData: Заполненная доменная модель.
+        LocationData: Заполненный объект.
     """
     return LocationData(
         id=location.id,

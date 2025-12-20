@@ -20,11 +20,11 @@ async def insert_review(
         db: Асинхронная сессия SQLAlchemy.
         image_name: Имя файла изображения, загруженного вместе с отзывом.
         user_id: Идентификатор пользователя.
-        problem: Тип проблемы из схем Swagger.
+        problem: Тип проблемы из схем API.
         text: Текст отзыва.
 
     Returns:
-        schemas.Status: Пустой статус при успешной записи.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=user_id)

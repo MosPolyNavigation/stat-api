@@ -1,4 +1,4 @@
-"""Фильтры для расписания и статистики, используемые в swagger-эндпоинтах."""
+"""Фильтры для расписания и статистики, используемые в эндпоинтах API."""
 
 from datetime import datetime, time
 from sqlalchemy import Select
@@ -15,11 +15,11 @@ def filter_by_user(
     """
     Строит Select с фильтром по user_id, если он передан в запросе.
 
-    Используется Swagger-эндпоинтами статистики для точечного отбора данных.
+    Используется эндпоинтами статистики для точечного отбора данных.
 
     Args:
         data_model: SQLAlchemy модель или выражение, к которому применяется фильтрация.
-        params: Параметры фильтра из Swagger (schemas.Filter).
+        params: Параметры фильтра (schemas.Filter).
 
     Returns:
         Select: Запрос, дополненный условием по user_id.
@@ -40,7 +40,7 @@ def filter_by_date(
     строится граница внутри одного дня.
 
     Args:
-        params: Параметры фильтра из Swagger (start_date/end_date).
+        params: Параметры фильтра (start_date/end_date).
 
     Returns:
         Optional[tuple[datetime, datetime]]: Пара времен начала и конца периода либо None.

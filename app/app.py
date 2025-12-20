@@ -1,4 +1,4 @@
-"""Инициализация FastAPI приложения, настройка Swagger и регистрация маршрутов."""
+"""Инициализация FastAPI приложения, настройка описания OpenAPI и регистрация маршрутов."""
 
 from fastapi.middleware.cors import CORSMiddleware
 from app.jobs import lifespan
@@ -16,7 +16,7 @@ from os import path, makedirs
 tags_metadata = [
     {
         "name": "stat",
-        "description": "Эндпоинты статистики использования сервисов, отраженные в Swagger."
+        "description": "Эндпоинты статистики использования сервисов."
     },
     {
         "name": "get",
@@ -28,11 +28,11 @@ tags_metadata = [
     },
     {
         "name": "graphql",
-        "description": "GraphQL API, описанное в Swagger и доступное по /api/graphql."
+        "description": "GraphQL API, доступное по /api/graphql."
     },
     {
         "name": "auth",
-        "description": "Авторизация и выдача токенов, используемые для защищенных Swagger-эндпоинтов."
+        "description": "Авторизация и выдача токенов для защищенных эндпоинтов."
     },
     {
         "name": "jobs",
@@ -108,7 +108,7 @@ app.add_middleware(
 @app.exception_handler(SQLAlchemyError)
 async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
     """
-    Унифицированный обработчик ошибок SQLAlchemy для Swagger-эндпоинтов.
+    Унифицированный обработчик ошибок SQLAlchemy для REST API.
 
     При любом исключении SQLAlchemy формируем консистентный JSON-ответ,
     чтобы в документации было понятно, что сервис вернет код 500 и текст ошибки.
@@ -118,7 +118,7 @@ async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
         exc: Исключение SQLAlchemy, содержащее первичный текст ошибки.
 
     Returns:
-        JSONResponse: Ответ с кодом 500 и полем `status`, понятным в Swagger.
+        JSONResponse: Ответ с кодом 500 и полем `status`, понятным клиентам.
     """
     return JSONResponse(status_code=500, content={"status": str(exc)})
 
@@ -129,7 +129,7 @@ async def lookup_exception_handler(_, exc: LookupException):
     Обработчик ошибок поиска доменных сущностей (LookupException).
 
     Преобразует доменное исключение в предсказуемый 404 ответ,
-    чтобы Swagger описывал одинаковый формат ошибки.
+    чтобы документация OpenAPI описывала одинаковый формат ошибки.
 
     Args:
         _: Request объект, не используется напрямую.

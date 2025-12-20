@@ -19,7 +19,7 @@ async def insert_site_stat(
         data: Данные о посещении (user_id, endpoint).
 
     Returns:
-        schemas.Status: Пустой статус, если запись успешно добавлена.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -43,7 +43,7 @@ async def insert_aud_selection(
         data: Входные данные о выбранной аудитории.
 
     Returns:
-        schemas.Status: Пустой статус при успешной записи.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -77,7 +77,7 @@ async def insert_start_way(
         data: Входные данные о старте маршрута.
 
     Returns:
-        schemas.Status: Пустой статус при успешной записи.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -117,7 +117,7 @@ async def insert_changed_plan(
         data: Данные о смене плана (user_id, plan_id).
 
     Returns:
-        schemas.Status: Пустой статус при успешной записи.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     user = (await db.execute(
         Select(models.UserId).filter_by(user_id=data.user_id)
@@ -157,8 +157,6 @@ async def insert_floor_map(
         corpus: Идентификатор корпуса в навигации.
         floor: Номер этажа.
 
-    Returns:
-        None: Операция выполняется ради побочного эффекта commit.
     """
     file_name, file_extension = path.splitext(full_file_name)
 
@@ -187,7 +185,7 @@ async def insert_tg_event(
         data: Данные события телеграм-бота.
 
     Returns:
-        schemas.Status: Пустой статус при успешной записи.
+        schemas.Status: Статус по умолчанию (OK) при успешной записи.
     """
     tg_user = (
         await db.execute(

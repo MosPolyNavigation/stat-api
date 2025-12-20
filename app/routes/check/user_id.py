@@ -35,7 +35,7 @@ def register_endpoint(router: APIRouter):
             },
             404: {
                 'model': Status,
-                'description": "Item not found",
+                'description': "Item not found",
                 'content': {
                     "application/json": {
                         "example": {"status": "User not found"}

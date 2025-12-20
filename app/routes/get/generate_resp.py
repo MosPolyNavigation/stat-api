@@ -1,4 +1,4 @@
-"""Генератор описаний ответов для Swagger."""
+"""Генератор описаний ответов для OpenAPI."""
 
 from typing import Type, Any
 
@@ -7,7 +7,7 @@ from app.schemas import Status
 
 def generate_resp(t: Type) -> dict[int, dict[str, Any]]:
     """
-    Формирует словарь ответов Swagger для эндпоинтов получения данных.
+    Формирует словарь ответов OpenAPI для эндпоинтов получения данных.
 
     Args:
         t: Модель успешного ответа.

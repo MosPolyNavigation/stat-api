@@ -147,7 +147,7 @@ def register_endpoint(router: APIRouter):
             db: Асинхронная сессия SQLAlchemy.
 
         Returns:
-            UserOut: Данные пользователя и права, отраженные в Swagger.
+            UserOut: Данные пользователя и права в формате ответа API.
         """
         await db.refresh(current_user)
         result = UserOut(
