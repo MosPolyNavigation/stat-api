@@ -13,8 +13,8 @@ from app.schemas.rasp.schedule import Schedule, Variety, Auditory, Rasp
 from app.models.nav.auditory import Auditory as AuditoryModel
 
 filter_reg = re.compile(
-    r'(گُگ?|گْگّگ>|cگُگ?‘?‘'|گ?گ?گ>گّگüگ?|گ>گّگüگ?|‘"گçگ?گç‘?گّگ>‘?گ?گّ‘?|گٌگ?گّ‘?|hami|گ?گّگ?گٌ|‘'گç‘:گ?گ?گ?‘?گّگ?|گ+گٌگ?گَگ?گ?گ+گٌگ?گّ‘'|‘?گَگ?گ>گَگ?گ?گ?|گ+گٌگ?‘'گç‘:گ?گ?گ>گ?گ?گٌگٌ|h'
-    r'گّگ?گٌ|گ?گç‘?‘'گçگ>‘?گ?گ?‘?‘'‘?|گ+گّگْ‘< گُ‘?گّگَ‘'گٌگَ|گ'گّگْ‘< گُ‘?گّگَ‘'گٌگَ)',
+    r'(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h'
+    r'ами|деятельность|базы практик|Базы практик)',
     re.IGNORECASE)
 
 numToDay = {"1": "monday", "2": "tuesday", "3": "wednesday", "4": "thursday", "5": "friday", "6": "saturday"}
