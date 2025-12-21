@@ -30,7 +30,7 @@ jobs:
         run: |
           sed -i "s|base: '/web/'|base: '/'|" vite.config.ts
           sed -i "s|outDir: 'dist'|outDir: '../dist'|" vite.config.ts
-          sed -i "s|<BrowserRouter basename=\"/web\">|<BrowserRouter>|" src/App.ts
+          sed -i "s|<BrowserRouter basename=\"/web\">|<BrowserRouter>|" src/App.tsч
 
       - name: Prepare front
         working-directory: ./web
