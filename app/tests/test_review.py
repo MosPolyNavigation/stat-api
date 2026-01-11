@@ -33,7 +33,8 @@ class TestSetReviewStatus:
                 f"/api/review/{review_id}/status",
                 data={
                     "status_id": 1
-                }
+                },
+                headers=ADMIN_HEADERS
             )
             assert response.status_code == 200
             data = response.json()
@@ -53,7 +54,8 @@ class TestSetReviewStatus:
             "/api/review/99999/status",
             data={
                 "status_id": 1
-            }
+            },
+            headers=ADMIN_HEADERS
         )
         assert response.status_code == 404
         data = response.json()
@@ -79,7 +81,8 @@ class TestSetReviewStatus:
                 f"/api/review/{review_id}/status",
                 data={
                     "status_id": 99999
-                }
+                },
+                headers=ADMIN_HEADERS
             )
             assert response.status_code == 404
             data = response.json()
@@ -90,7 +93,8 @@ class TestSetReviewStatus:
         """Ошибка валидации при отсутствии status_id"""
         response = client.patch(
             "/api/review/1/status",
-            data={}
+            data={},
+            headers=ADMIN_HEADERS
         )
         assert response.status_code == 422
 
@@ -101,7 +105,8 @@ class TestSetReviewStatus:
             "/api/review/invalid/status",
             data={
                 "status_id": 1
-            }
+            },
+            headers=ADMIN_HEADERS
         )
         assert response.status_code == 422
 
@@ -111,6 +116,7 @@ class TestSetReviewStatus:
             "/api/review/1/status",
             data={
                 "status_id": "invalid"
-            }
+            },
+            headers=ADMIN_HEADERS
         )
         assert response.status_code == 422
