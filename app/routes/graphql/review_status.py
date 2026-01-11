@@ -27,7 +27,7 @@ async def resolve_review_status(
 ) -> list[ReviewStatusType]:
     session: AsyncSession = await ensure_stats_view_permission(info)
     statement = select(ReviewStatus).order_by(ReviewStatus.id)
-    if problem_id:
+    if review_status_id:
         statement = statement.where(ReviewStatus.id == review_status_id)
     validated_limit = _validated_limit(limit)
     if validated_limit == 0:
