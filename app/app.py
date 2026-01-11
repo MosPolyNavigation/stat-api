@@ -6,6 +6,7 @@ from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
+from .helpers.spa_static_files import SPAStaticFiles
 from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav
 from fastapi import FastAPI, Request, HTTPException
 from .state import AppState
@@ -80,7 +81,7 @@ app.include_router(free_aud.router)
 app.include_router(nav.router)
 app.mount(
     "/admin/",
-    StaticFiles(
+    SPAStaticFiles(
         directory=ADMIN_DIR,
         html=True
     ),
@@ -88,7 +89,7 @@ app.mount(
 )
 app.mount(
     "/",
-    StaticFiles(
+    SPAStaticFiles(
         directory=FRONT_DIR,
         html=True
     ),
