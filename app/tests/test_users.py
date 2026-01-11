@@ -388,3 +388,103 @@ class TestDeleteUser:
         """Ошибка валидации при невалидном ID"""
         response = client.delete("/api/users/invalid", headers=ADMIN_HEADERS)
         assert response.status_code == 422
+
+
+class TestChangeUserPassword:
+    """Тесты для POST /api/users/{user_id}/change-pass - смена пароля пользователя администратором"""
+
+    def test_200_change_user_password_success(self):
+        """Успешная смена пароля пользователя администратором"""
+        # Создаём пользователя
+        create_response = client.post(
+            "/api/users",
+            headers=ADMIN_HEADERS,
+            data={
+                "login": unique_login("passchange"),
+                "password": "oldpassword123",
+                "is_active": True
+            }
+        )
+        assert create_response.status_code == 201
+        user_id = create_response.json()["id"]
+        user_login = create_response.json()["login"]
+
+        # Меняем пароль через админа
+        response = client.post(
+            f"/api/users/{user_id}/change-pass",
+            headers=ADMIN_HEADERS,
+            data={
+                "new_password": "newpassword456"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "user_id" in data
+        assert data["user_id"] == user_id
+        assert "изменён" in data["message"].lower()
+
+        # Проверяем что пользователь может войти с новым паролем
+        login_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": user_login,
+                "password": "newpassword456"
+            }
+        )
+        assert login_response.status_code == 200
+        assert "access_token" in login_response.json()
+
+        # Проверяем что старый пароль не работает
+        old_login_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": user_login,
+                "password": "oldpassword123"
+            }
+        )
+        assert old_login_response.status_code == 400
+
+    def test_404_change_password_user_not_found(self):
+        """Ошибка 404 при попытке изменить пароль несуществующего пользователя"""
+        response = client.post(
+            "/api/users/99999/change-pass",
+            headers=ADMIN_HEADERS,
+            data={
+                "new_password": "newpass123"
+            }
+        )
+        assert response.status_code == 404
+        data = response.json()
+        assert "detail" in data
+        assert "не найден" in data["detail"].lower()
+
+    def test_401_change_password_no_token(self):
+        """Ошибка при отсутствии токена аутентификации"""
+        response = client.post(
+            "/api/users/1/change-pass",
+            data={
+                "new_password": "newpass123"
+            }
+        )
+        assert response.status_code == 401
+
+    def test_422_change_password_missing_new_password(self):
+        """Ошибка валидации при отсутствии нового пароля"""
+        response = client.post(
+            "/api/users/1/change-pass",
+            headers=ADMIN_HEADERS,
+            data={}
+        )
+        assert response.status_code == 422
+
+    def test_422_change_password_invalid_user_id(self):
+        """Ошибка валидации при невалидном ID пользователя"""
+        response = client.post(
+            "/api/users/invalid/change-pass",
+            headers=ADMIN_HEADERS,
+            data={
+                "new_password": "newpass123"
+            }
+        )
+        assert response.status_code == 422

@@ -4,6 +4,7 @@ from app.models.stat.change_plan import ChangePlan
 from app.models.auth.goal import Goal
 from .problem import Problem
 from .review import Review
+from .review_status import ReviewStatus
 from app.models.auth.right import Right
 from app.models.auth.role import Role
 from app.models.auth.role_right_goal import RoleRightGoal
@@ -21,3 +22,4 @@ from app.models.nav.auditory import Auditory
 from app.models.nav.corpus import Corpus
 from app.models.nav.types import Type
 from app.models.nav.location import Location
+from app.models.stat.tg_bot import TgEvent, TgEventType, TgUser

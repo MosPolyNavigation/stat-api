@@ -220,3 +220,149 @@ class TestAuthMe:
         # Пытаемся получить /me - должна быть ошибка, т.к. пользователь неактивен
         me_after_deactivate = client.get("/api/auth/me", headers=user_headers)
         assert me_after_deactivate.status_code in [400, 401]  # Деактивированный пользователь
+
+
+class TestAuthChangePassword:
+    """Тесты для POST /api/auth/change-pass - смена собственного пароля"""
+
+    def test_200_change_own_password_success(self):
+        """Успешная смена собственного пароля"""
+        # Создаём пользователя
+        login = unique_login("ownpasschange")
+        client.post(
+            "/api/users",
+            headers=ADMIN_HEADERS,
+            data={
+                "login": login,
+                "password": "oldpassword123",
+                "is_active": True
+            }
+        )
+
+        # Получаем токен
+        token_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": login,
+                "password": "oldpassword123"
+            }
+        )
+        assert token_response.status_code == 200
+        user_token = token_response.json()["access_token"]
+        user_headers = {"Authorization": f"Bearer {user_token}"}
+
+        # Меняем свой пароль
+        response = client.post(
+            "/api/auth/change-pass",
+            headers=user_headers,
+            data={
+                "old_password": "oldpassword123",
+                "new_password": "newpassword456"
+            }
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "message" in data
+        assert "изменён" in data["message"].lower()
+
+        # Проверяем что можем войти с новым паролем
+        new_login_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": login,
+                "password": "newpassword456"
+            }
+        )
+        assert new_login_response.status_code == 200
+        assert "access_token" in new_login_response.json()
+
+        # Проверяем что старый пароль не работает
+        old_login_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": login,
+                "password": "oldpassword123"
+            }
+        )
+        assert old_login_response.status_code == 400
+
+    def test_400_change_own_password_wrong_old_password(self):
+        """Ошибка при неверном текущем пароле"""
+        # Создаём пользователя
+        login = unique_login("wrongoldpass")
+        client.post(
+            "/api/users",
+            headers=ADMIN_HEADERS,
+            data={
+                "login": login,
+                "password": "correctpassword",
+                "is_active": True
+            }
+        )
+
+        # Получаем токен
+        token_response = client.post(
+            "/api/auth/token",
+            data={
+                "username": login,
+                "password": "correctpassword"
+            }
+        )
+        user_token = token_response.json()["access_token"]
+        user_headers = {"Authorization": f"Bearer {user_token}"}
+
+        # Пытаемся изменить пароль с неверным старым паролем
+        response = client.post(
+            "/api/auth/change-pass",
+            headers=user_headers,
+            data={
+                "old_password": "wrongoldpassword",
+                "new_password": "newpassword123"
+            }
+        )
+        assert response.status_code == 400
+        data = response.json()
+        assert "detail" in data
+        assert "неверный" in data["detail"].lower()
+
+    def test_401_change_own_password_no_token(self):
+        """Ошибка при отсутствии токена аутентификации"""
+        response = client.post(
+            "/api/auth/change-pass",
+            data={
+                "old_password": "oldpass",
+                "new_password": "newpass"
+            }
+        )
+        assert response.status_code == 401
+
+    def test_422_change_own_password_missing_old_password(self):
+        """Ошибка валидации при отсутствии старого пароля"""
+        response = client.post(
+            "/api/auth/change-pass",
+            headers=ADMIN_HEADERS,
+            data={
+                "new_password": "newpassword123"
+            }
+        )
+        assert response.status_code == 422
+
+    def test_422_change_own_password_missing_new_password(self):
+        """Ошибка валидации при отсутствии нового пароля"""
+        response = client.post(
+            "/api/auth/change-pass",
+            headers=ADMIN_HEADERS,
+            data={
+                "old_password": "oldpassword123"
+            }
+        )
+        assert response.status_code == 422
+
+    def test_422_change_own_password_missing_both_passwords(self):
+        """Ошибка валидации при отсутствии обоих паролей"""
+        response = client.post(
+            "/api/auth/change-pass",
+            headers=ADMIN_HEADERS,
+            data={}
+        )
+        assert response.status_code == 422
