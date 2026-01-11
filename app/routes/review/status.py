@@ -58,19 +58,3 @@ def register_endpoint(router: APIRouter):
             "status_id": status_obj.id,
             "status_name": status_obj.name,
         }
-
-    @router.get(
-        "/statuses",
-        tags=["review"],
-        description="Список всех возможных статусов отзывов",
-    )
-    async def list_review_statuses(
-        db: AsyncSession = Depends(get_db),
-    ):
-        result = await db.execute(Select(ReviewStatus))
-        statuses = result.scalars().all()
-
-        return [
-            {"id": s.id, "name": s.name}
-            for s in statuses
-        ]
