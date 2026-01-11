@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.review import Review
 from app.models.review_status import ReviewStatus
-# from app.helpers.permissions import require_rights
+from app.helpers.permissions import require_rights
 
 
 def register_endpoint(router: APIRouter):
@@ -18,6 +18,7 @@ def register_endpoint(router: APIRouter):
         description="Назначение статуса отзыву по ID статуса",
         tags=["review"],
         status_code=status.HTTP_200_OK,
+        dependencies=[Depends(require_rights("tables", "edit"))],
     )
     async def set_review_status(
         review_id: int,
