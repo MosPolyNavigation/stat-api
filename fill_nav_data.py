@@ -2,7 +2,9 @@ import asyncio
 import csv
 import json
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.sql import text
 from app.database import AsyncSessionLocal
 from app.models.nav.location import Location as LocationModel
 from app.models.nav.corpus import Corpus as CorpusModel
@@ -153,6 +155,17 @@ def get_types(auds: list[Auditory]) -> list[str]:
 type StrIntId = dict[str, int]
 
 
+async def clear_tables(db: AsyncSession):
+    """Очищает все таблицы в правильном порядке для избежания нарушений внешних ключей"""
+
+    await db.execute(delete(AuditoryModel))
+    await db.execute(delete(TypeModel))
+    await db.execute(delete(PlanModel))
+    await db.execute(delete(CorpusModel))
+    await db.execute(delete(LocationModel))
+    await db.commit()
+
+
 async def fill_locations(db: AsyncSession, locations: list[Location]) -> StrIntId:
     ids: StrIntId = dict()
     locations_db: list[LocationModel] = []
@@ -262,6 +275,7 @@ async def main():
     auds = load_auditories_from_csv()
     types_ = get_types(auds)
     async with AsyncSessionLocal() as db:
+        await clear_tables(db)
         loc_ids: StrIntId = await fill_locations(db, locations)
         cor_ids: StrIntId = await fill_corpuses(db, corpuses, loc_ids)
         pl_ids: StrIntId = await fill_plans(db, plans, cor_ids)
