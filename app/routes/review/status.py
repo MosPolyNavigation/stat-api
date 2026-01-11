@@ -48,13 +48,14 @@ def register_endpoint(router: APIRouter):
                 detail="Статус не найден",
             )
 
-        review.status_id = status_obj.id
+        review.review_status_id = status_obj.id
         status_name = status_obj.name
         await db.commit()
-
+        await db.refresh(review)
+            
         return {
             "message": "Статус отзыва обновлён",
-            "review_id": review_id,
-            "status_id": status_id,
-            "status_name": status_name,
+            "review_id": review.id,
+            "status_id": review.review_status_id,
+            "status_name": status_obj.name,
         }
