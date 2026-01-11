@@ -61,4 +61,4 @@ def register_endpoint(router: APIRouter):
         sanitized_path = secure_image_path(base_path, image_path)
         if sanitized_path is None:
             raise LookupException("Image")
-        return FileResponse(image_path)
+        return FileResponse(sanitized_path)
