@@ -18,6 +18,7 @@ from .nav import (
     resolve_nav_types,
 )
 from .problem import ProblemType, resolve_problems
+from .review_status import ReviewStatusType, resolve_review_status
 from .review import ReviewType, resolve_reviews
 from .select_auditory import SelectAuditoryType, resolve_select_auditories
 from .site_stat import SiteStatType, resolve_site_stats
@@ -64,6 +65,10 @@ class Query:
     problems: list[ProblemType] = strawberry.field(
         resolver=resolve_problems,
         description="Получение списка проблем."
+    )
+    review_statuses: list[ReviewStatusType] = strawberry.field(
+        resolver=resolve_review_status,
+        description="Получение списка статусов отзывов."
     )
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,

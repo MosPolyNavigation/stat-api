@@ -8,6 +8,7 @@ from typing import Optional
 from .filter_handlers import _validated_limit
 from .permissions import ensure_stats_view_permission
 from .problem import ProblemType, _to_problem
+from .review_status import ReviewStatusType, _to_review_status
 from .user_id import UserIdType, _to_user_id
 from app.models import Review
 
@@ -17,11 +18,13 @@ class ReviewType:
     id: int
     user_id: str
     problem_id: str
+    status_id: int
     text: str
     image_name: Optional[str]
     creation_date: datetime
     problem: Optional[ProblemType]
     user: Optional[UserIdType]
+    status: Optional[ReviewStatusType]
 
 
 def _to_review(model: Review) -> ReviewType:
@@ -29,11 +32,13 @@ def _to_review(model: Review) -> ReviewType:
         id=model.id,
         user_id=model.user_id,
         problem_id=model.problem_id,
+        status_id=model.review_status_id,
         text=model.text,
         image_name=model.image_name,
         creation_date=model.creation_date,
         problem=_to_problem(model.problem),
-        user=_to_user_id(model.user)
+        user=_to_user_id(model.user),
+        status=_to_review_status(model.review_status)
     )
 
 
@@ -48,7 +53,8 @@ async def resolve_reviews(
         select(Review)
         .options(
             selectinload(Review.user),
-            selectinload(Review.problem)
+            selectinload(Review.problem),
+            selectinload(Review.review_status)
         )
         .order_by(Review.creation_date.desc())
     )
