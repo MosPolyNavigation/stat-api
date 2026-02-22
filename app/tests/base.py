@@ -131,7 +131,7 @@ async def create_db_and_tables():
             floor_id=1,
             ready=True,
             entrances="[]",
-            graph="{}",
+            graph="[]",
             svg_id=None,
             nearest_entrance=None,
             nearest_man_wc=None,
