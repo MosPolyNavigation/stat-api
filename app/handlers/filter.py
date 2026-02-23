@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from sqlalchemy import Select
 from typing import Any, Optional
 from app import schemas
@@ -44,18 +44,38 @@ def filter_by_date(
     """
     borders: Optional[tuple[datetime, datetime]] = None
     start_time = time(0, 0, 0)
-    end_time = time(23, 59, 59)
     if params.start_date is not None and params.end_date is not None:
         borders = (
             datetime.combine(params.start_date, start_time),
-            datetime.combine(params.end_date, end_time)
-        )
-    elif params.start_date is not None and params.end_date is None:
-        borders = (
-            datetime.combine(params.start_date, start_time),
-            datetime.combine(params.start_date, end_time)
+            datetime.combine(params.end_date + timedelta(days=1), start_time)
         )
     return borders
+
+
+def filter_by_month(
+        params: schemas.FilterQuery
+) -> Optional[tuple[datetime, datetime]]:
+    if params.start_month is None or params.end_month is None:
+        return None
+
+    start_month = datetime.strptime(params.start_month, "%Y-%m")
+    end_month = datetime.strptime(params.end_month, "%Y-%m")
+    if end_month.month == 12:
+        end_exclusive = datetime(end_month.year + 1, 1, 1)
+    else:
+        end_exclusive = datetime(end_month.year, end_month.month + 1, 1)
+    return start_month, end_exclusive
+
+
+def filter_by_year(
+        params: schemas.FilterQuery
+) -> Optional[tuple[datetime, datetime]]:
+    if params.start_year is None or params.end_year is None:
+        return None
+
+    start_year = datetime.strptime(params.start_year, "%Y")
+    end_exclusive = datetime(int(params.end_year) + 1, 1, 1)
+    return start_year, end_exclusive
 
 
 def filter_lesson(lesson: Lesson | None, filter_: FilterSvobodn) -> Lesson:

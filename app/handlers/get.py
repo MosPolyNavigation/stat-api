@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from typing import Dict
 from datetime import date
-from .filter import filter_by_date
+from .filter import filter_by_date, filter_by_month, filter_by_year
 from app import schemas, models
 
 
@@ -21,22 +21,43 @@ async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> l
         Статистика по эндпоинту.
     """
     borders = filter_by_date(params)
-    visit_date_expr = func.date(params.model.visit_date)
-    visit_date_out_expr = func.cast(visit_date_expr, String)
+    period_expr = func.cast(func.date(params.model.visit_date), String)
+    unique_visitors_expr = case(
+        (func.date(models.UserId.creation_date) == func.date(params.model.visit_date), models.UserId.user_id)
+    )
+
+    month_borders = filter_by_month(params)
+    if month_borders is not None:
+        borders = month_borders
+        period_expr = func.substr(func.cast(func.date(params.model.visit_date), String), 1, 7)
+        unique_visitors_expr = case(
+            (
+                func.substr(func.cast(func.date(models.UserId.creation_date), String), 1, 7) == period_expr,
+                models.UserId.user_id
+            )
+        )
+
+    year_borders = filter_by_year(params)
+    if year_borders is not None:
+        borders = year_borders
+        period_expr = func.substr(func.cast(func.date(params.model.visit_date), String), 1, 4)
+        unique_visitors_expr = case(
+            (
+                func.substr(func.cast(func.date(models.UserId.creation_date), String), 1, 4) == period_expr,
+                models.UserId.user_id
+            )
+        )
+
     query = (
         select(
-            visit_date_out_expr.label("period_str"),
+            period_expr.label("period_str"),
             func.count(params.model.user_id).label("all_visits"),
             func.count(params.model.user_id.distinct()).label("visitor_count"),
-            func.count(
-                case(
-                    (func.date(models.UserId.creation_date) == visit_date_expr, models.UserId.user_id)
-                ).distinct()
-            ).label("unique_visits")
+            func.count(unique_visitors_expr.distinct()).label("unique_visits")
         ).select_from(params.model)
         .join(models.UserId, params.model.user_id == models.UserId.user_id)
-        .group_by(visit_date_out_expr)
-        .order_by(visit_date_out_expr)
+        .group_by(period_expr)
+        .order_by(period_expr)
     )
     if borders is not None:
         query = (
@@ -45,6 +66,30 @@ async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> l
             .where(params.model.visit_date < borders[1])
         )
     rows = (await db.execute(query)).fetchall()
+    if params.start_month is not None and params.end_month is not None:
+        stats = [
+            schemas.Statistics(
+                period=date.fromisoformat(f"{row.period_str}-01"),
+                all_visits=row.all_visits,
+                visitor_count=row.visitor_count,
+                unique_visitors=row.unique_visits
+            )
+            for row in rows
+        ]
+        return stats
+
+    if params.start_year is not None and params.end_year is not None:
+        stats = [
+            schemas.Statistics(
+                period=date.fromisoformat(f"{row.period_str}-01-01"),
+                all_visits=row.all_visits,
+                visitor_count=row.visitor_count,
+                unique_visitors=row.unique_visits
+            )
+            for row in rows
+        ]
+        return stats
+
     stats = [
         schemas.Statistics(
             period=date.fromisoformat(row.period_str),
