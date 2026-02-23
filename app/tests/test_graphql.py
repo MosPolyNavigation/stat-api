@@ -394,6 +394,27 @@ class TestGraphQLReviews:
         assert "data" in data
 
 
+    def test_200_reviews_filtered_by_status_id(self):
+        """Запрос reviews с фильтром status_id"""
+        query = """
+        {
+            reviews(status_id: 1) {
+                id
+                statusId
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "reviews" in data["data"]
+        reviews = data["data"]["reviews"]
+        assert isinstance(reviews, list)
+        for review in reviews:
+            assert review["statusId"] == 1
+
+
 class TestGraphQLProblems:
     """Тесты для problems query"""
 
