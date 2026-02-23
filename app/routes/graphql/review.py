@@ -4,7 +4,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
-from typing import Optional
+from typing import Annotated, Optional
 from .filter_handlers import _validated_limit
 from .permissions import ensure_stats_view_permission
 from .problem import ProblemType, _to_problem
@@ -46,6 +46,7 @@ async def resolve_reviews(
         info: Info,
         user_id: Optional[str] = None,
         problem_id: Optional[str] = None,
+        status_id: Annotated[Optional[int], strawberry.argument(name="status_id")] = None,
         limit: Optional[int] = None
 ) -> list[ReviewType]:
     session: AsyncSession = await ensure_stats_view_permission(info)
@@ -62,6 +63,8 @@ async def resolve_reviews(
         statement = statement.where(Review.user_id == user_id)
     if problem_id:
         statement = statement.where(Review.problem_id == problem_id)
+    if status_id is not None:
+        statement = statement.where(Review.review_status_id == status_id)
     validated_limit = _validated_limit(limit)
     if validated_limit == 0:
         return []
