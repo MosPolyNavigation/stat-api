@@ -690,7 +690,10 @@ class TestGraphQLEndpointStatistics:
         """Запрос endpointStatistics с фильтром endpoint='site'"""
         query = """
         {
-            endpointStatistics(endpoint: "site") {
+            endpointStatistics(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
                 uniqueVisitors
                 allVisits
                 visitorCount
@@ -716,7 +719,10 @@ class TestGraphQLEndpointStatistics:
         """Запрос endpointStatistics с фильтром endpoint='auds'"""
         query = """
         {
-            endpointStatistics(endpoint: "auds") {
+            endpointStatistics(
+                endpoint: "auds",
+                byMonth: {start: "2025-01", end: "2025-12"}
+            ) {
                 uniqueVisitors
                 allVisits
                 visitorCount
@@ -734,7 +740,10 @@ class TestGraphQLEndpointStatistics:
         """Запрос endpointStatistics с фильтром endpoint='ways'"""
         query = """
         {
-            endpointStatistics(endpoint: "ways") {
+            endpointStatistics(
+                endpoint: "ways",
+                byYear: {start: "2024", end: "2025"}
+            ) {
                 uniqueVisitors
                 allVisits
                 visitorCount
@@ -752,7 +761,10 @@ class TestGraphQLEndpointStatistics:
         """Запрос endpointStatistics с фильтром endpoint='plans'"""
         query = """
         {
-            endpointStatistics(endpoint: "plans") {
+            endpointStatistics(
+                endpoint: "plans",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
                 uniqueVisitors
                 allVisits
                 visitorCount
@@ -770,7 +782,10 @@ class TestGraphQLEndpointStatistics:
         """Запрос endpointStatistics с одним полем"""
         query = """
         {
-            endpointStatistics(endpoint: "site") {
+            endpointStatistics(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
                 period
             }
         }
@@ -779,6 +794,36 @@ class TestGraphQLEndpointStatistics:
         assert response.status_code == 200
         data = response.json()
         assert "data" in data
+
+    def test_200_endpoint_statistics_requires_one_filter(self):
+        query = """
+        {
+            endpointStatistics(endpoint: "site") {
+                period
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "errors" in data
+
+    def test_200_endpoint_statistics_rejects_multiple_filters(self):
+        query = """
+        {
+            endpointStatistics(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"},
+                byYear: {start: "2025", end: "2025"}
+            ) {
+                period
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "errors" in data
 
 
 class TestGraphQLUnauthorized:
@@ -814,7 +859,10 @@ class TestGraphQLUnauthorized:
         """Попытка получить статистику без токена возвращает 401"""
         query = """
         {
-            endpointStatistics(endpoint: "site") {
+            endpointStatistics(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
                 period
                 allVisits
             }

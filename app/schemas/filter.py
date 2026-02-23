@@ -62,6 +62,18 @@ class FilterQuery(BaseModel):
     end_date: Optional[date] = Field(
         default=None, description="Date on which filtering ends"
     )
+    start_month: Optional[str] = Field(
+        default=None, description="Month from which filtering begins in YYYY-MM format"
+    )
+    end_month: Optional[str] = Field(
+        default=None, description="Month on which filtering ends in YYYY-MM format"
+    )
+    start_year: Optional[str] = Field(
+        default=None, description="Year from which filtering begins in YYYY format"
+    )
+    end_year: Optional[str] = Field(
+        default=None, description="Year on which filtering ends in YYYY format"
+    )
 
     @computed_field
     @property
