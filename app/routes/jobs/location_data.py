@@ -10,7 +10,7 @@ def register_endpoint(router: APIRouter):
     @router.post(
         "/locationData",
         response_model=Status,
-        # dependencies=[Depends(require_rights("tasks", "edit"))],
+        dependencies=[Depends(require_rights("tasks", "edit"))],
         responses={409: {"model": Status, "description": "Task is executed now"}},
     )
     async def start_location_data_job(response: Response, background_tasks: BackgroundTasks) -> Status:
