@@ -172,6 +172,10 @@ async def create_db_and_tables():
     globals_.global_rasp = schedule.root
     globals_.locker = False
 
+    # Инициализируем locationData для тестов
+    from app.jobs.location_data.worker import fetch_location_data
+    await fetch_location_data()
+
 
 asyncio.run(create_db_and_tables())
 
