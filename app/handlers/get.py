@@ -162,24 +162,3 @@ async def get_popular_auds_with_count(db: AsyncSession):
              .order_by(func.sum(tr.c.CNT).desc()))
     with_count = (await db.execute(query)).fetchall()
     return with_count
-
-
-async def get_all_floor_maps(db: AsyncSession) -> Dict[str, Dict[str, Dict[int, str]]]:
-    maps = (await db.execute(Select(models.floor_map.FloorMap))).all()
-    result: Dict[str, Dict[str, Dict[int, str]]] = {}
-
-    for floor_map in maps:
-        campus = floor_map.campus
-        corpus = floor_map.corpus
-        floor = floor_map.floor
-        file_path = floor_map.file_path
-
-        if campus not in result:
-            result[campus] = {}
-
-        if corpus not in result[campus]:
-            result[campus][corpus] = {}
-
-        result[campus][corpus][floor] = file_path
-
-    return result
