@@ -19,6 +19,7 @@ from app.models.nav.floor import Floor
 from app.models.nav.static import Static
 from app.models.nav.plan import Plan
 from app.models.nav.auditory import Auditory
+from app.models.nav.aud_photo import AudPhoto
 from app.models.nav.corpus import Corpus
 from app.models.nav.types import Type
 from app.models.nav.location import Location
