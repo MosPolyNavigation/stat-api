@@ -158,8 +158,7 @@ async def create_db_and_tables():
             text_from_sign=None,
             additional_info=None,
             comments=None,
-            link=None,
-            photo_id=None
+            link=None
         )
         db.add(test_auditory)
 
