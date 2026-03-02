@@ -40,7 +40,23 @@ tags_metadata = [
     {
         "name": "free-aud",
         "description": "Эндпоинты для получения свободных аудиторий"
-    }
+    },
+    {
+        "name": "nav",
+        "description": "Эндпоинты для работы с данными навигации"
+    },
+    {
+        "name": "users",
+        "description": "Эндпоинты для работы с пользователями"
+    },
+    {
+        "name": "roles",
+        "description": "Эндпоинты для работы с пользователями"
+    },
+    {
+        "name": "check",
+        "description": "Эндпоинты для проверки"
+    },
 ]
 
 settings = get_settings()

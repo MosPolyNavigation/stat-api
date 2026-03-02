@@ -19,22 +19,22 @@ from app.models.nav.static import Static
 from app.handlers.insert import insert_floor_map
 
 def register_endpoint(router: APIRouter):
-    """
-    Эндпоинт для получения плана:
-    /api/nav/plan?plan={plan_id}
-
-    Возвращает JSON формата {loc_id}{plan_id}.json
-    """
-
     @router.get(
         "/plan",
         description="Получение навигационного плана",
         response_model=PlanNav,
+        tags=["nav"],
     )
     async def get_plan(
         plan: str,
         db: AsyncSession = Depends(get_db),
     ) -> PlanNav:
+        """
+        Эндпоинт для получения плана:
+        /api/nav/plan?plan={plan_id}
+
+        Возвращает JSON формата {loc_id}{plan_id}.json
+        """ 
         #  находим план по id_sys и подгружаем corpus, floor, svg
         stmt = (
             Select(Plan)
@@ -96,27 +96,28 @@ def register_endpoint(router: APIRouter):
             spaces=spaces,
         )
 
-    """
-    Эндпоинт для загрузки svg-плана:
-    POST /api/nav/upload_plan
-
-    Принимает x-www-form-urlencoded форму:
-    - PlanId: идентификатор плана (plan.id_sys)
-    - File: svg плана (текст)
-
-    Сохраняет svg на диск в директорию:
-    {static_files}/plans/uuid.svg
-    """
     @router.post(
         "/upload_plan",
-        description="Загрузка svg плана (x-www-form-urlencoded: PlanId, File)",
+        description="Загрузка svg плана (x-www-form-urlencoded)",
         dependencies=[Depends(require_rights("nav_data", "edit", "create"))],
+        tags=["nav"],
     )
     async def upload_plan(
-        plan_id: str = Form(..., alias="PlanId"),
-        file_svg: str = Form(..., alias="File"),
+        plan_id: str = Form(...),
+        file_svg: str = Form(...),
         db: AsyncSession = Depends(get_db),
     ):
+        """
+        Эндпоинт для загрузки svg-плана:
+        POST /api/nav/upload_plan
+
+        Принимает x-www-form-urlencoded форму:
+        - PlanId: идентификатор плана (plan.id_sys)
+        - File: svg плана (текст)
+
+        Сохраняет svg на диск в директорию:
+        {static_files}/plans/uuid.svg
+        """
         # валидность plan_id
         plan_id = (plan_id or "").strip()
         if not plan_id or len(plan_id) > 20:
@@ -209,19 +210,20 @@ def register_endpoint(router: APIRouter):
         # вернуть имя файла
         return {"file_name": saved_file}
 
-    """
-    Эндпоинт для получения svg-плана:
-    GET /api/nav/plan_svg?plan_id={plan_id}
-    """
     @router.get(
         "/plan_svg",
         description="Получение svg плана по plan_id",
         response_class=FileResponse,
+        tags=["nav"],
     )
     async def plan_svg(
         plan_id: str,
         db: AsyncSession = Depends(get_db),
     ) -> FileResponse:
+        """
+        Эндпоинт для получения svg-плана:
+        GET /api/nav/plan_svg?plan_id={plan_id}
+        """
         # Валидируем plan_id
         plan_id = (plan_id or "").strip()
         if not plan_id or len(plan_id) > 20:
