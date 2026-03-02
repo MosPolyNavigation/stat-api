@@ -225,7 +225,6 @@ def register_endpoint(router: APIRouter):
             404: {"model": Status, "description": "Plan/SVG not found"},
             422: {"model": Status, "description": "Invalid plan_id"},
         },
-        tags=["nav"],
     )
     async def plan_svg(
         plan_id: str,
