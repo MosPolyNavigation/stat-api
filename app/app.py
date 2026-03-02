@@ -40,7 +40,23 @@ tags_metadata = [
     {
         "name": "free-aud",
         "description": "Эндпоинты для получения свободных аудиторий"
-    }
+    },
+    {
+        "name": "nav",
+        "description": "Эндпоинты для работы с данными навигации"
+    },
+    {
+        "name": "users",
+        "description": "Эндпоинты для работы с пользователями"
+    },
+    {
+        "name": "roles",
+        "description": "Эндпоинты для работы с пользователями"
+    },
+    {
+        "name": "check",
+        "description": "Эндпоинты для проверки"
+    },
 ]
 
 settings = get_settings()
@@ -49,9 +65,12 @@ PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
 FRONT_DIR = path.join(PROJECT_DIR, "dist")
 ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
+AUDITORY_STATIC_DIR = path.join(settings.static_files, "auditories")
 
 if not path.exists(STATIC_DIR):
     makedirs(STATIC_DIR)
+if not path.exists(AUDITORY_STATIC_DIR):
+    makedirs(AUDITORY_STATIC_DIR)
 if not path.exists(FRONT_DIR):
     makedirs(FRONT_DIR)
 if not path.exists(ADMIN_DIR):

@@ -280,7 +280,6 @@ class TestGraphQLNavAuditories:
                 additionalInfo
                 comments
                 link
-                photoId
             }
         }
         """
