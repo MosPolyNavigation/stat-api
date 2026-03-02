@@ -1,21 +1,21 @@
 import json
 import os
-from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Form
+from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy import Select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from fastapi.responses import FileResponse
 
 from app.database import get_db
 from app.models.nav.plan import Plan
 from app.models.nav.location import Location
+from app.models.nav.static import Static
 from app.schemas.nav.plan import PlanNav
+from app.schemas import Status
 from app.config import get_settings
 from app.helpers.permissions import require_rights
-from app.helpers.svg import save_svg_to_disk
-from app.models.nav.static import Static
+from app.helpers.svg import save_svg_bytes_to_disk
 from app.handlers.insert import insert_floor_map
 
 def register_endpoint(router: APIRouter):
@@ -98,15 +98,22 @@ def register_endpoint(router: APIRouter):
 
     @router.post(
         "/upload_plan",
-        description="Загрузка svg плана (x-www-form-urlencoded)",
-        dependencies=[Depends(require_rights("nav_data", "edit", "create"))],
         tags=["nav"],
+        description="Загрузка svg плана (multipart/form-data: PlanId, File)",
+        response_model=Status,
+        dependencies=[Depends(require_rights("nav_data", "edit", "create"))],
+        responses={
+            200: {"model": Status, "description": "SVG uploaded"},
+            400: {"model": Status, "description": "Invalid SVG or file was not saved"},
+            404: {"model": Status, "description": "Plan not found"},
+            422: {"model": Status, "description": "Invalid plan_id"},
+        },
     )
     async def upload_plan(
-        plan_id: str = Form(...),
-        file_svg: str = Form(...),
-        db: AsyncSession = Depends(get_db),
-    ):
+            plan_id: str = Form(..., alias="PlanId"),
+            file: UploadFile = File(..., alias="File"),
+            db: AsyncSession = Depends(get_db),
+    ) -> Status:
         """
         Эндпоинт для загрузки svg-плана:
         POST /api/nav/upload_plan
@@ -133,7 +140,7 @@ def register_endpoint(router: APIRouter):
         if plan_obj is None:
             raise HTTPException(status_code=404, detail="Plan not found")
 
-        # Базовая директория хранения планов
+        # базовая директория хранения планов
         base_path = os.path.join(get_settings().static_files, "plans")
 
         # backup старого плана, если он есть
@@ -143,7 +150,6 @@ def register_endpoint(router: APIRouter):
         backup_disk_path = None
 
         if old_static is not None:
-            # Путь до текущего файла на диске
             old_disk_path = os.path.join(
                 get_settings().static_files,
                 old_static.path,
@@ -151,13 +157,12 @@ def register_endpoint(router: APIRouter):
             )
             backup_disk_path = old_disk_path + ".bak"
 
-            # Если файл реально существует - переименовываем
             if os.path.exists(old_disk_path):
                 os.replace(old_disk_path, backup_disk_path)
                 backup_done = True
 
                 # чтобы имя файла стало uuid.svg.bak:
-                # было: name=uuid, ext=svg -> стало: name=uuid.svg, ext=bak
+                # было name=uuid, ext=svg; стало name=uuid.svg, ext=bak
                 await db.execute(
                     update(Static)
                     .where(Static.id == old_static.id)
@@ -165,10 +170,11 @@ def register_endpoint(router: APIRouter):
                 )
                 await db.commit()
 
-        # сохраняем новый svg
-        saved_file = await save_svg_to_disk(file_svg, base_path)
+        # читаем и сохраняем новый svg (функция внутри проверяет что это svg)
+        contents = await file.read()
+        saved_file = await save_svg_bytes_to_disk(contents, base_path)
         if saved_file is None:
-            # Если новый файл не сохранился, Откатываем backup
+            # откатить backup
             if backup_done and old_disk_path and backup_disk_path and os.path.exists(backup_disk_path):
                 os.replace(backup_disk_path, old_disk_path)
 
@@ -199,7 +205,7 @@ def register_endpoint(router: APIRouter):
             link=link,
         )
 
-        # Обновляем связь плана на новый svg
+        # обновляем plans.svg_id
         await db.execute(
             update(Plan)
             .where(Plan.id == plan_obj.id)
@@ -207,13 +213,18 @@ def register_endpoint(router: APIRouter):
         )
         await db.commit()
 
-        # вернуть имя файла
-        return {"file_name": saved_file}
+        return Status(status=f"Uploaded svg: {saved_file}")
 
     @router.get(
         "/plan_svg",
+        tags=["nav"],
         description="Получение svg плана по plan_id",
         response_class=FileResponse,
+        responses={
+            200: {"description": "SVG file"},
+            404: {"model": Status, "description": "Plan/SVG not found"},
+            422: {"model": Status, "description": "Invalid plan_id"},
+        },
         tags=["nav"],
     )
     async def plan_svg(
