@@ -19,22 +19,30 @@ def is_valid_svg(svg_text: str) -> bool:
     tag = root.tag
     return tag == "svg" or tag.endswith("}svg")
 
-# Сохранение svg
-async def save_svg_to_disk(svg_text: str, base_path: str) -> str | None:
-    if not is_valid_svg(svg_text):
+# Проверка bytes (для multipart UploadFile)
+def is_valid_svg_bytes(data: bytes) -> bool:
+    if not data:
+        return False
+
+    try:
+        text = data.decode("utf-8", errors="strict")
+    except UnicodeDecodeError:
+        return False
+    return is_valid_svg(text)
+
+# Сохранение svg из bytes (для multipart UploadFile)
+async def save_svg_bytes_to_disk(data: bytes, base_path: str) -> str | None:
+    if not is_valid_svg_bytes(data):
         return None
 
-    # Проверка, что директория существует
     os.makedirs(base_path, exist_ok=True)
 
-    # Генерируем уникальное имя файла
     file_name = f"{uuid.uuid4().hex}.svg"
     file_path = os.path.join(base_path, file_name)
 
-    # Пишем файл асинхронно
     try:
         async with aiofiles.open(file_path, "wb") as f:
-            await f.write(svg_text.encode("utf-8"))
+            await f.write(data)
     except OSError:
         return None
 
