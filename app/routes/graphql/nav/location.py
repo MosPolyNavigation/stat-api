@@ -35,6 +35,7 @@ class NavLocationInput:
     address: str
     metro: str
     comments: Optional[str] = None
+    crossings: Optional[str] = None
 
 
 @strawberry.input
@@ -46,6 +47,7 @@ class NavLocationUpdateInput:
     address: Optional[str] = None
     metro: Optional[str] = None
     comments: Optional[str] = None
+    crossings: Optional[str] = None
 
 
 def _to_nav_location(model: Location) -> NavLocationType:
@@ -82,7 +84,7 @@ async def create_nav_location(info: Info, data: NavLocationInput) -> NavLocation
         ready=data.ready,
         address=data.address,
         metro=data.metro,
-        crossings=None,
+        crossings=data.crossings,
         comments=data.comments,
     )
     session.add(location)
@@ -108,6 +110,8 @@ async def update_nav_location(info: Info, id: int, data: NavLocationUpdateInput)
         location.metro = data.metro
     if data.comments is not None:
         location.comments = data.comments
+    if data.crossings is not None:
+        location.crossings = data.crossings
     await session.commit()
     await session.refresh(location)
     return _to_nav_location(location)
