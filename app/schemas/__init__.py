@@ -3,7 +3,7 @@ from .filter import Filter, FilterQuery, FilterRoute
 from app.schemas.stat.selected_aud import SelectedAuditoryIn
 from app.schemas.stat.site_stat import SiteStatIn
 from app.schemas.stat.start_way import StartWayIn
-from .statistics import Statistics
+from .statistics import Statistics, AggregatedStatistics
 from .status import Status
 from .review import Problem
 from app.schemas.stat.user_id import UserId, UserIdCheck

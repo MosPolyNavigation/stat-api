@@ -1,6 +1,11 @@
 import strawberry
 from .change_plan import ChangePlanType, resolve_change_plans
-from .endpoint_stats import EndpointStatisticsType, resolve_endpoint_statistics
+from .endpoint_stats import (
+    EndpointStatisticsType,
+    AggregatedEndpointStatisticsType,
+    resolve_endpoint_statistics,
+    resolve_endpoint_statistics_avg,
+)
 from .nav import (
     NavAuditoryType,
     NavCampusType,
@@ -73,6 +78,10 @@ class Query:
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
         description="Статистика по эндпоинтам для выбранной цели."
+    )
+    endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
+        resolver=resolve_endpoint_statistics_avg,
+        description="Агрегированная статистика по эндпоинтам за период."
     )
     tg_bot_users: list[TgBotUserType] = strawberry.field(
         resolver=resolve_tg_bot_users,

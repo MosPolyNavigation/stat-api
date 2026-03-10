@@ -846,6 +846,191 @@ class TestGraphQLEndpointStatistics:
         assert "errors" in data
 
 
+class TestGraphQLEndpointStatisticsAvg:
+    """Тесты для endpointStatisticsAvg query с агрегированной статистикой"""
+
+    def test_200_endpoint_statistics_avg_by_date_site(self):
+        """Запрос endpointStatisticsAvg с фильтром byDate для endpoint='site'"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
+                totalVisits
+                totalUnique
+                totalVisitorCount
+                avgVisits
+                avgUnique
+                avgVisitorCount
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "endpointStatisticsAvg" in data["data"]
+        stats = data["data"]["endpointStatisticsAvg"]
+        assert "totalVisits" in stats
+        assert "totalUnique" in stats
+        assert "totalVisitorCount" in stats
+        assert "avgVisits" in stats
+        assert "avgUnique" in stats
+        assert "avgVisitorCount" in stats
+        assert "entriesCount" in stats
+        assert isinstance(stats["totalVisits"], int)
+        assert isinstance(stats["totalUnique"], int)
+        assert isinstance(stats["totalVisitorCount"], int)
+        assert isinstance(stats["avgVisits"], (int, float))
+        assert isinstance(stats["avgUnique"], (int, float))
+        assert isinstance(stats["avgVisitorCount"], (int, float))
+        assert isinstance(stats["entriesCount"], int)
+
+    def test_200_endpoint_statistics_avg_by_month_auds(self):
+        """Запрос endpointStatisticsAvg с фильтром byMonth для endpoint='auds'"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "auds",
+                byMonth: {start: "2025-01", end: "2025-12"}
+            ) {
+                totalVisits
+                totalUnique
+                totalVisitorCount
+                avgVisits
+                avgUnique
+                avgVisitorCount
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "endpointStatisticsAvg" in data["data"]
+        stats = data["data"]["endpointStatisticsAvg"]
+        assert "totalVisits" in stats
+        assert "entriesCount" in stats
+
+    def test_200_endpoint_statistics_avg_by_year_ways(self):
+        """Запрос endpointStatisticsAvg с фильтром byYear для endpoint='ways'"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "ways",
+                byYear: {start: "2024", end: "2025"}
+            ) {
+                totalVisits
+                totalUnique
+                totalVisitorCount
+                avgVisits
+                avgUnique
+                avgVisitorCount
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "endpointStatisticsAvg" in data["data"]
+
+    def test_200_endpoint_statistics_avg_plans(self):
+        """Запрос endpointStatisticsAvg для endpoint='plans'"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "plans",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
+                totalVisits
+                totalUnique
+                totalVisitorCount
+                avgVisits
+                avgUnique
+                avgVisitorCount
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "endpointStatisticsAvg" in data["data"]
+
+    def test_200_endpoint_statistics_avg_single_field(self):
+        """Запрос endpointStatisticsAvg с одним полем"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "data" in data
+        assert "endpointStatisticsAvg" in data["data"]
+        assert "entriesCount" in data["data"]["endpointStatisticsAvg"]
+
+    def test_200_endpoint_statistics_avg_requires_one_filter(self):
+        """endpointStatisticsAvg требует ровно один фильтр"""
+        query = """
+        {
+            endpointStatisticsAvg(endpoint: "site") {
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "errors" in data
+
+    def test_200_endpoint_statistics_avg_rejects_multiple_filters(self):
+        """endpointStatisticsAvg отклоняет несколько фильтров"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"},
+                byMonth: {start: "2025-01", end: "2025-12"}
+            ) {
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        data = response.json()
+        assert "errors" in data
+
+    def test_401_endpoint_statistics_avg_without_token(self):
+        """Попытка получить агрегированную статистику без токена возвращает 401"""
+        query = """
+        {
+            endpointStatisticsAvg(
+                endpoint: "site",
+                byDate: {start: "2025-01-01", end: "2025-01-31"}
+            ) {
+                totalVisits
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query)  # Без токена
+        assert response.status_code == 401
+
+
 class TestGraphQLUnauthorized:
     """Тесты на неавторизованный доступ к GraphQL"""
 
