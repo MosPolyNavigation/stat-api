@@ -102,6 +102,52 @@ async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> l
     return stats
 
 
+async def get_agr_endp_stats(db: AsyncSession, params: schemas.FilterQuery) -> schemas.AggregatedStatistics:
+    """
+    Функция для получения агрегированной статистики по эндпоинту.
+
+    Эта функция агрегирует результаты за период по эндпоинту.
+
+    Args:
+        db: Сессия базы данных;
+        params: Параметры фильтрации.
+
+    Returns:
+        Агрегированная статистика по эндпоинту.
+    """
+    stats = await get_endpoint_stats(db, params)
+
+    if not stats:
+        return schemas.AggregatedStatistics(
+            total_all_visits=0,
+            total_unique_visitors=0,
+            total_visitor_count=0,
+            avg_all_visits_per_day=0.0,
+            avg_unique_visitors_per_day=0.0,
+            avg_visitor_count_per_day=0.0,
+            entries_analized=0
+        )
+
+    total_all_visits = sum(stat.all_visits for stat in stats)
+    total_unique_visitors = sum(stat.unique_visitors for stat in stats)
+    total_visitor_count = sum(stat.visitor_count for stat in stats)
+    entries_count = len(stats)
+
+    avg_all_visits = round(total_all_visits / entries_count, 1)
+    avg_unique_visitors = round(total_unique_visitors / entries_count, 1)
+    avg_visitor_count = round(total_visitor_count / entries_count, 1)
+
+    return schemas.AggregatedStatistics(
+        total_all_visits=total_all_visits,
+        total_unique_visitors=total_unique_visitors,
+        total_visitor_count=total_visitor_count,
+        avg_all_visits_per_day=avg_all_visits,
+        avg_unique_visitors_per_day=avg_unique_visitors,
+        avg_visitor_count_per_day=avg_visitor_count,
+        entries_analized=entries_count
+    )
+
+
 def get_popular_auds_query():
     """
         Query in basis:
