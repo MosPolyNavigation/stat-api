@@ -1,4 +1,4 @@
-from .base import Base
+﻿from .base import Base
 # from .plan import Plan
 from app.models.stat.change_plan import ChangePlan
 from app.models.auth.goal import Goal
@@ -23,4 +23,12 @@ from app.models.nav.aud_photo import AudPhoto
 from app.models.nav.corpus import Corpus
 from app.models.nav.types import Type
 from app.models.nav.location import Location
+from app.models.dod.floor import Floor as DodFloor
+from app.models.dod.static import Static as DodStatic
+from app.models.dod.plan import Plan as DodPlan
+from app.models.dod.auditory import Auditory as DodAuditory
+from app.models.dod.aud_photo import AudPhoto as DodAudPhoto
+from app.models.dod.corpus import Corpus as DodCorpus
+from app.models.dod.types import Type as DodType
+from app.models.dod.location import Location as DodLocation
 from app.models.stat.tg_bot import TgEvent, TgEventType, TgUser

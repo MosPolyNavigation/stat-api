@@ -1,4 +1,4 @@
-import asyncio
+﻿import asyncio
 import os
 from pwdlib import PasswordHash
 from app.config import get_settings
@@ -89,16 +89,16 @@ async def create_db_and_tables():
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
 
-        # Добавляем навигационные данные для тестов
+        # Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð½Ð°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð¾Ð²
         # Location
         test_location = models.Location(
             id=1,
             id_sys="AV",
-            name="Автозаводская",
-            short="АВ",
+            name="ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ",
+            short="ÐÐ’",
             ready=True,
-            address="ул. Автозаводская, д. 16",
-            metro="Автозаводская",
+            address="ÑƒÐ». ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ, Ð´. 16",
+            metro="ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ",
             crossings=None,
             comments=None
         )
@@ -109,7 +109,7 @@ async def create_db_and_tables():
             id=1,
             id_sys="av-test",
             loc_id=1,
-            name="Тестовый корпус",
+            name="Ð¢ÐµÑÑ‚Ð¾Ð²Ñ‹Ð¹ ÐºÐ¾Ñ€Ð¿ÑƒÑ",
             ready=True,
             stair_groups=None,
             comments=None
@@ -143,7 +143,7 @@ async def create_db_and_tables():
         # Type
         test_type = models.Type(
             id=1,
-            name="Учебная аудитория"
+            name="Ð£Ñ‡ÐµÐ±Ð½Ð°Ñ Ð°ÑƒÐ´Ð¸Ñ‚Ð¾Ñ€Ð¸Ñ"
         )
         db.add(test_type)
 
@@ -162,16 +162,92 @@ async def create_db_and_tables():
         )
         db.add(test_auditory)
 
+        # DOD navigation dataset
+        dod_location = models.DodLocation(
+            id=1,
+            id_sys="DD",
+            name="DOD Campus",
+            short="DD",
+            ready=True,
+            address="dod address",
+            metro="dod metro",
+            crossings=None,
+            comments="dod location",
+        )
+        db.add(dod_location)
+
+        dod_corpus = models.DodCorpus(
+            id=1,
+            id_sys="dd-test",
+            loc_id=1,
+            name="DOD Corpus",
+            ready=True,
+            stair_groups=None,
+            comments="dod corpus",
+        )
+        db.add(dod_corpus)
+
+        dod_floor = models.DodFloor(
+            id=1,
+            name=1,
+        )
+        db.add(dod_floor)
+
+        dod_static = models.DodStatic(
+            id=1,
+            ext="svg",
+            path="/dod/plan.svg",
+            name="dod-plan-svg",
+            link="/static/dod-plan.svg",
+        )
+        db.add(dod_static)
+
+        dod_plan = models.DodPlan(
+            id=1,
+            id_sys="dod-plan-1",
+            cor_id=1,
+            floor_id=1,
+            ready=True,
+            entrances="[]",
+            graph="{}",
+            svg_id=1,
+            nearest_entrance=None,
+            nearest_man_wc=None,
+            nearest_woman_wc=None,
+            nearest_shared_wc=None,
+        )
+        db.add(dod_plan)
+
+        dod_type = models.DodType(
+            id=1,
+            name="DOD Type",
+        )
+        db.add(dod_type)
+
+        dod_auditory = models.DodAuditory(
+            id=1,
+            id_sys="dod-101",
+            type_id=1,
+            ready=True,
+            plan_id=1,
+            name="D101",
+            text_from_sign="dod sign",
+            additional_info=None,
+            comments="dod auditory",
+            link=None,
+        )
+        db.add(dod_auditory)
+
         await db.commit()
 
-    # Загружаем тестовое расписание в globals
+    # Ð—Ð°Ð³Ñ€ÑƒÐ¶Ð°ÐµÐ¼ Ñ‚ÐµÑÑ‚Ð¾Ð²Ð¾Ðµ Ñ€Ð°ÑÐ¿Ð¸ÑÐ°Ð½Ð¸Ðµ Ð² globals
     schedule_path = Path(__file__).parent / "schedule_test.json"
     json_text = schedule_path.read_text(encoding="utf-8")
     schedule = Schedule.model_validate_json(json_text)
     globals_.global_rasp = schedule.root
     globals_.locker = False
 
-    # Инициализируем locationData для тестов
+    # Ð˜Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼ locationData Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð¾Ð²
     from app.jobs.location_data.worker import fetch_location_data
     await fetch_location_data()
 
@@ -179,3 +255,5 @@ async def create_db_and_tables():
 asyncio.run(create_db_and_tables())
 
 client = TestClient(app)
+
+
