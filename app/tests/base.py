@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import os
 from pwdlib import PasswordHash
 from app.config import get_settings
@@ -89,16 +89,16 @@ async def create_db_and_tables():
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
 
-        # Ð”Ð¾Ð±Ð°Ð²Ð»ÑÐµÐ¼ Ð½Ð°Ð²Ð¸Ð³Ð°Ñ†Ð¸Ð¾Ð½Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð¾Ð²
+        # Добавляем навигационные данные для тестов
         # Location
         test_location = models.Location(
             id=1,
             id_sys="AV",
-            name="ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ",
-            short="ÐÐ’",
+            name="Автозаводская",
+            short="АВ",
             ready=True,
-            address="ÑƒÐ». ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ, Ð´. 16",
-            metro="ÐÐ²Ñ‚Ð¾Ð·Ð°Ð²Ð¾Ð´ÑÐºÐ°Ñ",
+            address="ул. Автозаводская, д. 16",
+            metro="Автозаводская",
             crossings=None,
             comments=None
         )
@@ -109,7 +109,7 @@ async def create_db_and_tables():
             id=1,
             id_sys="av-test",
             loc_id=1,
-            name="Ð¢ÐµÑÑ‚Ð¾Ð²Ñ‹Ð¹ ÐºÐ¾Ñ€Ð¿ÑƒÑ",
+            name="Тестовый корпус",
             ready=True,
             stair_groups=None,
             comments=None
@@ -143,7 +143,7 @@ async def create_db_and_tables():
         # Type
         test_type = models.Type(
             id=1,
-            name="Ð£Ñ‡ÐµÐ±Ð½Ð°Ñ Ð°ÑƒÐ´Ð¸Ñ‚Ð¾Ñ€Ð¸Ñ"
+            name="Учебная аудитория"
         )
         db.add(test_type)
 
@@ -240,14 +240,14 @@ async def create_db_and_tables():
 
         await db.commit()
 
-    # Ð—Ð°Ð³Ñ€ÑƒÐ¶Ð°ÐµÐ¼ Ñ‚ÐµÑÑ‚Ð¾Ð²Ð¾Ðµ Ñ€Ð°ÑÐ¿Ð¸ÑÐ°Ð½Ð¸Ðµ Ð² globals
+    # Загружаем тестовое расписание в globals
     schedule_path = Path(__file__).parent / "schedule_test.json"
     json_text = schedule_path.read_text(encoding="utf-8")
     schedule = Schedule.model_validate_json(json_text)
     globals_.global_rasp = schedule.root
     globals_.locker = False
 
-    # Ð˜Ð½Ð¸Ñ†Ð¸Ð°Ð»Ð¸Ð·Ð¸Ñ€ÑƒÐµÐ¼ locationData Ð´Ð»Ñ Ñ‚ÐµÑÑ‚Ð¾Ð²
+    # Инициализируем locationData для тестов
     from app.jobs.location_data.worker import fetch_location_data
     await fetch_location_data()
 
@@ -255,5 +255,3 @@ async def create_db_and_tables():
 asyncio.run(create_db_and_tables())
 
 client = TestClient(app)
-
-
