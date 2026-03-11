@@ -29,13 +29,13 @@ def register_endpoint(router: APIRouter):
         },
     )
     async def upload_auditory_photos(
-        aud_id: int = Form(..., description="Auditory id"),
+        aud_id: str = Form(..., description="Auditory id"),
         photos: list[UploadFile] = File(..., description="Auditory photos"),
         db: AsyncSession = Depends(get_db),
     ) -> Status:
         auditory = (
             await db.execute(
-                Select(Auditory).filter(Auditory.id == aud_id)
+                Select(Auditory).filter(Auditory.id_sys == aud_id)
             )
         ).scalar_one_or_none()
         if auditory is None:
@@ -99,12 +99,12 @@ def register_endpoint(router: APIRouter):
         },
     )
     async def get_auditory_photo_links(
-        aud_id: int,
+        aud_id: str,
         db: AsyncSession = Depends(get_db),
     ) -> list[str]:
         auditory = (
             await db.execute(
-                Select(Auditory).filter(Auditory.id == aud_id)
+                Select(Auditory).filter(Auditory.id_sys == aud_id)
             )
         ).scalar_one_or_none()
         if auditory is None:
@@ -112,7 +112,7 @@ def register_endpoint(router: APIRouter):
 
         photos = await db.execute(
             Select(AudPhoto.link)
-            .filter(AudPhoto.aud_id == aud_id)
+            .filter(AudPhoto.aud_id == auditory.id)
             .order_by(AudPhoto.id)
         )
         return list(photos.scalars().all())

@@ -28,13 +28,13 @@ class TestNavAuditoryPhotos:
         response = client.post(
             "/api/nav/auditory/photos/upload",
             headers=ADMIN_HEADERS,
-            data={"aud_id": "1"},
+            data={"aud_id": "test-101"},
             files=[("photos", ("test.txt", b"text", "text/plain"))],
         )
         assert response.status_code == 415
 
     def test_200_upload_and_get_links_and_download(self):
-        links_before_response = client.get("/api/nav/auditory/1/photos/links")
+        links_before_response = client.get("/api/nav/auditory/test-101/photos/links")
         assert links_before_response.status_code == 200
         links_before = links_before_response.json()
         assert isinstance(links_before, list)
@@ -42,7 +42,7 @@ class TestNavAuditoryPhotos:
         upload_response = client.post(
             "/api/nav/auditory/photos/upload",
             headers=ADMIN_HEADERS,
-            data={"aud_id": "1"},
+            data={"aud_id": "test-101"},
             files=[
                 ("photos", ("test_1.jpg", b"\xff\xd8\xff", "image/jpeg")),
                 ("photos", ("test_2.png", b"\x89PNG\r\n\x1a\n", "image/png")),
@@ -50,7 +50,7 @@ class TestNavAuditoryPhotos:
         )
         assert upload_response.status_code == 200
 
-        links_after_response = client.get("/api/nav/auditory/1/photos/links")
+        links_after_response = client.get("/api/nav/auditory/test-101/photos/links")
         assert links_after_response.status_code == 200
         links_after = links_after_response.json()
         assert isinstance(links_after, list)
