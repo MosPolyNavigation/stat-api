@@ -1,20 +1,15 @@
 ﻿from datetime import datetime
-
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
-from sqlalchemy.orm import Mapped, relationship
-
+from sqlalchemy import Column, DateTime, Integer, String
 from app.models.base import Base
-from app.models.nav.auditory import Auditory
 
 
-class AudPhoto(Base):
-    __tablename__ = "aud_photo"
+class DodStatic(Base):
+    __tablename__ = "dod_statics"
 
     id: int = Column(Integer, primary_key=True)
-    aud_id: int = Column(ForeignKey("auditories.id"), nullable=False)
     ext: str = Column(String(6), nullable=False)
-    name: str = Column(String(50), nullable=False, unique=True)
     path: str = Column(String(255), nullable=False)
+    name: str = Column(String(50), nullable=False, unique=True)
     link: str = Column(String(255), nullable=False)
     creation_date: datetime = Column(
         DateTime,
@@ -27,5 +22,4 @@ class AudPhoto(Base):
         nullable=False,
     )
 
-    auditory: Mapped["Auditory"] = relationship(Auditory, back_populates="photos")
 

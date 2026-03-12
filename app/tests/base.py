@@ -162,6 +162,82 @@ async def create_db_and_tables():
         )
         db.add(test_auditory)
 
+        # DOD navigation dataset
+        dod_location = models.DodLocation(
+            id=1,
+            id_sys="DD",
+            name="DOD Campus",
+            short="DD",
+            ready=True,
+            address="dod address",
+            metro="dod metro",
+            crossings=None,
+            comments="dod location",
+        )
+        db.add(dod_location)
+
+        dod_corpus = models.DodCorpus(
+            id=1,
+            id_sys="dd-test",
+            loc_id=1,
+            name="DOD Corpus",
+            ready=True,
+            stair_groups=None,
+            comments="dod corpus",
+        )
+        db.add(dod_corpus)
+
+        dod_floor = models.DodFloor(
+            id=1,
+            name=1,
+        )
+        db.add(dod_floor)
+
+        dod_static = models.DodStatic(
+            id=1,
+            ext="svg",
+            path="/dod/plan.svg",
+            name="dod-plan-svg",
+            link="/static/dod-plan.svg",
+        )
+        db.add(dod_static)
+
+        dod_plan = models.DodPlan(
+            id=1,
+            id_sys="dod-plan-1",
+            cor_id=1,
+            floor_id=1,
+            ready=True,
+            entrances="[]",
+            graph="{}",
+            svg_id=1,
+            nearest_entrance=None,
+            nearest_man_wc=None,
+            nearest_woman_wc=None,
+            nearest_shared_wc=None,
+        )
+        db.add(dod_plan)
+
+        dod_type = models.DodType(
+            id=1,
+            name="DOD Type",
+        )
+        db.add(dod_type)
+
+        dod_auditory = models.DodAuditory(
+            id=1,
+            id_sys="dod-101",
+            type_id=1,
+            ready=True,
+            plan_id=1,
+            name="D101",
+            text_from_sign="dod sign",
+            additional_info=None,
+            comments="dod auditory",
+            link=None,
+        )
+        db.add(dod_auditory)
+
         await db.commit()
 
     # Загружаем тестовое расписание в globals

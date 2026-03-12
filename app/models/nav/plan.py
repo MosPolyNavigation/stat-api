@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, relationship
+﻿from sqlalchemy.orm import Mapped, relationship
 from typing import Union
 from app.models.base import Base
 from sqlalchemy import Boolean, Integer, String, Text, Column, ForeignKey
@@ -22,6 +22,7 @@ class Plan(Base):
     nearest_woman_wc: Union[str, None] = Column(String(50), nullable=True)
     nearest_shared_wc: Union[str, None] = Column(String(50), nullable=True)
 
-    floor: Mapped["Floor"] = relationship()
-    corpus: Mapped["Corpus"] = relationship()
-    svg: Mapped[Union["Static", None]] = relationship()
+    floor: Mapped["Floor"] = relationship(Floor)
+    corpus: Mapped["Corpus"] = relationship(Corpus)
+    svg: Mapped[Union["Static", None]] = relationship(Static)
+

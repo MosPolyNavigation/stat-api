@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, relationship
+﻿from sqlalchemy.orm import Mapped, relationship
 from typing import List, Union
 from app.models.base import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
@@ -19,6 +19,7 @@ class Auditory(Base):
     comments: Union[str, None] = Column(String(200), nullable=True)
     link: Union[str, None] = Column(String(255), nullable=True)
 
-    typ: Mapped["Type"] = relationship()
-    plans: Mapped["Plan"] = relationship()
-    photos: Mapped[List["AudPhoto"]] = relationship(back_populates="auditory")
+    typ: Mapped["Type"] = relationship(Type)
+    plans: Mapped["Plan"] = relationship(Plan)
+    photos: Mapped[List["AudPhoto"]] = relationship("app.models.nav.aud_photo.AudPhoto", back_populates="auditory")
+
