@@ -1,63 +1,16 @@
 ﻿import strawberry
-
 from .change_plan import ChangePlanType, resolve_change_plans
-from .dod import (
-    DodNavAuditoryType,
-    DodNavCampusType,
-    DodNavFloorType,
-    DodNavLocationType,
-    DodNavPlanType,
-    DodNavStaticType,
-    DodNavTypeType,
-    resolve_dod_nav_auditories,
-    resolve_dod_nav_campuses,
-    resolve_dod_nav_floors,
-    resolve_dod_nav_locations,
-    resolve_dod_nav_plans,
-    resolve_dod_nav_statics,
-    resolve_dod_nav_types,
-)
-from .endpoint_stats import (
-    AggregatedEndpointStatisticsType,
-    EndpointStatisticsType,
-    resolve_endpoint_statistics,
-    resolve_endpoint_statistics_avg,
-)
-from .nav import (
-    NavAuditoryType,
-    NavCampusType,
-    NavFloorType,
-    NavLocationType,
-    NavPlanType,
-    NavStaticType,
-    NavTypeType,
-    resolve_nav_auditories,
-    resolve_nav_campuses,
-    resolve_nav_floors,
-    resolve_nav_locations,
-    resolve_nav_plans,
-    resolve_nav_statics,
-    resolve_nav_types,
-)
+from .dod import DodNavAuditoryType, DodNavCampusType, DodNavFloorType, DodNavLocationType, DodNavPlanType, DodNavStaticType, DodNavTypeType, resolve_dod_nav_auditories, resolve_dod_nav_campuses, resolve_dod_nav_floors, resolve_dod_nav_locations, resolve_dod_nav_plans, resolve_dod_nav_statics, resolve_dod_nav_types
+from .endpoint_stats import AggregatedEndpointStatisticsType, EndpointStatisticsType, resolve_endpoint_statistics, resolve_endpoint_statistics_avg
+from .nav import NavAuditoryType, NavCampusType, NavFloorType, NavLocationType, NavPlanType, NavStaticType, NavTypeType, resolve_nav_auditories, resolve_nav_campuses, resolve_nav_floors, resolve_nav_locations, resolve_nav_plans, resolve_nav_statics, resolve_nav_types
 from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
 from .select_auditory import SelectAuditoryType, resolve_select_auditories
 from .site_stat import SiteStatType, resolve_site_stats
 from .start_way import StartWayType, resolve_start_ways
-from .tg_bot import (
-    TgBotEventKindType,
-    TgBotEventStatisticType,
-    TgBotEventType,
-    TgBotUserType,
-    resolve_tg_bot_event_statistics,
-    resolve_tg_bot_event_types,
-    resolve_tg_bot_events,
-    resolve_tg_bot_users,
-)
+from .tg_bot import TgBotEventKindType, TgBotEventStatisticType, TgBotEventType, TgBotUserType, resolve_tg_bot_event_statistics, resolve_tg_bot_event_types, resolve_tg_bot_events, resolve_tg_bot_users
 from .user_id import UserIdType, resolve_user_ids
-
-
 @strawberry.type
 class Query:
     change_plans: list[ChangePlanType] = strawberry.field(
@@ -174,3 +127,6 @@ class Query:
         resolver=resolve_dod_nav_auditories,
         description="Get DOD navigation auditories.",
     )
+
+
+

@@ -2,14 +2,8 @@
 import strawberry
 from sqlalchemy import select
 from strawberry import Info
-from app.models.dod.location import Location
-from app.routes.graphql.permissions import (
-    CREATE_RIGHT_NAME,
-    DELETE_RIGHT_NAME,
-    EDIT_RIGHT_NAME,
-    VIEW_RIGHT_NAME,
-    ensure_nav_permission,
-)
+from app.models.dod.location import DodLocation
+from app.routes.graphql.permissions import CREATE_RIGHT_NAME, DELETE_RIGHT_NAME, EDIT_RIGHT_NAME, VIEW_RIGHT_NAME, ensure_nav_permission
 from .common import get_or_error
 
 
@@ -50,7 +44,7 @@ class DodNavLocationUpdateInput:
     crossings: Optional[str] = None
 
 
-def _to_dod_nav_location(model: Location) -> DodNavLocationType:
+def _to_dod_nav_location(model: DodLocation) -> DodNavLocationType:
     return DodNavLocationType(
         id=model.id,
         id_sys=model.id_sys,
@@ -64,20 +58,24 @@ def _to_dod_nav_location(model: Location) -> DodNavLocationType:
     )
 
 
-async def resolve_dod_nav_locations(info: Info, id: Optional[int] = None, id_sys: Optional[str] = None) -> list[DodNavLocationType]:
+async def resolve_dod_nav_locations(
+    info: Info,
+    id: Optional[int] = None,
+    id_sys: Optional[str] = None,
+) -> list[DodNavLocationType]:
     session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Location).order_by(Location.id)
+    statement = select(DodLocation).order_by(DodLocation.id)
     if id is not None:
-        statement = statement.where(Location.id == id)
+        statement = statement.where(DodLocation.id == id)
     if id_sys is not None:
-        statement = statement.where(Location.id_sys == id_sys)
+        statement = statement.where(DodLocation.id_sys == id_sys)
     records = (await session.execute(statement)).scalars().all()
     return [_to_dod_nav_location(record) for record in records]
 
 
 async def create_dod_nav_location(info: Info, data: DodNavLocationInput) -> DodNavLocationType:
     session = await ensure_nav_permission(info, CREATE_RIGHT_NAME)
-    location = Location(
+    location = DodLocation(
         id_sys=data.id_sys,
         name=data.name,
         short=data.short,
@@ -93,9 +91,13 @@ async def create_dod_nav_location(info: Info, data: DodNavLocationInput) -> DodN
     return _to_dod_nav_location(location)
 
 
-async def update_dod_nav_location(info: Info, id: int, data: DodNavLocationUpdateInput) -> DodNavLocationType:
+async def update_dod_nav_location(
+    info: Info,
+    id: int,
+    data: DodNavLocationUpdateInput,
+) -> DodNavLocationType:
     session = await ensure_nav_permission(info, EDIT_RIGHT_NAME)
-    location = await get_or_error(session, Location, id, "location")
+    location = await get_or_error(session, DodLocation, id, "location")
     if data.id_sys is not None:
         location.id_sys = data.id_sys
     if data.name is not None:
@@ -119,8 +121,10 @@ async def update_dod_nav_location(info: Info, id: int, data: DodNavLocationUpdat
 
 async def delete_dod_nav_location(info: Info, id: int) -> bool:
     session = await ensure_nav_permission(info, DELETE_RIGHT_NAME)
-    location = await get_or_error(session, Location, id, "location")
+    location = await get_or_error(session, DodLocation, id, "location")
     await session.delete(location)
     await session.commit()
     return True
+
+
 

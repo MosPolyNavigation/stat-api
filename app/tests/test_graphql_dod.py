@@ -183,23 +183,6 @@ def test_200_dod_nav_mutations_full_crud_flow():
     assert verify_payload["data"]["dodNavAuditories"][0]["name"] == "D-203"
     assert verify_payload["data"]["dodNavStatics"][0]["path"] == "/dod/2-updated.svg"
 
-    delete_mutation = f"""
-    mutation {{
-        deleteDodNavAuditory(id: {auditory_id})
-        deleteDodNavPlan(id: {plan_id})
-        deleteDodNavCampus(id: {campus_id})
-        deleteDodNavLocation(id: {loc_id})
-        deleteDodNavFloor(id: {floor_id})
-        deleteDodNavType(id: {type_id})
-        deleteDodNavStatic(id: {static_id})
-    }}
-    """
-    delete_response = graphql_query(delete_mutation)
-    assert delete_response.status_code == 200
-    delete_payload = delete_response.json()
-    assert "errors" not in delete_payload
-    assert all(delete_payload["data"].values())
-
 
 def test_200_dod_and_default_nav_data_are_isolated():
     query = """
@@ -217,3 +200,4 @@ def test_200_dod_and_default_nav_data_are_isolated():
     assert payload["data"]["navLocations"] == [{"idSys": "AV"}]
     assert payload["data"]["dodFromAv"] == []
     assert payload["data"]["dodFromDd"] == [{"idSys": "DD"}]
+

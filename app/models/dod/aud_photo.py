@@ -1,13 +1,11 @@
 ﻿from datetime import datetime
-
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, relationship
-
 from app.models.base import Base
-from app.models.dod.auditory import Auditory
+from app.models.dod.auditory import DodAuditory
 
 
-class AudPhoto(Base):
+class DodAudPhoto(Base):
     __tablename__ = "dod_aud_photo"
 
     id: int = Column(Integer, primary_key=True)
@@ -27,6 +25,4 @@ class AudPhoto(Base):
         nullable=False,
     )
 
-    auditory: Mapped["Auditory"] = relationship(Auditory, back_populates="photos")
-
-
+    auditory: Mapped["DodAuditory"] = relationship(back_populates="photos")

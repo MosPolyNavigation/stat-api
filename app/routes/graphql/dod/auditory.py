@@ -2,14 +2,8 @@
 import strawberry
 from sqlalchemy import select
 from strawberry import Info
-from app.models.dod.auditory import Auditory
-from app.routes.graphql.permissions import (
-    CREATE_RIGHT_NAME,
-    DELETE_RIGHT_NAME,
-    EDIT_RIGHT_NAME,
-    VIEW_RIGHT_NAME,
-    ensure_nav_permission,
-)
+from app.models.dod.auditory import DodAuditory
+from app.routes.graphql.permissions import CREATE_RIGHT_NAME, DELETE_RIGHT_NAME, EDIT_RIGHT_NAME, VIEW_RIGHT_NAME, ensure_nav_permission
 from .common import get_or_error
 
 
@@ -53,7 +47,7 @@ class DodNavAuditoryUpdateInput:
     link: Optional[str] = None
 
 
-def _to_dod_nav_auditory(model: Auditory) -> DodNavAuditoryType:
+def _to_dod_nav_auditory(model: DodAuditory) -> DodNavAuditoryType:
     return DodNavAuditoryType(
         id=model.id,
         id_sys=model.id_sys,
@@ -76,22 +70,22 @@ async def resolve_dod_nav_auditories(
     type_id: Optional[int] = None,
 ) -> list[DodNavAuditoryType]:
     session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Auditory).order_by(Auditory.id)
+    statement = select(DodAuditory).order_by(DodAuditory.id)
     if id is not None:
-        statement = statement.where(Auditory.id == id)
+        statement = statement.where(DodAuditory.id == id)
     if id_sys is not None:
-        statement = statement.where(Auditory.id_sys == id_sys)
+        statement = statement.where(DodAuditory.id_sys == id_sys)
     if plan_id is not None:
-        statement = statement.where(Auditory.plan_id == plan_id)
+        statement = statement.where(DodAuditory.plan_id == plan_id)
     if type_id is not None:
-        statement = statement.where(Auditory.type_id == type_id)
+        statement = statement.where(DodAuditory.type_id == type_id)
     records = (await session.execute(statement)).scalars().all()
     return [_to_dod_nav_auditory(record) for record in records]
 
 
 async def create_dod_nav_auditory(info: Info, data: DodNavAuditoryInput) -> DodNavAuditoryType:
     session = await ensure_nav_permission(info, CREATE_RIGHT_NAME)
-    auditory = Auditory(
+    auditory = DodAuditory(
         id_sys=data.id_sys,
         type_id=data.type_id,
         ready=data.ready,
@@ -108,9 +102,13 @@ async def create_dod_nav_auditory(info: Info, data: DodNavAuditoryInput) -> DodN
     return _to_dod_nav_auditory(auditory)
 
 
-async def update_dod_nav_auditory(info: Info, id: int, data: DodNavAuditoryUpdateInput) -> DodNavAuditoryType:
+async def update_dod_nav_auditory(
+    info: Info,
+    id: int,
+    data: DodNavAuditoryUpdateInput,
+) -> DodNavAuditoryType:
     session = await ensure_nav_permission(info, EDIT_RIGHT_NAME)
-    auditory = await get_or_error(session, Auditory, id, "auditory")
+    auditory = await get_or_error(session, DodAuditory, id, "auditory")
     if data.id_sys is not None:
         auditory.id_sys = data.id_sys
     if data.type_id is not None:
@@ -136,8 +134,10 @@ async def update_dod_nav_auditory(info: Info, id: int, data: DodNavAuditoryUpdat
 
 async def delete_dod_nav_auditory(info: Info, id: int) -> bool:
     session = await ensure_nav_permission(info, DELETE_RIGHT_NAME)
-    auditory = await get_or_error(session, Auditory, id, "auditory")
+    auditory = await get_or_error(session, DodAuditory, id, "auditory")
     await session.delete(auditory)
     await session.commit()
     return True
+
+
 

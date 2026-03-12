@@ -2,14 +2,8 @@
 import strawberry
 from sqlalchemy import select
 from strawberry import Info
-from app.models.dod.corpus import Corpus
-from app.routes.graphql.permissions import (
-    CREATE_RIGHT_NAME,
-    DELETE_RIGHT_NAME,
-    EDIT_RIGHT_NAME,
-    VIEW_RIGHT_NAME,
-    ensure_nav_permission,
-)
+from app.models.dod.corpus import DodCorpus
+from app.routes.graphql.permissions import CREATE_RIGHT_NAME, DELETE_RIGHT_NAME, EDIT_RIGHT_NAME, VIEW_RIGHT_NAME, ensure_nav_permission
 from .common import get_or_error
 
 
@@ -42,7 +36,7 @@ class DodNavCampusUpdateInput:
     comments: Optional[str] = None
 
 
-def _to_dod_nav_campus(model: Corpus) -> DodNavCampusType:
+def _to_dod_nav_campus(model: DodCorpus) -> DodNavCampusType:
     return DodNavCampusType(
         id=model.id,
         id_sys=model.id_sys,
@@ -54,22 +48,27 @@ def _to_dod_nav_campus(model: Corpus) -> DodNavCampusType:
     )
 
 
-async def resolve_dod_nav_campuses(info: Info, id: Optional[int] = None, id_sys: Optional[str] = None, loc_id: Optional[int] = None) -> list[DodNavCampusType]:
+async def resolve_dod_nav_campuses(
+    info: Info,
+    id: Optional[int] = None,
+    id_sys: Optional[str] = None,
+    loc_id: Optional[int] = None,
+) -> list[DodNavCampusType]:
     session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Corpus).order_by(Corpus.id)
+    statement = select(DodCorpus).order_by(DodCorpus.id)
     if id is not None:
-        statement = statement.where(Corpus.id == id)
+        statement = statement.where(DodCorpus.id == id)
     if id_sys is not None:
-        statement = statement.where(Corpus.id_sys == id_sys)
+        statement = statement.where(DodCorpus.id_sys == id_sys)
     if loc_id is not None:
-        statement = statement.where(Corpus.loc_id == loc_id)
+        statement = statement.where(DodCorpus.loc_id == loc_id)
     records = (await session.execute(statement)).scalars().all()
     return [_to_dod_nav_campus(record) for record in records]
 
 
 async def create_dod_nav_campus(info: Info, data: DodNavCampusInput) -> DodNavCampusType:
     session = await ensure_nav_permission(info, CREATE_RIGHT_NAME)
-    campus = Corpus(
+    campus = DodCorpus(
         id_sys=data.id_sys,
         loc_id=data.loc_id,
         name=data.name,
@@ -83,9 +82,13 @@ async def create_dod_nav_campus(info: Info, data: DodNavCampusInput) -> DodNavCa
     return _to_dod_nav_campus(campus)
 
 
-async def update_dod_nav_campus(info: Info, id: int, data: DodNavCampusUpdateInput) -> DodNavCampusType:
+async def update_dod_nav_campus(
+    info: Info,
+    id: int,
+    data: DodNavCampusUpdateInput,
+) -> DodNavCampusType:
     session = await ensure_nav_permission(info, EDIT_RIGHT_NAME)
-    campus = await get_or_error(session, Corpus, id, "campus")
+    campus = await get_or_error(session, DodCorpus, id, "campus")
     if data.id_sys is not None:
         campus.id_sys = data.id_sys
     if data.loc_id is not None:
@@ -103,8 +106,10 @@ async def update_dod_nav_campus(info: Info, id: int, data: DodNavCampusUpdateInp
 
 async def delete_dod_nav_campus(info: Info, id: int) -> bool:
     session = await ensure_nav_permission(info, DELETE_RIGHT_NAME)
-    campus = await get_or_error(session, Corpus, id, "campus")
+    campus = await get_or_error(session, DodCorpus, id, "campus")
     await session.delete(campus)
     await session.commit()
     return True
+
+
 

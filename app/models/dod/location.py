@@ -1,10 +1,11 @@
 ﻿from typing import Union
+from sqlalchemy import Boolean, Column, Integer, String, Text
 from app.models.base import Base
-from sqlalchemy import Integer, String, Text, Column, Boolean
 
 
-class Location(Base):
+class DodLocation(Base):
     __tablename__ = "dod_locations"
+
     id: int = Column(Integer, primary_key=True)
     id_sys: str = Column(String(2), unique=True, nullable=False)
     name: str = Column(String(25), nullable=False)
@@ -14,4 +15,5 @@ class Location(Base):
     metro: str = Column(String(100), nullable=False)
     crossings: Union[str, None] = Column(Text, nullable=True)
     comments: Union[str, None] = Column(String(100))
+
 

@@ -1,13 +1,14 @@
-﻿from sqlalchemy.orm import Mapped, relationship
-from typing import List, Union
+﻿from typing import List, Union
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
+from sqlalchemy.orm import Mapped, relationship
 from app.models.base import Base
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
-from app.models.dod.plan import Plan
-from app.models.dod.types import Type
+from app.models.dod.plan import DodPlan
+from app.models.dod.types import DodType
 
 
-class Auditory(Base):
+class DodAuditory(Base):
     __tablename__ = "dod_auditories"
+
     id: int = Column(Integer, primary_key=True)
     id_sys: str = Column(String(50), nullable=False)
     type_id: int = Column(ForeignKey("dod_types.id"), nullable=False)
@@ -19,8 +20,8 @@ class Auditory(Base):
     comments: Union[str, None] = Column(String(200), nullable=True)
     link: Union[str, None] = Column(String(255), nullable=True)
 
-    typ: Mapped["Type"] = relationship(Type)
-    plans: Mapped["Plan"] = relationship(Plan)
-    photos: Mapped[List["AudPhoto"]] = relationship("app.models.dod.aud_photo.AudPhoto", back_populates="auditory")
+    typ: Mapped["DodType"] = relationship()
+    plans: Mapped["DodPlan"] = relationship()
+    photos: Mapped[List["DodAudPhoto"]] = relationship(back_populates="auditory")
 
 

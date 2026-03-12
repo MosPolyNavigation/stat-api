@@ -2,14 +2,8 @@
 import strawberry
 from sqlalchemy import select
 from strawberry import Info
-from app.models.dod.plan import Plan
-from app.routes.graphql.permissions import (
-    CREATE_RIGHT_NAME,
-    DELETE_RIGHT_NAME,
-    EDIT_RIGHT_NAME,
-    VIEW_RIGHT_NAME,
-    ensure_nav_permission,
-)
+from app.models.dod.plan import DodPlan
+from app.routes.graphql.permissions import CREATE_RIGHT_NAME, DELETE_RIGHT_NAME, EDIT_RIGHT_NAME, VIEW_RIGHT_NAME, ensure_nav_permission
 from .common import get_or_error
 
 DEFAULT_PLAN_ENTRANCES = "[]"
@@ -56,7 +50,7 @@ class DodNavPlanUpdateInput:
     nearest_shared_wc: Optional[str] = None
 
 
-def _to_dod_nav_plan(model: Plan) -> DodNavPlanType:
+def _to_dod_nav_plan(model: DodPlan) -> DodNavPlanType:
     return DodNavPlanType(
         id=model.id,
         id_sys=model.id_sys,
@@ -81,22 +75,22 @@ async def resolve_dod_nav_plans(
     floor_id: Optional[int] = None,
 ) -> list[DodNavPlanType]:
     session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Plan).order_by(Plan.id)
+    statement = select(DodPlan).order_by(DodPlan.id)
     if id is not None:
-        statement = statement.where(Plan.id == id)
+        statement = statement.where(DodPlan.id == id)
     if id_sys is not None:
-        statement = statement.where(Plan.id_sys == id_sys)
+        statement = statement.where(DodPlan.id_sys == id_sys)
     if cor_id is not None:
-        statement = statement.where(Plan.cor_id == cor_id)
+        statement = statement.where(DodPlan.cor_id == cor_id)
     if floor_id is not None:
-        statement = statement.where(Plan.floor_id == floor_id)
+        statement = statement.where(DodPlan.floor_id == floor_id)
     records = (await session.execute(statement)).scalars().all()
     return [_to_dod_nav_plan(record) for record in records]
 
 
 async def create_dod_nav_plan(info: Info, data: DodNavPlanInput) -> DodNavPlanType:
     session = await ensure_nav_permission(info, CREATE_RIGHT_NAME)
-    plan = Plan(
+    plan = DodPlan(
         id_sys=data.id_sys,
         cor_id=data.cor_id,
         floor_id=data.floor_id,
@@ -115,9 +109,13 @@ async def create_dod_nav_plan(info: Info, data: DodNavPlanInput) -> DodNavPlanTy
     return _to_dod_nav_plan(plan)
 
 
-async def update_dod_nav_plan(info: Info, id: int, data: DodNavPlanUpdateInput) -> DodNavPlanType:
+async def update_dod_nav_plan(
+    info: Info,
+    id: int,
+    data: DodNavPlanUpdateInput,
+) -> DodNavPlanType:
     session = await ensure_nav_permission(info, EDIT_RIGHT_NAME)
-    plan = await get_or_error(session, Plan, id, "plan")
+    plan = await get_or_error(session, DodPlan, id, "plan")
     if data.id_sys is not None:
         plan.id_sys = data.id_sys
     if data.cor_id is not None:
@@ -141,8 +139,10 @@ async def update_dod_nav_plan(info: Info, id: int, data: DodNavPlanUpdateInput) 
 
 async def delete_dod_nav_plan(info: Info, id: int) -> bool:
     session = await ensure_nav_permission(info, DELETE_RIGHT_NAME)
-    plan = await get_or_error(session, Plan, id, "plan")
+    plan = await get_or_error(session, DodPlan, id, "plan")
     await session.delete(plan)
     await session.commit()
     return True
+
+
 

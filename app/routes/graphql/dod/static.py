@@ -2,14 +2,8 @@
 import strawberry
 from sqlalchemy import select
 from strawberry import Info
-from app.models.dod.static import Static
-from app.routes.graphql.permissions import (
-    CREATE_RIGHT_NAME,
-    DELETE_RIGHT_NAME,
-    EDIT_RIGHT_NAME,
-    VIEW_RIGHT_NAME,
-    ensure_nav_permission,
-)
+from app.models.dod.static import DodStatic
+from app.routes.graphql.permissions import CREATE_RIGHT_NAME, DELETE_RIGHT_NAME, EDIT_RIGHT_NAME, VIEW_RIGHT_NAME, ensure_nav_permission
 from .common import get_or_error
 
 
@@ -40,7 +34,7 @@ class DodNavStaticUpdateInput:
     link: Optional[str] = None
 
 
-def _to_dod_nav_static(model: Static) -> DodNavStaticType:
+def _to_dod_nav_static(model: DodStatic) -> DodNavStaticType:
     return DodNavStaticType(
         id=model.id,
         ext=model.ext,
@@ -52,20 +46,24 @@ def _to_dod_nav_static(model: Static) -> DodNavStaticType:
     )
 
 
-async def resolve_dod_nav_statics(info: Info, id: Optional[int] = None, name: Optional[str] = None) -> list[DodNavStaticType]:
+async def resolve_dod_nav_statics(
+    info: Info,
+    id: Optional[int] = None,
+    name: Optional[str] = None,
+) -> list[DodNavStaticType]:
     session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Static).order_by(Static.id)
+    statement = select(DodStatic).order_by(DodStatic.id)
     if id is not None:
-        statement = statement.where(Static.id == id)
+        statement = statement.where(DodStatic.id == id)
     if name is not None:
-        statement = statement.where(Static.name == name)
+        statement = statement.where(DodStatic.name == name)
     records = (await session.execute(statement)).scalars().all()
     return [_to_dod_nav_static(record) for record in records]
 
 
 async def create_dod_nav_static(info: Info, data: DodNavStaticInput) -> DodNavStaticType:
     session = await ensure_nav_permission(info, CREATE_RIGHT_NAME)
-    static = Static(
+    static = DodStatic(
         ext=data.ext,
         path=data.path,
         name=data.name,
@@ -77,9 +75,13 @@ async def create_dod_nav_static(info: Info, data: DodNavStaticInput) -> DodNavSt
     return _to_dod_nav_static(static)
 
 
-async def update_dod_nav_static(info: Info, id: int, data: DodNavStaticUpdateInput) -> DodNavStaticType:
+async def update_dod_nav_static(
+    info: Info,
+    id: int,
+    data: DodNavStaticUpdateInput,
+) -> DodNavStaticType:
     session = await ensure_nav_permission(info, EDIT_RIGHT_NAME)
-    static = await get_or_error(session, Static, id, "static file")
+    static = await get_or_error(session, DodStatic, id, "static file")
     if data.ext is not None:
         static.ext = data.ext
     if data.path is not None:
@@ -95,8 +97,10 @@ async def update_dod_nav_static(info: Info, id: int, data: DodNavStaticUpdateInp
 
 async def delete_dod_nav_static(info: Info, id: int) -> bool:
     session = await ensure_nav_permission(info, DELETE_RIGHT_NAME)
-    static = await get_or_error(session, Static, id, "static file")
+    static = await get_or_error(session, DodStatic, id, "static file")
     await session.delete(static)
     await session.commit()
     return True
+
+
 
