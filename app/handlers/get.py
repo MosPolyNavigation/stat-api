@@ -1,4 +1,4 @@
-from sqlalchemy import Select, func, union_all, select, case, String
+from sqlalchemy import Select, func, union_all, select, case, String, literal
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import aliased
 from typing import Dict
@@ -152,59 +152,64 @@ def get_popular_auds_query():
     """
         Query in basis:
         ```sql
-            SELECT ID from (
-              SELECT auditory_id as ID, count(*) as CNT
-              from selected_auditories
-              where success=1
-              group by auditory_id
-              UNION ALL
-              SELECT start_id as ID, count(*)*3 as CNT
-              from started_ways
-              group by start_id
-              UNION ALL
-              SELECT end_id as ID, count(*)*3 as CNT
-              from started_ways
-              group by end_id
-            ) as tr
+            WITH sw AS (
+                SELECT start_id, end_id FROM started_ways
+            )
+            SELECT ID
+            FROM (
+                SELECT auditory_id AS ID, 1 AS weight
+                FROM selected_auditories
+                WHERE success = 1
+
+                UNION ALL
+                SELECT start_id, 3 FROM sw
+
+                UNION ALL
+                SELECT end_id, 3 FROM sw
+            ) AS tr
             GROUP BY ID
-            ORDER BY SUM(CNT) DESC;
+            ORDER BY SUM(weight) DESC;
         ```
     """
-    return aliased(
-        union_all(
-            Select(
-                models.SelectAuditory.auditory_id.label('ID'),
-                func.count().label('CNT'))
-            .select_from(models.SelectAuditory)
-            .filter_by(success=True)
-            .group_by(models.SelectAuditory.auditory_id.label('ID')),
-            Select(models.StartWay.start_id.label('ID'),
-                   func.count().label('CNT') * 3)
-            .select_from(models.StartWay)
-            .group_by(models.StartWay.start_id.label('ID')),
-            Select(models.StartWay.end_id.label('ID'),
-                   func.count().label('CNT') * 3)
-            .select_from(models.StartWay)
-            .group_by(models.StartWay.end_id.label('ID'))
-        ).alias('tr')
+    sw_cte = select(
+        models.StartWay.start_id,
+        models.StartWay.end_id
+    ).cte('sw')
+
+    # Три части UNION ALL
+    part1 = select(
+        models.SelectAuditory.auditory_id.label('ID'),
+        literal(1).label('weight')
+    ).where(models.SelectAuditory.success == 1)
+
+    part2 = select(
+        sw_cte.c.start_id.label('ID'),
+        literal(3).label('weight')
     )
+
+    part3 = select(
+        sw_cte.c.end_id.label('ID'),
+        literal(3).label('weight')
+    )
+    return union_all(part1, part2, part3).alias('tr')
 
 
 async def get_popular_auds(db: AsyncSession):
-    tr = get_popular_auds_query()
-    query = (Select(tr.c.ID)
-             .select_from(tr)
-             .group_by(tr.c.ID)
-             .order_by(func.sum(tr.c.CNT).desc()))
+    union_query = get_popular_auds_query()
+    query = select(union_query.c.ID).group_by(union_query.c.ID).order_by(
+        func.sum(union_query.c.weight).desc()
+    )
     popular = (await db.execute(query)).scalars().all()
     return popular
 
 
 async def get_popular_auds_with_count(db: AsyncSession):
-    tr = get_popular_auds_query()
-    query = (Select(tr.c.ID, func.sum(tr.c.CNT))
-             .select_from(tr)
-             .group_by(tr.c.ID)
-             .order_by(func.sum(tr.c.CNT).desc()))
-    with_count = (await db.execute(query)).fetchall()
+    union_query = get_popular_auds_query()
+    query = select(
+        union_query.c.ID,
+        func.sum(union_query.c.weight)
+    ).group_by(union_query.c.ID).order_by(
+        func.sum(union_query.c.weight).desc()
+    )
+    popular = (await db.execute(query)).scalars().all()
     return with_count
