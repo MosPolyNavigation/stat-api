@@ -25,6 +25,12 @@ class TgUser(Base):
         unique=True,
         index=True
     )
+    creation_date: datetime = Column(
+        DateTime,
+        default=datetime.now,
+        nullable=False,
+        index=True
+    )
 
     events: Mapped[list["TgEvent"]] = relationship(
         "TgEvent",
