@@ -175,4 +175,4 @@ async def http_exception_handler(_: Request, exc: HTTPException):
     Returns:
         JSONResponse: JSON ответ с кодом ошибки и сообщением
     """
-    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

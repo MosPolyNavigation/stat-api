@@ -10,8 +10,6 @@ from time import sleep
     ("/api/stat/change-plan", {"plan_id": "A-0"})
 ])
 def test_200_stat(endpoint, data):
-    if endpoint == "/api/stat/select-aud":
-        sleep(1)
     response = client.put(endpoint, json={
         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
         **data
