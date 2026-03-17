@@ -10,6 +10,7 @@ from app.database import get_db
 from app.config import get_settings
 from app.handlers import insert_review
 from app.schemas import Status, Problem
+from app.guards.file_checker import image_validator
 
 
 def register_endpoint(router: APIRouter):
@@ -37,6 +38,15 @@ def register_endpoint(router: APIRouter):
                     }
                 }
             },
+            413: {
+                'model': Status,
+                'description': "File or text too large",
+                'content': {
+                    "application/json": {
+                        "example": {"status": "Image too large"}
+                    }
+                }
+            },
             415: {
                 'model': Status,
                 'description': "Unsupported Media Type",
@@ -54,10 +64,7 @@ def register_endpoint(router: APIRouter):
     )
     async def add_review(
             response: Response,
-            image: Optional[UploadFile] = File(
-                default=None,
-                description="User image with problem"
-            ),
+            image: Optional[UploadFile] = Depends(image_validator),
             user_id: str = Form(
                 title="id",
                 description="Unique user id",
@@ -73,8 +80,12 @@ def register_endpoint(router: APIRouter):
                     "pattern": r"way|other|plan|work"
                 }
             ),
-            text: str = Form(title="text",
-                             description="User review"),
+            text: str = Form(
+                title="text",
+                description="User review",
+                min_length=1,
+                max_length=5000
+            ),
             db: AsyncSession = Depends(get_db),
     ):
         base_path = os.path.join(get_settings().static_files, "images")
@@ -86,9 +97,6 @@ def register_endpoint(router: APIRouter):
             async with aiofiles.open(image_path, "wb") as file:
                 contents = await image.read()
                 await file.write(contents)
-        elif image is not None and image.content_type.split("/")[0] != "image":
-            response.status_code = 415
-            return Status(status="This endpoint accepts only images")
         else:
             image_name = None
         return await insert_review(db, image_name, user_id, problem, text)
