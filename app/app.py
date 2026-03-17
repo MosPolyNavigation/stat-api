@@ -1,16 +1,19 @@
+from os import path, makedirs
+
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.middleware.cors import CORSMiddleware
-from app.jobs import lifespan
-from .helpers.errors import LookupException
 from fastapi_pagination import add_pagination
-from .config import get_settings
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
-from sqlalchemy.exc import SQLAlchemyError
-from .helpers.spa_static_files import SPAStaticFiles
-from .routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav
 from fastapi import FastAPI, Request, HTTPException
-from .state import AppState
-from os import path, makedirs
+from sqlalchemy.exc import SQLAlchemyError
+
+from app.config import get_settings
+from app.state import AppState
+from app.jobs import lifespan
+from app.helpers.errors import LookupException
+from app.helpers.spa_static_files import SPAStaticFiles
+from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav, admin
 
 tags_metadata = [
     {
@@ -57,6 +60,10 @@ tags_metadata = [
         "name": "check",
         "description": "Эндпоинты для проверки"
     },
+    {
+        "name": "admin",
+        "description": "Эндпоинты для управления забаненными пользователями"
+    },
 ]
 
 settings = get_settings()
@@ -79,9 +86,9 @@ if not path.exists(ADMIN_DIR):
 app = FastAPI(
     version="0.2.1",
     openapi_tags=tags_metadata,
-    docs_url=None,
+    # docs_url=None,
     redoc_url=None,
-    openapi_url=None,
+    # openapi_url=None,
     lifespan=lifespan
 )
 add_pagination(app)
@@ -98,6 +105,7 @@ app.include_router(crud_roles.router)
 app.include_router(jobs.router)
 app.include_router(free_aud.router)
 app.include_router(nav.router)
+app.include_router(admin.router)
 app.mount(
     "/admin/",
     SPAStaticFiles(
@@ -121,6 +129,7 @@ app.add_middleware(
     allow_methods=settings.allowed_methods,
     allow_headers=settings.allowed_headers
 )
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.exception_handler(SQLAlchemyError)
@@ -171,4 +180,4 @@ async def http_exception_handler(_: Request, exc: HTTPException):
     Returns:
         JSONResponse: JSON ответ с кодом ошибки и сообщением
     """
-    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc)})
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})

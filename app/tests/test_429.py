@@ -16,5 +16,5 @@ def test_429_stat_aud():
     })
     assert response.status_code == 429
     assert response.json() == {
-        "status": "Too many requests for this user within one second"
+        "detail": "Too many requests for this user within one second"
     }

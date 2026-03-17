@@ -11,6 +11,7 @@ from app.config import get_settings
 from app.handlers import insert_review
 from app.schemas import Status, Problem
 from app.guards.file_checker import image_validator
+from app.guards.review_governor import review_rate_limiter
 
 
 def register_endpoint(router: APIRouter):
@@ -19,6 +20,7 @@ def register_endpoint(router: APIRouter):
         description="Эндпоинт для добавления отзывов",
         response_model=Status,
         tags=["review"],
+        dependencies=[Depends(review_rate_limiter)],
         responses={
             500: {
                 'model': Status,
@@ -59,6 +61,17 @@ def register_endpoint(router: APIRouter):
             200: {
                 'model': Status,
                 "description": "Status of adding new object to db"
+            },
+            429: {
+                "description": "Too many requests",
+                'content': {
+                    "application/json": {
+                        "example": {
+                            "detail":
+                                "Too many requests for this user within one second"
+                        }
+                    }
+                }
             }
         }
     )
