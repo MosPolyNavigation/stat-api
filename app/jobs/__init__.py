@@ -3,15 +3,18 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app.guards.governor import stat_rate_limiter
+from app.guards.review_governor import review_rate_limiter
 from app.jobs.rasp import fetch_cur_rasp
 from app.jobs.schedule.schedule import fetch_cur_data
 from app.jobs.location_data.worker import fetch_location_data
-from app.jobs.governor_cleaner.stat_cleaner import create_cleanup_job 
+from app.jobs.governor_cleaner.stat_cleaner import create_cleanup_job
+
 
 STAT_LIMITERS = [
     stat_rate_limiter
 ]
-#
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     scheduler = AsyncIOScheduler({'apscheduler.timezone': 'Europe/Moscow'})
@@ -26,6 +29,12 @@ async def lifespan(app: FastAPI):
         name="Clean up expired rate limiter entries",
         replace_existing=True,
     )
+    scheduler.add_job(
+        create_cleanup_job(app, [review_rate_limiter]),
+        trigger="interval",
+        minutes=10,
+        id="review_rate_limiter_cleanup",
+    )
 
     await fetch_location_data()
 
@@ -34,7 +43,3 @@ async def lifespan(app: FastAPI):
     yield
 
     scheduler.shutdown(wait=True)
-    
-    # Опционально: финальная очистка перед выходом
-    for limiter in STAT_LIMITERS:
-        limiter.cleanup_now(app.state)

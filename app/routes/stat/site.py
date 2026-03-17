@@ -38,7 +38,6 @@ def register_endpoint(router: APIRouter):
                 "description": "Status of adding new object to db"
             },
             429: {
-                'model': Status,
                 "description": "Too many requests",
                 'content': {
                     "application/json": {
