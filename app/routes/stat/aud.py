@@ -43,7 +43,7 @@ def register_endpoint(router: APIRouter):
                 'content': {
                     "application/json": {
                         "example": {
-                            "status":
+                            "detail":
                                 "Too many requests for this user within one second"
                         }
                     }
