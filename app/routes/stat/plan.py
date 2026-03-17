@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.handlers import insert_changed_plan
 from app.schemas import ChangePlanIn, Status
+from app.guards.governor import stat_rate_limiter
 
 
 def register_endpoint(router: APIRouter):
@@ -12,6 +13,7 @@ def register_endpoint(router: APIRouter):
         description="Эндпоинт для добавления смены плана",
         response_model=Status,
         tags=["stat"],
+        dependencies=[Depends(stat_rate_limiter)],
         responses={
             500: {
                 'model': Status,
@@ -34,6 +36,17 @@ def register_endpoint(router: APIRouter):
             200: {
                 'model': Status,
                 "description": "Status of adding new object to db"
+            },
+            429: {
+                "description": "Too many requests",
+                'content': {
+                    "application/json": {
+                        "example": {
+                            "detail":
+                                "Too many requests for this user within one second"
+                        }
+                    }
+                }
             }
         }
     )

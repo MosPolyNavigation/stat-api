@@ -45,6 +45,7 @@ def _to_review(model: Review) -> ReviewType:
 async def resolve_reviews(
         info: Info,
         user_id: Optional[str] = None,
+        review_id: Optional[int] = None,
         problem_id: Optional[str] = None,
         status_id: Annotated[Optional[int], strawberry.argument(name="status_id")] = None,
         limit: Optional[int] = None
@@ -61,6 +62,8 @@ async def resolve_reviews(
     )
     if user_id:
         statement = statement.where(Review.user_id == user_id)
+    if review_id:
+        statement = statement.where(Review.id == review_id)
     if problem_id:
         statement = statement.where(Review.problem_id == problem_id)
     if status_id is not None:
