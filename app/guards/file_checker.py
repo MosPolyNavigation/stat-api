@@ -5,7 +5,7 @@ from typing import Optional
 
 class FileValidator:
     def __init__(
-        self, 
+        self,
         max_size: int = 10 * 1024 * 1024,
         allowed_types: Optional[list[str]] = None,
         request_overhead_multiplier: float = 2.0
@@ -16,8 +16,8 @@ class FileValidator:
     
     async def __call__(
         self, 
-        image: Optional[UploadFile],
-        request: Request
+        request: Request,
+        image: Optional[UploadFile] = None,
     ) -> Optional[UploadFile]:
         if image is None:
             return None
@@ -116,8 +116,8 @@ class PhotoValidator:
     
     async def __call__(
         self, 
-        photos: list[UploadFile],
-        request: Request
+        request: Request,
+        photos: list[UploadFile] = [],
     ) -> list[UploadFile]:
         # 1. Проверка количества файлов
         if len(photos) > self.max_files:
