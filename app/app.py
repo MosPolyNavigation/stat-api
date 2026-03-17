@@ -13,7 +13,7 @@ from app.state import AppState
 from app.jobs import lifespan
 from app.helpers.errors import LookupException
 from app.helpers.spa_static_files import SPAStaticFiles
-from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav
+from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav, admin
 
 tags_metadata = [
     {
@@ -60,6 +60,10 @@ tags_metadata = [
         "name": "check",
         "description": "Эндпоинты для проверки"
     },
+    {
+        "name": "admin",
+        "description": "Эндпоинты для управления забаненными пользователями"
+    },
 ]
 
 settings = get_settings()
@@ -82,9 +86,9 @@ if not path.exists(ADMIN_DIR):
 app = FastAPI(
     version="0.2.1",
     openapi_tags=tags_metadata,
-    docs_url=None,
+    # docs_url=None,
     redoc_url=None,
-    openapi_url=None,
+    # openapi_url=None,
     lifespan=lifespan
 )
 add_pagination(app)
@@ -101,6 +105,7 @@ app.include_router(crud_roles.router)
 app.include_router(jobs.router)
 app.include_router(free_aud.router)
 app.include_router(nav.router)
+app.include_router(admin.router)
 app.mount(
     "/admin/",
     SPAStaticFiles(

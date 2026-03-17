@@ -281,25 +281,109 @@ class ReviewRateLimiter:
             "limit_5min": self.WINDOW_5_MIN_MAX,
         }
     
+    def get_banned_users(
+        self,
+        state: AppState,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> Dict:
+        """
+        Возвращает пагинированный список забаненных пользователей.
+        
+        Args:
+            state: AppState с хранилищем
+            limit: Максимальное количество записей
+            offset: Сдвиг для пагинации
+        
+        Returns:
+            Dict с пагинированным списком банов
+        """
+        access_store = getattr(state, self.state_attr, None)
+        if access_store is None:
+            return {"items": [], "total": 0, "page": 1, "size": limit}
+        
+        # Фильтруем только забаненных
+        banned = []
+        for user_id, data in access_store.items():
+            if data.get("banned"):
+                banned.append({
+                    "user_id": user_id,
+                    "ban_reason": data["ban_reason"],
+                    "ban_timestamp": data["ban_timestamp"].isoformat() if data["ban_timestamp"] else None,
+                    "violation_count": data["violation_count"],
+                    "requests_count": len(data["requests"]),
+                })
+        
+        total = len(banned)
+        
+        # Сортируем по времени бана (сначала новые)
+        banned.sort(key=lambda x: x["ban_timestamp"] or "", reverse=True)
+        
+        # Пагинация
+        paginated = banned[offset:offset + limit]
+        
+        return {
+            "items": paginated,
+            "total": total,
+            "page": (offset // limit) + 1,
+            "size": limit,
+            "pages": (total + limit - 1) // limit if limit > 0 else 0,
+        }
+    
+    def get_user_ban_info(
+        self,
+        state: AppState,
+        user_id: str,
+    ) -> Optional[Dict]:
+        """
+        Возвращает детальную информацию о бане конкретного пользователя.
+        
+        Returns:
+            Dict с информацией о бане или None если пользователь не найден/не забанен
+        """
+        access_store = getattr(state, self.state_attr, None)
+        if access_store is None or user_id not in access_store:
+            return None
+        
+        user_data = access_store[user_id]
+        if not user_data.get("banned"):
+            return None
+        
+        return {
+            "user_id": user_id,
+            "banned": True,
+            "ban_reason": user_data["ban_reason"],
+            "ban_timestamp": user_data["ban_timestamp"].isoformat() if user_data["ban_timestamp"] else None,
+            "violation_count": user_data["violation_count"],
+            "requests_count": len(user_data["requests"]),
+            "last_request": user_data["requests"][-1].isoformat() if user_data["requests"] else None,
+        }
+    
     def unban_user(
         self,
         state: AppState,
         user_id: str,
     ) -> bool:
         """
-        Снимает бан с пользователя (для админки).
-        Returns True если успешно, False если пользователь не найден.
+        Снимает бан с пользователя.
+        
+        Returns:
+            True если успешно, False если пользователь не найден или не был забанен
         """
         access_store = getattr(state, self.state_attr, None)
         if access_store is None or user_id not in access_store:
             return False
         
         user_data = access_store[user_id]
+        if not user_data.get("banned"):
+            return False
+        
+        # Сбрасываем бан
         user_data["banned"] = False
         user_data["ban_reason"] = None
         user_data["ban_timestamp"] = None
         user_data["violation_count"] = 0
-        user_data["requests"] = []  # сбрасываем историю
+        user_data["requests"] = []  # опционально: сбросить историю
         
         return True
 
