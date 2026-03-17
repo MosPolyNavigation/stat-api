@@ -86,9 +86,9 @@ if not path.exists(ADMIN_DIR):
 app = FastAPI(
     version="0.2.1",
     openapi_tags=tags_metadata,
-    # docs_url=None,
+    docs_url=None,
     redoc_url=None,
-    # openapi_url=None,
+    openapi_url=None,
     lifespan=lifespan
 )
 add_pagination(app)

@@ -12,7 +12,7 @@ from app.helpers.auth_utils import get_current_active_user
 
 def register_endpoint(router: APIRouter):
     @router.get(
-        "/api/admin/review-bans",
+        "/review-bans",
         description="Получение списка забаненных пользователей для отзывов",
         response_model=BanListOut,
         tags=["admin"],
@@ -41,7 +41,7 @@ def register_endpoint(router: APIRouter):
         return result
     
     @router.get(
-        "/api/admin/review-bans/{user_id}",
+        "/review-bans/{user_id}",
         description="Получение информации о бане конкретного пользователя",
         response_model=BanInfoOut,
         tags=["admin"],
@@ -76,7 +76,7 @@ def register_endpoint(router: APIRouter):
         return info
     
     @router.post(
-        "/api/admin/review-bans/{user_id}/unban",
+        "/review-bans/{user_id}/unban",
         description="Снятие бана с пользователя",
         response_model=Status,
         tags=["admin"],

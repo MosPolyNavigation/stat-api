@@ -1,6 +1,9 @@
-from datetime import datetime, timedelta
-from typing import Optional, Union, List, Dict
+import os
+import json
+from pathlib import Path
 from collections import OrderedDict
+from datetime import datetime, timedelta
+from typing import Optional, Union, List, Dict, TYPE_CHECKING
 
 from fastapi import HTTPException, Request, status
 
@@ -386,6 +389,125 @@ class ReviewRateLimiter:
         user_data["requests"] = []  # опционально: сбросить историю
         
         return True
+    
+    def save_bans(
+        self,
+        state: AppState,
+        settings: "Settings",
+    ) -> bool:
+        """
+        Сохраняет список забаненных пользователей в файл.
+        
+        Файл сохраняется в папке static из настроек.
+        
+        Args:
+            state: AppState с хранилищем
+            settings: Настройки приложения
+        
+        Returns:
+            bool: True если успешно, False если ошибка
+        """
+        try:
+            access_store = getattr(state, self.state_attr, None)
+            if access_store is None:
+                return True  # Нечего сохранять
+            
+            # Фильтруем только забаненных
+            banned_data = {}
+            for user_id, data in access_store.items():
+                if data.get("banned"):
+                    banned_data[str(user_id)] = {
+                        "ban_reason": data["ban_reason"],
+                        "ban_timestamp": data["ban_timestamp"].isoformat() if data["ban_timestamp"] else None,
+                        "violation_count": data["violation_count"],
+                    }
+            
+            # Формируем путь к файлу в папке static
+            static_path = Path(settings.static_files)
+            static_path.mkdir(parents=True, exist_ok=True)
+            ban_file = static_path / "banned_users.json"
+            
+            # Сохраняем в JSON
+            with open(ban_file, "w", encoding="utf-8") as f:
+                json.dump(banned_data, f, ensure_ascii=False, indent=2)
+            
+            return True
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to save banned users: {e}")
+            return False
+    
+    def load_bans(
+        self,
+        state: AppState,
+        settings: "Settings",
+    ) -> int:
+        """
+        Загружает список забаненных пользователей из файла.
+        
+        Файл ожидается в папке static из настроек.
+        
+        Args:
+            state: AppState с хранилищем
+            settings: Настройки приложения
+        
+        Returns:
+            int: Количество загруженных банов
+        """
+        try:
+            static_path = Path(settings.static_files)
+            ban_file = static_path / "banned_users.json"
+            
+            if not ban_file.exists():
+                return 0
+            
+            access_store = getattr(state, self.state_attr, None)
+            if access_store is None:
+                access_store = OrderedDict()
+                setattr(state, self.state_attr, access_store)
+            
+            with open(ban_file, "r", encoding="utf-8") as f:
+                banned_data = json.load(f)
+            
+            loaded_count = 0
+            for user_id, data in banned_data.items():
+                # Инициализируем запись пользователя если нет
+                if user_id not in access_store:
+                    access_store[user_id] = {
+                        "requests": [],
+                        "banned": False,
+                        "ban_reason": None,
+                        "ban_timestamp": None,
+                        "violation_count": 0,
+                    }
+                
+                # Восстанавливаем данные бана
+                user_data = access_store[user_id]
+                user_data["banned"] = True
+                user_data["ban_reason"] = data.get("ban_reason")
+                
+                # Парсим timestamp если есть
+                ts = data.get("ban_timestamp")
+                if ts:
+                    try:
+                        user_data["ban_timestamp"] = datetime.fromisoformat(ts)
+                    except ValueError:
+                        user_data["ban_timestamp"] = None
+                else:
+                    user_data["ban_timestamp"] = None
+                
+                user_data["violation_count"] = data.get("violation_count", 0)
+                loaded_count += 1
+            
+            return loaded_count
+            
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to load banned users: {e}")
+            return 0
 
 
 review_rate_limiter = ReviewRateLimiter(
