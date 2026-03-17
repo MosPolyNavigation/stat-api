@@ -17,6 +17,7 @@ from app.config import get_settings
 from app.helpers.permissions import require_rights
 from app.helpers.svg import save_svg_bytes_to_disk
 from app.handlers.insert import insert_floor_map
+from app.guards.file_checker import plan_validator
 
 def register_endpoint(router: APIRouter):
     @router.get(
@@ -110,8 +111,8 @@ def register_endpoint(router: APIRouter):
         },
     )
     async def upload_plan(
-            plan_id: str = Form(..., alias="PlanId"),
-            file: UploadFile = File(..., alias="File"),
+            plan_id: str = Form(..., max_length=20),
+            file: UploadFile = Depends(plan_validator),
             db: AsyncSession = Depends(get_db),
     ) -> Status:
         """
