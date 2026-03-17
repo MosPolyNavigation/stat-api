@@ -15,6 +15,7 @@ from app.helpers.permissions import require_rights
 from app.models.nav.aud_photo import AudPhoto
 from app.models.nav.auditory import Auditory
 from app.schemas import Status
+from app.guards.file_checker import photo_validator
 
 
 def register_endpoint(router: APIRouter):
@@ -30,7 +31,7 @@ def register_endpoint(router: APIRouter):
     )
     async def upload_auditory_photos(
         aud_id: str = Form(..., description="Auditory id"),
-        photos: list[UploadFile] = File(..., description="Auditory photos"),
+        photos: list[UploadFile] = Depends(photo_validator),
         db: AsyncSession = Depends(get_db),
     ) -> Status:
         auditory = (
