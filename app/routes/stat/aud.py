@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.schemas import Status, SelectedAuditoryIn
 from app.handlers import check_user, insert_aud_selection
+from app.guards.governor import stat_rate_limiter
 
 
 def register_endpoint(router: APIRouter):
@@ -12,6 +13,7 @@ def register_endpoint(router: APIRouter):
         description="Эндпоинт для добавления выбора аудитории",
         response_model=Status,
         tags=["stat"],
+        dependencies=[Depends(stat_rate_limiter)],
         responses={
             500: {
                 'model': Status,
@@ -50,8 +52,6 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def add_selected_aud(
-            request: Request,
-            response: Response,
             data: SelectedAuditoryIn = Body(),
             db: AsyncSession = Depends(get_db),
     ):
@@ -69,10 +69,4 @@ def register_endpoint(router: APIRouter):
         Returns:
             Status: Статус добавления нового объекта в базу данных.
         """
-        state = request.app.state
-        if check_user(state, data.user_id) < 1:
-            response.status_code = 429
-            return Status(
-                status="Too many requests for this user within one second"
-            )
         return await insert_aud_selection(db, data)
