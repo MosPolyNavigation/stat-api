@@ -2,7 +2,7 @@ from app.helpers.errors import LookupException
 from app.config import get_settings
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
-from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, free_aud
+from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, free_aud, nav
 from fastapi import FastAPI, HTTPException, Request
 from app.state import AppState
 
@@ -20,6 +20,7 @@ app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql
 app.include_router(crud_users.router)
 app.include_router(crud_roles.router)
 app.include_router(free_aud.router)
+app.include_router(nav.router)
 
 
 @app.exception_handler(SQLAlchemyError)

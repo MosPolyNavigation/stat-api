@@ -1,10 +1,9 @@
-from sqlalchemy.orm import Mapped, relationship
-from typing import Union
+﻿from sqlalchemy.orm import Mapped, relationship
+from typing import List, Union
 from app.models.base import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 from app.models.nav.plan import Plan
 from app.models.nav.types import Type
-from app.models.nav.static import Static
 
 
 class Auditory(Base):
@@ -19,8 +18,8 @@ class Auditory(Base):
     additional_info: Union[str, None] = Column(String(200), nullable=True)
     comments: Union[str, None] = Column(String(200), nullable=True)
     link: Union[str, None] = Column(String(255), nullable=True)
-    photo_id: Mapped[Union[int, None]] = Column(ForeignKey("statics.id"), nullable=True)
 
-    typ: Mapped["Type"] = relationship()
-    plans: Mapped["Plan"] = relationship()
-    photo: Mapped[Union["Static", None]] = relationship()
+    typ: Mapped["Type"] = relationship(Type)
+    plans: Mapped["Plan"] = relationship(Plan)
+    photos: Mapped[List["AudPhoto"]] = relationship("app.models.nav.aud_photo.AudPhoto", back_populates="auditory")
+

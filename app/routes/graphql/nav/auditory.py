@@ -25,7 +25,6 @@ class NavAuditoryType:
     additional_info: Optional[str]
     comments: Optional[str]
     link: Optional[str]
-    photo_id: Optional[int]
 
 
 @strawberry.input
@@ -39,7 +38,6 @@ class NavAuditoryInput:
     additional_info: Optional[str] = None
     comments: Optional[str] = None
     link: Optional[str] = None
-    photo_id: Optional[int] = None
 
 
 @strawberry.input
@@ -53,7 +51,6 @@ class NavAuditoryUpdateInput:
     additional_info: Optional[str] = None
     comments: Optional[str] = None
     link: Optional[str] = None
-    photo_id: Optional[int] = None
 
 
 def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
@@ -68,7 +65,6 @@ def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
         additional_info=model.additional_info,
         comments=model.comments,
         link=model.link,
-        photo_id=model.photo_id,
     )
 
 
@@ -105,7 +101,6 @@ async def create_nav_auditory(info: Info, data: NavAuditoryInput) -> NavAuditory
         additional_info=data.additional_info,
         comments=data.comments,
         link=data.link,
-        photo_id=data.photo_id,
     )
     session.add(auditory)
     await session.commit()
@@ -134,8 +129,6 @@ async def update_nav_auditory(info: Info, id: int, data: NavAuditoryUpdateInput)
         auditory.comments = data.comments
     if data.link is not None:
         auditory.link = data.link
-    if data.photo_id is not None:
-        auditory.photo_id = data.photo_id
     await session.commit()
     await session.refresh(auditory)
     return _to_nav_auditory(auditory)

@@ -148,39 +148,35 @@ async def insert_floor_map(
     db: AsyncSession,
     full_file_name: str,
     file_path: str,
-    campus: str,
-    corpus: str,
-    floor: int
+    link: str
 ):
     """
-    Функция для добавления карты этажа.
-
-    Эта функция добавляет карту этажа в базу данных.
+    Функция для добавления svg-плана в statics.
+    Эта функция добавляет запись о файле в таблицу statics.
 
     Args:
         db: Сессия базы данных;
         full_file_name: Имя файла с расширением;
         file_path: Путь, по которому сохранен файл;
-        campus: Кампус, в котором распологается этаж;
-        corpus: Корпус, в котором распологается этаж;
-        floor: Номер этажа, в котором распологается этаж.
+        link: Ссылка на маршрут для получения файла;
 
     Returns:
-        Статус операции.
+         id вставленной записи.
     """
     file_name, file_extension = path.splitext(full_file_name)
 
-    item = models.FloorMap(
-        floor=floor,
-        campus=campus,
-        corpus=corpus,
-        file_path=file_path,
-        file_name=file_name.lower(),
-        file_extension=file_extension.lower()
+    item = models.Static(
+        ext=file_extension.lower().lstrip("."),
+        path=file_path,
+        name=file_name.lower(),
+        link=link,
     )
 
     db.add(item)
     await db.commit()
+    await db.refresh(item)
+    return item.id
+
 
 
 async def insert_tg_event(

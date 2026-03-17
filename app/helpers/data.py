@@ -567,6 +567,7 @@ roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 1, 8),
     (1, 2, 8),
     (1, 3, 8),
+    (1, 4, 8),
 ]
 
 review_status: dict[int, str] = {

@@ -9,3 +9,5 @@
 /dist/
 /dist-panel/
 /nav_data/
+/.coverage
+/htmlcov/

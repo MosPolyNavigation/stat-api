@@ -1,4 +1,4 @@
-from typing import Union
+﻿from typing import Union
 from sqlalchemy import String, Integer, Boolean, Text, Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 from app.models.base import Base
@@ -15,4 +15,5 @@ class Corpus(Base):
     stair_groups: Union[str, None] = Column(Text, nullable=True)
     comments: Union[str, None] = Column(String(100), nullable=True)
 
-    locations: Mapped["Location"] = relationship()
+    locations: Mapped["Location"] = relationship(Location)
+
