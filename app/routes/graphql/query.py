@@ -9,7 +9,7 @@ from .review_status import ReviewStatusType, resolve_review_status
 from .select_auditory import SelectAuditoryType, resolve_select_auditories
 from .site_stat import SiteStatType, resolve_site_stats
 from .start_way import StartWayType, resolve_start_ways
-from .tg_bot import TgBotEventKindType, TgBotEventStatisticType, TgBotEventType, TgBotUserType, resolve_tg_bot_event_statistics, resolve_tg_bot_event_types, resolve_tg_bot_events, resolve_tg_bot_users
+from .tg_bot import TgBotEventKindType, TgBotEventStatisticType, TgBotEventType, TgBotUserType, resolve_tg_bot_event_statistics, resolve_tg_bot_event_types, resolve_tg_bot_events, resolve_tg_bot_users, AggregatedTgStatisticsType, TgStatisticsType, resolve_tg_bot_event_statistics, resolve_tg_statistics, resolve_tg_statistics_avg
 from .user_id import UserIdType, resolve_user_ids
 @strawberry.type
 class Query:
@@ -68,6 +68,21 @@ class Query:
     tg_bot_event_statistics: list[TgBotEventStatisticType] = strawberry.field(
         resolver=resolve_tg_bot_event_statistics,
         description="Get Telegram bot event statistics.",
+    )
+    tg_stats: list[TgStatisticsType] = strawberry.field(
+        name="TgStats",
+        resolver=resolve_tg_statistics,
+        description="Get Telegram bot statistics grouped by selected period.",
+    )
+    tg_event_type: list[TgBotEventKindType] = strawberry.field(
+        name="TgEventType",
+        resolver=resolve_tg_bot_event_types,
+        description="Get Telegram bot event types.",
+    )
+    tg_stats_avg: AggregatedTgStatisticsType = strawberry.field(
+        name="TgStatsAvg",
+        resolver=resolve_tg_statistics_avg,
+        description="Get aggregated Telegram bot statistics for selected period.",
     )
 
     nav_floors: list[NavFloorType] = strawberry.field(

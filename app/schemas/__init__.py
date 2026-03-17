@@ -1,5 +1,5 @@
 from app.schemas.stat.change_plan import ChangePlanIn
-from .filter import Filter, FilterQuery, FilterRoute
+from .filter import Filter, FilterQuery, FilterRoute, TgFilterQuery
 from app.schemas.stat.selected_aud import SelectedAuditoryIn
 from app.schemas.stat.site_stat import SiteStatIn
 from app.schemas.stat.start_way import StartWayIn

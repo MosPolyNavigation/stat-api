@@ -147,6 +147,47 @@ class FilterSvobodn(BaseModel):
     para: Optional[int] = Field(default=None)
 
 
+# Схема фильтрации статистики tg-бота
+class TgFilterQuery(BaseModel):
+    """
+    Класс для фильтрации статистики телеграм-бота.
+
+    Attributes:
+        event_type_id: Идентификатор типа события телеграм-бота;
+        is_dod: Признак, что событие относится к ДОД-боту;
+        start_date: дата, с которой начинается фильтрация;
+        end_date: дата, на которой заканчивается фильтрация;
+        start_month: месяц, с которого начинается фильтрация в формате YYYY-MM;
+        end_month: месяц, на котором заканчивается фильтрация в формате YYYY-MM;
+        start_year: год, с которого начинается фильтрация в формате YYYY;
+        end_year: год, на котором заканчивается фильтрация в формате YYYY.
+    """
+    event_type_id: Optional[int] = Field(
+        default=None, description="Telegram bot event type identifier"
+    )
+    is_dod: Optional[bool] = Field(
+        default=None, description="Whether event belongs to DOD bot"
+    )
+    start_date: Optional[date] = Field(
+        default=None, description="Date from which filtering begins"
+    )
+    end_date: Optional[date] = Field(
+        default=None, description="Date on which filtering ends"
+    )
+    start_month: Optional[str] = Field(
+        default=None, description="Month from which filtering begins in YYYY-MM format"
+    )
+    end_month: Optional[str] = Field(
+        default=None, description="Month on which filtering ends in YYYY-MM format"
+    )
+    start_year: Optional[str] = Field(
+        default=None, description="Year from which filtering begins in YYYY format"
+    )
+    end_year: Optional[str] = Field(
+        default=None, description="Year on which filtering ends in YYYY format"
+    )
+
+
 class FilterSvobodnForAud(FilterSvobodn):
     aud_id: str = Field()
 
@@ -161,3 +202,4 @@ class FilterSvobodnByCorpus(FilterSvobodn):
 
 class FilterSvobodnByLocation(FilterSvobodn):
     loc_id: str = Field()
+

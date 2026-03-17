@@ -8,12 +8,16 @@ from strawberry import Info
 from app.models import TgEvent, TgEventType, TgUser
 from .filter_handlers import _validated_limit
 from .permissions import ensure_stats_view_permission
+from .endpoint_stats import EndpointStatisticsByDateInput, EndpointStatisticsByMonthInput, EndpointStatisticsByYearInput, _fill_missing_dates, _validate_month_value, _validate_year_value
+from app.schemas import AggregatedStatistics, Statistics, TgFilterQuery
+from app.handlers import get_tg_stats, get_agr_tg_stats
 
 
 @strawberry.type
 class TgBotUserType:
     id: int
     tg_id: int
+    creation_date: datetime
 
 
 @strawberry.type
@@ -41,12 +45,34 @@ class TgBotEventStatisticType:
     count: int
 
 
+# Тип статистики по событиям tg-бота за период
+@strawberry.type
+class TgStatisticsType:
+    unique_visitors: int
+    all_visits: int
+    visitor_count: int
+    period: date
+
+
+# Тип агрегированной статистики по событиям tg-бота
+@strawberry.type
+class AggregatedTgStatisticsType:
+    total_visits: int
+    total_unique: int
+    total_visitor_count: int
+    avg_visits: float
+    avg_unique: float
+    avg_visitor_count: float
+    entries_count: int
+
+
 def _to_tg_bot_user(model: TgUser | None) -> Optional[TgBotUserType]:
     if model is None:
         return None
     return TgBotUserType(
         id=model.id,
-        tg_id=model.tg_id
+        tg_id=model.tg_id,
+        creation_date=model.creation_date
     )
 
 
@@ -256,3 +282,119 @@ async def resolve_tg_bot_event_statistics(
                 )
             )
     return result
+
+
+def _to_tg_statistics(model: Statistics) -> TgStatisticsType:
+    return TgStatisticsType(
+        unique_visitors=model.unique_visitors,
+        visitor_count=model.visitor_count,
+        all_visits=model.all_visits,
+        period=model.period,
+    )
+
+
+
+def _to_aggregated_tg_statistics(model: AggregatedStatistics) -> AggregatedTgStatisticsType:
+    return AggregatedTgStatisticsType(
+        total_visits=model.total_all_visits,
+        total_unique=model.total_unique_visitors,
+        total_visitor_count=model.total_visitor_count,
+        avg_visits=model.avg_all_visits_per_day,
+        avg_unique=model.avg_unique_visitors_per_day,
+        avg_visitor_count=model.avg_visitor_count_per_day,
+        entries_count=model.entries_analized,
+    )
+
+
+
+def _build_tg_filter(
+    event_type_id: Optional[int],
+    is_dod: Optional[bool],
+    by_date: Optional[EndpointStatisticsByDateInput],
+    by_month: Optional[EndpointStatisticsByMonthInput],
+    by_year: Optional[EndpointStatisticsByYearInput],
+) -> TgFilterQuery:
+    active_filters_count = sum(
+        item is not None for item in (by_date, by_month, by_year)
+    )
+    if active_filters_count != 1:
+        raise ValueError(
+            "Exactly one filter must be provided: by_date, by_month, or by_year"
+        )
+
+    effective_start_date: Optional[date] = None
+    effective_end_date: Optional[date] = None
+    effective_start_month: Optional[str] = None
+    effective_end_month: Optional[str] = None
+    effective_start_year: Optional[str] = None
+    effective_end_year: Optional[str] = None
+    today = date.today()
+
+    if by_date is not None:
+        if by_date.start > by_date.end:
+            raise ValueError("by_date.start must be less than or equal to by_date.end")
+        effective_start_date = by_date.start
+        effective_end_date = min(by_date.end, today)
+        if effective_start_date > effective_end_date:
+            raise ValueError("by_date.start must not be greater than today's date")
+    elif by_month is not None:
+        _validate_month_value(by_month.start, "by_month.start")
+        _validate_month_value(by_month.end, "by_month.end")
+        if by_month.start > by_month.end:
+            raise ValueError("by_month.start must be less than or equal to by_month.end")
+        effective_start_month = by_month.start
+        effective_end_month = by_month.end
+    elif by_year is not None:
+        _validate_year_value(by_year.start, "by_year.start")
+        _validate_year_value(by_year.end, "by_year.end")
+        if by_year.start > by_year.end:
+            raise ValueError("by_year.start must be less than or equal to by_year.end")
+        effective_start_year = by_year.start
+        effective_end_year = by_year.end
+
+    return TgFilterQuery(
+        event_type_id=event_type_id,
+        is_dod=is_dod,
+        start_date=effective_start_date,
+        end_date=effective_end_date,
+        start_month=effective_start_month,
+        end_month=effective_end_month,
+        start_year=effective_start_year,
+        end_year=effective_end_year,
+    )
+
+
+# GraphQL-резолвер для получения статистики tg-бота по периодам
+async def resolve_tg_statistics(
+    info: Info,
+    event_type_id: Optional[int] = None,
+    is_dod: Optional[bool] = None,
+    by_date: Optional[EndpointStatisticsByDateInput] = None,
+    by_month: Optional[EndpointStatisticsByMonthInput] = None,
+    by_year: Optional[EndpointStatisticsByYearInput] = None) -> list[TgStatisticsType]:
+
+    session: AsyncSession = await ensure_stats_view_permission(info)
+    params = _build_tg_filter(event_type_id, is_dod, by_date, by_month, by_year)
+    stats = await get_tg_stats(session, params)
+
+    if by_date is not None and params.start_date is not None and params.end_date is not None:
+        stats = _fill_missing_dates(stats, params.start_date, params.end_date)
+
+    return [_to_tg_statistics(stat) for stat in stats]
+
+
+# GraphQL-резолвер для получения агрегированной статистики tg-бота
+async def resolve_tg_statistics_avg(
+    info: Info,
+    event_type_id: Optional[int] = None,
+    is_dod: Optional[bool] = None,
+    by_date: Optional[EndpointStatisticsByDateInput] = None,
+    by_month: Optional[EndpointStatisticsByMonthInput] = None,
+    by_year: Optional[EndpointStatisticsByYearInput] = None) -> AggregatedTgStatisticsType:
+
+    session: AsyncSession = await ensure_stats_view_permission(info)
+    params = _build_tg_filter(event_type_id, is_dod, by_date, by_month, by_year)
+    aggregated_stats = await get_agr_tg_stats(session, params)
+
+    return _to_aggregated_tg_statistics(aggregated_stats)
+
