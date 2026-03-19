@@ -1,4 +1,5 @@
 ﻿import strawberry
+from typing import Optional
 from .change_plan import ChangePlanType, resolve_change_plans
 from .dod import DodNavAuditoryType, DodNavCampusType, DodNavFloorType, DodNavLocationType, DodNavPlanType, DodNavStaticType, DodNavTypeType, resolve_dod_nav_auditories, resolve_dod_nav_campuses, resolve_dod_nav_floors, resolve_dod_nav_locations, resolve_dod_nav_plans, resolve_dod_nav_statics, resolve_dod_nav_types
 from .endpoint_stats import AggregatedEndpointStatisticsType, EndpointStatisticsType, resolve_endpoint_statistics, resolve_endpoint_statistics_avg
@@ -11,6 +12,14 @@ from .site_stat import SiteStatType, resolve_site_stats
 from .start_way import StartWayType, resolve_start_ways
 from .tg_bot import TgBotEventKindType, TgBotEventStatisticType, TgBotEventType, TgBotUserType, resolve_tg_bot_event_statistics, resolve_tg_bot_event_types, resolve_tg_bot_events, resolve_tg_bot_users, AggregatedTgStatisticsType, TgStatisticsType, resolve_tg_bot_event_statistics, resolve_tg_statistics, resolve_tg_statistics_avg
 from .user_id import UserIdType, resolve_user_ids
+from .user_role import UserConnection, resolve_users, UserType, resolve_user
+from .user_role import RoleConnection, resolve_roles, RoleType, resolve_role
+from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, resolve_user_role
+from .user_role import RoleRightGoalConnection, resolve_role_right_goals, RoleRightGoalType, resolve_role_right_goal
+from .user_role import RightConnection, resolve_rights
+from .user_role import GoalConnection, resolve_goals
+
+
 @strawberry.type
 class Query:
     change_plans: list[ChangePlanType] = strawberry.field(
@@ -143,5 +152,43 @@ class Query:
         description="Get DOD navigation auditories.",
     )
 
-
-
+    users: UserConnection = strawberry.field(
+        resolver=resolve_users,
+        description="Get users with pagination."
+    )
+    user: Optional[UserType] = strawberry.field(
+        resolver=resolve_user,
+        description="Get user."
+    )
+    roles: RoleConnection = strawberry.field(
+        resolver=resolve_roles,
+        description="Get roles with pagination."
+    )
+    role: Optional[RoleType] = strawberry.field(
+        resolver=resolve_role,
+        description="Get role."
+    )
+    user_roles: UserRoleConnection = strawberry.field(
+        resolver=resolve_user_roles,
+        description="Get user_roles with pagination."
+    )
+    user_role: Optional[UserRoleType] = strawberry.field(
+        resolver=resolve_user_role,
+        description="Get user_role."
+    )
+    role_right_goals: RoleRightGoalConnection = strawberry.field(
+        resolver=resolve_role_right_goals,
+        description="Get role_right_goals with pagination."
+    )
+    role_right_goal: Optional[RoleRightGoalType] = strawberry.field(
+        resolver=resolve_role_right_goal,
+        description="Get role_right_goal."
+    )
+    rights: RightConnection = strawberry.field(
+        resolver=resolve_rights,
+        description="Get rights with pagination."
+    )
+    goals: GoalConnection = strawberry.field(
+        resolver=resolve_goals,
+        description="Get goals with pagination."
+    )
