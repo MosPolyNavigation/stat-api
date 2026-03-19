@@ -3,13 +3,13 @@ import strawberry
 from sqlalchemy import select
 from strawberry import Info
 from app.models.nav.corpus import Corpus
-from app.routes.graphql.permissions import (
+from app.constants import (
     CREATE_RIGHT_NAME,
     DELETE_RIGHT_NAME,
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
-    ensure_nav_permission,
 )
+from app.routes.graphql.permissions import ensure_nav_permission
 from .common import get_or_error
 
 

@@ -13,7 +13,11 @@ from app.state import AppState
 from app.jobs import lifespan
 from app.helpers.errors import LookupException
 from app.helpers.spa_static_files import SPAStaticFiles
-from app.routes import get, stat, review, check, auth, graphql, crud_users, crud_roles, jobs, free_aud, nav, admin
+from app.routes import (
+    get, stat, review,
+    check, auth, graphql,
+    jobs, free_aud, nav, admin
+)
 
 tags_metadata = [
     {
@@ -47,14 +51,6 @@ tags_metadata = [
     {
         "name": "nav",
         "description": "Эндпоинты для работы с данными навигации"
-    },
-    {
-        "name": "users",
-        "description": "Эндпоинты для работы с пользователями"
-    },
-    {
-        "name": "roles",
-        "description": "Эндпоинты для работы с пользователями"
     },
     {
         "name": "check",
@@ -100,8 +96,6 @@ app.include_router(review.router)
 app.include_router(check.router)
 app.include_router(auth.router)
 app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
-app.include_router(crud_users.router)
-app.include_router(crud_roles.router)
 app.include_router(jobs.router)
 app.include_router(free_aud.router)
 app.include_router(nav.router)
