@@ -4,9 +4,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional, List
-from app.routes.graphql.pagination import PaginationInput, PageInfo, PaginationInfo
-from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_offset, _create_pagination_info
-from app.routes.graphql.permissions import ensure_roles_view_permission, ensure_roles_edit_permission
+from app.routes.graphql.pagination import (
+    PaginationInput, PageInfo, PaginationInfo
+)
+from app.routes.graphql.filter_handlers import (
+    _validated_limit_2, _validated_offset, _create_pagination_info
+)
+from app.routes.graphql.permissions import (
+    ensure_roles_view_permission,
+    ensure_roles_edit_permission,
+    validate_user_permissions_by_ids
+)
 from app.models import Role, UserRole, RoleRightGoal
 from .types import RoleType
 from .inputs import RoleRightGoalInput, CreateRoleInput
@@ -143,21 +151,11 @@ async def resolve_role(info: Info, role_id: int) -> Optional[RoleType]:
 
 
 async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
-    """Мутация для создания новой роли с правами.
-    
-    ВАЖНО: Пользователь может назначить только те права, которые есть у него самого.
-    """
-    from graphql import GraphQLError
-    from app.models import Right, Goal
-    
-    session: AsyncSession = await ensure_roles_edit_permission(info)
-    
+    """Мутация для создания новой роли с правами."""
+    session: AsyncSession = await ensure_roles_create_permission(info)
     current_user = info.context["current_user"]
     
-    # Получаем права текущего пользователя
-    user_rights = await current_user.get_rights(session)
-    
-    # Проверка на уникальность name
+    # 1. Проверка на уникальность name
     existing_role = (
         await session.execute(
             select(Role).where(Role.name == data.name)
@@ -167,66 +165,51 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
     if existing_role:
         raise GraphQLError("Роль с таким названием уже существует")
     
-    # Оптимизация: собираем все уникальные right_id и goal_id
+    # 2. Валидация прав и существования ID через единую функцию
     if data.role_right_goals:
-        unique_right_ids = {rrg.right_id for rrg in data.role_right_goals}
-        unique_goal_ids = {rrg.goal_id for rrg in data.role_right_goals}
+        required_permissions = [
+            (rrg.right_id, rrg.goal_id)
+            for rrg in data.role_right_goals
+        ]
         
-        # Один запрос для всех прав
-        rights_result = await session.execute(
-            select(Right).where(Right.id.in_(unique_right_ids))
+        missing = await validate_user_permissions_by_ids(
+            current_user, 
+            session, 
+            required_permissions
         )
-        rights_map = {right.id: right for right in rights_result.scalars().all()}
         
-        # Один запрос для всех целей
-        goals_result = await session.execute(
-            select(Goal).where(Goal.id.in_(unique_goal_ids))
-        )
-        goals_map = {goal.id: goal for goal in goals_result.scalars().all()}
+        if missing:
+            raise GraphQLError(
+                f"Недостаточно прав для назначения следующих прав: {', '.join(missing)}. "
+                f"Вы можете назначать только те права, которые есть у вас."
+            )
         
-        # Проверка: все ли права и цели найдены
-        missing_rights = unique_right_ids - rights_map.keys()
-        missing_goals = unique_goal_ids - goals_map.keys()
-        
-        if missing_rights:
-            raise GraphQLError(f"Права с ID не найдены: {', '.join(map(str, missing_rights))}")
-        if missing_goals:
-            raise GraphQLError(f"Цели с ID не найдены: {', '.join(map(str, missing_goals))}")
-        
-        # Проверка прав пользователя и дубликатов
-        missing_permissions = []
+        # 3. Проверка на дубликаты в рамках запроса
         seen_combinations = set()
-        
         for rrg_input in data.role_right_goals:
-            right = rights_map[rrg_input.right_id]
-            goal = goals_map[rrg_input.goal_id]
-            
-            # Проверка дубликатов через set (O(1))
             combination_key = (rrg_input.right_id, rrg_input.goal_id)
             if combination_key in seen_combinations:
+                rights_result = await session.execute(
+                    select(Right).where(Right.id == rrg_input.right_id)
+                )
+                right = rights_result.scalars().first()
+                
+                goals_result = await session.execute(
+                    select(Goal).where(Goal.id == rrg_input.goal_id)
+                )
+                goal = goals_result.scalars().first()
+                
                 raise GraphQLError(
                     f"Дублирующаяся связь: право {right.name} -> цель {goal.name}"
                 )
             seen_combinations.add(combination_key)
-            
-            # Проверка: есть ли у пользователя это право для этой цели
-            user_goal_rights = user_rights.get(goal.name, [])
-            if right.name not in user_goal_rights:
-                missing_permissions.append(f"{right.name} -> {goal.name}")
-        
-        # Если есть недостающие права — ошибка
-        if missing_permissions:
-            raise GraphQLError(
-                f"Недостаточно прав для назначения следующих прав: {', '.join(missing_permissions)}. "
-                f"Вы можете назначать только те права, которые есть у вас."
-            )
     
-    # Создание роли
+    # 4. Создание роли
     role = Role(name=data.name)
     session.add(role)
-    await session.flush()  # Получаем ID роли до commit
+    await session.flush()
     
-    # Создание связей role_right_goals если указаны
+    # 5. Создание связей role_right_goals
     if data.role_right_goals:
         for rrg_input in data.role_right_goals:
             rrg = RoleRightGoal(
@@ -239,7 +222,7 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
     await session.commit()
     await session.refresh(role)
     
-    # Перезагружаем роль с связями для возврата полных данных
+    # 6. Перезагружаем роль с связями для возврата полных данных
     statement = (
         select(Role)
         .options(

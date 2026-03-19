@@ -1,12 +1,21 @@
 import strawberry
+from graphql import GraphQLError
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional, List
-from app.routes.graphql.pagination import PaginationInput, PageInfo, PaginationInfo
-from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_offset, _create_pagination_info
-from app.routes.graphql.permissions import ensure_roles_view_permission, ensure_roles_grant_permission
+from app.routes.graphql.pagination import (
+    PaginationInput, PageInfo, PaginationInfo
+)
+from app.routes.graphql.filter_handlers import (
+    _validated_limit_2, _validated_offset, _create_pagination_info
+)
+from app.routes.graphql.permissions import (
+    ensure_roles_view_permission,
+    ensure_roles_grant_permission,
+    validate_user_permissions_by_ids
+)
 from app.models import UserRole, User, Role, RoleRightGoal
 from .types import UserRoleType, GrantRoleResult, UserType
 from .inputs import GrantRoleInput
@@ -160,12 +169,7 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     (защита от эскалации привилегий)
     """
     session: AsyncSession = await ensure_roles_grant_permission(info)
-    
     current_user = info.context["current_user"]
-    
-    # Получаем права текущего пользователя
-    current_user_rights = await current_user.get_rights(session)
-    # Формат: {"users": ["view", "create"], "roles": ["view", "grant"], ...}
     
     # Проверяем существование пользователя
     target_user = (
@@ -191,40 +195,38 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     if missing_roles:
         raise GraphQLError(f"Роли с ID не найдены: {', '.join(map(str, missing_roles))}")
     
-    # Проверяем права на эскалацию привилегий
-    # Нельзя выдать роль, если в ней есть права, которых нет у текущего пользователя
-    escalation_warnings = []
-    
-    for role_id, role in roles_map.items():
-        # Загружаем права роли
-        role_rights_result = await session.execute(
-            select(RoleRightGoal)
-            .options(
-                selectinload(RoleRightGoal.right),
-                selectinload(RoleRightGoal.goal)
-            )
-            .where(RoleRightGoal.role_id == role_id)
+    # === Собираем все уникальные права из всех ролей (right_id, goal_id) ===
+    role_rights_result = await session.execute(
+        select(RoleRightGoal).where(
+            RoleRightGoal.role_id.in_(roles_map.keys())
         )
-        role_rights = role_rights_result.scalars().all()
-        
-        for rrg in role_rights:
-            goal_name = rrg.goal.name
-            right_name = rrg.right.name
-            
-            # Проверяем, есть ли такое право у текущего пользователя
-            user_goal_rights = current_user_rights.get(goal_name, [])
-            if right_name not in user_goal_rights:
-                escalation_warnings.append(f"{right_name} -> {goal_name} (из роли '{role.name}')")
+    )
+    role_rights = role_rights_result.scalars().all()
     
-    if escalation_warnings:
+    # Собираем уникальные права из всех ролей
+    required_permissions_set = set()
+    for rrg in role_rights:
+        required_permissions_set.add((rrg.right_id, rrg.goal_id))
+    
+    # Конвертируем set в list для передачи в функцию валидации
+    required_permissions = list(required_permissions_set)
+    
+    # === Проверяем права пользователя через единую функцию ===
+    missing = await validate_user_permissions_by_ids(
+        current_user, 
+        session, 
+        required_permissions
+    )
+    
+    if missing:
         raise GraphQLError(
             f"Невозможно назначить роли. Обнаружена попытка эскалации привилегий. "
             f"У вас нет следующих прав, которые присутствуют в назначаемых ролях: "
-            f"{', '.join(escalation_warnings)}. "
+            f"{', '.join(missing)}. "
             f"Вы можете назначать только те роли, права которых не превышают ваши собственные."
         )
     
-    # Назначаем роли (избегаем дубликатов)
+    # === Назначаем роли (избегаем дубликатов) ===
     assigned_count = 0
     skipped_count = 0
     
@@ -280,8 +282,16 @@ async def revoke_role(
     user_id: int,
     role_id: int
 ) -> GrantRoleResult:
-    """Мутация для отзыва роли у пользователя."""
+    """Мутация для отзыва роли у пользователя.
+    
+    ВАЖНО:
+    1. Пользователь должен иметь право roles -> grant
+    2. Нельзя отозвать роль, если у тебя нет прав, которые есть в этой роли
+    (защита от злоупотреблений)
+    """
+    
     session: AsyncSession = await ensure_roles_grant_permission(info)
+    current_user = info.context["current_user"]
     
     # Проверяем существование связи
     user_role = (
@@ -296,6 +306,35 @@ async def revoke_role(
     if not user_role:
         raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
     
+    # === Проверяем права на эскалацию (аналогично grant_role) ===
+    # Загружаем права отзываемой роли
+    role_rights_result = await session.execute(
+        select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
+    )
+    role_rights = role_rights_result.scalars().all()
+    
+    # Собираем уникальные права из роли
+    required_permissions_set = set()
+    for rrg in role_rights:
+        required_permissions_set.add((rrg.right_id, rrg.goal_id))
+    
+    required_permissions = list(required_permissions_set)
+    
+    # Проверяем, есть ли у текущего пользователя эти права
+    missing = await validate_user_permissions_by_ids(
+        current_user, 
+        session, 
+        required_permissions
+    )
+    
+    if missing:
+        raise GraphQLError(
+            f"Невозможно отозвать роль. У вас нет следующих прав, которые присутствуют в этой роли: "
+            f"{', '.join(missing)}. "
+            f"Вы можете отзывать только те роли, права которых не превышают ваши собственные."
+        )
+    
+    # === Отзыв роли ===
     await session.delete(user_role)
     await session.commit()
     
