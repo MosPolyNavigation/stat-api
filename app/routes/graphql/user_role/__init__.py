@@ -4,7 +4,8 @@ from .user import (
     UserConnection,
     create_user,
     update_user,
-    delete_user
+    delete_user,
+    change_user_password
 )
 from .role import (
     resolve_roles,
@@ -36,7 +37,8 @@ from .types import (
     GoalType,
     RoleRightGoalType,
     GrantRoleResult,
-    DeleteResult
+    DeleteResult,
+    ChangePasswordResult
 )
 
 __all__ = [
@@ -45,6 +47,7 @@ __all__ = [
     "create_user",
     "update_user",
     "delete_user",
+    "change_user_password",
     "UserType",
     "UserConnection",
     "resolve_roles",
@@ -72,4 +75,5 @@ __all__ = [
     "revoke_role",
     "GrantRoleResult",
     "DeleteResult",
+    "ChangePasswordResult",
 ]

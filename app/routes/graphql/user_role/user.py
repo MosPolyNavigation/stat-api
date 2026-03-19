@@ -17,11 +17,12 @@ from app.routes.graphql.permissions import (
     ensure_users_view_permission,
     ensure_users_create_permission,
     ensure_users_edit_permission,
-    ensure_users_delete_permission
+    ensure_users_delete_permission,
+    ensure_user_pass_edit_permission
 )
 from app.models import User, UserRole
-from .types import UserType, DeleteResult
-from .inputs import CreateUserInput, UpdateUserInput
+from .types import UserType, DeleteResult, ChangePasswordResult
+from .inputs import CreateUserInput, UpdateUserInput, ChangeUserPasswordInput
 
 
 password_hash = PasswordHash.recommended()
@@ -255,4 +256,48 @@ async def delete_user(info: Info, user_id: int) -> DeleteResult:
         success=True,
         message=f"Пользователь {user_id} успешно удалён",
         deleted_id=user_id
+    )
+
+
+async def change_user_password(info: Info, data: ChangeUserPasswordInput) -> ChangePasswordResult:
+    """Мутация для смены пароля пользователя администратором.
+    
+    ВАЖНО:
+    1. Требуется право user_pass -> edit
+    2. Нельзя изменить пароль самого себя (для этого есть отдельный REST endpoint)
+    3. Пароль хэшируется перед сохранением
+    """
+    session: AsyncSession = await ensure_user_pass_edit_permission(info)
+    current_user = info.context["current_user"]
+    
+    # Проверяем существование пользователя
+    user = (
+        await session.execute(
+            select(User).where(User.id == data.user_id)
+        )
+    ).scalars().first()
+    
+    if not user:
+        raise GraphQLError(f"Пользователь с ID {data.user_id} не найден")
+    
+    # Защита: нельзя изменить пароль самого себя через эту мутацию
+    if user.id == current_user.id:
+        raise GraphQLError(
+            "Нельзя изменить пароль самого себя через эту мутацию. "
+            "Используйте REST endpoint POST /change-pass для смены собственного пароля."
+        )
+    
+    # Валидация пароля (минимальная длина)
+    if len(data.new_password) < 8:
+        raise GraphQLError("Пароль должен содержать минимум 8 символов")
+    
+    user.hash = password_hash.hash(data.new_password)
+    user.updated_at = datetime.now()
+    
+    await session.commit()
+    
+    return ChangePasswordResult(
+        success=True,
+        message=f"Пароль пользователя {user.login} успешно изменён",
+        user_id=user.id
     )

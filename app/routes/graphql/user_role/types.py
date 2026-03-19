@@ -68,3 +68,11 @@ class DeleteResult:
     success: bool
     message: str
     deleted_id: Optional[int] = None
+
+
+@strawberry.type
+class ChangePasswordResult:
+    """Результат операции смены пароля."""
+    success: bool
+    message: str
+    user_id: Optional[int] = None

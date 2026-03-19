@@ -43,3 +43,10 @@ class UpdateRoleInput:
     """Входные данные для редактирования роли."""
     name: Optional[str] = None
     role_right_goals: Optional[List[RoleRightGoalInput]] = None
+
+
+@strawberry.input
+class ChangeUserPasswordInput:
+    """Входные данные для смены пароля пользователя."""
+    user_id: int
+    new_password: str
