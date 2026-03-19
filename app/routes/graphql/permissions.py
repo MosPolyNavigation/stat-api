@@ -64,6 +64,14 @@ async def ensure_users_edit_permission(info: Info) -> AsyncSession:
     return session
 
 
+async def ensure_users_delete_permission(info: Info) -> AsyncSession:
+    """Проверка права на создание пользователей (users -> delete)."""
+    session, current_user = _get_session_and_user(info)
+    if not await current_user.is_capable(session, USERS_GOAL_NAME, DELETE_RIGHT_NAME):
+        raise GraphQLError("Недостаточно прав для создания пользователей")
+    return session
+
+
 async def ensure_roles_view_permission(info: Info) -> AsyncSession:
     """Проверка права на просмотр ролей и связанных таблиц (roles -> view)."""
     session, current_user = _get_session_and_user(info)
@@ -84,6 +92,14 @@ async def ensure_roles_edit_permission(info: Info) -> AsyncSession:
     """Проверка права на редактирование ролей (roles -> edit)."""
     session, current_user = _get_session_and_user(info)
     if not await current_user.is_capable(session, ROLES_GOAL_NAME, EDIT_RIGHT_NAME):
+        raise GraphQLError("Недостаточно прав для редактирования ролей")
+    return session
+
+
+async def ensure_roles_delete_permission(info: Info) -> AsyncSession:
+    """Проверка права на редактирование ролей (roles -> delete)."""
+    session, current_user = _get_session_and_user(info)
+    if not await current_user.is_capable(session, ROLES_GOAL_NAME, DELETE_RIGHT_NAME):
         raise GraphQLError("Недостаточно прав для редактирования ролей")
     return session
 

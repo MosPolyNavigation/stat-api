@@ -32,10 +32,11 @@ from .nav import (
     update_nav_type
 )
 from .user_role import (
-    UserType, RoleType, GrantRoleResult,
+    UserType, RoleType, GrantRoleResult, DeleteResult,
     create_role, create_user,
     grant_role, revoke_role,
-    update_user, update_role
+    update_user, update_role,
+    delete_user, delete_role
 )
 
 
@@ -218,6 +219,10 @@ class Mutation:
         resolver=update_user,
         description="Update user."
     )
+    delete_user: DeleteResult = strawberry.mutation(
+        resolver=delete_user,
+        description="Delete user."
+    )
     create_role: RoleType = strawberry.mutation(
         resolver=create_role,
         description="Create role."
@@ -225,6 +230,10 @@ class Mutation:
     update_role: RoleType = strawberry.mutation(
         resolver=update_role,
         description="Update role."
+    )
+    delete_role: DeleteResult = strawberry.mutation(
+        resolver=delete_role,
+        description="Delete role."
     )
     grant_role: GrantRoleResult = strawberry.mutation(
         resolver=grant_role,

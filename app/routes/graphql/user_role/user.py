@@ -16,10 +16,11 @@ from app.routes.graphql.filter_handlers import (
 from app.routes.graphql.permissions import (
     ensure_users_view_permission,
     ensure_users_create_permission,
-    ensure_users_edit_permission
+    ensure_users_edit_permission,
+    ensure_users_delete_permission
 )
 from app.models import User, UserRole
-from .types import UserType
+from .types import UserType, DeleteResult
 from .inputs import CreateUserInput, UpdateUserInput
 
 
@@ -31,6 +32,14 @@ class UserConnection:
     nodes: List[UserType]
     page_info: PageInfo
     pagination_info: PaginationInfo
+
+
+@strawberry.type
+class DeleteResult:
+    """Результат операции удаления."""
+    success: bool
+    message: str
+    deleted_id: Optional[int] = None
 
 
 @strawberry.input
@@ -217,3 +226,33 @@ async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserTy
     
     user_with_roles = (await session.execute(statement)).scalars().first()
     return _to_user(user_with_roles)
+
+
+async def delete_user(info: Info, user_id: int) -> DeleteResult:
+    """Мутация для удаления пользователя."""
+    session: AsyncSession = await ensure_users_delete_permission(info)
+    current_user = info.context["current_user"]
+    
+    # Проверяем существование пользователя
+    user = (
+        await session.execute(
+            select(User).where(User.id == user_id)
+        )
+    ).scalars().first()
+    
+    if not user:
+        raise GraphQLError(f"Пользователь с ID {user_id} не найден")
+    
+    # Защита: нельзя удалить самого себя
+    if user.id == current_user.id:
+        raise GraphQLError("Нельзя удалить самого себя")
+    
+    # Удаляем пользователя (связи user_roles удалятся каскадно)
+    await session.delete(user)
+    await session.commit()
+    
+    return DeleteResult(
+        success=True,
+        message=f"Пользователь {user_id} успешно удалён",
+        deleted_id=user_id
+    )

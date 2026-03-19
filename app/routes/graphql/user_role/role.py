@@ -13,12 +13,14 @@ from app.routes.graphql.filter_handlers import (
 )
 from app.routes.graphql.permissions import (
     ensure_roles_view_permission,
+    ensure_roles_create_permission,
     ensure_roles_edit_permission,
+    ensure_roles_delete_permission,
     validate_user_permissions_by_ids,
     validate_role_right_goals_duplicates
 )
 from app.models import Role, UserRole, RoleRightGoal
-from .types import RoleType
+from .types import RoleType, DeleteResult
 from .inputs import RoleRightGoalInput, CreateRoleInput, UpdateRoleInput
 
 
@@ -322,3 +324,77 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
     
     role_with_relations = (await session.execute(statement)).scalars().first()
     return _to_role(role_with_relations)
+
+
+async def delete_role(info: Info, role_id: int) -> DeleteResult:
+    """Мутация для удаления роли.
+    
+    ПРОВЕРКИ:
+    1. Пользователь должен иметь право roles -> delete
+    2. Роль не должна быть назначена ни одному пользователю
+    3. Права роли не должны превышать права текущего пользователя
+    """
+    session: AsyncSession = await ensure_roles_delete_permission(info)
+    current_user = info.context["current_user"]
+    
+    # Проверяем существование роли
+    role = (
+        await session.execute(
+            select(Role).where(Role.id == role_id)
+        )
+    ).scalars().first()
+    
+    if not role:
+        raise GraphQLError(f"Роль с ID {role_id} не найдена")
+    
+    # === Проверка 1: Роль не должна быть назначена пользователям ===
+    user_roles_count = (
+        await session.execute(
+            select(func.count()).select_from(UserRole).where(UserRole.role_id == role_id)
+        )
+    ).scalar() or 0
+    
+    if user_roles_count > 0:
+        raise GraphQLError(
+            f"Невозможно удалить роль. Она назначена {user_roles_count} пользователю(ям). "
+            f"Сначала отзовите роль у всех пользователей."
+        )
+    
+    # === Проверка 2: Права роли не должны превышать права текущего пользователя ===
+    # Загружаем все права роли одним запросом
+    role_rights_result = await session.execute(
+        select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
+    )
+    role_rights = role_rights_result.scalars().all()
+    
+    if role_rights:
+        # Собираем уникальные права из роли
+        required_permissions_set = set()
+        for rrg in role_rights:
+            required_permissions_set.add((rrg.right_id, rrg.goal_id))
+        
+        required_permissions = list(required_permissions_set)
+        
+        # Проверяем, есть ли у текущего пользователя эти права
+        missing = await validate_user_permissions_by_ids(
+            current_user, 
+            session, 
+            required_permissions
+        )
+        
+        if missing:
+            raise GraphQLError(
+                f"Невозможно удалить роль. У вас нет следующих прав, которые присутствуют в этой роли: "
+                f"{', '.join(missing)}. "
+                f"Вы можете удалять только те роли, права которых не превышают ваши собственные."
+            )
+    
+    # === Удаляем роль (связи удалятся каскадно) ===
+    await session.delete(role)
+    await session.commit()
+    
+    return DeleteResult(
+        success=True,
+        message=f"Роль {role_id} успешно удалена",
+        deleted_id=role_id
+    )

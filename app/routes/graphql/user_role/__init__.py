@@ -3,7 +3,8 @@ from .user import (
     resolve_user,
     UserConnection,
     create_user,
-    update_user
+    update_user,
+    delete_user
 )
 from .role import (
     resolve_roles,
@@ -11,6 +12,7 @@ from .role import (
     RoleConnection,
     create_role,
     update_role,
+    delete_role
 )
 from .right import resolve_rights, RightConnection
 from .goal import resolve_goals, GoalConnection
@@ -34,19 +36,22 @@ from .types import (
     GoalType,
     RoleRightGoalType,
     GrantRoleResult,
+    DeleteResult
 )
 
 __all__ = [
     "resolve_users",
     "resolve_user",
     "create_user",
-    "update_user"
+    "update_user",
+    "delete_user",
     "UserType",
     "UserConnection",
     "resolve_roles",
     "resolve_role",
     "create_role",
     "update_role",
+    "delete_role",
     "RoleType",
     "RoleConnection",
     "resolve_rights",
@@ -65,5 +70,6 @@ __all__ = [
     "RoleRightGoalConnection",
     "grant_role",
     "revoke_role",
-    "GrantRoleResult"
+    "GrantRoleResult",
+    "DeleteResult",
 ]

@@ -60,3 +60,11 @@ class GrantRoleResult:
     success: bool
     message: str
     user: Optional[UserType] = None
+
+
+@strawberry.type
+class DeleteResult:
+    """Результат операции удаления."""
+    success: bool
+    message: str
+    deleted_id: Optional[int] = None
