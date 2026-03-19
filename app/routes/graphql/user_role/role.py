@@ -9,6 +9,7 @@ from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_of
 from app.routes.graphql.permissions import ensure_roles_view_permission, ensure_roles_edit_permission
 from app.models import Role, UserRole, RoleRightGoal
 from .types import RoleType
+from .inputs import RoleRightGoalInput, CreateRoleInput
 
 
 @strawberry.type
@@ -22,20 +23,6 @@ class RoleConnection:
 class RoleFilterInput:
     id: Optional[int] = None
     name: Optional[str] = None
-
-
-@strawberry.input
-class RoleRightGoalInput:
-    """Входные данные для связи роли с правом и целью."""
-    right_id: int
-    goal_id: int
-
-
-@strawberry.input
-class CreateRoleInput:
-    """Входные данные для создания роли."""
-    name: str
-    role_right_goals: Optional[List[RoleRightGoalInput]] = None
 
 
 def _to_role(model: Role) -> RoleType:

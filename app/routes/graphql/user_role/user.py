@@ -11,6 +11,7 @@ from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_of
 from app.routes.graphql.permissions import ensure_users_view_permission, ensure_users_create_permission
 from app.models import User, UserRole
 from .types import UserType
+from .inputs import CreateUserInput
 
 
 password_hash = PasswordHash.recommended()
@@ -30,15 +31,6 @@ class UserFilterInput:
     is_active: Optional[bool] = None
 
 
-@strawberry.input
-class CreateUserInput:
-    """Входные данные для создания пользователя."""
-    login: str
-    password: str
-    fio: Optional[str] = None
-    is_active: bool = True
-
-
 def _to_user(model: User) -> UserType:
     from .user_role import _to_user_role_safe
     
@@ -52,7 +44,7 @@ def _to_user(model: User) -> UserType:
         roles=[_to_user_role_safe(ur) for ur in model.user_roles] if model.user_roles else None
     )
 
-def _to_user_sage(model: User) -> UserType:
+def _to_user_safe(model: User) -> UserType:
     return UserType(
         id=model.id,
         login=model.login,

@@ -2,9 +2,9 @@ from .user import resolve_users, resolve_user, UserConnection, create_user
 from .role import resolve_roles, resolve_role, RoleConnection, create_role
 from .right import resolve_rights, RightConnection
 from .goal import resolve_goals, GoalConnection
-from .user_role import resolve_user_roles, resolve_user_role, UserRoleConnection
+from .user_role import resolve_user_roles, resolve_user_role, UserRoleConnection, grant_role, revoke_role
 from .role_right_goal import resolve_role_right_goals, resolve_role_right_goal, RoleRightGoalConnection
-from .types import UserRoleType, UserType, RoleType, RightType, GoalType, RoleRightGoalType
+from .types import UserRoleType, UserType, RoleType, RightType, GoalType, RoleRightGoalType, GrantRoleResult
 
 __all__ = [
     "resolve_users",
@@ -29,4 +29,7 @@ __all__ = [
     "resolve_role_right_goals",
     "RoleRightGoalType",
     "RoleRightGoalConnection",
+    "grant_role",
+    "revoke_role",
+    "GrantRoleResult"
 ]

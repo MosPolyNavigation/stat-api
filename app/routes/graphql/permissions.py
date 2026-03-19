@@ -13,6 +13,7 @@ VIEW_RIGHT_NAME = "view"
 CREATE_RIGHT_NAME = "create"
 EDIT_RIGHT_NAME = "edit"
 DELETE_RIGHT_NAME = "delete"
+GRANT_RIGHT_NAME = "grant"
 
 
 def _get_session_and_user(info: Info) -> Tuple[AsyncSession, User]:

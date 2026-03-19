@@ -52,3 +52,11 @@ class UserRoleType:
     role_id: int
     user: Optional[UserType] = None
     role: Optional[RoleType] = None
+
+
+@strawberry.type
+class GrantRoleResult:
+    """Результат операции назначения роли."""
+    success: bool
+    message: str
+    user: Optional[UserType] = None

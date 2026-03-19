@@ -6,9 +6,10 @@ from strawberry import Info
 from typing import Optional, List
 from app.routes.graphql.pagination import PaginationInput, PageInfo, PaginationInfo
 from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_offset, _create_pagination_info
-from app.routes.graphql.permissions import ensure_roles_view_permission
-from app.models import UserRole
-from .types import UserRoleType
+from app.routes.graphql.permissions import ensure_roles_view_permission, ensure_roles_grant_permission
+from app.models import UserRole, User, Role, RoleRightGoal
+from .types import UserRoleType, GrantRoleResult, UserType
+from .inputs import GrantRoleInput
 
 
 @strawberry.type
@@ -148,3 +149,172 @@ async def resolve_user_role(
     
     result = (await session.execute(statement)).scalars().first()
     return _to_user_role(result) if result else None
+
+
+async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
+    """Мутация для назначения роли(ей) пользователю.
+    
+    ВАЖНО: 
+    1. Пользователь должен иметь право roles -> grant
+    2. Нельзя назначить роль, если у тебя нет прав, которые есть в этой роли
+    (защита от эскалации привилегий)
+    """
+    session: AsyncSession = await ensure_roles_grant_permission(info)
+    
+    current_user = info.context["current_user"]
+    
+    # Получаем права текущего пользователя
+    current_user_rights = await current_user.get_rights(session)
+    # Формат: {"users": ["view", "create"], "roles": ["view", "grant"], ...}
+    
+    # Проверяем существование пользователя
+    target_user = (
+        await session.execute(
+            select(User).where(User.id == data.user_id)
+        )
+    ).scalars().first()
+    
+    if not target_user:
+        raise GraphQLError(f"Пользователь с ID {data.user_id} не найден")
+    
+    if not target_user.is_active:
+        raise GraphQLError("Нельзя назначить роль неактивному пользователю")
+    
+    # Получаем все роли одним запросом
+    roles_result = await session.execute(
+        select(Role).where(Role.id.in_(data.role_ids))
+    )
+    roles_map = {role.id: role for role in roles_result.scalars().all()}
+    
+    # Проверяем, все ли роли найдены
+    missing_roles = set(data.role_ids) - roles_map.keys()
+    if missing_roles:
+        raise GraphQLError(f"Роли с ID не найдены: {', '.join(map(str, missing_roles))}")
+    
+    # Проверяем права на эскалацию привилегий
+    # Нельзя выдать роль, если в ней есть права, которых нет у текущего пользователя
+    escalation_warnings = []
+    
+    for role_id, role in roles_map.items():
+        # Загружаем права роли
+        role_rights_result = await session.execute(
+            select(RoleRightGoal)
+            .options(
+                selectinload(RoleRightGoal.right),
+                selectinload(RoleRightGoal.goal)
+            )
+            .where(RoleRightGoal.role_id == role_id)
+        )
+        role_rights = role_rights_result.scalars().all()
+        
+        for rrg in role_rights:
+            goal_name = rrg.goal.name
+            right_name = rrg.right.name
+            
+            # Проверяем, есть ли такое право у текущего пользователя
+            user_goal_rights = current_user_rights.get(goal_name, [])
+            if right_name not in user_goal_rights:
+                escalation_warnings.append(f"{right_name} -> {goal_name} (из роли '{role.name}')")
+    
+    if escalation_warnings:
+        raise GraphQLError(
+            f"Невозможно назначить роли. Обнаружена попытка эскалации привилегий. "
+            f"У вас нет следующих прав, которые присутствуют в назначаемых ролях: "
+            f"{', '.join(escalation_warnings)}. "
+            f"Вы можете назначать только те роли, права которых не превышают ваши собственные."
+        )
+    
+    # Назначаем роли (избегаем дубликатов)
+    assigned_count = 0
+    skipped_count = 0
+    
+    for role_id in data.role_ids:
+        # Проверяем, не назначена ли уже эта роль
+        existing_assignment = (
+            await session.execute(
+                select(UserRole).where(
+                    UserRole.user_id == data.user_id,
+                    UserRole.role_id == role_id
+                )
+            )
+        ).scalars().first()
+        
+        if existing_assignment:
+            skipped_count += 1
+            continue
+        
+        # Создаем связь
+        user_role = UserRole(user_id=data.user_id, role_id=role_id)
+        session.add(user_role)
+        assigned_count += 1
+    
+    await session.commit()
+    
+    # Перезагружаем пользователя с ролями для возврата полных данных
+    statement = (
+        select(User)
+        .options(
+            selectinload(User.user_roles)
+            .selectinload(UserRole.role)
+        )
+        .where(User.id == data.user_id)
+    )
+    
+    user_with_roles = (await session.execute(statement)).scalars().first()
+    
+    from .user import _to_user
+    
+    message = f"Успешно назначено ролей: {assigned_count}"
+    if skipped_count > 0:
+        message += f" (пропущено уже назначенных: {skipped_count})"
+    
+    return GrantRoleResult(
+        success=True,
+        message=message,
+        user=_to_user(user_with_roles)
+    )
+
+
+async def revoke_role(
+    info: Info,
+    user_id: int,
+    role_id: int
+) -> GrantRoleResult:
+    """Мутация для отзыва роли у пользователя."""
+    session: AsyncSession = await ensure_roles_grant_permission(info)
+    
+    # Проверяем существование связи
+    user_role = (
+        await session.execute(
+            select(UserRole).where(
+                UserRole.user_id == user_id,
+                UserRole.role_id == role_id
+            )
+        )
+    ).scalars().first()
+    
+    if not user_role:
+        raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
+    
+    await session.delete(user_role)
+    await session.commit()
+    
+    # Перезагружаем пользователя с ролями
+    statement = (
+        select(User)
+        .options(
+            selectinload(User.user_roles)
+            .selectinload(UserRole.role)
+        )
+        .where(User.id == user_id)
+    )
+    
+    user_with_roles = (await session.execute(statement)).scalars().first()
+    
+    from .user import _to_user
+    
+    return GrantRoleResult(
+        success=True,
+        message=f"Роль {role_id} успешно отозвана у пользователя {user_id}",
+        user=_to_user(user_with_roles) if user_with_roles else None
+    )
