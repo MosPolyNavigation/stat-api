@@ -4,17 +4,25 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 from app.models import User
-
-STATS_GOAL_NAME = "stats"
-NAV_GOAL_NAME = "nav_data"
-USERS_GOAL_NAME = "users"
-ROLES_GOAL_NAME = "roles"
-
-VIEW_RIGHT_NAME = "view"
-CREATE_RIGHT_NAME = "create"
-EDIT_RIGHT_NAME = "edit"
-DELETE_RIGHT_NAME = "delete"
-GRANT_RIGHT_NAME = "grant"
+from app.constants import (
+    # Goals
+    STATS_GOAL_ID,
+    DASHBOARDS_GOAL_ID,
+    USERS_GOAL_ID,
+    ROLES_GOAL_ID,
+    TABLES_GOAL_ID,
+    RESOURCES_GOAL_ID,
+    TASKS_GOAL_ID,
+    NAV_GOAL_ID,
+    USER_PASS_GOAL_ID,
+    # Rights
+    VIEW_RIGHT_ID,
+    CREATE_RIGHT_ID,
+    EDIT_RIGHT_ID,
+    DELETE_RIGHT_ID,
+    GRANT_RIGHT_ID,
+    RIGHTS_BY_NAME
+)
 
 
 def _get_session_and_user(info: Info) -> Tuple[AsyncSession, User]:
@@ -24,92 +32,6 @@ def _get_session_and_user(info: Info) -> Tuple[AsyncSession, User]:
     except KeyError as exc:
         raise GraphQLError("В контексте GraphQL отсутствуют необходимые значения") from exc
     return session, current_user
-
-
-async def ensure_stats_view_permission(info: Info) -> AsyncSession:
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, STATS_GOAL_NAME, VIEW_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для просмотра статистики")
-    return session
-
-
-async def ensure_nav_permission(info: Info, right: str) -> AsyncSession:
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, NAV_GOAL_NAME, right):
-        raise GraphQLError("Недостаточно прав для работы с навигацией")
-    return session
-
-
-async def ensure_users_view_permission(info: Info) -> AsyncSession:
-    """Проверка права на просмотр пользователей (users -> view)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, USERS_GOAL_NAME, VIEW_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для просмотра пользователей")
-    return session
-
-
-async def ensure_users_create_permission(info: Info) -> AsyncSession:
-    """Проверка права на создание пользователей (users -> create)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, USERS_GOAL_NAME, CREATE_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для создания пользователей")
-    return session
-
-
-async def ensure_users_edit_permission(info: Info) -> AsyncSession:
-    """Проверка права на создание пользователей (users -> create)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, USERS_GOAL_NAME, EDIT_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для создания пользователей")
-    return session
-
-
-async def ensure_users_delete_permission(info: Info) -> AsyncSession:
-    """Проверка права на создание пользователей (users -> delete)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, USERS_GOAL_NAME, DELETE_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для создания пользователей")
-    return session
-
-
-async def ensure_roles_view_permission(info: Info) -> AsyncSession:
-    """Проверка права на просмотр ролей и связанных таблиц (roles -> view)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, ROLES_GOAL_NAME, VIEW_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для просмотра ролей")
-    return session
-
-
-async def ensure_roles_create_permission(info: Info) -> AsyncSession:
-    """Проверка права на редактирование ролей (roles -> create)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, ROLES_GOAL_NAME, CREATE_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для редактирования ролей")
-    return session
-
-
-async def ensure_roles_edit_permission(info: Info) -> AsyncSession:
-    """Проверка права на редактирование ролей (roles -> edit)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, ROLES_GOAL_NAME, EDIT_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для редактирования ролей")
-    return session
-
-
-async def ensure_roles_delete_permission(info: Info) -> AsyncSession:
-    """Проверка права на редактирование ролей (roles -> delete)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, ROLES_GOAL_NAME, DELETE_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для редактирования ролей")
-    return session
-
-
-async def ensure_roles_grant_permission(info: Info) -> AsyncSession:
-    """Проверка права на выдачу прав (roles -> grant)."""
-    session, current_user = _get_session_and_user(info)
-    if not await current_user.is_capable(session, ROLES_GOAL_NAME, GRANT_RIGHT_NAME):
-        raise GraphQLError("Недостаточно прав для выдачи прав")
-    return session
 
 
 async def validate_user_permissions_by_ids(
@@ -244,3 +166,80 @@ async def validate_role_right_goals_duplicates(
         ]
         
         raise GraphQLError(f"Дублирующиеся связи: {', '.join(duplicate_messages)}")
+
+
+async def ensure_stats_view_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(VIEW_RIGHT_ID, STATS_GOAL_ID)], "Недостаточно прав для просмотра статистики"
+    )
+
+
+async def _ensure_nav_permission(info: Info, right_id: int) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(right_id, NAV_GOAL_ID)], f"Недостаточно прав для работы с навигацией"
+    )
+
+async def ensure_nav_permission(info: Info, right_name: str) -> AsyncSession:
+    right_id = RIGHTS_BY_NAME.get(right_name)
+    return await _ensure_nav_permission(info, right_id)
+
+
+async def ensure_users_view_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(VIEW_RIGHT_ID, USERS_GOAL_ID)], "Недостаточно прав для просмотра пользователей"
+    )
+
+
+async def ensure_users_create_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(CREATE_RIGHT_ID, USERS_GOAL_ID)], "Недостаточно прав для создания пользователей"
+    )
+
+
+async def ensure_users_edit_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(EDIT_RIGHT_ID, USERS_GOAL_ID)], "Недостаточно прав для редактирования пользователей"
+    )
+
+
+async def ensure_users_delete_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(DELETE_RIGHT_ID, USERS_GOAL_ID)], "Недостаточно прав для удаления пользователей"
+    )
+
+
+async def ensure_user_pass_edit_permission(info: Info) -> AsyncSession:
+    """Проверка права на редактирование пароля пользователя (user_pass -> edit)."""
+    return await ensure_permissions_by_ids(
+        info, [(EDIT_RIGHT_ID, USER_PASS_GOAL_ID)], "Недостаточно прав для смены пароля пользователя"
+    )
+
+
+async def ensure_roles_view_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(VIEW_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для просмотра ролей"
+    )
+
+
+async def ensure_roles_create_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(CREATE_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для создания ролей"
+    )
+
+
+async def ensure_roles_edit_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(EDIT_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для редактирования ролей"
+    )
+
+
+async def ensure_roles_delete_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(DELETE_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для удаления ролей"
+    )
+
+
+async def ensure_roles_grant_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(GRANT_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для выдачи ролей"
+    )
