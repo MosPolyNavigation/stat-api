@@ -194,6 +194,7 @@ async def create_user(info: Info, data: CreateUserInput) -> UserType:
 async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserType:
     """Мутация для редактирования пользователя."""
     session: AsyncSession = await ensure_users_edit_permission(info)
+    current_user = info.context["current_user"]
     
     # Проверяем существование пользователя
     user = (
@@ -204,6 +205,13 @@ async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserTy
     
     if not user:
         raise GraphQLError(f"Пользователь с ID {user_id} не найден")
+    
+    # === Защита: нельзя деактивировать самого себя ===
+    if user.id == current_user.id and data.is_active is False:
+        raise GraphQLError(
+            "Нельзя деактивировать самого себя. "
+            "Если вы хотите выйти из системы, используйте выход из аккаунта."
+        )
     
     # Обновляем только предоставленные поля
     if data.fio is not None:
