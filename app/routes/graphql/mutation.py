@@ -1,7 +1,42 @@
 ﻿import strawberry
-from .dod import DodNavAuditoryType, DodNavCampusType, DodNavFloorType, DodNavLocationType, DodNavPlanType, DodNavStaticType, DodNavTypeType, create_dod_nav_auditory, create_dod_nav_campus, create_dod_nav_floor, create_dod_nav_location, create_dod_nav_plan, create_dod_nav_static, create_dod_nav_type, delete_dod_nav_auditory, delete_dod_nav_campus, delete_dod_nav_floor, delete_dod_nav_location, delete_dod_nav_plan, delete_dod_nav_static, delete_dod_nav_type, update_dod_nav_auditory, update_dod_nav_campus, update_dod_nav_floor, update_dod_nav_location, update_dod_nav_plan, update_dod_nav_static, update_dod_nav_type
-from .nav import NavAuditoryType, NavCampusType, NavFloorType, NavLocationType, NavPlanType, NavStaticType, NavTypeType, create_nav_auditory, create_nav_campus, create_nav_floor, create_nav_location, create_nav_plan, create_nav_static, create_nav_type, delete_nav_auditory, delete_nav_campus, delete_nav_floor, delete_nav_location, delete_nav_plan, delete_nav_static, delete_nav_type, update_nav_auditory, update_nav_campus, update_nav_floor, update_nav_location, update_nav_plan, update_nav_static, update_nav_type
-from .user_role import UserType, RoleType, create_role, create_user, grant_role, revoke_role, GrantRoleResult
+from .dod import (
+    DodNavAuditoryType, DodNavCampusType, DodNavFloorType,
+    DodNavLocationType, DodNavPlanType, DodNavStaticType,
+    DodNavTypeType,
+    create_dod_nav_auditory, create_dod_nav_campus,
+    create_dod_nav_floor, create_dod_nav_location,
+    create_dod_nav_plan, create_dod_nav_static,
+    create_dod_nav_type, delete_dod_nav_auditory,
+    delete_dod_nav_campus, delete_dod_nav_floor,
+    delete_dod_nav_location, delete_dod_nav_plan,
+    delete_dod_nav_static, delete_dod_nav_type,
+    update_dod_nav_auditory, update_dod_nav_campus,
+    update_dod_nav_floor, update_dod_nav_location,
+    update_dod_nav_plan, update_dod_nav_static,
+    update_dod_nav_type
+)
+from .nav import (
+    NavAuditoryType, NavCampusType, NavFloorType,
+    NavLocationType, NavPlanType, NavStaticType,
+    NavTypeType,
+    create_nav_auditory, create_nav_campus,
+    create_nav_floor, create_nav_location,
+    create_nav_plan, create_nav_static,
+    create_nav_type, delete_nav_auditory,
+    delete_nav_campus, delete_nav_floor,
+    delete_nav_location, delete_nav_plan,
+    delete_nav_static, delete_nav_type,
+    update_nav_auditory, update_nav_campus,
+    update_nav_floor, update_nav_location,
+    update_nav_plan, update_nav_static,
+    update_nav_type
+)
+from .user_role import (
+    UserType, RoleType, GrantRoleResult,
+    create_role, create_user,
+    grant_role, revoke_role,
+    update_user, update_role
+)
 
 
 @strawberry.type
@@ -179,9 +214,17 @@ class Mutation:
         resolver=create_user,
         description="Create user."
     )
+    update_user: UserType = strawberry.mutation(
+        resolver=update_user,
+        description="Update user."
+    )
     create_role: RoleType = strawberry.mutation(
         resolver=create_role,
         description="Create role."
+    )
+    update_role: RoleType = strawberry.mutation(
+        resolver=update_role,
+        description="Update role."
     )
     grant_role: GrantRoleResult = strawberry.mutation(
         resolver=grant_role,

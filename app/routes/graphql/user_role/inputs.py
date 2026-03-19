@@ -29,3 +29,17 @@ class GrantRoleInput:
     """Входные данные для назначения роли пользователю."""
     user_id: int
     role_ids: List[int]
+
+
+@strawberry.input
+class UpdateUserInput:
+    """Входные данные для редактирования пользователя."""
+    fio: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+@strawberry.input
+class UpdateRoleInput:
+    """Входные данные для редактирования роли."""
+    name: Optional[str] = None
+    role_right_goals: Optional[List[RoleRightGoalInput]] = None

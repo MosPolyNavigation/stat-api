@@ -1,18 +1,52 @@
-from .user import resolve_users, resolve_user, UserConnection, create_user
-from .role import resolve_roles, resolve_role, RoleConnection, create_role
+from .user import (
+    resolve_users,
+    resolve_user,
+    UserConnection,
+    create_user,
+    update_user
+)
+from .role import (
+    resolve_roles,
+    resolve_role,
+    RoleConnection,
+    create_role,
+    update_role,
+)
 from .right import resolve_rights, RightConnection
 from .goal import resolve_goals, GoalConnection
-from .user_role import resolve_user_roles, resolve_user_role, UserRoleConnection, grant_role, revoke_role
-from .role_right_goal import resolve_role_right_goals, resolve_role_right_goal, RoleRightGoalConnection
-from .types import UserRoleType, UserType, RoleType, RightType, GoalType, RoleRightGoalType, GrantRoleResult
+from .user_role import (
+    resolve_user_roles,
+    resolve_user_role,
+    UserRoleConnection,
+    grant_role,
+    revoke_role
+)
+from .role_right_goal import (
+    resolve_role_right_goals,
+    resolve_role_right_goal,
+    RoleRightGoalConnection
+)
+from .types import (
+    UserRoleType,
+    UserType,
+    RoleType,
+    RightType,
+    GoalType,
+    RoleRightGoalType,
+    GrantRoleResult,
+)
 
 __all__ = [
     "resolve_users",
     "resolve_user",
+    "create_user",
+    "update_user"
     "UserType",
     "UserConnection",
     "resolve_roles",
     "resolve_role",
+    "create_role",
+    "update_role",
     "RoleType",
     "RoleConnection",
     "resolve_rights",

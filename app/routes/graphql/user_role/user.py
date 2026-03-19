@@ -1,4 +1,5 @@
 import strawberry
+from graphql import GraphQLError
 from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -6,12 +7,20 @@ from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional, List
 from pwdlib import PasswordHash
-from app.routes.graphql.pagination import PaginationInput, PageInfo, PaginationInfo
-from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_offset, _create_pagination_info
-from app.routes.graphql.permissions import ensure_users_view_permission, ensure_users_create_permission
+from app.routes.graphql.pagination import (
+    PaginationInput, PageInfo, PaginationInfo
+)
+from app.routes.graphql.filter_handlers import (
+    _validated_limit_2, _validated_offset, _create_pagination_info
+)
+from app.routes.graphql.permissions import (
+    ensure_users_view_permission,
+    ensure_users_create_permission,
+    ensure_users_edit_permission
+)
 from app.models import User, UserRole
 from .types import UserType
-from .inputs import CreateUserInput
+from .inputs import CreateUserInput, UpdateUserInput
 
 
 password_hash = PasswordHash.recommended()
@@ -170,3 +179,41 @@ async def create_user(info: Info, data: CreateUserInput) -> UserType:
     await session.refresh(user)
     
     return _to_user_safe(user)
+
+
+async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserType:
+    """Мутация для редактирования пользователя."""
+    session: AsyncSession = await ensure_users_edit_permission(info)
+    
+    # Проверяем существование пользователя
+    user = (
+        await session.execute(
+            select(User).where(User.id == user_id)
+        )
+    ).scalars().first()
+    
+    if not user:
+        raise GraphQLError(f"Пользователь с ID {user_id} не найден")
+    
+    # Обновляем только предоставленные поля
+    if data.fio is not None:
+        user.fio = data.fio
+    
+    if data.is_active is not None:
+        user.is_active = data.is_active
+    
+    await session.commit()
+    await session.refresh(user)
+    
+    # Перезагружаем с ролями для возврата полных данных
+    statement = (
+        select(User)
+        .options(
+            selectinload(User.user_roles)
+            .selectinload(UserRole.role)
+        )
+        .where(User.id == user_id)
+    )
+    
+    user_with_roles = (await session.execute(statement)).scalars().first()
+    return _to_user(user_with_roles)
