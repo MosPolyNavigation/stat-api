@@ -46,11 +46,27 @@ async def ensure_users_view_permission(info: Info) -> AsyncSession:
     return session
 
 
+async def ensure_users_create_permission(info: Info) -> AsyncSession:
+    """Проверка права на создание пользователей (users -> create)."""
+    session, current_user = _get_session_and_user(info)
+    if not await current_user.is_capable(session, USERS_GOAL_NAME, CREATE_RIGHT_NAME):
+        raise GraphQLError("Недостаточно прав для создания пользователей")
+    return session
+
+
 async def ensure_roles_view_permission(info: Info) -> AsyncSession:
     """Проверка права на просмотр ролей и связанных таблиц (roles -> view)."""
     session, current_user = _get_session_and_user(info)
     if not await current_user.is_capable(session, ROLES_GOAL_NAME, VIEW_RIGHT_NAME):
         raise GraphQLError("Недостаточно прав для просмотра ролей")
+    return session
+
+
+async def ensure_roles_create_permission(info: Info) -> AsyncSession:
+    """Проверка права на редактирование ролей (roles -> create)."""
+    session, current_user = _get_session_and_user(info)
+    if not await current_user.is_capable(session, ROLES_GOAL_NAME, CREATE_RIGHT_NAME):
+        raise GraphQLError("Недостаточно прав для редактирования ролей")
     return session
 
 

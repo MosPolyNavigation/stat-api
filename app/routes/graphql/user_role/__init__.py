@@ -1,5 +1,5 @@
-from .user import resolve_users, resolve_user, UserConnection
-from .role import resolve_roles, resolve_role, RoleConnection
+from .user import resolve_users, resolve_user, UserConnection, create_user
+from .role import resolve_roles, resolve_role, RoleConnection, create_role
 from .right import resolve_rights, RightConnection
 from .goal import resolve_goals, GoalConnection
 from .user_role import resolve_user_roles, resolve_user_role, UserRoleConnection

@@ -1,15 +1,19 @@
-from datetime import datetime
 import strawberry
+from datetime import datetime
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Optional, List
+from pwdlib import PasswordHash
 from app.routes.graphql.pagination import PaginationInput, PageInfo, PaginationInfo
 from app.routes.graphql.filter_handlers import _validated_limit_2, _validated_offset, _create_pagination_info
-from app.routes.graphql.permissions import ensure_users_view_permission
+from app.routes.graphql.permissions import ensure_users_view_permission, ensure_users_create_permission
 from app.models import User, UserRole
 from .types import UserType
+
+
+password_hash = PasswordHash.recommended()
 
 
 @strawberry.type
@@ -24,6 +28,15 @@ class UserFilterInput:
     id: Optional[int] = None
     login: Optional[str] = None
     is_active: Optional[bool] = None
+
+
+@strawberry.input
+class CreateUserInput:
+    """Входные данные для создания пользователя."""
+    login: str
+    password: str
+    fio: Optional[str] = None
+    is_active: bool = True
 
 
 def _to_user(model: User) -> UserType:
@@ -132,3 +145,36 @@ async def resolve_user(info: Info, user_id: int) -> Optional[UserType]:
     
     result = (await session.execute(statement)).scalars().first()
     return _to_user(result) if result else None
+
+
+async def create_user(info: Info, data: CreateUserInput) -> UserType:
+    """Мутация для создания нового пользователя."""
+    session: AsyncSession = await ensure_users_create_permission(info)
+    
+    # Проверка на уникальность login
+    existing_user = (
+        await session.execute(
+            select(User).where(User.login == data.login)
+        )
+    ).scalars().first()
+    
+    if existing_user:
+        from graphql import GraphQLError
+        raise GraphQLError("Пользователь с таким логином уже существует")
+    
+    # Хэширование пароля
+    hashed_password = password_hash.hash(data.password)
+    
+    # Создание пользователя
+    user = User(
+        login=data.login,
+        hash=hashed_password,
+        fio=data.fio,
+        is_active=data.is_active
+    )
+    
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
+    
+    return _to_user_safe(user)
