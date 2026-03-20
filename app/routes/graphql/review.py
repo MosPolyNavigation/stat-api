@@ -6,7 +6,7 @@ from sqlalchemy.orm import selectinload
 from strawberry import Info
 from typing import Annotated, Optional
 from .filter_handlers import _validated_limit
-from .permissions import ensure_stats_view_permission
+from .permissions import ensure_reviews_view_permission
 from .problem import ProblemType, _to_problem
 from .review_status import ReviewStatusType, _to_review_status
 from .user_id import UserIdType, _to_user_id
@@ -50,7 +50,7 @@ async def resolve_reviews(
         status_id: Annotated[Optional[int], strawberry.argument(name="status_id")] = None,
         limit: Optional[int] = None
 ) -> list[ReviewType]:
-    session: AsyncSession = await ensure_stats_view_permission(info)
+    session: AsyncSession = await ensure_reviews_view_permission(info)
     statement = (
         select(Review)
         .options(

@@ -7,7 +7,7 @@ from app.schemas import Status
 from app.schemas.ban import BanListOut, BanInfoOut, UnbanRequest
 from app.guards.review_governor import review_rate_limiter
 from app.state import AppState
-from app.helpers.auth_utils import get_current_active_user
+from app.helpers.permissions import require_rights
 
 
 def register_endpoint(router: APIRouter):
@@ -16,7 +16,7 @@ def register_endpoint(router: APIRouter):
         description="Получение списка забаненных пользователей для отзывов",
         response_model=BanListOut,
         tags=["admin"],
-        dependencies=[Depends(get_current_active_user)],
+        dependencies=[Depends(require_rights('admin', "view"))],
         responses={
             200: {"model": BanListOut, "description": "Список забаненных пользователей"},
             401: {"description": "Требуется аутентификация"},
@@ -55,7 +55,7 @@ def register_endpoint(router: APIRouter):
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
         },
-        dependencies=[Depends(get_current_active_user)],
+        dependencies=[Depends(require_rights('admin', "view"))],
     )
     async def get_user_ban_info(
         user_id: str,
@@ -92,7 +92,7 @@ def register_endpoint(router: APIRouter):
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
         },
-        dependencies=[Depends(get_current_active_user)],
+        dependencies=[Depends(require_rights('admin', "edit"))],
     )
     async def unban_user(
         rq: Request,
