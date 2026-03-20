@@ -15,6 +15,7 @@ from app.constants import (
     TASKS_GOAL_ID,
     NAV_GOAL_ID,
     USER_PASS_GOAL_ID,
+    REVIEWS_GOAL_ID,
     # Rights
     VIEW_RIGHT_ID,
     CREATE_RIGHT_ID,
@@ -171,6 +172,12 @@ async def validate_role_right_goals_duplicates(
 async def ensure_stats_view_permission(info: Info) -> AsyncSession:
     return await ensure_permissions_by_ids(
         info, [(VIEW_RIGHT_ID, STATS_GOAL_ID)], "Недостаточно прав для просмотра статистики"
+    )
+
+
+async def ensure_reviews_view_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info, [(VIEW_RIGHT_ID, REVIEWS_GOAL_ID)], "Недостаточно прав для просмотра статистики"
     )
 
 

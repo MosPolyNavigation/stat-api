@@ -18,7 +18,7 @@ def register_endpoint(router: APIRouter):
         description="Назначение статуса отзыву по ID статуса",
         tags=["review"],
         status_code=status.HTTP_200_OK,
-        dependencies=[Depends(require_rights("tables", "edit"))],
+        dependencies=[Depends(require_rights("reviews", "edit"))],
     )
     async def set_review_status(
         review_id: int,
