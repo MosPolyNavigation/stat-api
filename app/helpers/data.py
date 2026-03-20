@@ -531,6 +531,7 @@ goals: dict[int, str] = {
     7: "tasks",
     8: "nav_data",
     9: "user_pass",
+    10: "admin",
 }
 
 rights: dict[int, str] = {
@@ -570,6 +571,8 @@ roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 3, 8),
     (1, 4, 8),
     (1, 3, 9),
+    (1, 1, 10),
+    (1, 3, 10),
 ]
 
 review_status: dict[int, str] = {

@@ -12,6 +12,7 @@ RESOURCES_GOAL_NAME = "resources"
 TASKS_GOAL_NAME = "tasks"
 NAV_GOAL_NAME = "nav_data"
 USER_PASS_GOAL_NAME = "user_pass"
+ADMIN_GOAL_NAME = "admin"
 
 # ID целей
 STATS_GOAL_ID = 1
@@ -23,6 +24,7 @@ RESOURCES_GOAL_ID = 6
 TASKS_GOAL_ID = 7
 NAV_GOAL_ID = 8
 USER_PASS_GOAL_ID = 9
+ADMIN_GOAL_ID = 10
 
 # =============================================================================
 # КОНСТАНТЫ ПРАВ (RIGHTS)
@@ -56,6 +58,7 @@ GOALS_BY_ID: dict[int, str] = {
     7: "tasks",
     8: "nav_data",
     9: "user_pass",
+    10: "admin",
 }
 
 GOALS_BY_NAME: dict[str, int] = {
@@ -68,6 +71,7 @@ GOALS_BY_NAME: dict[str, int] = {
     "tasks": 7,
     "nav_data": 8,
     "user_pass": 9,
+    "admin": 10,
 }
 
 RIGHTS_BY_ID: dict[int, str] = {
@@ -144,4 +148,8 @@ PERMISSIONS_BY_GOAL: dict[int, list[tuple[int, int]]] = {
     USER_PASS_GOAL_ID: [
         (EDIT_RIGHT_ID, USER_PASS_GOAL_ID),
     ],
+    ADMIN_GOAL_ID: [
+        (VIEW_RIGHT_ID, ADMIN_GOAL_ID),
+        (EDIT_RIGHT_ID, ADMIN_GOAL_ID),
+    ]
 }
