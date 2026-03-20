@@ -69,11 +69,14 @@ FRONT_DIR = path.join(PROJECT_DIR, "dist")
 ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
 AUDITORY_STATIC_DIR = path.join(settings.static_files, "auditories")
+PLANS_STATIC_DIR = path.join(settings.static_files, "plans")
 
 if not path.exists(STATIC_DIR):
     makedirs(STATIC_DIR)
 if not path.exists(AUDITORY_STATIC_DIR):
     makedirs(AUDITORY_STATIC_DIR)
+if not path.exists(PLANS_STATIC_DIR):
+    makedirs(PLANS_STATIC_DIR)
 if not path.exists(FRONT_DIR):
     makedirs(FRONT_DIR)
 if not path.exists(ADMIN_DIR):

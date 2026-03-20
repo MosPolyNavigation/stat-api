@@ -36,7 +36,10 @@ def upgrade() -> None:
     # === 1. Добавляем новую цель user_pass (ID: 9) ===
     op.bulk_insert(
         goals_table,
-        [{'id': 10, 'name': 'admin'}]
+        [
+            {'id': 10, 'name': 'admin'},
+            {'id': 11, 'name': 'reviews'},
+        ]
     )
     
     # === 2. Добавляем право edit (3) для admin (1) на цель user_pass (9) ===
@@ -44,7 +47,9 @@ def upgrade() -> None:
         role_right_goals_table,
         [
             {'role_id': 1, 'right_id': 1, 'goal_id': 10},
-            {'role_id': 1, 'right_id': 3, 'goal_id': 10}
+            {'role_id': 1, 'right_id': 3, 'goal_id': 10},
+            {'role_id': 1, 'right_id': 1, 'goal_id': 11},
+            {'role_id': 1, 'right_id': 3, 'goal_id': 11},
         ]
     )
 
@@ -69,11 +74,11 @@ def downgrade() -> None:
         role_right_goals_table.delete()
         .where(role_right_goals_table.c.role_id == 1)
         .where(role_right_goals_table.c.right_id.in_([1, 3]))
-        .where(role_right_goals_table.c.goal_id == 10)
+        .where(role_right_goals_table.c.goal_id.in_([10, 11]))
     )
     
     # === 2. Удаляем цель user_pass ===
     op.execute(
         goals_table.delete()
-        .where(goals_table.c.id == 10)
+        .where(goals_table.c.id.in_([10, 11]))
     )
