@@ -336,6 +336,9 @@ async def delete_role(info: Info, role_id: int) -> DeleteResult:
     """
     session: AsyncSession = await ensure_roles_delete_permission(info)
     current_user = info.context["current_user"]
+
+    if role_id == 1:
+        raise GraphQLError(f"Нельзя удалить роль с ID 1")
     
     # Проверяем существование роли
     role = (
