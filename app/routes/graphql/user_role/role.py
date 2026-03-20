@@ -235,6 +235,9 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
     """
     session: AsyncSession = await ensure_roles_edit_permission(info)
     current_user = info.context["current_user"]
+
+    if role_id == 1:
+        raise GraphQLError(f"Нельзя изменить роль с ID 1")
     
     # Проверяем существование роли
     role = (
