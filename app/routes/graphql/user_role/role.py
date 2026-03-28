@@ -19,6 +19,7 @@ from app.routes.graphql.permissions import (
     validate_user_permissions_by_ids,
     validate_role_right_goals_duplicates
 )
+from app.services.permission_service import PermissionService
 from app.models import Role, UserRole, RoleRightGoal
 from .types import RoleType, DeleteResult
 from .inputs import RoleRightGoalInput, CreateRoleInput, UpdateRoleInput
@@ -158,6 +159,7 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
     """Мутация для создания новой роли с правами."""
     session: AsyncSession = await ensure_roles_create_permission(info)
     current_user = info.context["current_user"]
+    service: PermissionService = info.context["permission_service"]
     
     # 1. Проверка на уникальность name
     existing_role = (
@@ -177,8 +179,8 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
         ]
         
         missing = await validate_user_permissions_by_ids(
-            current_user, 
-            session, 
+            current_user.id, 
+            service, 
             required_permissions
         )
         
@@ -189,7 +191,7 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
             )
         
         # 3. Проверка на дубликаты в рамках запроса
-        await validate_role_right_goals_duplicates(session, data.role_right_goals)
+        await validate_role_right_goals_duplicates(data.role_right_goals)
     
     # 4. Создание роли
     role = Role(name=data.name)
@@ -235,6 +237,7 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
     """
     session: AsyncSession = await ensure_roles_edit_permission(info)
     current_user = info.context["current_user"]
+    service: PermissionService = info.context["permission_service"]
 
     if role_id == 1:
         raise GraphQLError(f"Нельзя изменить роль с ID 1")
@@ -273,8 +276,8 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
         
         # Проверяем права пользователя через универсальную функцию
         missing = await validate_user_permissions_by_ids(
-            current_user, 
-            session, 
+            current_user.id, 
+            service, 
             required_permissions
         )
         
@@ -285,7 +288,7 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
             )
         
         # Проверка на дубликаты в рамках запроса
-        await validate_role_right_goals_duplicates(session, data.role_right_goals)
+        await validate_role_right_goals_duplicates(data.role_right_goals)
         
         # Удаляем старые права роли
         old_rights = (
