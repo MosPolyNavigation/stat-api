@@ -1,35 +1,44 @@
-﻿from typing import Optional
+from typing import Optional
+
 import strawberry
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from strawberry import Info
-from app.models.dod.plan import DodPlan
+
 from app.constants import (
     CREATE_RIGHT_NAME,
     DELETE_RIGHT_NAME,
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
 )
+from app.models.dod.corpus import DodCorpus
+from app.models.dod.plan import DodPlan
+from app.routes.graphql.filter_handlers import (
+    _create_pagination_info,
+    _validated_limit_2,
+    _validated_offset,
+)
+from app.routes.graphql.pagination import (
+    PageInfo,
+    PaginationInfo,
+    PaginationInput,
+)
 from app.routes.graphql.permissions import ensure_nav_permission
+
 from .common import get_or_error
+from .types import DodNavPlanType
+
 
 DEFAULT_PLAN_ENTRANCES = "[]"
 DEFAULT_PLAN_GRAPH = "{}"
 
 
-@strawberry.type(name="DodNavPlan")
-class DodNavPlanType:
-    id: int
-    id_sys: str
-    cor_id: int
-    floor_id: int
-    ready: bool
-    entrances: str
-    graph: str
-    svg_id: Optional[int]
-    nearest_entrance: Optional[str]
-    nearest_man_wc: Optional[str]
-    nearest_woman_wc: Optional[str]
-    nearest_shared_wc: Optional[str]
+@strawberry.type
+class DodNavPlanConnection:
+    nodes: list[DodNavPlanType]
+    page_info: PageInfo
+    pagination_info: PaginationInfo
 
 
 @strawberry.input
@@ -56,7 +65,21 @@ class DodNavPlanUpdateInput:
     nearest_shared_wc: Optional[str] = None
 
 
+@strawberry.input
+class DodNavPlanFilterInput:
+    id: Optional[int] = None
+    id_sys: Optional[str] = None
+    cor_id: Optional[int] = None
+    floor_id: Optional[int] = None
+    ready: Optional[bool] = None
+    svg_id: Optional[int] = None
+
+
 def _to_dod_nav_plan(model: DodPlan) -> DodNavPlanType:
+    from .campus import _to_dod_nav_campus_safe
+    from .floor import _to_dod_nav_floor
+    from .static import _to_dod_nav_static_safe
+
     return DodNavPlanType(
         id=model.id,
         id_sys=model.id_sys,
@@ -70,28 +93,95 @@ def _to_dod_nav_plan(model: DodPlan) -> DodNavPlanType:
         nearest_man_wc=model.nearest_man_wc,
         nearest_woman_wc=model.nearest_woman_wc,
         nearest_shared_wc=model.nearest_shared_wc,
+        campus=_to_dod_nav_campus_safe(model.corpus) if model.corpus else None,
+        floor=_to_dod_nav_floor(model.floor) if model.floor else None,
+        svg=_to_dod_nav_static_safe(model.svg) if model.svg else None,
     )
+
+
+def _to_dod_nav_plan_safe(model: DodPlan) -> DodNavPlanType:
+    return DodNavPlanType(
+        id=model.id,
+        id_sys=model.id_sys,
+        cor_id=model.cor_id,
+        floor_id=model.floor_id,
+        ready=model.ready,
+        entrances=model.entrances,
+        graph=model.graph,
+        svg_id=model.svg_id,
+        nearest_entrance=model.nearest_entrance,
+        nearest_man_wc=model.nearest_man_wc,
+        nearest_woman_wc=model.nearest_woman_wc,
+        nearest_shared_wc=model.nearest_shared_wc,
+        campus=None,
+        floor=None,
+        svg=None,
+    )
+
+
+def _apply_plan_filters(statement, filter_data: Optional[DodNavPlanFilterInput]):
+    if not filter_data:
+        return statement
+    if filter_data.id is not None:
+        statement = statement.where(DodPlan.id == filter_data.id)
+    if filter_data.id_sys is not None:
+        statement = statement.where(DodPlan.id_sys == filter_data.id_sys)
+    if filter_data.cor_id is not None:
+        statement = statement.where(DodPlan.cor_id == filter_data.cor_id)
+    if filter_data.floor_id is not None:
+        statement = statement.where(DodPlan.floor_id == filter_data.floor_id)
+    if filter_data.ready is not None:
+        statement = statement.where(DodPlan.ready == filter_data.ready)
+    if filter_data.svg_id is not None:
+        statement = statement.where(DodPlan.svg_id == filter_data.svg_id)
+    return statement
 
 
 async def resolve_dod_nav_plans(
     info: Info,
-    id: Optional[int] = None,
-    id_sys: Optional[str] = None,
-    cor_id: Optional[int] = None,
-    floor_id: Optional[int] = None,
-) -> list[DodNavPlanType]:
-    session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(DodPlan).order_by(DodPlan.id)
-    if id is not None:
-        statement = statement.where(DodPlan.id == id)
-    if id_sys is not None:
-        statement = statement.where(DodPlan.id_sys == id_sys)
-    if cor_id is not None:
-        statement = statement.where(DodPlan.cor_id == cor_id)
-    if floor_id is not None:
-        statement = statement.where(DodPlan.floor_id == floor_id)
+    pagination: Optional[PaginationInput] = None,
+    filter: Optional[DodNavPlanFilterInput] = None,
+) -> DodNavPlanConnection:
+    session: AsyncSession = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
+
+    limit = _validated_limit_2(pagination.limit if pagination else 10)
+    offset = _validated_offset(pagination.offset if pagination else 0)
+
+    statement = _apply_plan_filters(
+        select(DodPlan)
+        .options(
+            selectinload(DodPlan.corpus).selectinload(DodCorpus.locations),
+            selectinload(DodPlan.floor),
+            selectinload(DodPlan.svg),
+        )
+        .order_by(DodPlan.id),
+        filter,
+    )
+    count_statement = _apply_plan_filters(
+        select(func.count()).select_from(DodPlan),
+        filter,
+    )
+
+    total_count = (await session.execute(count_statement)).scalar() or 0
+
+    if offset > 0:
+        statement = statement.offset(offset)
+    if limit > 0:
+        statement = statement.limit(limit)
+
     records = (await session.execute(statement)).scalars().all()
-    return [_to_dod_nav_plan(record) for record in records]
+    page_info, pagination_info = _create_pagination_info(
+        total_count=total_count,
+        offset=offset,
+        limit=limit,
+        records_count=len(records),
+    )
+
+    return DodNavPlanConnection(
+        nodes=[_to_dod_nav_plan(record) for record in records],
+        page_info=page_info,
+        pagination_info=pagination_info,
+    )
 
 
 async def create_dod_nav_plan(info: Info, data: DodNavPlanInput) -> DodNavPlanType:
@@ -112,7 +202,7 @@ async def create_dod_nav_plan(info: Info, data: DodNavPlanInput) -> DodNavPlanTy
     session.add(plan)
     await session.commit()
     await session.refresh(plan)
-    return _to_dod_nav_plan(plan)
+    return _to_dod_nav_plan_safe(plan)
 
 
 async def update_dod_nav_plan(
@@ -140,7 +230,7 @@ async def update_dod_nav_plan(
         plan.nearest_shared_wc = data.nearest_shared_wc
     await session.commit()
     await session.refresh(plan)
-    return _to_dod_nav_plan(plan)
+    return _to_dod_nav_plan_safe(plan)
 
 
 async def delete_dod_nav_plan(info: Info, id: int) -> bool:
@@ -149,6 +239,3 @@ async def delete_dod_nav_plan(info: Info, id: int) -> bool:
     await session.delete(plan)
     await session.commit()
     return True
-
-
-

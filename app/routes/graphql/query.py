@@ -1,9 +1,9 @@
 ﻿import strawberry
 from typing import Optional
 from .change_plan import ChangePlanType, resolve_change_plans
-from .dod import DodNavAuditoryType, DodNavCampusType, DodNavFloorType, DodNavLocationType, DodNavPlanType, DodNavStaticType, DodNavTypeType, resolve_dod_nav_auditories, resolve_dod_nav_campuses, resolve_dod_nav_floors, resolve_dod_nav_locations, resolve_dod_nav_plans, resolve_dod_nav_statics, resolve_dod_nav_types
+from .dod import DodNavAuditoryConnection, DodNavAuditoryPhotoConnection, DodNavCampusConnection, DodNavFloorConnection, DodNavLocationConnection, DodNavPlanConnection, DodNavStaticConnection, DodNavTypeConnection, resolve_dod_nav_auditories, resolve_dod_nav_auditory_photos, resolve_dod_nav_campuses, resolve_dod_nav_floors, resolve_dod_nav_locations, resolve_dod_nav_plans, resolve_dod_nav_statics, resolve_dod_nav_types
 from .endpoint_stats import AggregatedEndpointStatisticsType, EndpointStatisticsType, resolve_endpoint_statistics, resolve_endpoint_statistics_avg
-from .nav import NavAuditoryType, NavCampusType, NavFloorType, NavLocationType, NavPlanType, NavStaticType, NavTypeType, resolve_nav_auditories, resolve_nav_campuses, resolve_nav_floors, resolve_nav_locations, resolve_nav_plans, resolve_nav_statics, resolve_nav_types
+from .nav import NavAuditoryConnection, NavAuditoryPhotoConnection, NavCampusConnection, NavFloorConnection, NavLocationConnection, NavPlanConnection, NavStaticConnection, NavTypeConnection, resolve_nav_auditories, resolve_nav_auditory_photos, resolve_nav_campuses, resolve_nav_floors, resolve_nav_locations, resolve_nav_plans, resolve_nav_statics, resolve_nav_types
 from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
@@ -94,62 +94,70 @@ class Query:
         description="Get aggregated Telegram bot statistics for selected period.",
     )
 
-    nav_floors: list[NavFloorType] = strawberry.field(
+    nav_floors: NavFloorConnection = strawberry.field(
         resolver=resolve_nav_floors,
-        description="Get navigation floors.",
+        description="Get navigation floors with pagination.",
     )
-    nav_locations: list[NavLocationType] = strawberry.field(
+    nav_locations: NavLocationConnection = strawberry.field(
         resolver=resolve_nav_locations,
-        description="Get navigation locations.",
+        description="Get navigation locations with pagination.",
     )
-    nav_campuses: list[NavCampusType] = strawberry.field(
+    nav_campuses: NavCampusConnection = strawberry.field(
         resolver=resolve_nav_campuses,
-        description="Get navigation campuses.",
+        description="Get navigation campuses with pagination.",
     )
-    nav_plans: list[NavPlanType] = strawberry.field(
+    nav_plans: NavPlanConnection = strawberry.field(
         resolver=resolve_nav_plans,
-        description="Get navigation plans.",
+        description="Get navigation plans with pagination.",
     )
-    nav_statics: list[NavStaticType] = strawberry.field(
+    nav_statics: NavStaticConnection = strawberry.field(
         resolver=resolve_nav_statics,
-        description="Get navigation static resources.",
+        description="Get navigation static resources with pagination.",
     )
-    nav_types: list[NavTypeType] = strawberry.field(
+    nav_types: NavTypeConnection = strawberry.field(
         resolver=resolve_nav_types,
-        description="Get navigation auditory types.",
+        description="Get navigation auditory types with pagination.",
     )
-    nav_auditories: list[NavAuditoryType] = strawberry.field(
+    nav_auditories: NavAuditoryConnection = strawberry.field(
         resolver=resolve_nav_auditories,
-        description="Get navigation auditories.",
+        description="Get navigation auditories with pagination.",
+    )
+    nav_auditory_photos: NavAuditoryPhotoConnection = strawberry.field(
+        resolver=resolve_nav_auditory_photos,
+        description="Get navigation auditory photos with pagination.",
     )
 
-    dod_nav_floors: list[DodNavFloorType] = strawberry.field(
+    dod_nav_floors: DodNavFloorConnection = strawberry.field(
         resolver=resolve_dod_nav_floors,
-        description="Get DOD navigation floors.",
+        description="Get DOD navigation floors with pagination.",
     )
-    dod_nav_locations: list[DodNavLocationType] = strawberry.field(
+    dod_nav_locations: DodNavLocationConnection = strawberry.field(
         resolver=resolve_dod_nav_locations,
-        description="Get DOD navigation locations.",
+        description="Get DOD navigation locations with pagination.",
     )
-    dod_nav_campuses: list[DodNavCampusType] = strawberry.field(
+    dod_nav_campuses: DodNavCampusConnection = strawberry.field(
         resolver=resolve_dod_nav_campuses,
-        description="Get DOD navigation campuses.",
+        description="Get DOD navigation campuses with pagination.",
     )
-    dod_nav_plans: list[DodNavPlanType] = strawberry.field(
+    dod_nav_plans: DodNavPlanConnection = strawberry.field(
         resolver=resolve_dod_nav_plans,
-        description="Get DOD navigation plans.",
+        description="Get DOD navigation plans with pagination.",
     )
-    dod_nav_statics: list[DodNavStaticType] = strawberry.field(
+    dod_nav_statics: DodNavStaticConnection = strawberry.field(
         resolver=resolve_dod_nav_statics,
-        description="Get DOD navigation static resources.",
+        description="Get DOD navigation static resources with pagination.",
     )
-    dod_nav_types: list[DodNavTypeType] = strawberry.field(
+    dod_nav_types: DodNavTypeConnection = strawberry.field(
         resolver=resolve_dod_nav_types,
-        description="Get DOD navigation auditory types.",
+        description="Get DOD navigation auditory types with pagination.",
     )
-    dod_nav_auditories: list[DodNavAuditoryType] = strawberry.field(
+    dod_nav_auditories: DodNavAuditoryConnection = strawberry.field(
         resolver=resolve_dod_nav_auditories,
-        description="Get DOD navigation auditories.",
+        description="Get DOD navigation auditories with pagination.",
+    )
+    dod_nav_auditory_photos: DodNavAuditoryPhotoConnection = strawberry.field(
+        resolver=resolve_dod_nav_auditory_photos,
+        description="Get DOD navigation auditory photos with pagination.",
     )
 
     users: UserConnection = strawberry.field(

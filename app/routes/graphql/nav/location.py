@@ -1,29 +1,38 @@
 from typing import Optional
+
 import strawberry
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
-from app.models.nav.location import Location
+
 from app.constants import (
     CREATE_RIGHT_NAME,
     DELETE_RIGHT_NAME,
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
 )
+from app.models.nav.location import Location
+from app.routes.graphql.filter_handlers import (
+    _create_pagination_info,
+    _validated_limit_2,
+    _validated_offset,
+)
+from app.routes.graphql.pagination import (
+    PageInfo,
+    PaginationInfo,
+    PaginationInput,
+)
 from app.routes.graphql.permissions import ensure_nav_permission
+
 from .common import get_or_error
+from .types import NavLocationType
 
 
-@strawberry.type(name="NavLocation")
-class NavLocationType:
-    id: int
-    id_sys: str
-    name: str
-    short: str
-    ready: bool
-    address: str
-    metro: str
-    crossings: Optional[str]
-    comments: Optional[str]
+@strawberry.type
+class NavLocationConnection:
+    nodes: list[NavLocationType]
+    page_info: PageInfo
+    pagination_info: PaginationInfo
 
 
 @strawberry.input
@@ -50,6 +59,15 @@ class NavLocationUpdateInput:
     crossings: Optional[str] = None
 
 
+@strawberry.input
+class NavLocationFilterInput:
+    id: Optional[int] = None
+    id_sys: Optional[str] = None
+    name: Optional[str] = None
+    short: Optional[str] = None
+    ready: Optional[bool] = None
+
+
 def _to_nav_location(model: Location) -> NavLocationType:
     return NavLocationType(
         id=model.id,
@@ -64,15 +82,61 @@ def _to_nav_location(model: Location) -> NavLocationType:
     )
 
 
-async def resolve_nav_locations(info: Info, id: Optional[int] = None, id_sys: Optional[str] = None) -> list[NavLocationType]:
-    session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Location).order_by(Location.id)
-    if id is not None:
-        statement = statement.where(Location.id == id)
-    if id_sys is not None:
-        statement = statement.where(Location.id_sys == id_sys)
+def _apply_location_filters(statement, filter_data: Optional[NavLocationFilterInput]):
+    if not filter_data:
+        return statement
+    if filter_data.id is not None:
+        statement = statement.where(Location.id == filter_data.id)
+    if filter_data.id_sys is not None:
+        statement = statement.where(Location.id_sys == filter_data.id_sys)
+    if filter_data.name is not None:
+        statement = statement.where(Location.name == filter_data.name)
+    if filter_data.short is not None:
+        statement = statement.where(Location.short == filter_data.short)
+    if filter_data.ready is not None:
+        statement = statement.where(Location.ready == filter_data.ready)
+    return statement
+
+
+async def resolve_nav_locations(
+    info: Info,
+    pagination: Optional[PaginationInput] = None,
+    filter: Optional[NavLocationFilterInput] = None,
+) -> NavLocationConnection:
+    session: AsyncSession = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
+
+    limit = _validated_limit_2(pagination.limit if pagination else 10)
+    offset = _validated_offset(pagination.offset if pagination else 0)
+
+    statement = _apply_location_filters(
+        select(Location).order_by(Location.id),
+        filter,
+    )
+    count_statement = _apply_location_filters(
+        select(func.count()).select_from(Location),
+        filter,
+    )
+
+    total_count = (await session.execute(count_statement)).scalar() or 0
+
+    if offset > 0:
+        statement = statement.offset(offset)
+    if limit > 0:
+        statement = statement.limit(limit)
+
     records = (await session.execute(statement)).scalars().all()
-    return [_to_nav_location(record) for record in records]
+    page_info, pagination_info = _create_pagination_info(
+        total_count=total_count,
+        offset=offset,
+        limit=limit,
+        records_count=len(records),
+    )
+
+    return NavLocationConnection(
+        nodes=[_to_nav_location(record) for record in records],
+        page_info=page_info,
+        pagination_info=pagination_info,
+    )
 
 
 async def create_nav_location(info: Info, data: NavLocationInput) -> NavLocationType:

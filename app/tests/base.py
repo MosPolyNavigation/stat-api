@@ -162,6 +162,16 @@ async def create_db_and_tables():
         )
         db.add(test_auditory)
 
+        test_auditory_photo = models.AudPhoto(
+            id=1,
+            aud_id=1,
+            ext="jpg",
+            name="test-auditory-photo.jpg",
+            path="/tmp/test-auditory-photo.jpg",
+            link="/api/nav/auditory/photos/test-auditory-photo.jpg",
+        )
+        db.add(test_auditory_photo)
+
         # DOD navigation dataset
         dod_location = models.DodLocation(
             id=1,
@@ -237,6 +247,16 @@ async def create_db_and_tables():
             link=None,
         )
         db.add(dod_auditory)
+
+        dod_auditory_photo = models.DodAudPhoto(
+            id=1,
+            aud_id=1,
+            ext="png",
+            name="dod-auditory-photo.png",
+            path="/tmp/dod-auditory-photo.png",
+            link="/api/dod/auditory/photos/dod-auditory-photo.png",
+        )
+        db.add(dod_auditory_photo)
 
         await db.commit()
 
