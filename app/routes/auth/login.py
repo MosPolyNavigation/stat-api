@@ -9,7 +9,9 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models.auth.user import User
 from app.helpers.auth_utils import get_current_active_user
+from app.helpers.permissions import group_rights_by_goals
 from app.schemas import UserOut
+from app.services.permission_service import PermissionService
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -95,34 +97,13 @@ def register_endpoint(router: APIRouter):
     ):
         """Возвращает актуальные данные текущего пользователя"""
         await db.refresh(current_user)
+        service: PermissionService = PermissionService(db)
+
         result = UserOut(
             id=current_user.id,
             login=current_user.login,
             is_active=current_user.is_active
         )
-        result.rights_by_goals = await current_user.get_rights(db)
+        rights_goals = await service.get_user_permissions(current_user.id)
+        result.rights_by_goals = group_rights_by_goals(rights_goals)
         return result
-
-    # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
-    # @router.post(
-    #     "/deactivate",
-    #     description="Эндпоинт для деактивации текущего пользователя",
-    #     tags=["auth"],
-    # )
-    # async def deactivate_user(
-    #         current_user: Annotated[User, Depends(get_current_user)],
-    #         db: AsyncSession = Depends(get_db)
-    # ):
-    #     """Деактивирует текущего пользователя"""
-    #     if not current_user.is_active:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Пользователь уже неактивен"
-    #         )
-    #
-    #     current_user.is_active = False
-    #     db.add(current_user)
-    #     db.commit()
-    #     db.refresh(current_user)
-    #
-    #     return {"message": f"Пользователь {current_user.login} деактивирован", "is_active": current_user.is_active}

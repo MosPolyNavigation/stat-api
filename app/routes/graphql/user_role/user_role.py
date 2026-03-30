@@ -16,6 +16,7 @@ from app.routes.graphql.permissions import (
     ensure_roles_grant_permission,
     validate_user_permissions_by_ids
 )
+from app.services.permission_service import PermissionService
 from app.models import UserRole, User, Role, RoleRightGoal
 from .types import UserRoleType, GrantRoleResult, UserType
 from .inputs import GrantRoleInput
@@ -170,6 +171,7 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     """
     session: AsyncSession = await ensure_roles_grant_permission(info)
     current_user = info.context["current_user"]
+    service: PermissionService = info.context["permission_service"]
     
     # Проверяем существование пользователя
     target_user = (
@@ -213,8 +215,8 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     
     # === Проверяем права пользователя через единую функцию ===
     missing = await validate_user_permissions_by_ids(
-        current_user, 
-        session, 
+        current_user.id, 
+        service, 
         required_permissions
     )
     
@@ -292,6 +294,7 @@ async def revoke_role(
     
     session: AsyncSession = await ensure_roles_grant_permission(info)
     current_user = info.context["current_user"]
+    service: PermissionService = info.context["permission_service"]
     
     # Проверяем существование связи
     user_role = (
@@ -322,8 +325,8 @@ async def revoke_role(
     
     # Проверяем, есть ли у текущего пользователя эти права
     missing = await validate_user_permissions_by_ids(
-        current_user, 
-        session, 
+        current_user.id, 
+        service, 
         required_permissions
     )
     

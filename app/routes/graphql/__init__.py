@@ -6,6 +6,7 @@ from app.database import get_db
 from app.helpers.auth_utils import get_current_active_user
 from app.models import User
 from app.routes.graphql.schema import schema
+from app.services.permission_service import PermissionService
 
 
 async def get_context(
@@ -14,7 +15,8 @@ async def get_context(
 ) -> dict[str, Any]:
     return {
         "db": db,
-        "current_user": current_user
+        "current_user": current_user,
+        "permission_service": PermissionService(db)
     }
 
 graphql_router = GraphQLRouter(
