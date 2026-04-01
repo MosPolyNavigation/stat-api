@@ -12,9 +12,7 @@ from app.constants import (
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
 )
-from app.models.nav.corpus import Corpus
 from app.models.nav.plan import Plan
-from app.models.nav.static import Static
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -79,7 +77,7 @@ class NavPlanFilterInput:
 def _to_nav_plan(model: Plan) -> NavPlanType:
     from .campus import _to_nav_campus_safe
     from .floor import _to_nav_floor
-    from .static import _to_nav_static_safe
+    from .static import _to_nav_static
 
     return NavPlanType(
         id=model.id,
@@ -96,7 +94,7 @@ def _to_nav_plan(model: Plan) -> NavPlanType:
         nearest_shared_wc=model.nearest_shared_wc,
         campus=_to_nav_campus_safe(model.corpus) if model.corpus else None,
         floor=_to_nav_floor(model.floor) if model.floor else None,
-        svg=_to_nav_static_safe(model.svg) if model.svg else None,
+        svg=_to_nav_static(model.svg) if model.svg else None,
     )
 
 
@@ -151,7 +149,7 @@ async def resolve_nav_plans(
     statement = _apply_plan_filters(
         select(Plan)
         .options(
-            selectinload(Plan.corpus).selectinload(Corpus.locations),
+            selectinload(Plan.corpus),
             selectinload(Plan.floor),
             selectinload(Plan.svg),
         )

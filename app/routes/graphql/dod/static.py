@@ -71,10 +71,6 @@ def _to_dod_nav_static(model: DodStatic) -> DodNavStaticType:
     )
 
 
-def _to_dod_nav_static_safe(model: DodStatic) -> DodNavStaticType:
-    return _to_dod_nav_static(model)
-
-
 def _apply_static_filters(statement, filter_data: Optional[DodNavStaticFilterInput]):
     if not filter_data:
         return statement

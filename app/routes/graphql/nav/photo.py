@@ -8,7 +8,6 @@ from strawberry import Info
 
 from app.constants import VIEW_RIGHT_NAME
 from app.models.nav.aud_photo import AudPhoto
-from app.models.nav.auditory import Auditory
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -95,7 +94,7 @@ async def resolve_nav_auditory_photos(
 
     statement = _apply_photo_filters(
         select(AudPhoto)
-        .options(selectinload(AudPhoto.auditory).selectinload(Auditory.typ))
+        .options(selectinload(AudPhoto.auditory))
         .order_by(AudPhoto.id),
         filter,
     )

@@ -55,10 +55,6 @@ def _to_dod_nav_type(model: DodType) -> DodNavTypeType:
     return DodNavTypeType(id=model.id, name=model.name)
 
 
-def _to_dod_nav_type_safe(model: DodType) -> DodNavTypeType:
-    return _to_dod_nav_type(model)
-
-
 def _apply_type_filters(statement, filter_data: Optional[DodNavTypeFilterInput]):
     if not filter_data:
         return statement

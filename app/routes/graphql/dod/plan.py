@@ -12,7 +12,6 @@ from app.constants import (
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
 )
-from app.models.dod.corpus import DodCorpus
 from app.models.dod.plan import DodPlan
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
@@ -78,7 +77,7 @@ class DodNavPlanFilterInput:
 def _to_dod_nav_plan(model: DodPlan) -> DodNavPlanType:
     from .campus import _to_dod_nav_campus_safe
     from .floor import _to_dod_nav_floor
-    from .static import _to_dod_nav_static_safe
+    from .static import _to_dod_nav_static
 
     return DodNavPlanType(
         id=model.id,
@@ -95,7 +94,7 @@ def _to_dod_nav_plan(model: DodPlan) -> DodNavPlanType:
         nearest_shared_wc=model.nearest_shared_wc,
         campus=_to_dod_nav_campus_safe(model.corpus) if model.corpus else None,
         floor=_to_dod_nav_floor(model.floor) if model.floor else None,
-        svg=_to_dod_nav_static_safe(model.svg) if model.svg else None,
+        svg=_to_dod_nav_static(model.svg) if model.svg else None,
     )
 
 
@@ -150,7 +149,7 @@ async def resolve_dod_nav_plans(
     statement = _apply_plan_filters(
         select(DodPlan)
         .options(
-            selectinload(DodPlan.corpus).selectinload(DodCorpus.locations),
+            selectinload(DodPlan.corpus),
             selectinload(DodPlan.floor),
             selectinload(DodPlan.svg),
         )

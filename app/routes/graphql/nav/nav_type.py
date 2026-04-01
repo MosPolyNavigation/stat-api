@@ -55,10 +55,6 @@ def _to_nav_type(model: NavTypeModel) -> NavTypeType:
     return NavTypeType(id=model.id, name=model.name)
 
 
-def _to_nav_type_safe(model: NavTypeModel) -> NavTypeType:
-    return _to_nav_type(model)
-
-
 def _apply_type_filters(statement, filter_data: Optional[NavTypeFilterInput]):
     if not filter_data:
         return statement

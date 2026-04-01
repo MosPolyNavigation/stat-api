@@ -13,8 +13,6 @@ from app.constants import (
     VIEW_RIGHT_NAME,
 )
 from app.models.nav.auditory import Auditory
-from app.models.nav.plan import Plan
-from app.models.nav.corpus import Corpus
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -75,7 +73,7 @@ class NavAuditoryFilterInput:
 
 
 def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
-    from .nav_type import _to_nav_type_safe
+    from .nav_type import _to_nav_type
     from .photo import _to_nav_auditory_photo_safe
     from .plan import _to_nav_plan_safe
 
@@ -90,7 +88,7 @@ def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
         additional_info=model.additional_info,
         comments=model.comments,
         link=model.link,
-        type=_to_nav_type_safe(model.typ) if model.typ else None,
+        type=_to_nav_type(model.typ) if model.typ else None,
         plan=_to_nav_plan_safe(model.plans) if model.plans else None,
         photos=[
             _to_nav_auditory_photo_safe(photo)
@@ -149,11 +147,7 @@ async def resolve_nav_auditories(
         select(Auditory)
         .options(
             selectinload(Auditory.typ),
-            selectinload(Auditory.plans)
-            .selectinload(Plan.corpus)
-            .selectinload(Corpus.locations),
-            selectinload(Auditory.plans).selectinload(Plan.floor),
-            selectinload(Auditory.plans).selectinload(Plan.svg),
+            selectinload(Auditory.plans),
             selectinload(Auditory.photos),
         )
         .order_by(Auditory.id),

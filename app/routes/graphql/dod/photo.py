@@ -8,7 +8,6 @@ from strawberry import Info
 
 from app.constants import VIEW_RIGHT_NAME
 from app.models.dod.aud_photo import DodAudPhoto
-from app.models.dod.auditory import DodAuditory
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -98,9 +97,7 @@ async def resolve_dod_nav_auditory_photos(
 
     statement = _apply_photo_filters(
         select(DodAudPhoto)
-        .options(
-            selectinload(DodAudPhoto.auditory).selectinload(DodAuditory.typ)
-        )
+        .options(selectinload(DodAudPhoto.auditory))
         .order_by(DodAudPhoto.id),
         filter,
     )

@@ -13,8 +13,6 @@ from app.constants import (
     VIEW_RIGHT_NAME,
 )
 from app.models.dod.auditory import DodAuditory
-from app.models.dod.corpus import DodCorpus
-from app.models.dod.plan import DodPlan
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -75,7 +73,7 @@ class DodNavAuditoryFilterInput:
 
 
 def _to_dod_nav_auditory(model: DodAuditory) -> DodNavAuditoryType:
-    from .nav_type import _to_dod_nav_type_safe
+    from .nav_type import _to_dod_nav_type
     from .photo import _to_dod_nav_auditory_photo_safe
     from .plan import _to_dod_nav_plan_safe
 
@@ -90,7 +88,7 @@ def _to_dod_nav_auditory(model: DodAuditory) -> DodNavAuditoryType:
         additional_info=model.additional_info,
         comments=model.comments,
         link=model.link,
-        type=_to_dod_nav_type_safe(model.typ) if model.typ else None,
+        type=_to_dod_nav_type(model.typ) if model.typ else None,
         plan=_to_dod_nav_plan_safe(model.plans) if model.plans else None,
         photos=[
             _to_dod_nav_auditory_photo_safe(photo)
@@ -152,11 +150,7 @@ async def resolve_dod_nav_auditories(
         select(DodAuditory)
         .options(
             selectinload(DodAuditory.typ),
-            selectinload(DodAuditory.plans)
-            .selectinload(DodPlan.corpus)
-            .selectinload(DodCorpus.locations),
-            selectinload(DodAuditory.plans).selectinload(DodPlan.floor),
-            selectinload(DodAuditory.plans).selectinload(DodPlan.svg),
+            selectinload(DodAuditory.plans),
             selectinload(DodAuditory.photos),
         )
         .order_by(DodAuditory.id),

@@ -71,10 +71,6 @@ def _to_nav_static(model: Static) -> NavStaticType:
     )
 
 
-def _to_nav_static_safe(model: Static) -> NavStaticType:
-    return _to_nav_static(model)
-
-
 def _apply_static_filters(statement, filter_data: Optional[NavStaticFilterInput]):
     if not filter_data:
         return statement
