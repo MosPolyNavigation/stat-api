@@ -1,3 +1,4 @@
+import asyncio
 import os
 from PIL import Image
 from typing import Optional
@@ -66,7 +67,7 @@ async def create_thumbnail_async(
 ) -> Optional[str]:
     """
     Асинхронная обертка для создания thumbnail.
-    Выполняет создание thumbnail в синхронном режиме, так как Pillow не поддерживает async.
+    Выполняет создание thumbnail в отдельном потоке, чтобы не блокировать event loop.
 
     Args:
         source_path: Полный путь к оригинальному изображению
@@ -77,4 +78,10 @@ async def create_thumbnail_async(
     Returns:
         Имя файла thumbnail или None в случае ошибки
     """
-    return create_thumbnail(source_path, thumbnail_dir, size, quality)
+    return await asyncio.to_thread(
+        create_thumbnail,
+        source_path,
+        thumbnail_dir,
+        size,
+        quality
+    )
