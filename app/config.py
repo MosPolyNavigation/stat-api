@@ -28,8 +28,8 @@ class Settings(BaseSettings):
     allowed_hosts: Annotated[set[str], NoDecode] = ""
     allowed_methods: Annotated[set[str], NoDecode] = "*,"
     allowed_headers: Annotated[set[str], NoDecode] = "Authorization,"
-    access_secret: str
-    refresh_secret: str
+    access_secret: str = "test-access-secret"
+    refresh_secret: str = "test-refresh-secret"
     access_duration: int = 900
     refresh_duration: int = 2592000
 
