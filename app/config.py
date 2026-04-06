@@ -3,7 +3,9 @@ from pydantic import PostgresDsn, field_validator
 from app.helpers.dsn import SqliteDsn
 from functools import lru_cache
 from typing import Annotated
+from pathlib import Path
 
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 class Settings(BaseSettings):
     """
@@ -26,6 +28,10 @@ class Settings(BaseSettings):
     allowed_hosts: Annotated[set[str], NoDecode] = ""
     allowed_methods: Annotated[set[str], NoDecode] = "*,"
     allowed_headers: Annotated[set[str], NoDecode] = "Authorization,"
+    access_secret: str
+    refresh_secret: str
+    access_duration: int = 900
+    refresh_duration: int = 2592000
 
     @field_validator('allowed_hosts', mode='before')
     @classmethod
@@ -43,7 +49,9 @@ class Settings(BaseSettings):
         return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
     model_config = SettingsConfigDict(
-        env_file='.env', env_file_encoding='utf-8', extra='ignore'
+        env_file=BASE_DIR / ".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
     )
 
 
