@@ -1,7 +1,6 @@
 from datetime import datetime, timezone
 from typing import Annotated, Optional
 from fastapi import APIRouter, Depends, HTTPException, Cookie, Form, Request, Response, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
@@ -13,6 +12,7 @@ from app.helpers.permissions import group_rights_by_goals
 from app.schemas import UserOut
 from app.services.permission_service import PermissionService
 from app.helpers.token_utils import REFRESH_COOKIE_NAME, clear_refresh_cookie, create_access_token, create_refresh_token_session, decode_refresh_token, hash_token_value, normalize_token_error, set_refresh_cookie, validate_refresh_payload, get_refresh_session
+from app.schemas.auth import AuthScheme
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -57,14 +57,12 @@ async def issue_refresh_token(
     db: AsyncSession,
     request: Request,
     response: Response,
-    client_id: str | None = None,
     user_ip: str | None = None,
 ) -> None:
     refresh_token, _ = await create_refresh_token_session(
         user=user,
         db=db,
         request=request,
-        client_id=client_id,
         user_ip=user_ip,
     )
     set_refresh_cookie(response, request, refresh_token)
@@ -84,7 +82,7 @@ def register_endpoint(router: APIRouter):
     async def login(
             request: Request,
             response: Response,
-            form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+            form_data: Annotated[AuthScheme, Form()],
             db: AsyncSession = Depends(get_db)
     ):
         user = await authenticate_user(db, form_data.username, form_data.password)
@@ -93,13 +91,13 @@ def register_endpoint(router: APIRouter):
 
         access_token = await create_access_token(user, db)
 
-        if "long" in form_data.scopes:
+        if form_data.scope == "long":
             await issue_refresh_token(
                 user=user,
                 db=db,
                 request=request,
                 response=response,
-                client_id=form_data.client_id,
+                user_ip=form_data.user_ip,
             )
             await db.commit()
 
@@ -142,7 +140,7 @@ def register_endpoint(router: APIRouter):
             request: Request,
             response: Response,
             db: AsyncSession = Depends(get_db),
-            client_id: str | None = Form(default=None),
+            user_ip: str | None = Form(default=None),
             refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
     ):
         # Refresh токен должен приходить в cookie
@@ -201,8 +199,7 @@ def register_endpoint(router: APIRouter):
             db=db,
             request=request,
             response=response,
-            client_id=client_id,
-            user_ip=session.user_ip,
+            user_ip=user_ip if user_ip is not None else session.user_ip,
         )
         await db.commit()
 

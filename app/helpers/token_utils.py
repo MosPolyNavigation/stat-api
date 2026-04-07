@@ -79,7 +79,6 @@ async def create_refresh_token_session(
     user: User,
     db: AsyncSession,
     request: Request,
-    client_id: str | None = None,
     user_ip: str | None = None,
 ) -> tuple[str, RefreshToken]:
     raw_jti, refresh_token, expires_at = build_refresh_token(user.id)
@@ -89,7 +88,7 @@ async def create_refresh_token_session(
         jti=hash_token_value(raw_jti),
         exp_date=expires_at.replace(tzinfo=None),
         browser=parse_browser(request.headers.get("User-Agent")),
-        user_ip=client_id if client_id is not None else user_ip,
+        user_ip=user_ip,
         revoked=False,
     )
     db.add(session)
