@@ -25,7 +25,7 @@ from app.routes.graphql.pagination import (
 )
 from app.routes.graphql.permissions import ensure_nav_permission
 
-from .common import get_or_error
+from .common import get_or_error, validate_json_array
 from .types import DodNavCampusType
 
 
@@ -43,6 +43,7 @@ class DodNavCampusInput:
     name: str
     ready: bool
     comments: Optional[str] = None
+    stair_groups: Optional[str] = None
 
 
 @strawberry.input
@@ -52,6 +53,7 @@ class DodNavCampusUpdateInput:
     name: Optional[str] = None
     ready: Optional[bool] = None
     comments: Optional[str] = None
+    stair_groups: Optional[str] = None
 
 
 @strawberry.input
@@ -160,7 +162,7 @@ async def create_dod_nav_campus(
         loc_id=data.loc_id,
         name=data.name,
         ready=data.ready,
-        stair_groups=None,
+        stair_groups=validate_json_array(data.stair_groups, "stair_groups"),
         comments=data.comments,
     )
     session.add(campus)
@@ -186,6 +188,8 @@ async def update_dod_nav_campus(
         campus.ready = data.ready
     if data.comments is not None:
         campus.comments = data.comments
+    if data.stair_groups is not None:
+        campus.stair_groups = validate_json_array(data.stair_groups, "stair_groups")
     await session.commit()
     await session.refresh(campus)
     return _to_dod_nav_campus_safe(campus)
