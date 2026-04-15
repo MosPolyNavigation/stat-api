@@ -18,6 +18,7 @@ from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, res
 from .user_role import RoleRightGoalConnection, resolve_role_right_goals, RoleRightGoalType, resolve_role_right_goal
 from .user_role import RightConnection, resolve_rights
 from .user_role import GoalConnection, resolve_goals
+from .auth import RefreshTokenConnection, resolve_refresh_tokens
 
 
 @strawberry.type
@@ -199,4 +200,8 @@ class Query:
     goals: GoalConnection = strawberry.field(
         resolver=resolve_goals,
         description="Get goals with pagination."
+    )
+    refresh_tokens: RefreshTokenConnection = strawberry.field(
+        resolver=resolve_refresh_tokens,
+        description="Get refresh tokens with pagination."
     )
