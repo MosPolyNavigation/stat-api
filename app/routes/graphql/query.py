@@ -48,22 +48,12 @@ from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
 from .user_id import UserIdType, resolve_user_ids
-from .user_role import GoalConnection, resolve_goals
+from .user_role import UserConnection, resolve_users, UserType, resolve_user
+from .user_role import RoleConnection, resolve_roles, RoleType, resolve_role
+from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, resolve_user_role
+from .user_role import RoleRightGoalConnection, resolve_role_right_goals, RoleRightGoalType, resolve_role_right_goal
 from .user_role import RightConnection, resolve_rights
-from .user_role import RoleConnection, RoleType, resolve_role, resolve_roles
-from .user_role import (
-    RoleRightGoalConnection,
-    RoleRightGoalType,
-    resolve_role_right_goal,
-    resolve_role_right_goals,
-)
-from .user_role import UserConnection, UserType, resolve_user, resolve_users
-from .user_role import (
-    UserRoleConnection,
-    UserRoleType,
-    resolve_user_role,
-    resolve_user_roles,
-)
+from .user_role import GoalConnection, resolve_goals
 
 
 @strawberry.type
