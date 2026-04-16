@@ -11,6 +11,7 @@ from app.jobs.rasp import fetch_cur_rasp
 from app.jobs.schedule.schedule import fetch_cur_data
 from app.jobs.location_data.worker import fetch_location_data
 from app.jobs.governor_cleaner.stat_cleaner import create_cleanup_job
+from app.jobs.refresh_token import delete_old_refresh_tokens, revoke_expired_refresh_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +46,25 @@ async def lifespan(app: FastAPI):
         trigger="interval",
         minutes=10,
         id="review_rate_limiter_cleanup",
+    )
+    scheduler.add_job(
+        revoke_expired_refresh_tokens,
+        trigger="interval",
+        minutes=5,
+        id="refresh_token_auto_revoke",
+        name="Auto revoke expired refresh tokens",
+        replace_existing=True,
+        max_instances=1,
+    )
+    scheduler.add_job(
+        delete_old_refresh_tokens,
+        trigger="cron",
+        hour=22,
+        minute=49,
+        id="refresh_token_daily_cleanup",
+        name="Delete old refresh tokens",
+        replace_existing=True,
+        max_instances=1,
     )
 
     await fetch_location_data()
