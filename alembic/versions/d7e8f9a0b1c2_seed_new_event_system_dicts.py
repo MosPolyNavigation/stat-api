@@ -124,27 +124,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Remove only relations inserted by this migration.
     op.execute(
-        """
-        DELETE FROM allowed_payloads
-        WHERE (event_type_id, payload_type_id) IN (
-            SELECT et.id, pt.id
-            FROM event_types et
-            JOIN payload_types pt ON (
-                (et.code_name = 'site' AND pt.code_name = 'endpoint') OR
-                (et.code_name = 'auds' AND pt.code_name = 'auditory_id') OR
-                (et.code_name = 'auds' AND pt.code_name = 'success') OR
-                (et.code_name = 'ways' AND pt.code_name = 'start_id') OR
-                (et.code_name = 'ways' AND pt.code_name = 'end_id') OR
-                (et.code_name = 'ways' AND pt.code_name = 'success') OR
-                (et.code_name = 'plans' AND pt.code_name = 'plan_id')
-            )
-        )
-        """
+        "DELETE FROM allowed_payloads WHERE event_type_id IN (1, 2, 3, 4) AND payload_type_id IN (1, 2, 3, 4, 5, 6)"
     )
 
-    # payloads/events are not cleaned explicitly:
+    # payloads/events are not cleaned explicitly.
     # they are removed by FK cascades from deleted dictionary rows.
     op.execute("DELETE FROM payload_types WHERE id IN (1, 2, 3, 4, 5, 6)")
     op.execute("DELETE FROM event_types WHERE id IN (1, 2, 3, 4)")
