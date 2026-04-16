@@ -24,7 +24,7 @@ from app.routes.graphql.pagination import (
 )
 from app.routes.graphql.permissions import ensure_nav_permission
 
-from .common import get_or_error
+from .common import get_or_error, validate_json_array
 from .types import NavLocationType
 
 
@@ -148,7 +148,7 @@ async def create_nav_location(info: Info, data: NavLocationInput) -> NavLocation
         ready=data.ready,
         address=data.address,
         metro=data.metro,
-        crossings=data.crossings,
+        crossings=validate_json_array(data.crossings, "crossings"),
         comments=data.comments,
     )
     session.add(location)
@@ -175,7 +175,7 @@ async def update_nav_location(info: Info, id: int, data: NavLocationUpdateInput)
     if data.comments is not None:
         location.comments = data.comments
     if data.crossings is not None:
-        location.crossings = data.crossings
+        location.crossings = validate_json_array(data.crossings, "crossings")
     await session.commit()
     await session.refresh(location)
     return _to_nav_location(location)

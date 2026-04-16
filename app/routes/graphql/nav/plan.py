@@ -25,7 +25,7 @@ from app.routes.graphql.pagination import (
 )
 from app.routes.graphql.permissions import ensure_nav_permission
 
-from .common import get_or_error
+from .common import get_or_error, validate_json_array
 from .types import NavPlanType
 
 
@@ -46,6 +46,8 @@ class NavPlanInput:
     cor_id: int
     floor_id: int
     ready: bool
+    entrances: Optional[str] = None
+    graph: Optional[str] = None
     nearest_entrance: Optional[str] = None
     nearest_man_wc: Optional[str] = None
     nearest_woman_wc: Optional[str] = None
@@ -58,6 +60,8 @@ class NavPlanUpdateInput:
     cor_id: Optional[int] = None
     floor_id: Optional[int] = None
     ready: Optional[bool] = None
+    entrances: Optional[str] = None
+    graph: Optional[str] = None
     nearest_entrance: Optional[str] = None
     nearest_man_wc: Optional[str] = None
     nearest_woman_wc: Optional[str] = None
@@ -190,8 +194,8 @@ async def create_nav_plan(info: Info, data: NavPlanInput) -> NavPlanType:
         cor_id=data.cor_id,
         floor_id=data.floor_id,
         ready=data.ready,
-        entrances=DEFAULT_PLAN_ENTRANCES,
-        graph=DEFAULT_PLAN_GRAPH,
+        entrances=validate_json_array(data.entrances, "entrances"),
+        graph=validate_json_array(data.graph, "graph"),
         svg_id=None,
         nearest_entrance=data.nearest_entrance,
         nearest_man_wc=data.nearest_man_wc,
@@ -215,6 +219,10 @@ async def update_nav_plan(info: Info, id: int, data: NavPlanUpdateInput) -> NavP
         plan.floor_id = data.floor_id
     if data.ready is not None:
         plan.ready = data.ready
+    if data.entrances is not None:
+        plan.entrances = validate_json_array(data.entrances, "entrances")
+    if data.graph is not None:
+        plan.graph = validate_json_array(data.graph, "graph")
     if data.nearest_entrance is not None:
         plan.nearest_entrance = data.nearest_entrance
     if data.nearest_man_wc is not None:

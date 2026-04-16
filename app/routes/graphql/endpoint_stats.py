@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 from typing import Optional
 from .permissions import ensure_stats_view_permission
-from app.handlers import get_endpoint_stats, get_agr_endp_stats
+from app.handlers import get_agr_endp_stats_stub, get_endpoint_stats_stub
 from app.schemas import Statistics, AggregatedStatistics, FilterQuery
 from app.schemas.filter import TargetEnum
 
@@ -137,7 +137,8 @@ async def resolve_endpoint_statistics(
         start_year=effective_start_year,
         end_year=effective_end_year,
     )
-    stats = await get_endpoint_stats(session, params)
+    # TODO: restore after analytics refactor
+    stats = await get_endpoint_stats_stub(session, params)
     if by_date is not None and effective_start_date is not None and effective_end_date is not None:
         stats = _fill_missing_dates(stats, effective_start_date, effective_end_date)
     return [_to_endpoint_statistics(stat) for stat in stats]
@@ -221,5 +222,6 @@ async def resolve_endpoint_statistics_avg(
         start_year=effective_start_year,
         end_year=effective_end_year,
     )
-    aggregated_stats = await get_agr_endp_stats(session, params)
+    # TODO: restore after analytics refactor
+    aggregated_stats = await get_agr_endp_stats_stub(session, params)
     return _to_aggregated_endpoint_statistics(aggregated_stats)
