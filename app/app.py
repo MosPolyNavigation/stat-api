@@ -87,6 +87,13 @@ app = FastAPI(
     openapi_url=None,
     lifespan=lifespan
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_hosts,
+    allow_methods=settings.allowed_methods,
+    allow_headers=settings.allowed_headers
+)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 add_pagination(app)
 app.state = AppState()
 
@@ -108,14 +115,6 @@ app.mount(
     ),
     "admin"
 )
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_hosts,
-    allow_methods=settings.allowed_methods,
-    allow_headers=settings.allowed_headers
-)
-app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.exception_handler(SQLAlchemyError)
