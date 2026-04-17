@@ -22,6 +22,9 @@ dependencies = [
     "transliterate",
     "aiosqlite",
     "asyncpg",
+    "pillow",
+    "PyJWT",
+    "user-agents",
 ]
 
 [dependency-groups]

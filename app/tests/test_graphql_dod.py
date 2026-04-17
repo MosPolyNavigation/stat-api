@@ -1,4 +1,4 @@
-﻿"""Integration tests for DOD GraphQL navigation endpoints."""
+"""Integration tests for DOD GraphQL navigation endpoints."""
 
 from app.tests.base import client
 
@@ -13,30 +13,57 @@ def graphql_query(query: str):
 def test_200_dod_nav_queries_return_dod_seed_data():
     query = """
     {
-        dodNavLocations(idSys: "DD") {
-            id
-            idSys
-            name
-            short
+        dodNavLocations(filter: {idSys: "DD"}) {
+            nodes {
+                id
+                idSys
+                name
+                short
+            }
         }
-        dodNavCampuses(idSys: "dd-test") {
-            id
-            idSys
-            name
-            locId
+        dodNavCampuses(filter: {idSys: "dd-test"}) {
+            nodes {
+                id
+                idSys
+                name
+                locId
+                location {
+                    idSys
+                }
+            }
         }
-        dodNavPlans(idSys: "dod-plan-1") {
-            id
-            idSys
-            corId
-            floorId
+        dodNavPlans(filter: {idSys: "dod-plan-1"}) {
+            nodes {
+                id
+                idSys
+                corId
+                floorId
+                campus {
+                    idSys
+                }
+            }
         }
-        dodNavAuditories(idSys: "dod-101") {
-            id
-            idSys
-            name
-            planId
-            typeId
+        dodNavAuditories(filter: {idSys: "dod-101"}) {
+            nodes {
+                id
+                idSys
+                name
+                planId
+                typeId
+                photos {
+                    id
+                    link
+                }
+            }
+        }
+        dodNavAuditoryPhotos(filter: {audId: 1}) {
+            nodes {
+                id
+                audId
+                auditory {
+                    idSys
+                }
+            }
         }
     }
     """
@@ -45,10 +72,13 @@ def test_200_dod_nav_queries_return_dod_seed_data():
 
     payload = response.json()
     assert "errors" not in payload
-    assert payload["data"]["dodNavLocations"][0]["idSys"] == "DD"
-    assert payload["data"]["dodNavCampuses"][0]["idSys"] == "dd-test"
-    assert payload["data"]["dodNavPlans"][0]["idSys"] == "dod-plan-1"
-    assert payload["data"]["dodNavAuditories"][0]["idSys"] == "dod-101"
+    assert payload["data"]["dodNavLocations"]["nodes"][0]["idSys"] == "DD"
+    assert payload["data"]["dodNavCampuses"]["nodes"][0]["idSys"] == "dd-test"
+    assert payload["data"]["dodNavCampuses"]["nodes"][0]["location"]["idSys"] == "DD"
+    assert payload["data"]["dodNavPlans"]["nodes"][0]["idSys"] == "dod-plan-1"
+    assert payload["data"]["dodNavPlans"]["nodes"][0]["campus"]["idSys"] == "dd-test"
+    assert payload["data"]["dodNavAuditories"]["nodes"][0]["idSys"] == "dod-101"
+    assert payload["data"]["dodNavAuditoryPhotos"]["nodes"][0]["auditory"]["idSys"] == "dod-101"
 
 
 def test_200_dod_nav_mutations_full_crud_flow():
@@ -164,32 +194,74 @@ def test_200_dod_nav_mutations_full_crud_flow():
 
     verify_query = f"""
     {{
-        dodNavLocations(id: {loc_id}) {{ id name }}
-        dodNavCampuses(id: {campus_id}) {{ id comments }}
-        dodNavTypes(id: {type_id}) {{ id name }}
-        dodNavPlans(id: {plan_id}) {{ id nearestEntrance }}
-        dodNavAuditories(id: {auditory_id}) {{ id name }}
-        dodNavStatics(id: {static_id}) {{ id path }}
+        dodNavLocations(filter: {{id: {loc_id}}}) {{
+            nodes {{
+                id
+                name
+            }}
+        }}
+        dodNavCampuses(filter: {{id: {campus_id}}}) {{
+            nodes {{
+                id
+                comments
+            }}
+        }}
+        dodNavTypes(filter: {{id: {type_id}}}) {{
+            nodes {{
+                id
+                name
+            }}
+        }}
+        dodNavPlans(filter: {{id: {plan_id}}}) {{
+            nodes {{
+                id
+                nearestEntrance
+            }}
+        }}
+        dodNavAuditories(filter: {{id: {auditory_id}}}) {{
+            nodes {{
+                id
+                name
+            }}
+        }}
+        dodNavStatics(filter: {{id: {static_id}}}) {{
+            nodes {{
+                id
+                path
+            }}
+        }}
     }}
     """
     verify_response = graphql_query(verify_query)
     assert verify_response.status_code == 200
     verify_payload = verify_response.json()
     assert "errors" not in verify_payload
-    assert verify_payload["data"]["dodNavLocations"][0]["name"] == "DOD Location 2 Updated"
-    assert verify_payload["data"]["dodNavCampuses"][0]["comments"] == "updated"
-    assert verify_payload["data"]["dodNavTypes"][0]["name"] == "DOD Type 2 Updated"
-    assert verify_payload["data"]["dodNavPlans"][0]["nearestEntrance"] == "entry-2-updated"
-    assert verify_payload["data"]["dodNavAuditories"][0]["name"] == "D-203"
-    assert verify_payload["data"]["dodNavStatics"][0]["path"] == "/dod/2-updated.svg"
+    assert verify_payload["data"]["dodNavLocations"]["nodes"][0]["name"] == "DOD Location 2 Updated"
+    assert verify_payload["data"]["dodNavCampuses"]["nodes"][0]["comments"] == "updated"
+    assert verify_payload["data"]["dodNavTypes"]["nodes"][0]["name"] == "DOD Type 2 Updated"
+    assert verify_payload["data"]["dodNavPlans"]["nodes"][0]["nearestEntrance"] == "entry-2-updated"
+    assert verify_payload["data"]["dodNavAuditories"]["nodes"][0]["name"] == "D-203"
+    assert verify_payload["data"]["dodNavStatics"]["nodes"][0]["path"] == "/dod/2-updated.svg"
 
 
 def test_200_dod_and_default_nav_data_are_isolated():
     query = """
     {
-        navLocations(idSys: "AV") { idSys }
-        dodFromAv: dodNavLocations(idSys: "AV") { idSys }
-        dodFromDd: dodNavLocations(idSys: "DD") { idSys }
+        navLocations(filter: {idSys: "AV"}) {
+            nodes {
+                idSys
+            }
+        }
+        dodFromAv: dodNavLocations(filter: {idSys: "AV"}) {
+            nodes {
+                idSys
+            }
+        }
+        dodFromDd: dodNavLocations(filter: {idSys: "DD"}) {
+            nodes {
+                idSys
+            }
+        }
     }
     """
     response = graphql_query(query)
@@ -197,7 +269,6 @@ def test_200_dod_and_default_nav_data_are_isolated():
 
     payload = response.json()
     assert "errors" not in payload
-    assert payload["data"]["navLocations"] == [{"idSys": "AV"}]
-    assert payload["data"]["dodFromAv"] == []
-    assert payload["data"]["dodFromDd"] == [{"idSys": "DD"}]
-
+    assert payload["data"]["navLocations"]["nodes"] == [{"idSys": "AV"}]
+    assert payload["data"]["dodFromAv"]["nodes"] == []
+    assert payload["data"]["dodFromDd"]["nodes"] == [{"idSys": "DD"}]
