@@ -6,7 +6,7 @@ Create Date: 2025-11-30 12:35:01.781653
 
 """
 from typing import Sequence, Union
-from app.helpers.data import review_status
+from app.constants import REVIEW_STATUSES
 from alembic import op
 import sqlalchemy as sa
 
@@ -26,7 +26,7 @@ def data_upgrades():
     )
     op.bulk_insert(
         review_statuses_table,
-        list([{'id': id_, 'name': name} for id_, name in review_status.items()])
+        list([{'id': id_, 'name': name} for id_, name in REVIEW_STATUSES.items()])
     )
 
 
