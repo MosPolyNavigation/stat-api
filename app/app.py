@@ -65,7 +65,6 @@ tags_metadata = [
 settings = get_settings()
 CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
 PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
-FRONT_DIR = path.join(PROJECT_DIR, "dist")
 ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
 AUDITORY_STATIC_DIR = path.join(settings.static_files, "auditories")
@@ -80,8 +79,6 @@ if not path.exists(PLANS_STATIC_DIR):
     makedirs(PLANS_STATIC_DIR)
 if not path.exists(THUMBNAILS_DIR):
     makedirs(THUMBNAILS_DIR)
-if not path.exists(FRONT_DIR):
-    makedirs(FRONT_DIR)
 if not path.exists(ADMIN_DIR):
     makedirs(ADMIN_DIR)
 
@@ -93,6 +90,13 @@ app = FastAPI(
     openapi_url=None,
     lifespan=lifespan
 )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.allowed_hosts,
+    allow_methods=settings.allowed_methods,
+    allow_headers=settings.allowed_headers
+)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 add_pagination(app)
 app.state = AppState()
 
@@ -114,22 +118,6 @@ app.mount(
     ),
     "admin"
 )
-app.mount(
-    "/",
-    SPAStaticFiles(
-        directory=FRONT_DIR,
-        html=True
-    ),
-    "front"
-)
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.allowed_hosts,
-    allow_methods=settings.allowed_methods,
-    allow_headers=settings.allowed_headers
-)
-app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 
 @app.exception_handler(SQLAlchemyError)
