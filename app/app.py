@@ -65,7 +65,6 @@ tags_metadata = [
 settings = get_settings()
 CURRENT_FILE_DIR = path.dirname(path.abspath(__file__))
 PROJECT_DIR = path.dirname(CURRENT_FILE_DIR)
-FRONT_DIR = path.join(PROJECT_DIR, "dist")
 ADMIN_DIR = path.join(PROJECT_DIR, "dist-panel")
 STATIC_DIR = path.join(settings.static_files, "images")
 AUDITORY_STATIC_DIR = path.join(settings.static_files, "auditories")
@@ -77,8 +76,6 @@ if not path.exists(AUDITORY_STATIC_DIR):
     makedirs(AUDITORY_STATIC_DIR)
 if not path.exists(PLANS_STATIC_DIR):
     makedirs(PLANS_STATIC_DIR)
-if not path.exists(FRONT_DIR):
-    makedirs(FRONT_DIR)
 if not path.exists(ADMIN_DIR):
     makedirs(ADMIN_DIR)
 
@@ -110,14 +107,6 @@ app.mount(
         html=True
     ),
     "admin"
-)
-app.mount(
-    "/",
-    SPAStaticFiles(
-        directory=FRONT_DIR,
-        html=True
-    ),
-    "front"
 )
 
 app.add_middleware(
