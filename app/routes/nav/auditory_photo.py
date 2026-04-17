@@ -1,5 +1,6 @@
 import os
 import uuid
+import base64
 import aiofiles
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -12,6 +13,7 @@ from app.database import get_db
 from app.helpers.errors import LookupException
 from app.helpers.path import ALLOWED_EXTENSIONS, secure_image_path
 from app.helpers.permissions import require_rights
+from app.helpers.thumbnail import create_thumbnail_async
 from app.models.nav.aud_photo import AudPhoto
 from app.models.nav.auditory import Auditory
 from app.schemas import Status
@@ -43,7 +45,9 @@ def register_endpoint(router: APIRouter):
             raise HTTPException(status_code=404, detail="Auditory not found")
 
         base_path = os.path.join(get_settings().static_files, "auditories")
+        thumbnail_path = os.path.join(get_settings().static_files, "thumbnails")
         os.makedirs(base_path, exist_ok=True)
+        os.makedirs(thumbnail_path, exist_ok=True)
 
         photos_to_create: list[AudPhoto] = []
         for photo in photos:
@@ -61,6 +65,9 @@ def register_endpoint(router: APIRouter):
             async with aiofiles.open(image_path, "wb") as file:
                 contents = await photo.read()
                 await file.write(contents)
+
+            # Создаем thumbnail для загруженного изображения
+            await create_thumbnail_async(image_path, thumbnail_path)
 
             photos_to_create.append(
                 AudPhoto(
@@ -117,3 +124,69 @@ def register_endpoint(router: APIRouter):
             .order_by(AudPhoto.id)
         )
         return list(photos.scalars().all())
+
+    @router.get(
+        "/auditory/{aud_id}/thumbnails",
+        tags=["nav"],
+        response_model=dict[str, str],
+        responses={
+            404: {"model": Status, "description": "Auditory not found"},
+        },
+    )
+    async def get_auditory_thumbnails(
+        aud_id: str,
+        db: AsyncSession = Depends(get_db),
+    ) -> dict[str, str]:
+        """
+        Получить все thumbnails для аудитории в виде словаря с base64-кодированными изображениями.
+
+        Args:
+            aud_id: ID аудитории
+            db: Сессия базы данных
+
+        Returns:
+            Словарь вида {"image_name": "base64_encoded_data", ...}
+
+        Example response:
+            {
+                "abc123.jpg": "iVBORw0KGgoAAAANS...",
+                "def456.jpg": "iVBORw0KGgoAAAANS..."
+            }
+        """
+        auditory = (
+            await db.execute(
+                Select(Auditory).filter(Auditory.id_sys == aud_id)
+            )
+        ).scalar_one_or_none()
+        if auditory is None:
+            raise HTTPException(status_code=404, detail="Auditory not found")
+
+        photos = await db.execute(
+            Select(AudPhoto.name)
+            .filter(AudPhoto.aud_id == auditory.id)
+            .order_by(AudPhoto.id)
+        )
+        photo_names = list(photos.scalars().all())
+
+        thumbnails_dir = os.path.join(get_settings().static_files, "thumbnails")
+        result = {}
+
+        for photo_name in photo_names:
+            # Заменяем расширение на .jpg для thumbnails
+            base_name = os.path.splitext(photo_name)[0]
+            thumbnail_name = f"{base_name}.jpg"
+            thumbnail_path = os.path.join(thumbnails_dir, thumbnail_name)
+
+            if os.path.exists(thumbnail_path):
+                try:
+                    async with aiofiles.open(thumbnail_path, "rb") as file:
+                        thumbnail_data = await file.read()
+                        # Кодируем в base64
+                        encoded_data = base64.b64encode(thumbnail_data).decode("utf-8")
+                        result[thumbnail_name] = encoded_data
+                except Exception as e:
+                    # Если не удалось прочитать файл, пропускаем его
+                    print(f"Error reading thumbnail {thumbnail_name}: {e}")
+                    continue
+
+        return result

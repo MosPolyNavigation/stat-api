@@ -13,3 +13,4 @@ from app.schemas.graph.data import LocationData, CorpusData, PlanData
 from app.schemas.graph.graph import Graph, Vertex, DataEntry
 from .user import UserOut
 from app.schemas.stat.tg_bot import TgBotEventIn
+from .auth import AuthScheme

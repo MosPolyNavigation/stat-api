@@ -1,30 +1,39 @@
 from typing import Optional
+
 import strawberry
-from sqlalchemy import select
+from sqlalchemy import func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from strawberry import Info
-from app.models.nav.auditory import Auditory
+
 from app.constants import (
     CREATE_RIGHT_NAME,
     DELETE_RIGHT_NAME,
     EDIT_RIGHT_NAME,
     VIEW_RIGHT_NAME,
 )
+from app.models.nav.auditory import Auditory
+from app.routes.graphql.filter_handlers import (
+    _create_pagination_info,
+    _validated_limit_2,
+    _validated_offset,
+)
+from app.routes.graphql.pagination import (
+    PageInfo,
+    PaginationInfo,
+    PaginationInput,
+)
 from app.routes.graphql.permissions import ensure_nav_permission
+
 from .common import get_or_error
+from .types import NavAuditoryType
 
 
-@strawberry.type(name="NavAuditory")
-class NavAuditoryType:
-    id: int
-    id_sys: str
-    type_id: int
-    ready: bool
-    plan_id: int
-    name: str
-    text_from_sign: Optional[str]
-    additional_info: Optional[str]
-    comments: Optional[str]
-    link: Optional[str]
+@strawberry.type
+class NavAuditoryConnection:
+    nodes: list[NavAuditoryType]
+    page_info: PageInfo
+    pagination_info: PaginationInfo
 
 
 @strawberry.input
@@ -53,7 +62,21 @@ class NavAuditoryUpdateInput:
     link: Optional[str] = None
 
 
+@strawberry.input
+class NavAuditoryFilterInput:
+    id: Optional[int] = None
+    id_sys: Optional[str] = None
+    plan_id: Optional[int] = None
+    type_id: Optional[int] = None
+    ready: Optional[bool] = None
+    name: Optional[str] = None
+
+
 def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
+    from .nav_type import _to_nav_type
+    from .photo import _to_nav_auditory_photo_safe
+    from .plan import _to_nav_plan_safe
+
     return NavAuditoryType(
         id=model.id,
         id_sys=model.id_sys,
@@ -65,28 +88,96 @@ def _to_nav_auditory(model: Auditory) -> NavAuditoryType:
         additional_info=model.additional_info,
         comments=model.comments,
         link=model.link,
+        type=_to_nav_type(model.typ) if model.typ else None,
+        plan=_to_nav_plan_safe(model.plans) if model.plans else None,
+        photos=[
+            _to_nav_auditory_photo_safe(photo)
+            for photo in model.photos
+        ] if model.photos else None,
     )
+
+
+def _to_nav_auditory_safe(model: Auditory) -> NavAuditoryType:
+    return NavAuditoryType(
+        id=model.id,
+        id_sys=model.id_sys,
+        type_id=model.type_id,
+        ready=model.ready,
+        plan_id=model.plan_id,
+        name=model.name,
+        text_from_sign=model.text_from_sign,
+        additional_info=model.additional_info,
+        comments=model.comments,
+        link=model.link,
+        type=None,
+        plan=None,
+        photos=None,
+    )
+
+
+def _apply_auditory_filters(statement, filter_data: Optional[NavAuditoryFilterInput]):
+    if not filter_data:
+        return statement
+    if filter_data.id is not None:
+        statement = statement.where(Auditory.id == filter_data.id)
+    if filter_data.id_sys is not None:
+        statement = statement.where(Auditory.id_sys == filter_data.id_sys)
+    if filter_data.plan_id is not None:
+        statement = statement.where(Auditory.plan_id == filter_data.plan_id)
+    if filter_data.type_id is not None:
+        statement = statement.where(Auditory.type_id == filter_data.type_id)
+    if filter_data.ready is not None:
+        statement = statement.where(Auditory.ready == filter_data.ready)
+    if filter_data.name is not None:
+        statement = statement.where(Auditory.name == filter_data.name)
+    return statement
 
 
 async def resolve_nav_auditories(
     info: Info,
-    id: Optional[int] = None,
-    id_sys: Optional[str] = None,
-    plan_id: Optional[int] = None,
-    type_id: Optional[int] = None,
-) -> list[NavAuditoryType]:
-    session = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
-    statement = select(Auditory).order_by(Auditory.id)
-    if id is not None:
-        statement = statement.where(Auditory.id == id)
-    if id_sys is not None:
-        statement = statement.where(Auditory.id_sys == id_sys)
-    if plan_id is not None:
-        statement = statement.where(Auditory.plan_id == plan_id)
-    if type_id is not None:
-        statement = statement.where(Auditory.type_id == type_id)
+    pagination: Optional[PaginationInput] = None,
+    filter: Optional[NavAuditoryFilterInput] = None,
+) -> NavAuditoryConnection:
+    session: AsyncSession = await ensure_nav_permission(info, VIEW_RIGHT_NAME)
+
+    limit = _validated_limit_2(pagination.limit if pagination else 10)
+    offset = _validated_offset(pagination.offset if pagination else 0)
+
+    statement = _apply_auditory_filters(
+        select(Auditory)
+        .options(
+            selectinload(Auditory.typ),
+            selectinload(Auditory.plans),
+            selectinload(Auditory.photos),
+        )
+        .order_by(Auditory.id),
+        filter,
+    )
+    count_statement = _apply_auditory_filters(
+        select(func.count()).select_from(Auditory),
+        filter,
+    )
+
+    total_count = (await session.execute(count_statement)).scalar() or 0
+
+    if offset > 0:
+        statement = statement.offset(offset)
+    if limit > 0:
+        statement = statement.limit(limit)
+
     records = (await session.execute(statement)).scalars().all()
-    return [_to_nav_auditory(record) for record in records]
+    page_info, pagination_info = _create_pagination_info(
+        total_count=total_count,
+        offset=offset,
+        limit=limit,
+        records_count=len(records),
+    )
+
+    return NavAuditoryConnection(
+        nodes=[_to_nav_auditory(record) for record in records],
+        page_info=page_info,
+        pagination_info=pagination_info,
+    )
 
 
 async def create_nav_auditory(info: Info, data: NavAuditoryInput) -> NavAuditoryType:
@@ -105,7 +196,7 @@ async def create_nav_auditory(info: Info, data: NavAuditoryInput) -> NavAuditory
     session.add(auditory)
     await session.commit()
     await session.refresh(auditory)
-    return _to_nav_auditory(auditory)
+    return _to_nav_auditory_safe(auditory)
 
 
 async def update_nav_auditory(info: Info, id: int, data: NavAuditoryUpdateInput) -> NavAuditoryType:
@@ -131,7 +222,7 @@ async def update_nav_auditory(info: Info, id: int, data: NavAuditoryUpdateInput)
         auditory.link = data.link
     await session.commit()
     await session.refresh(auditory)
-    return _to_nav_auditory(auditory)
+    return _to_nav_auditory_safe(auditory)
 
 
 async def delete_nav_auditory(info: Info, id: int) -> bool:

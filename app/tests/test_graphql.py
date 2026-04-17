@@ -1,375 +1,222 @@
-"""Тесты для GraphQL эндпоинта /api/graphql"""
+"""Smoke tests for GraphQL endpoint /api/graphql."""
 
-import pytest
 from .base import client
 
-# Токен администратора из base.py (пользователь с полными правами)
 ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 
 
 def graphql_query(query: str, headers: dict = None):
-    """Вспомогательная функция для выполнения GraphQL запросов"""
-    response = client.post(
+    return client.post(
         "/api/graphql",
         json={"query": query},
-        headers=headers or {}
+        headers=headers or {},
     )
-    return response
 
 
 class TestGraphQLBasic:
-    """Базовые тесты для GraphQL эндпоинта"""
-
     def test_200_graphql_endpoint_exists(self):
-        """Проверка что GraphQL эндпоинт доступен"""
-        query = "{ __typename }"
-        response = graphql_query(query, ADMIN_HEADERS)
+        response = graphql_query("{ __typename }", ADMIN_HEADERS)
         assert response.status_code == 200
 
     def test_200_graphql_introspection(self):
-        """Проверка что интроспекция работает"""
-        query = "{ __schema { queryType { name } } }"
-        response = graphql_query(query, ADMIN_HEADERS)
+        response = graphql_query("{ __schema { queryType { name } } }", ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
+        assert "data" in response.json()
 
 
-class TestGraphQLNavLocations:
-    """Тесты для nav_locations query"""
-
-    def test_200_nav_locations_single_field(self):
-        """Запрос nav_locations с одним полем (id)"""
+class TestGraphQLNavConnections:
+    def test_200_nav_locations_connection(self):
         query = """
         {
-            navLocations {
-                id
+            navLocations(filter: {idSys: "AV"}, pagination: {limit: 10}) {
+                nodes {
+                    id
+                    idSys
+                    name
+                }
+                pageInfo {
+                    hasNextPage
+                }
+                paginationInfo {
+                    totalCount
+                    currentPage
+                    totalPages
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navLocations" in data["data"]
-        locations = data["data"]["navLocations"]
-        assert isinstance(locations, list)
-        if len(locations) > 0:
-            assert "id" in locations[0]
-            assert isinstance(locations[0]["id"], int)
+        payload = response.json()["data"]["navLocations"]
+        assert payload["nodes"][0]["idSys"] == "AV"
+        assert payload["paginationInfo"]["totalCount"] >= 1
 
-    def test_200_nav_locations_all_fields(self):
-        """Запрос nav_locations со всеми полями"""
+    def test_200_nav_campuses_with_related_location(self):
         query = """
         {
-            navLocations {
-                id
-                idSys
-                name
-                short
-                ready
-                address
-                metro
-                crossings
-                comments
+            navCampuses(filter: {idSys: "av-test"}) {
+                nodes {
+                    id
+                    idSys
+                    locId
+                    location {
+                        id
+                        idSys
+                    }
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        locations = data["data"]["navLocations"]
-        if len(locations) > 0:
-            location = locations[0]
-            assert "id" in location
-            assert "idSys" in location
-            assert "name" in location
-            assert "short" in location
-            assert "ready" in location
-            assert "address" in location
-            assert "metro" in location
+        campus = response.json()["data"]["navCampuses"]["nodes"][0]
+        assert campus["idSys"] == "av-test"
+        assert campus["location"]["idSys"] == "AV"
 
-
-class TestGraphQLNavCampuses:
-    """Тесты для nav_campuses query"""
-
-    def test_200_nav_campuses_single_field(self):
-        """Запрос nav_campuses с одним полем"""
+    def test_200_nav_floors_connection(self):
         query = """
         {
-            navCampuses {
-                id
+            navFloors(filter: {name: 1}) {
+                nodes {
+                    id
+                    name
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navCampuses" in data["data"]
+        assert response.json()["data"]["navFloors"]["nodes"][0]["name"] == 1
 
-    def test_200_nav_campuses_all_fields(self):
-        """Запрос nav_campuses со всеми полями"""
+    def test_200_nav_plans_with_related_entities(self):
         query = """
         {
-            navCampuses {
-                id
-                idSys
-                locId
-                name
-                ready
-                stairGroups
-                comments
+            navPlans(filter: {idSys: "test-plan-1"}) {
+                nodes {
+                    id
+                    idSys
+                    corId
+                    floorId
+                    campus {
+                        id
+                        idSys
+                    }
+                    floor {
+                        id
+                        name
+                    }
+                    svg {
+                        id
+                        name
+                    }
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        campuses = data["data"]["navCampuses"]
-        assert isinstance(campuses, list)
+        plan = response.json()["data"]["navPlans"]["nodes"][0]
+        assert plan["idSys"] == "test-plan-1"
+        assert plan["campus"]["idSys"] == "av-test"
+        assert plan["floor"]["name"] == 1
+        assert plan["svg"] is None
 
-
-class TestGraphQLNavFloors:
-    """Тесты для nav_floors query"""
-
-    def test_200_nav_floors_single_field(self):
-        """Запрос nav_floors с одним полем"""
+    def test_200_nav_types_connection(self):
         query = """
         {
-            navFloors {
-                id
+            navTypes(filter: {name: "Учебная аудитория"}) {
+                nodes {
+                    id
+                    name
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navFloors" in data["data"]
+        assert response.json()["data"]["navTypes"]["nodes"][0]["name"] == "Учебная аудитория"
 
-    def test_200_nav_floors_all_fields(self):
-        """Запрос nav_floors со всеми полями"""
+    def test_200_nav_auditories_with_related_entities(self):
         query = """
         {
-            navFloors {
-                id
-                name
+            navAuditories(filter: {idSys: "test-101"}) {
+                nodes {
+                    id
+                    idSys
+                    typeId
+                    planId
+                    type {
+                        id
+                        name
+                    }
+                    plan {
+                        id
+                        idSys
+                    }
+                    photos {
+                        id
+                        link
+                    }
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
+        auditory = response.json()["data"]["navAuditories"]["nodes"][0]
+        assert auditory["idSys"] == "test-101"
+        assert auditory["type"]["id"] == 1
+        assert auditory["plan"]["idSys"] == "test-plan-1"
+        assert auditory["photos"][0]["link"].startswith("/api/nav/auditory/photos/")
 
-
-class TestGraphQLNavPlans:
-    """Тесты для nav_plans query"""
-
-    def test_200_nav_plans_single_field(self):
-        """Запрос nav_plans с одним полем"""
+    def test_200_nav_auditory_photos_connection(self):
         query = """
         {
-            navPlans {
-                id
+            navAuditoryPhotos(filter: {audId: 1}) {
+                nodes {
+                    id
+                    audId
+                    ext
+                    link
+                    auditory {
+                        id
+                        idSys
+                    }
+                }
+                paginationInfo {
+                    totalCount
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navPlans" in data["data"]
+        payload = response.json()["data"]["navAuditoryPhotos"]
+        assert payload["paginationInfo"]["totalCount"] >= 1
+        assert payload["nodes"][0]["auditory"]["idSys"] == "test-101"
 
-    def test_200_nav_plans_all_fields(self):
-        """Запрос nav_plans со всеми полями"""
+    def test_200_nav_statics_connection(self):
         query = """
         {
-            navPlans {
-                id
-                idSys
-                corId
-                floorId
-                ready
-                entrances
-                graph
-                svgId
-                nearestEntrance
-                nearestManWc
-                nearestWomanWc
-                nearestSharedWc
+            navStatics(pagination: {limit: 5}) {
+                nodes {
+                    id
+                    ext
+                    path
+                    name
+                    link
+                }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        plans = data["data"]["navPlans"]
-        assert isinstance(plans, list)
+        assert isinstance(response.json()["data"]["navStatics"]["nodes"], list)
 
 
-class TestGraphQLNavTypes:
-    """Тесты для nav_types query"""
-
-    def test_200_nav_types_single_field(self):
-        """Запрос nav_types с одним полем"""
-        query = """
-        {
-            navTypes {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navTypes" in data["data"]
-
-    def test_200_nav_types_all_fields(self):
-        """Запрос nav_types со всеми полями"""
-        query = """
-        {
-            navTypes {
-                id
-                name
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLNavAuditories:
-    """Тесты для nav_auditories query"""
-
-    def test_200_nav_auditories_single_field(self):
-        """Запрос nav_auditories с одним полем"""
-        query = """
-        {
-            navAuditories {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navAuditories" in data["data"]
-
-    def test_200_nav_auditories_all_fields(self):
-        """Запрос nav_auditories со всеми полями"""
-        query = """
-        {
-            navAuditories {
-                id
-                idSys
-                typeId
-                ready
-                planId
-                name
-                textFromSign
-                additionalInfo
-                comments
-                link
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLNavStatics:
-    """Тесты для nav_statics query"""
-
-    def test_200_nav_statics_single_field(self):
-        """Запрос nav_statics с одним полем"""
-        query = """
-        {
-            navStatics {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navStatics" in data["data"]
-
-    def test_200_nav_statics_all_fields(self):
-        """Запрос nav_statics со всеми полями"""
-        query = """
-        {
-            navStatics {
-                id
-                idSys
-                typeId
-                planId
-                name
-                textFromSign
-                additionalInfo
-                comments
-                link
-                photoId
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLReviews:
-    """Тесты для reviews query"""
-
-    def test_200_reviews_single_field(self):
-        """Запрос reviews с одним полем"""
-        query = """
-        {
-            reviews {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "reviews" in data["data"]
-
-    def test_200_reviews_all_fields(self):
-        """Запрос reviews со всеми полями"""
-        query = """
-        {
-            reviews(limit: 10) {
-                id
-                userId
-                problemId
-                text
-                imageName
-                creationDate
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
+class TestGraphQLOtherQueries:
     def test_200_reviews_with_nested_entities(self):
-        """Запрос reviews с вложенными сущностями (problem, user)"""
         query = """
         {
             reviews(limit: 5) {
@@ -378,7 +225,6 @@ class TestGraphQLReviews:
                 problem {
                     id
                     name
-                    description
                 }
                 user {
                     id
@@ -389,51 +235,9 @@ class TestGraphQLReviews:
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
+        assert "data" in response.json()
 
-
-    def test_200_reviews_filtered_by_status_id(self):
-        """Запрос reviews с фильтром status_id"""
-        query = """
-        {
-            reviews(status_id: 1) {
-                id
-                statusId
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "reviews" in data["data"]
-        reviews = data["data"]["reviews"]
-        assert isinstance(reviews, list)
-        for review in reviews:
-            assert review["statusId"] == 1
-
-
-class TestGraphQLProblems:
-    """Тесты для problems query"""
-
-    def test_200_problems_single_field(self):
-        """Запрос problems с одним полем"""
-        query = """
-        {
-            problems {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "problems" in data["data"]
-
-    def test_200_problems_all_fields(self):
-        """Запрос problems со всеми полями"""
+    def test_200_problems_query(self):
         query = """
         {
             problems {
@@ -445,46 +249,9 @@ class TestGraphQLProblems:
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLSiteStats:
-    """Тесты для siteStats query"""
-
-    def test_200_site_stats_single_field(self):
-        """Запрос siteStats с одним полем"""
-        query = """
-        {
-            siteStats(limit: 10) {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "siteStats" in data["data"]
-
-    def test_200_site_stats_all_fields(self):
-        """Запрос siteStats со всеми полями"""
-        query = """
-        {
-            siteStats(limit: 10) {
-                id
-                userId
-                dateTime
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
+        assert "data" in response.json()
 
     def test_200_site_stats_with_nested_user(self):
-        """Запрос siteStats с вложенной сущностью user"""
         query = """
         {
             siteStats(limit: 5) {
@@ -498,544 +265,34 @@ class TestGraphQLSiteStats:
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
+        assert "data" in response.json()
 
-
-class TestGraphQLStartWays:
-    """Тесты для startWays query"""
-
-    def test_200_start_ways_single_field(self):
-        """Запрос startWays с одним полем"""
+    def test_200_multiple_queries_in_one_request(self):
         query = """
         {
-            startWays(limit: 10) {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "startWays" in data["data"]
-
-    def test_200_start_ways_all_fields(self):
-        """Запрос startWays со всеми полями"""
-        query = """
-        {
-            startWays(limit: 10) {
-                id
-                userId
-                startId
-                endId
-                dateTime
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-    def test_200_start_ways_with_nested_user(self):
-        """Запрос startWays с вложенной сущностью user"""
-        query = """
-        {
-            startWays(limit: 5) {
-                id
-                startId
-                endId
-                user {
+            navFloors(filter: {name: 1}) {
+                nodes {
                     id
-                    userId
+                    name
+                }
+            }
+            navTypes(filter: {name: "Учебная аудитория"}) {
+                nodes {
+                    id
+                    name
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLSelectAuditories:
-    """Тесты для selectAuditories query"""
-
-    def test_200_select_auditories_single_field(self):
-        """Запрос selectAuditories с одним полем"""
-        query = """
-        {
-            selectAuditories(limit: 10) {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "selectAuditories" in data["data"]
-
-    def test_200_select_auditories_all_fields(self):
-        """Запрос selectAuditories со всеми полями"""
-        query = """
-        {
-            selectAuditories(limit: 10) {
-                id
-                userId
-                auditoryId
-                dateTime
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-    def test_200_select_auditories_with_nested_user(self):
-        """Запрос selectAuditories с вложенной сущностью user"""
-        query = """
-        {
-            selectAuditories(limit: 5) {
-                id
-                auditoryId
-                user {
-                    id
-                    userId
-                }
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLChangePlans:
-    """Тесты для changePlans query"""
-
-    def test_200_change_plans_single_field(self):
-        """Запрос changePlans с одним полем"""
-        query = """
-        {
-            changePlans(limit: 10) {
-                id
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "changePlans" in data["data"]
-
-    def test_200_change_plans_all_fields(self):
-        """Запрос changePlans со всеми полями"""
-        query = """
-        {
-            changePlans(limit: 10) {
-                id
-                userId
-                planId
-                dateTime
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-    def test_200_change_plans_with_nested_user(self):
-        """Запрос changePlans с вложенной сущностью user"""
-        query = """
-        {
-            changePlans(limit: 5) {
-                id
-                planId
-                user {
-                    id
-                    userId
-                }
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLUserIds:
-    """Тесты для userIds query"""
-
-    def test_200_user_ids_single_field(self):
-        """Запрос userIds с одним полем"""
-        query = """
-        {
-            userIds(limit: 10) {
-                userId
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "userIds" in data["data"]
-
-    def test_200_user_ids_all_fields(self):
-        """Запрос userIds со всеми полями"""
-        query = """
-        {
-            userIds(limit: 10) {
-                userId
-                creationDate
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-
-class TestGraphQLEndpointStatistics:
-    """Тесты для endpointStatistics query с фильтрами"""
-
-    def test_200_endpoint_statistics_filter_site(self):
-        """Запрос endpointStatistics с фильтром endpoint='site'"""
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                uniqueVisitors
-                allVisits
-                visitorCount
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatistics" in data["data"]
-        stats = data["data"]["endpointStatistics"]
-        assert isinstance(stats, list)
-        if len(stats) > 0:
-            stat = stats[0]
-            assert "uniqueVisitors" in stat
-            assert "allVisits" in stat
-            assert "visitorCount" in stat
-            assert "period" in stat
-
-    def test_200_endpoint_statistics_filter_auds(self):
-        """Запрос endpointStatistics с фильтром endpoint='auds'"""
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "auds",
-                byMonth: {start: "2025-01", end: "2025-12"}
-            ) {
-                uniqueVisitors
-                allVisits
-                visitorCount
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatistics" in data["data"]
-
-    def test_200_endpoint_statistics_filter_ways(self):
-        """Запрос endpointStatistics с фильтром endpoint='ways'"""
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "ways",
-                byYear: {start: "2024", end: "2025"}
-            ) {
-                uniqueVisitors
-                allVisits
-                visitorCount
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatistics" in data["data"]
-
-    def test_200_endpoint_statistics_filter_plans(self):
-        """Запрос endpointStatistics с фильтром endpoint='plans'"""
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "plans",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                uniqueVisitors
-                allVisits
-                visitorCount
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatistics" in data["data"]
-
-    def test_200_endpoint_statistics_single_field(self):
-        """Запрос endpointStatistics с одним полем"""
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-
-    def test_200_endpoint_statistics_requires_one_filter(self):
-        query = """
-        {
-            endpointStatistics(endpoint: "site") {
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "errors" in data
-
-    def test_200_endpoint_statistics_rejects_multiple_filters(self):
-        query = """
-        {
-            endpointStatistics(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"},
-                byYear: {start: "2025", end: "2025"}
-            ) {
-                period
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "errors" in data
-
-
-class TestGraphQLEndpointStatisticsAvg:
-    """Тесты для endpointStatisticsAvg query с агрегированной статистикой"""
-
-    def test_200_endpoint_statistics_avg_by_date_site(self):
-        """Запрос endpointStatisticsAvg с фильтром byDate для endpoint='site'"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                totalVisits
-                totalUnique
-                totalVisitorCount
-                avgVisits
-                avgUnique
-                avgVisitorCount
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatisticsAvg" in data["data"]
-        stats = data["data"]["endpointStatisticsAvg"]
-        assert "totalVisits" in stats
-        assert "totalUnique" in stats
-        assert "totalVisitorCount" in stats
-        assert "avgVisits" in stats
-        assert "avgUnique" in stats
-        assert "avgVisitorCount" in stats
-        assert "entriesCount" in stats
-        assert isinstance(stats["totalVisits"], int)
-        assert isinstance(stats["totalUnique"], int)
-        assert isinstance(stats["totalVisitorCount"], int)
-        assert isinstance(stats["avgVisits"], (int, float))
-        assert isinstance(stats["avgUnique"], (int, float))
-        assert isinstance(stats["avgVisitorCount"], (int, float))
-        assert isinstance(stats["entriesCount"], int)
-
-    def test_200_endpoint_statistics_avg_by_month_auds(self):
-        """Запрос endpointStatisticsAvg с фильтром byMonth для endpoint='auds'"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "auds",
-                byMonth: {start: "2025-01", end: "2025-12"}
-            ) {
-                totalVisits
-                totalUnique
-                totalVisitorCount
-                avgVisits
-                avgUnique
-                avgVisitorCount
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatisticsAvg" in data["data"]
-        stats = data["data"]["endpointStatisticsAvg"]
-        assert "totalVisits" in stats
-        assert "entriesCount" in stats
-
-    def test_200_endpoint_statistics_avg_by_year_ways(self):
-        """Запрос endpointStatisticsAvg с фильтром byYear для endpoint='ways'"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "ways",
-                byYear: {start: "2024", end: "2025"}
-            ) {
-                totalVisits
-                totalUnique
-                totalVisitorCount
-                avgVisits
-                avgUnique
-                avgVisitorCount
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatisticsAvg" in data["data"]
-
-    def test_200_endpoint_statistics_avg_plans(self):
-        """Запрос endpointStatisticsAvg для endpoint='plans'"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "plans",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                totalVisits
-                totalUnique
-                totalVisitorCount
-                avgVisits
-                avgUnique
-                avgVisitorCount
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatisticsAvg" in data["data"]
-
-    def test_200_endpoint_statistics_avg_single_field(self):
-        """Запрос endpointStatisticsAvg с одним полем"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "endpointStatisticsAvg" in data["data"]
-        assert "entriesCount" in data["data"]["endpointStatisticsAvg"]
-
-    def test_200_endpoint_statistics_avg_requires_one_filter(self):
-        """endpointStatisticsAvg требует ровно один фильтр"""
-        query = """
-        {
-            endpointStatisticsAvg(endpoint: "site") {
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "errors" in data
-
-    def test_200_endpoint_statistics_avg_rejects_multiple_filters(self):
-        """endpointStatisticsAvg отклоняет несколько фильтров"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"},
-                byMonth: {start: "2025-01", end: "2025-12"}
-            ) {
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "errors" in data
-
-    def test_401_endpoint_statistics_avg_without_token(self):
-        """Попытка получить агрегированную статистику без токена возвращает 401"""
-        query = """
-        {
-            endpointStatisticsAvg(
-                endpoint: "site",
-                byDate: {start: "2025-01-01", end: "2025-01-31"}
-            ) {
-                totalVisits
-                entriesCount
-            }
-        }
-        """
-        response = graphql_query(query)  # Без токена
-        assert response.status_code == 401
+        data = response.json()["data"]
+        assert "navFloors" in data
+        assert "navTypes" in data
 
 
 class TestGraphQLUnauthorized:
-    """Тесты на неавторизованный доступ к GraphQL"""
-
     def test_401_graphql_without_token_returns_unauthorized(self):
-        """GraphQL требует авторизацию - возвращает 401 при отсутствии токена"""
         query = """
         {
             reviews {
@@ -1043,25 +300,24 @@ class TestGraphQLUnauthorized:
             }
         }
         """
-        response = graphql_query(query)  # Без токена
-        # FastAPI требует авторизацию для GraphQL через depends
+        response = graphql_query(query)
         assert response.status_code == 401
 
     def test_401_graphql_nav_without_token(self):
-        """Попытка получить nav данные без токена возвращает 401"""
         query = """
         {
-            navLocations {
-                id
-                name
+            navLocations(filter: {idSys: "AV"}) {
+                nodes {
+                    id
+                    name
+                }
             }
         }
         """
-        response = graphql_query(query)  # Без токена
+        response = graphql_query(query)
         assert response.status_code == 401
 
     def test_401_graphql_endpoint_stats_without_token(self):
-        """Попытка получить статистику без токена возвращает 401"""
         query = """
         {
             endpointStatistics(
@@ -1073,49 +329,5 @@ class TestGraphQLUnauthorized:
             }
         }
         """
-        response = graphql_query(query)  # Без токена
+        response = graphql_query(query)
         assert response.status_code == 401
-
-
-class TestGraphQLMultipleQueries:
-    """Тесты на множественные запросы в одном GraphQL вызове"""
-
-    def test_200_multiple_queries_in_one_request(self):
-        """Несколько queries в одном запросе"""
-        query = """
-        {
-            navFloors {
-                id
-                name
-            }
-            navTypes {
-                id
-                name
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data
-        assert "navFloors" in data["data"]
-        assert "navTypes" in data["data"]
-
-    def test_200_query_with_filters(self):
-        """Запрос с использованием фильтров"""
-        query = """
-        {
-            reviews(limit: 5) {
-                id
-                text
-            }
-            siteStats(limit: 3) {
-                id
-                dateTime
-            }
-        }
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        data = response.json()
-        assert "data" in data

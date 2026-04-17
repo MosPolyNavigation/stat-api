@@ -30,5 +30,5 @@ from app.models.stat.site_stat import SiteStat
 from app.models.stat.start_way import StartWay
 from app.models.stat.tg_bot import TgEvent, TgEventType, TgUser
 from app.models.stat.user_id import UserId
-
+from app.models.auth.refresh_token import RefreshToken
 

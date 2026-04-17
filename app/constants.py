@@ -14,6 +14,7 @@ NAV_GOAL_NAME = "nav_data"
 USER_PASS_GOAL_NAME = "user_pass"
 ADMIN_GOAL_NAME = "admin"
 REVIEWS_GOAL_NAME = "reviews"
+REFRESH_TOKEN_GOAL_NAME = "refresh_token"
 
 # ID целей
 STATS_GOAL_ID = 1
@@ -27,6 +28,7 @@ NAV_GOAL_ID = 8
 USER_PASS_GOAL_ID = 9
 ADMIN_GOAL_ID = 10
 REVIEWS_GOAL_ID = 11
+REFRESH_TOKEN_GOAL_ID = 12
 
 # =============================================================================
 # КОНСТАНТЫ ПРАВ (RIGHTS)
@@ -62,6 +64,7 @@ GOALS_BY_ID: dict[int, str] = {
     9: "user_pass",
     10: "admin",
     11: "reviews",
+    12: "refresh_token",
 }
 
 GOALS_BY_NAME: dict[str, int] = {
@@ -76,6 +79,7 @@ GOALS_BY_NAME: dict[str, int] = {
     "user_pass": 9,
     "admin": 10,
     "reviews": 11,
+    "refresh_token": 12,
 }
 
 RIGHTS_BY_ID: dict[int, str] = {
