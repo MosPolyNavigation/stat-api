@@ -6,7 +6,7 @@ Create Date: 2025-03-24 12:31:57.493891
 
 """
 from typing import Sequence, Union
-from app.helpers.data import problems
+from app.constants import PROBLEMS
 
 from alembic import op
 import sqlalchemy as sa
@@ -26,7 +26,7 @@ def data_upgrades():
         problem,
         list(map(
             lambda x: {'id': x},
-            list(set(problems.split('\n')))
+            PROBLEMS
         ))
     )
 

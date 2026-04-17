@@ -95,69 +95,36 @@ RIGHTS_BY_NAME: dict[str, int] = {
 }
 
 # =============================================================================
-# ХЕЛПЕРЫ ДЛЯ ПРОВЕРКИ ПРАВ (CORTEGES ID)
+# КОНСТАНТЫ проблем (Problems)
 # =============================================================================
 
-# Все права для каждой цели (для удобной проверки)
-PERMISSIONS_BY_GOAL: dict[int, list[tuple[int, int]]] = {
-    STATS_GOAL_ID: [
-        (VIEW_RIGHT_ID, STATS_GOAL_ID),
-        (CREATE_RIGHT_ID, STATS_GOAL_ID),
-        (EDIT_RIGHT_ID, STATS_GOAL_ID),
-        (DELETE_RIGHT_ID, STATS_GOAL_ID),
-    ],
-    DASHBOARDS_GOAL_ID: [
-        (VIEW_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (CREATE_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (EDIT_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (DELETE_RIGHT_ID, DASHBOARDS_GOAL_ID),
-    ],
-    USERS_GOAL_ID: [
-        (VIEW_RIGHT_ID, USERS_GOAL_ID),
-        (CREATE_RIGHT_ID, USERS_GOAL_ID),
-        (EDIT_RIGHT_ID, USERS_GOAL_ID),
-        (DELETE_RIGHT_ID, USERS_GOAL_ID),
-    ],
-    ROLES_GOAL_ID: [
-        (VIEW_RIGHT_ID, ROLES_GOAL_ID),
-        (CREATE_RIGHT_ID, ROLES_GOAL_ID),
-        (EDIT_RIGHT_ID, ROLES_GOAL_ID),
-        (DELETE_RIGHT_ID, ROLES_GOAL_ID),
-        (GRANT_RIGHT_ID, ROLES_GOAL_ID),
-    ],
-    TABLES_GOAL_ID: [
-        (VIEW_RIGHT_ID, TABLES_GOAL_ID),
-        (CREATE_RIGHT_ID, TABLES_GOAL_ID),
-        (EDIT_RIGHT_ID, TABLES_GOAL_ID),
-        (DELETE_RIGHT_ID, TABLES_GOAL_ID),
-    ],
-    RESOURCES_GOAL_ID: [
-        (VIEW_RIGHT_ID, RESOURCES_GOAL_ID),
-        (CREATE_RIGHT_ID, RESOURCES_GOAL_ID),
-        (EDIT_RIGHT_ID, RESOURCES_GOAL_ID),
-        (DELETE_RIGHT_ID, RESOURCES_GOAL_ID),
-    ],
-    TASKS_GOAL_ID: [
-        (VIEW_RIGHT_ID, TASKS_GOAL_ID),
-        (CREATE_RIGHT_ID, TASKS_GOAL_ID),
-        (EDIT_RIGHT_ID, TASKS_GOAL_ID),
-        (DELETE_RIGHT_ID, TASKS_GOAL_ID),
-    ],
-    NAV_GOAL_ID: [
-        (VIEW_RIGHT_ID, NAV_GOAL_ID),
-        (CREATE_RIGHT_ID, NAV_GOAL_ID),
-        (EDIT_RIGHT_ID, NAV_GOAL_ID),
-        (DELETE_RIGHT_ID, NAV_GOAL_ID),
-    ],
-    USER_PASS_GOAL_ID: [
-        (EDIT_RIGHT_ID, USER_PASS_GOAL_ID),
-    ],
-    ADMIN_GOAL_ID: [
-        (VIEW_RIGHT_ID, ADMIN_GOAL_ID),
-        (EDIT_RIGHT_ID, ADMIN_GOAL_ID),
-    ],
-    REVIEWS_GOAL_ID: [
-        (VIEW_RIGHT_ID, REVIEWS_GOAL_ID),
-        (EDIT_RIGHT_ID, REVIEWS_GOAL_ID),
-    ]
+# Названия
+WAY_PROBLEM_NAME = "way"
+OTHER_PROBLEM_NAME = "other"
+PLAN_PROBLEM_NAME = "plan"
+WORK_PROBLEM_NAME = "work"
+
+# =============================================================================
+# СЛОВАРИ ДЛЯ МАППИНГА ПРОБЛЕМ
+# =============================================================================
+
+PROBLEMS: list[str] = [
+    WAY_PROBLEM_NAME,
+    OTHER_PROBLEM_NAME,
+    PLAN_PROBLEM_NAME,
+    WORK_PROBLEM_NAME,
+]
+
+# =============================================================================
+# СЛОВАРИ ДЛЯ МАППИНГА СТАТУСОВ ОТЗЫВОВ
+# =============================================================================
+
+REVIEW_STATUSES: dict[int, str] = {
+    1: "бэклог",
+    2: "на рассмотрении",
+    3: "принят в работу",
+    4: "ждет проверки",
+    5: "исправлен",
+    6: "не требует исправления",
+    7: "исправление отложено",
 }
