@@ -1,7 +1,7 @@
 """Add review and problem tables
 
 Revision ID: 9098dc1d4b10
-Revises: 3bce90c96a6a
+Revises: ca63b3dbe208
 Create Date: 2025-03-24 12:31:57.493891
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '9098dc1d4b10'
-down_revision: Union[str, None] = '3bce90c96a6a'
+down_revision: Union[str, None] = 'ca63b3dbe208'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
