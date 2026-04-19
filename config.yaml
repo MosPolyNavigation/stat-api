@@ -1,0 +1,31 @@
+server:
+  host: {{ env("STATAPI_HOST", "0.0.0.0") }}
+  port: {{ env("STATAPI_PORT", "8080") }}
+
+  cors:
+    allowed_hosts:
+      - "http://localhost:3000"
+    allowed_methods:
+      - "*"
+    allowed_headers:
+      - Authorization
+
+  static:
+    base_path: ./static
+    files: []
+
+  compression:
+    enable: true
+
+database:
+  uri: {{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///app.db") }}
+
+jwt:
+  access:
+    secret: {{ env("STATAPI_ACCESS_SECRET", "example1") }}
+    expiration: 900
+
+  refresh:
+    secret: {{ env("STATAPI_REFRESH_SECRET", "example2") }}
+    expiration: 2592000
+    cookie_name: refresh_token

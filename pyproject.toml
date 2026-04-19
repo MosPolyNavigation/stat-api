@@ -25,6 +25,7 @@ dependencies = [
     "pillow",
     "PyJWT",
     "user-agents",
+    "pyyaml",
 ]
 
 [dependency-groups]

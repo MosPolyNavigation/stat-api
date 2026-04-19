@@ -1,0 +1,44 @@
+server:
+  host: {{ env("STATAPI_HOST", "0.0.0.0") }}
+  port: {{ env("STATAPI_PORT", "8080") }}
+
+  # CORS-настройки (опционально — удалите секцию, если CORS не нужен)
+  cors:
+    allowed_hosts:
+      - "http://localhost:3000"
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+    allowed_headers:
+      - Authorization
+
+  # Статические файлы (опционально)
+  static:
+    base_path: ./static
+    files: []
+    # Пример маршрута SPA:
+    # - path: dist
+    #   name: frontend
+    #   fallback: true
+    #   fallback_to: index.html
+
+  # Сжатие ответов (опционально)
+  compression:
+    enable: true
+
+database:
+  # В продакшене задавайте URI явно через переменную окружения,
+  # не используйте SQLite со значением по умолчанию.
+  uri: {{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///app.db") }}
+
+jwt:
+  access:
+    # ВАЖНО: замените секреты на случайные строки в продакшене!
+    secret: {{ env("STATAPI_ACCESS_SECRET", "example1") }}
+    expiration: 900  # 15 минут
+
+  refresh:
+    secret: {{ env("STATAPI_REFRESH_SECRET", "example2") }}
+    expiration: 2592000  # 30 дней
+    cookie_name: refresh_token
