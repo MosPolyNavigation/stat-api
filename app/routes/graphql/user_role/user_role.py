@@ -300,30 +300,27 @@ async def revoke_role(
             )
         )
     ).scalars().first()
-    
+
     if not user_role:
         raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
-    
+
     # === Проверяем права на эскалацию (аналогично grant_role) ===
-    # Загружаем права отзываемой роли
     role_rights_result = await session.execute(
         select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
     )
     role_rights = role_rights_result.scalars().all()
-    
-    # Собираем уникальные права из роли
+
     required_permissions_set = set()
     for rrg in role_rights:
         required_permissions_set.add((rrg.right_id, rrg.goal_id))
-    
+
     required_permissions = list(required_permissions_set)
-    
-    # Проверяем, есть ли у текущего пользователя эти права
+
     missing = await service.check_grant_permissions(
         current_user.id,
         required_permissions
     )
-    
+
     if missing:
         raise GraphQLError(
             f"Невозможно отозвать роль. У вас нет следующих прав, которые присутствуют в этой роли: "
