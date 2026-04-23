@@ -58,7 +58,7 @@ async def create_db_and_tables():
         db.add_all(data_roles)
         db.add_all(data_rights)
         data_role_right_goals: list[models.RoleRightGoal] = list(
-            [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2]) for x in roles_rights_goals]
+            [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2], can_grant=x[0] == 1) for x in roles_rights_goals]
         )
         db.add_all(data_role_right_goals)
         data_user: models.User = models.User(

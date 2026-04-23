@@ -594,13 +594,14 @@ class TestRoleRightGoalIntegrity:
                 nodes {
                     rightId
                     goalId
+                    canGrant
                     right { name }
                     goal { name }
                 }
             }
         }
         """
-        
+
         response = graphql_query(
             query,
             variables={
@@ -609,16 +610,15 @@ class TestRoleRightGoalIntegrity:
             },
             headers=ADMIN_HEADERS
         )
-        
+
         result = assert_graphql_success(response, "roleRightGoals")
         assert len(result["nodes"]) > 0
-        
+
         # Проверяем наличие ключевых прав
         rights_set = {(rrg["rightId"], rrg["goalId"]) for rrg in result["nodes"]}
-        
-        # У admin должно быть право grant -> roles (5, 4)
-        assert (5, 4) in rights_set, "У admin роли должно быть право grant -> roles"
-        
+        assert result["nodes"], "У admin роли должны быть права"
+        assert all(rrg["canGrant"] is True for rrg in result["nodes"]), "Все права admin должны быть делегируемыми"
+
         # Дополнительные проверки
         assert (1, 3) in rights_set, "view -> users"
         assert (3, 3) in rights_set, "edit -> users"
