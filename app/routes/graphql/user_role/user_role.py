@@ -290,19 +290,6 @@ async def revoke_role(
     session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
-    
-    # Проверяем существование связи
-    user_role = (
-        await session.execute(
-            select(UserRole).where(
-                UserRole.user_id == user_id,
-                UserRole.role_id == role_id
-            )
-        )
-    ).scalars().first()
-
-    if not user_role:
-        raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
 
     # === Проверяем права на эскалацию (аналогично grant_role) ===
     role_rights_result = await session.execute(
@@ -327,6 +314,19 @@ async def revoke_role(
             f"{', '.join(missing)}. "
             f"Вы можете отзывать только те роли, права которых не превышают ваши собственные."
         )
+
+    # Проверяем существование связи
+    user_role = (
+        await session.execute(
+            select(UserRole).where(
+                UserRole.user_id == user_id,
+                UserRole.role_id == role_id
+            )
+        )
+    ).scalars().first()
+
+    if not user_role:
+        raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
     
     # === Отзыв роли ===
     await session.delete(user_role)
