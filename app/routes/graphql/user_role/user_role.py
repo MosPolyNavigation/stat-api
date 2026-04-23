@@ -13,8 +13,6 @@ from app.routes.graphql.filter_handlers import (
 )
 from app.routes.graphql.permissions import (
     ensure_roles_view_permission,
-    ensure_roles_grant_permission,
-    validate_user_permissions_by_ids
 )
 from app.services.permission_service import PermissionService
 from app.models import UserRole, User, Role, RoleRightGoal
@@ -165,11 +163,10 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     """Мутация для назначения роли(ей) пользователю.
     
     ВАЖНО: 
-    1. Пользователь должен иметь право roles -> grant
-    2. Нельзя назначить роль, если у тебя нет прав, которые есть в этой роли
+    Нельзя назначить роль, если у пользователя нет соответствующих прав с can_grant = True, которые содержатся в этой роли.
     (защита от эскалации привилегий)
     """
-    session: AsyncSession = await ensure_roles_grant_permission(info)
+    session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
     
@@ -214,9 +211,8 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     required_permissions = list(required_permissions_set)
     
     # === Проверяем права пользователя через единую функцию ===
-    missing = await validate_user_permissions_by_ids(
-        current_user.id, 
-        service, 
+    missing = await service.check_grant_permissions(
+        current_user.id,
         required_permissions
     )
     
@@ -287,12 +283,11 @@ async def revoke_role(
     """Мутация для отзыва роли у пользователя.
     
     ВАЖНО:
-    1. Пользователь должен иметь право roles -> grant
-    2. Нельзя отозвать роль, если у тебя нет прав, которые есть в этой роли
+    Нельзя отозвать роль, если у пользователя нет соответствующих прав с can_grant = True, которые содержатся в этой роли.
     (защита от злоупотреблений)
     """
     
-    session: AsyncSession = await ensure_roles_grant_permission(info)
+    session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
     
@@ -324,9 +319,8 @@ async def revoke_role(
     required_permissions = list(required_permissions_set)
     
     # Проверяем, есть ли у текущего пользователя эти права
-    missing = await validate_user_permissions_by_ids(
-        current_user.id, 
-        service, 
+    missing = await service.check_grant_permissions(
+        current_user.id,
         required_permissions
     )
     

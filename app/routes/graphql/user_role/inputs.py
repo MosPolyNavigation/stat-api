@@ -15,6 +15,7 @@ class RoleRightGoalInput:
     """Входные данные для связи роли с правом и целью."""
     right_id: int
     goal_id: int
+    can_grant: bool = False
 
 
 @strawberry.input

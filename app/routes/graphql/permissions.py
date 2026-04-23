@@ -21,7 +21,6 @@ from app.constants import (
     CREATE_RIGHT_ID,
     EDIT_RIGHT_ID,
     DELETE_RIGHT_ID,
-    GRANT_RIGHT_ID,
     # Hashmaps
     RIGHTS_BY_NAME,
     RIGHTS_BY_ID,
@@ -214,8 +213,3 @@ async def ensure_roles_delete_permission(info: Info) -> AsyncSession:
         info, [(DELETE_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для удаления ролей"
     )
 
-
-async def ensure_roles_grant_permission(info: Info) -> AsyncSession:
-    return await ensure_permissions_by_ids(
-        info, [(GRANT_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для выдачи ролей"
-    )

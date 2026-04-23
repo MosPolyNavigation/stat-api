@@ -39,14 +39,12 @@ VIEW_RIGHT_NAME = "view"
 CREATE_RIGHT_NAME = "create"
 EDIT_RIGHT_NAME = "edit"
 DELETE_RIGHT_NAME = "delete"
-GRANT_RIGHT_NAME = "grant"
 
 # ID прав
 VIEW_RIGHT_ID = 1
 CREATE_RIGHT_ID = 2
 EDIT_RIGHT_ID = 3
 DELETE_RIGHT_ID = 4
-GRANT_RIGHT_ID = 5
 
 # =============================================================================
 # СЛОВАРИ ДЛЯ МАППИНГА (ID ↔ NAME)
@@ -87,7 +85,6 @@ RIGHTS_BY_ID: dict[int, str] = {
     2: "create",
     3: "edit",
     4: "delete",
-    5: "grant",
 }
 
 RIGHTS_BY_NAME: dict[str, int] = {
@@ -95,7 +92,6 @@ RIGHTS_BY_NAME: dict[str, int] = {
     "create": 2,
     "edit": 3,
     "delete": 4,
-    "grant": 5,
 }
 
 # =============================================================================
