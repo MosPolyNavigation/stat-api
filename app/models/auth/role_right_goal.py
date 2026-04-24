@@ -1,4 +1,4 @@
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, Boolean, false
 from sqlalchemy.orm import Mapped, relationship
 from app.models.base import Base
 
@@ -20,6 +20,12 @@ class RoleRightGoal(Base):
         ForeignKey("goals.id", ondelete="CASCADE"),
         primary_key=True,
     )
+    can_grant: bool = Column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=false(),
+    )
 
     role: Mapped["Role"] = relationship("Role", back_populates="role_right_goals")
     right: Mapped["Right"] = relationship("Right", back_populates="role_right_goals")
@@ -28,6 +34,6 @@ class RoleRightGoal(Base):
     def __repr__(self) -> str:
         return (
             "RoleRightGoal("
-            f"role_id={self.role_id!r}, right_id={self.right_id!r}, goal_id={self.goal_id!r}"
+            f"role_id={self.role_id!r}, right_id={self.right_id!r}, goal_id={self.goal_id!r}, can_grant={self.can_grant!r}"
             ")"
         )

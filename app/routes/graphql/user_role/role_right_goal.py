@@ -38,6 +38,7 @@ def _to_role_right_goal(model: RoleRightGoal) -> RoleRightGoalType:
         role_id=model.role_id,
         right_id=model.right_id,
         goal_id=model.goal_id,
+        can_grant=model.can_grant,
         role=_to_role_safe(model.role) if model.role else None,
         right=_to_right(model.right) if model.right else None,
         goal=_to_goal(model.goal) if model.goal else None
@@ -54,6 +55,7 @@ def _to_role_right_goal_safe(model: RoleRightGoal) -> RoleRightGoalType:
         role_id=model.role_id,
         right_id=model.right_id,
         goal_id=model.goal_id,
+        can_grant=model.can_grant,
         role=None,
         right=_to_right(model.right) if model.right else None,
         goal=_to_goal(model.goal) if model.goal else None
