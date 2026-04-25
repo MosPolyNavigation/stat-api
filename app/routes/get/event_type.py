@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import EventType
-from app.scheme import EventTypeResponse
+from app.schemas import EventTypeResponse
 
 
 def register_endpoint(router: APIRouter):

@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import AllowedPayload, PayloadType, ValueType
-from app.scheme import PayloadTypeResponse
+from app.schemas import PayloadTypeResponse
 
 
 def register_endpoint(router: APIRouter):

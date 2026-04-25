@@ -15,8 +15,7 @@ from app.models import (
     PayloadType,
     ValueType,
 )
-from app.schemas import Status
-from app.scheme import EventCreateRequest
+from app.schemas import EventCreateRequest, Status
 
 
 def _normalize_payload_value(value: str, data_type: str, payload_type_id: int) -> str:

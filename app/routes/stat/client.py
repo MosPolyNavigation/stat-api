@@ -8,8 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.helpers.permissions import require_rights
 from app.models import ClientId
-from app.schemas import Status
-from app.scheme import ClientIdentResponse, ClientRegisterRequest
+from app.schemas import ClientIdentResponse, ClientRegisterRequest, Status
 
 
 def register_endpoint(router: APIRouter):

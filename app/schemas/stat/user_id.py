@@ -48,5 +48,4 @@ class ClientIdCheck(BaseModel):
         description="Unique client id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}"
     )

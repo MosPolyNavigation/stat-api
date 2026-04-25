@@ -1,6 +1,6 @@
 from typing import Annotated
-
 from pydantic import BaseModel, Field
+
 
 PayloadValue = Annotated[str, Field(max_length=50)]
 
@@ -9,7 +9,6 @@ class EventCreateRequest(BaseModel):
     ident: str = Field(
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}",
     )
     event_type_id: int
     payloads: dict[int, PayloadValue] = Field(min_length=1)
