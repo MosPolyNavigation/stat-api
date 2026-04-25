@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models import PayloadType, ValueType
+from app.models import AllowedPayload, PayloadType, ValueType
 from app.scheme import PayloadTypeResponse
 
 
@@ -14,12 +14,15 @@ def register_endpoint(router: APIRouter):
         tags=["get"],
     )
     async def get_payload_types(
+        event_type_id: int,
         db: AsyncSession = Depends(get_db),
     ) -> list[PayloadTypeResponse]:
         rows = (
             await db.execute(
                 select(PayloadType.id, PayloadType.code_name, ValueType.name)
+                .join(AllowedPayload, AllowedPayload.payload_type_id == PayloadType.id)
                 .join(ValueType, ValueType.id == PayloadType.value_type_id)
+                .where(AllowedPayload.event_type_id == event_type_id)
                 .order_by(PayloadType.id.asc())
             )
         ).all()
@@ -32,4 +35,3 @@ def register_endpoint(router: APIRouter):
             )
             for row in rows
         ]
-

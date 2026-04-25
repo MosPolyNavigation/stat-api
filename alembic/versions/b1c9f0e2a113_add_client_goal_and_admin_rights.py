@@ -18,123 +18,62 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-RIGHT_NAMES = ("view", "create", "edit", "delete")
-
-
-def _get_or_create_goal_id(bind, goal_name: str) -> int:
-    goal_id = bind.execute(
-        sa.text("SELECT id FROM goals WHERE name = :name"),
-        {"name": goal_name},
-    ).scalar()
-
-    if goal_id is not None:
-        return int(goal_id)
-
-    bind.execute(
-        sa.text("INSERT INTO goals (name) VALUES (:name)"),
-        {"name": goal_name},
-    )
-    created_goal_id = bind.execute(
-        sa.text("SELECT id FROM goals WHERE name = :name"),
-        {"name": goal_name},
-    ).scalar()
-    return int(created_goal_id)
-
-
-def _get_or_create_right_id(bind, right_name: str) -> int:
-    right_id = bind.execute(
-        sa.text("SELECT id FROM rights WHERE name = :name"),
-        {"name": right_name},
-    ).scalar()
-
-    if right_id is not None:
-        return int(right_id)
-
-    bind.execute(
-        sa.text("INSERT INTO rights (name) VALUES (:name)"),
-        {"name": right_name},
-    )
-    created_right_id = bind.execute(
-        sa.text("SELECT id FROM rights WHERE name = :name"),
-        {"name": right_name},
-    ).scalar()
-    return int(created_right_id)
+CLIENT_GOAL_ID = 12
+ADMIN_ROLE_ID = 1
+CREATE_RIGHT_ID = 2
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
-    client_goal_id = _get_or_create_goal_id(bind, "client")
+    goals_table = sa.sql.table(
+        "goals",
+        sa.sql.column("id", sa.Integer),
+        sa.sql.column("name", sa.String),
+    )
+    role_right_goals_table = sa.sql.table(
+        "role_right_goals",
+        sa.sql.column("role_id", sa.Integer),
+        sa.sql.column("right_id", sa.Integer),
+        sa.sql.column("goal_id", sa.Integer),
+    )
 
-    for right_name in RIGHT_NAMES:
-        right_id = _get_or_create_right_id(bind, right_name)
-        bind.execute(
-            sa.text(
-                """
-                INSERT INTO role_right_goals (role_id, right_id, goal_id)
-                SELECT :role_id, :right_id, :goal_id
-                WHERE NOT EXISTS (
-                    SELECT 1
-                    FROM role_right_goals
-                    WHERE role_id = :role_id
-                      AND right_id = :right_id
-                      AND goal_id = :goal_id
-                )
-                """
-            ),
+    op.bulk_insert(
+        goals_table,
+        [{"id": CLIENT_GOAL_ID, "name": "client"}],
+    )
+
+    op.bulk_insert(
+        role_right_goals_table,
+        [
             {
-                "role_id": 1,
-                "right_id": right_id,
-                "goal_id": client_goal_id,
-            },
-        )
+                "role_id": ADMIN_ROLE_ID,
+                "right_id": CREATE_RIGHT_ID,
+                "goal_id": CLIENT_GOAL_ID,
+            }
+        ],
+    )
 
 
 def downgrade() -> None:
-    bind = op.get_bind()
-    client_goal_id = bind.execute(
-        sa.text("SELECT id FROM goals WHERE name = :name"),
-        {"name": "client"},
-    ).scalar()
-
-    if client_goal_id is None:
-        return
-
-    right_ids = bind.execute(
-        sa.text(
-            "SELECT id FROM rights WHERE name IN ('view', 'create', 'edit', 'delete')"
-        )
-    ).scalars().all()
-
-    if right_ids:
-        bind.execute(
-            sa.text(
-                """
-                DELETE FROM role_right_goals
-                WHERE role_id = :role_id
-                  AND goal_id = :goal_id
-                  AND right_id IN :right_ids
-                """
-            ).bindparams(sa.bindparam("right_ids", expanding=True)),
-            {
-                "role_id": 1,
-                "goal_id": int(client_goal_id),
-                "right_ids": list(right_ids),
-            },
-        )
-
-    bind.execute(
-        sa.text("DELETE FROM goals WHERE id = :goal_id"),
-        {"goal_id": int(client_goal_id)},
+    goals_table = sa.sql.table(
+        "goals",
+        sa.sql.column("id", sa.Integer),
+        sa.sql.column("name", sa.String),
+    )
+    role_right_goals_table = sa.sql.table(
+        "role_right_goals",
+        sa.sql.column("role_id", sa.Integer),
+        sa.sql.column("right_id", sa.Integer),
+        sa.sql.column("goal_id", sa.Integer),
     )
 
-    # Remove rights only if they are no longer used anywhere.
-    bind.execute(
-        sa.text(
-            """
-            DELETE FROM rights
-            WHERE name IN ('view', 'create', 'edit', 'delete')
-              AND id NOT IN (SELECT DISTINCT right_id FROM role_right_goals)
-            """
-        )
+    op.execute(
+        role_right_goals_table.delete()
+        .where(role_right_goals_table.c.role_id == ADMIN_ROLE_ID)
+        .where(role_right_goals_table.c.right_id == CREATE_RIGHT_ID)
+        .where(role_right_goals_table.c.goal_id == CLIENT_GOAL_ID)
     )
 
+    op.execute(
+        goals_table.delete()
+        .where(goals_table.c.id == CLIENT_GOAL_ID)
+    )

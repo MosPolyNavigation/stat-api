@@ -165,9 +165,6 @@ PERMISSIONS_BY_GOAL: dict[int, list[tuple[int, int]]] = {
         (EDIT_RIGHT_ID, REVIEWS_GOAL_ID),
     ],
     CLIENT_GOAL_ID: [
-        (VIEW_RIGHT_ID, CLIENT_GOAL_ID),
         (CREATE_RIGHT_ID, CLIENT_GOAL_ID),
-        (EDIT_RIGHT_ID, CLIENT_GOAL_ID),
-        (DELETE_RIGHT_ID, CLIENT_GOAL_ID),
     ]
 }

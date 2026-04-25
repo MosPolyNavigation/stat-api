@@ -577,10 +577,7 @@ roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 3, 10),
     (1, 1, 11),
     (1, 3, 11),
-    (1, 1, 12),
     (1, 2, 12),
-    (1, 3, 12),
-    (1, 4, 12),
 ]
 
 review_status: dict[int, str] = {
