@@ -19,6 +19,7 @@ from app.schemas import Graph
 
 from app.jobs.schedule.get_graph import parse_location, parse_corpus, parse_plan
 import app.globals as globals_
+from app.jobs.manager import scheduled_task
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
@@ -144,6 +145,7 @@ def build_data_entry(dto: DataDto) -> DataEntry:
     return DataEntry(Locations=locations, Corpuses=corpuses, Plans=plans)
 
 # Воркер
+@scheduled_task(name="fetch_location_data")
 async def fetch_location_data():
     """ Воркер. собирает json и обновляет графы в памяти """
 

@@ -112,6 +112,9 @@ class Settings(BaseModel):
     server: ServerConfig = ServerConfig()
     database: DatabaseConfig
     jwt: JwtConfig = JwtConfig()
+    # Сырой dict из YAML; разбирается в JobsConfig при старте lifespan
+    # (прямой импорт JobsConfig создаёт циклический импорт через app.jobs.__init__)
+    jobs: dict = {}
 
     # ── Свойства для обратной совместимости ───────────────────────────────────
 
