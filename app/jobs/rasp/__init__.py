@@ -1,11 +1,14 @@
 import logging
+
 import app.globals as globals_
 from app.database import AsyncSessionLocal
+from app.jobs.manager import scheduled_task
 from app.jobs.rasp.parse import parse
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
+@scheduled_task(name="fetch_cur_rasp")
 async def fetch_cur_rasp():
     try:
         if globals_.locker:
