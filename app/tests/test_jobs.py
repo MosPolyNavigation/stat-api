@@ -17,7 +17,7 @@ from app.jobs.manager import (
     JobManager,
     _RUNNING_TASKS,
 )
-from app.jobs.models.job_config import (
+from app.config import (
     CronConfig,
     IntervalConfig,
     JobConfig,

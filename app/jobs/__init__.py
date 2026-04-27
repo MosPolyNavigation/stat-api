@@ -9,7 +9,7 @@ from app.guards.governor import stat_rate_limiter
 from app.guards.review_governor import review_rate_limiter
 from app.jobs.governor_cleaner.stat_cleaner import create_cleanup_job
 from app.jobs.manager import JobManager
-from app.jobs.models.job_config import JobsConfig
+from app.config import JobsConfig
 from app.jobs.refresh_token import delete_old_refresh_tokens, revoke_expired_refresh_tokens
 
 # Импорт задач, чтобы @scheduled_task отработал при старте и заполнил реестр

@@ -8,7 +8,7 @@ from typing import Any, Callable, Awaitable
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import BackgroundTasks
 
-from app.jobs.models.job_config import JobsConfig, JobConfig
+from app.config import JobsConfig, JobConfig
 from app.jobs.queue_db import (
     init_queue_db,
     log_job_start,

@@ -56,6 +56,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    global goals_table, role_right_goals_table
     op.execute(
         role_right_goals_table.delete()
         .where(role_right_goals_table.c.role_id == 1)
