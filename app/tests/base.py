@@ -1,5 +1,6 @@
 import asyncio
 import os
+os.environ["STATAPI_CONFIG"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.test.yaml")
 from pwdlib import PasswordHash
 from app.config import get_settings
 from fastapi.testclient import TestClient
