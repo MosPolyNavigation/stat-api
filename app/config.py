@@ -1,69 +1,211 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict, NoDecode
-from pydantic import PostgresDsn, field_validator
-from app.helpers.dsn import SqliteDsn
+import os
+import re
+import sys
 from functools import lru_cache
-from typing import Annotated
 from pathlib import Path
+from typing import Self
+
+import yaml
+from pydantic import BaseModel, PostgresDsn, model_validator
+
+from app.helpers.dsn import SqliteDsn
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-class Settings(BaseSettings):
-    """
-    Класс настроек приложения.
+# Паттерн: {{ env("VAR_NAME", "default") }} или {{ env("VAR_NAME") }}
+_ENV_PATTERN = re.compile(r'\{\{\s*env\("([^"]+)"(?:\s*,\s*"([^"]*)"\s*)?\)\s*\}\}')
 
-    Этот класс содержит настройки приложения,
-    которые могут быть загружены из файла .env.
 
-    Attributes:
-        sqlalchemy_database_url: URL базы данных SQLAlchemy.
-        allowed_hosts: Разрешенные хосты.
-        allowed_methods: Разрешенные методы.
+# ─── Загрузка .env без перезаписи системных переменных ────────────────────────
 
-    Config:
-        env_file: Путь к файлу .env.
-        env_file_encoding: Кодировка файла .env.
-    """
-    sqlalchemy_database_url: SqliteDsn | PostgresDsn = SqliteDsn("sqlite+aiosqlite:///app.db")
-    static_files: str = "./static"
-    allowed_hosts: Annotated[set[str], NoDecode] = ""
-    allowed_methods: Annotated[set[str], NoDecode] = "*,"
-    allowed_headers: Annotated[set[str], NoDecode] = "Authorization,"
-    access_secret: str = "test-access-secret"
-    refresh_secret: str = "test-refresh-secret"
-    access_duration: int = 900
-    refresh_duration: int = 2592000
+def _load_dotenv(dotenv_path: Path) -> None:
+    if not dotenv_path.exists():
+        return
+    with open(dotenv_path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            os.environ.setdefault(key, value)
 
-    @field_validator('allowed_hosts', mode='before')
-    @classmethod
-    def decode_allowed_hosts(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
 
-    @field_validator('allowed_methods', mode='before')
-    @classmethod
-    def decode_allowed_methods(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+# ─── Подстановка переменных окружения в YAML-строку ───────────────────────────
 
-    @field_validator('allowed_headers', mode='before')
-    @classmethod
-    def decode_allowed_headers(cls, v: str) -> set[str]:
-        return set([str(x.strip()) for x in v.split(',') if x.strip()])
+def _substitute_env(raw: str) -> str:
+    def replacer(match: re.Match) -> str:
+        var_name = match.group(1)
+        default = match.group(2)
+        value = os.environ.get(var_name)
+        if value is not None:
+            return value
+        if default is not None:
+            return default
+        return ""
 
-    model_config = SettingsConfigDict(
-        env_file=BASE_DIR / ".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    return _ENV_PATTERN.sub(replacer, raw)
+
+
+# ─── Pydantic-модели конфигурации ─────────────────────────────────────────────
+
+class CorsConfig(BaseModel):
+    allowed_hosts: list[str] = []
+    allowed_methods: list[str] = ["*"]
+    allowed_headers: list[str] = ["Authorization"]
+
+
+class StaticFileConfig(BaseModel):
+    path: str
+    name: str
+    fallback: bool = False
+    fallback_to: str | None = None
+
+    @model_validator(mode="after")
+    def validate_fallback_pair(self) -> Self:
+        if self.fallback and self.fallback_to is None:
+            raise ValueError("При fallback=True поле 'fallback_to' обязательно")
+        if self.fallback_to is not None and not self.fallback:
+            raise ValueError("Поле 'fallback_to' допустимо только при fallback=True")
+        return self
+
+
+class StaticConfig(BaseModel):
+    base_path: str = "./static"
+    files: list[StaticFileConfig] = []
+
+
+class CompressionConfig(BaseModel):
+    enable: bool = True
+
+
+class ServerConfig(BaseModel):
+    host: str = "localhost"
+    port: int = 8080
+    cors: CorsConfig | None = None
+    static: StaticConfig | None = None
+    compression: CompressionConfig | None = None
+
+
+class DatabaseConfig(BaseModel):
+    uri: SqliteDsn | PostgresDsn
+
+
+class JwtTokenConfig(BaseModel):
+    secret: str = "example1"
+    expiration: int = 900
+
+
+class JwtRefreshConfig(BaseModel):
+    secret: str = "example2"
+    expiration: int = 2592000
+    cookie_name: str = "refresh_token"
+
+
+class JwtConfig(BaseModel):
+    access: JwtTokenConfig = JwtTokenConfig()
+    refresh: JwtRefreshConfig = JwtRefreshConfig()
+
+
+class Settings(BaseModel):
+    server: ServerConfig = ServerConfig()
+    database: DatabaseConfig
+    jwt: JwtConfig = JwtConfig()
+    # Сырой dict из YAML; разбирается в JobsConfig при старте lifespan
+    # (прямой импорт JobsConfig создаёт циклический импорт через app.jobs.__init__)
+    jobs: dict = {}
+
+    # ── Свойства для обратной совместимости ───────────────────────────────────
+
+    @property
+    def sqlalchemy_database_url(self) -> SqliteDsn | PostgresDsn:
+        return self.database.uri
+
+    @property
+    def static_files(self) -> str:
+        if self.server.static:
+            return self.server.static.base_path
+        return "./static"
+
+    @property
+    def allowed_hosts(self) -> list[str]:
+        if self.server.cors:
+            return self.server.cors.allowed_hosts
+        return []
+
+    @property
+    def allowed_methods(self) -> list[str]:
+        if self.server.cors:
+            return self.server.cors.allowed_methods
+        return ["*"]
+
+    @property
+    def allowed_headers(self) -> list[str]:
+        if self.server.cors:
+            return self.server.cors.allowed_headers
+        return ["Authorization"]
+
+    @property
+    def access_secret(self) -> str:
+        return self.jwt.access.secret
+
+    @property
+    def refresh_secret(self) -> str:
+        return self.jwt.refresh.secret
+
+    @property
+    def access_duration(self) -> int:
+        return self.jwt.access.expiration
+
+    @property
+    def refresh_duration(self) -> int:
+        return self.jwt.refresh.expiration
+
+
+# ─── Загрузка конфигурации ────────────────────────────────────────────────────
+
+def load_settings() -> Settings:
+    # [1] Определяем путь к конфигу
+    config_path = Path(os.getenv("STATAPI_CONFIG", "config.yaml"))
+    if not config_path.is_absolute():
+        config_path = BASE_DIR / config_path
+
+    if not config_path.exists():
+        raise FileNotFoundError(
+            f"Файл конфигурации не найден: {config_path}\n"
+            "Создайте config.yaml из config.example.yaml и укажите путь через STATAPI_CONFIG."
+        )
+
+    # [2] Загружаем .env без перезаписи системных переменных
+    _load_dotenv(BASE_DIR / ".env")
+
+    # [3] Читаем YAML и подставляем {{ env(...) }}
+    raw_yaml = config_path.read_text(encoding="utf-8")
+    substituted = _substitute_env(raw_yaml)
+
+    # [4] Парсим YAML
+    data = yaml.safe_load(substituted) or {}
+
+    # [5] Валидируем через Pydantic
+    try:
+        settings = Settings.model_validate(data)
+    except Exception as exc:
+        print(f"ОШИБКА: Некорректная конфигурация: {exc}", file=sys.stderr)
+        raise SystemExit(1) from exc
+
+    # [6] Проверяем обязательное поле database.uri
+    if not settings.database.uri:
+        print(
+            "ОШИБКА: database.uri обязателен, но не задан. "
+            "Укажите его в config.yaml или через переменную окружения STATAPI_DB_URL.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+    return settings
 
 
 @lru_cache()
-def get_settings():
-    """
-    Функция для получения настроек приложения.
-
-    Эта функция возвращает объект настроек приложения.
-    Она использует декоратор lru_cache для кэширования результатов.
-
-    Returns:
-        Settings: Объект настроек приложения.
-    """
-    return Settings()
+def get_settings() -> Settings:
+    return load_settings()

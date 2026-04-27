@@ -1,0 +1,89 @@
+server:
+  host: {{ env("STATAPI_HOST", "0.0.0.0") }}
+  port: {{ env("STATAPI_PORT", "8080") }}
+
+  # CORS-настройки (опционально — удалите секцию, если CORS не нужен)
+  cors:
+    allowed_hosts:
+      - "http://localhost:3000"
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+    allowed_headers:
+      - Authorization
+
+  # Статические файлы (опционально)
+  static:
+    base_path: ./static
+    files: []
+    # Пример маршрута SPA:
+    # - path: dist
+    #   name: frontend
+    #   fallback: true
+    #   fallback_to: index.html
+
+  # Сжатие ответов (опционально)
+  compression:
+    enable: true
+
+database:
+  # В продакшене задавайте URI явно через переменную окружения,
+  # не используйте SQLite со значением по умолчанию.
+  uri: {{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///app.db") }}
+
+jwt:
+  access:
+    # ВАЖНО: замените секреты на случайные строки в продакшене!
+    secret: {{ env("STATAPI_ACCESS_SECRET", "example1") }}
+    expiration: 900  # 15 минут
+
+  refresh:
+    secret: {{ env("STATAPI_REFRESH_SECRET", "example2") }}
+    expiration: 2592000  # 30 дней
+    cookie_name: refresh_token
+
+# === Jobs Configuration ===
+# Логирование всех задач автоматически пишется в <static.base_path>/queue.db
+jobs:
+  # Тип хранилища для логов (сейчас поддерживается только sqlite)
+  queue: sqlite
+  # Имя файла БД (создаётся автоматически в static.base_path при старте)
+  url: queue.db
+
+  list:
+    # Пример interval-задачи
+    - name: fetch_location_data
+      enabled: true
+      desc: "Fetch location data every hour"
+      trigger: interval
+      interval:
+        hours: 1
+      scheduler:
+        id: "hourly_location_fetch"
+        replace_existing: true
+        max_instances: 1
+        misfire_grace_time: 300
+        coalesce: true
+
+    # Пример cron-задачи
+    - name: fetch_cur_rasp
+      enabled: true
+      desc: "Fetch current schedule at midnight"
+      trigger: cron
+      cron:
+        hour: 0
+        minute: 0
+        timezone: Europe/Moscow
+      scheduler:
+        id: "daily_rasp_fetch"
+        replace_existing: true
+        max_instances: 1
+
+    # Пример отключённой задачи (зарегистрирована, но не запускается)
+    - name: experimental_job
+      enabled: false
+      desc: "Experimental feature - disabled by default"
+      trigger: interval
+      interval:
+        minutes: 30
