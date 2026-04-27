@@ -3,10 +3,10 @@ import re
 import sys
 from functools import lru_cache
 from pathlib import Path
-from typing import Self
+from typing import Self, Optional, Literal
 
 import yaml
-from pydantic import BaseModel, PostgresDsn, model_validator
+from pydantic import BaseModel, PostgresDsn, model_validator, ConfigDict, Field
 
 from app.helpers.dsn import SqliteDsn
 
@@ -49,6 +49,49 @@ def _substitute_env(raw: str) -> str:
 
 
 # ─── Pydantic-модели конфигурации ─────────────────────────────────────────────
+
+class CronConfig(BaseModel):
+    minute: str | int = "*"
+    hour: str | int = "*"
+    day: str | int = "*"
+    month: str | int = "*"
+    day_of_week: str | int = "*"
+    timezone: str = "UTC"
+
+
+class IntervalConfig(BaseModel):
+    hours: int = 0
+    minutes: int = 0
+    seconds: int = 0
+
+
+class SchedulerConfig(BaseModel):
+    id: Optional[str] = None
+    name: Optional[str] = None
+    replace_existing: bool = False
+    max_instances: int = 1
+    misfire_grace_time: Optional[int] = None
+    coalesce: bool = False
+
+
+class JobConfig(BaseModel):
+    name: str
+    enabled: bool = True
+    desc: str = ""
+    trigger: Literal["cron", "interval"]
+    cron: Optional[CronConfig] = None
+    interval: Optional[IntervalConfig] = None
+    scheduler: SchedulerConfig = SchedulerConfig()
+
+
+class JobsConfig(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    queue: str = "sqlite"
+    url: str = "queue.db"
+    # В YAML-конфиге ключ называется "list", но "list" — имя встроенного типа Python
+    tasks: list[JobConfig] = Field(default=[], alias="list")
+
 
 class CorsConfig(BaseModel):
     allowed_hosts: list[str] = []
@@ -112,9 +155,7 @@ class Settings(BaseModel):
     server: ServerConfig = ServerConfig()
     database: DatabaseConfig
     jwt: JwtConfig = JwtConfig()
-    # Сырой dict из YAML; разбирается в JobsConfig при старте lifespan
-    # (прямой импорт JobsConfig создаёт циклический импорт через app.jobs.__init__)
-    jobs: dict = {}
+    jobs: JobsConfig = JobsConfig()
 
     # ── Свойства для обратной совместимости ───────────────────────────────────
 
