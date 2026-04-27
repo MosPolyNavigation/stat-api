@@ -85,16 +85,17 @@ if not path.exists(ADMIN_DIR):
 app = FastAPI(
     version="0.2.1",
     openapi_tags=tags_metadata,
-    # docs_url=None,
-    # redoc_url=None,
-    # openapi_url=None,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     lifespan=lifespan
 )
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_hosts,
     allow_methods=settings.allowed_methods,
-    allow_headers=settings.allowed_headers
+    allow_headers=settings.allowed_headers,
+    allow_credentials=settings.allow_credentials
 )
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 add_pagination(app)

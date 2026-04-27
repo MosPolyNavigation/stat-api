@@ -12,6 +12,9 @@ server:
       - PUT
     allowed_headers:
       - Authorization
+    # Нужно только для dev сервера админки, либо если админка на другом домене
+    # Для таких ситуаций установить true
+    allow_credentials: false
 
   # Статические файлы (опционально)
   static:

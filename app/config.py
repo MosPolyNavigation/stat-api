@@ -97,6 +97,7 @@ class CorsConfig(BaseModel):
     allowed_hosts: list[str] = []
     allowed_methods: list[str] = ["*"]
     allowed_headers: list[str] = ["Authorization"]
+    allow_credentials: bool = False
 
 
 class StaticFileConfig(BaseModel):
@@ -186,6 +187,12 @@ class Settings(BaseModel):
         if self.server.cors:
             return self.server.cors.allowed_headers
         return ["Authorization"]
+    
+    @property
+    def allow_credentials(self) -> list[str]:
+        if self.server.cors:
+            return self.server.cors.allow_credentials
+        return False
 
     @property
     def access_secret(self) -> str:
