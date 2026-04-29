@@ -15,8 +15,16 @@ async def create_user_id(db: AsyncSession) -> schemas.UserId:
     Returns:
         Созданный уникальный идентификатор пользователя.
     """
-    item = models.UserId()
+    item = models.ClientId()
     db.add(item)
     await db.commit()
     await db.refresh(item)
-    return item
+    return schemas.UserId(user_id=item.ident, creation_date=item.creation_date)
+
+
+async def create_client_id(db: AsyncSession) -> schemas.ClientIdentResponse:
+    item = models.ClientId()
+    db.add(item)
+    await db.commit()
+    await db.refresh(item)
+    return schemas.ClientIdentResponse(ident=item.ident)

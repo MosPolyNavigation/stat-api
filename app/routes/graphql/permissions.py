@@ -144,6 +144,30 @@ async def ensure_stats_view_permission(info: Info) -> AsyncSession:
     )
 
 
+async def ensure_stats_create_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(CREATE_RIGHT_ID, STATS_GOAL_ID)],
+        "Недостаточно прав для создания справочников статистики",
+    )
+
+
+async def ensure_stats_edit_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(EDIT_RIGHT_ID, STATS_GOAL_ID)],
+        "Недостаточно прав для редактирования справочников статистики",
+    )
+
+
+async def ensure_stats_delete_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(DELETE_RIGHT_ID, STATS_GOAL_ID)],
+        "Недостаточно прав для удаления справочников статистики",
+    )
+
+
 async def ensure_reviews_view_permission(info: Info) -> AsyncSession:
     return await ensure_permissions_by_ids(
         info, [(VIEW_RIGHT_ID, REVIEWS_GOAL_ID)], "Недостаточно прав для просмотра статистики"
