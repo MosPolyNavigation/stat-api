@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import Status
 from app.database import get_db
-from app.handlers import get_popular_auds_stub
+from app.handlers import get_popular_audiences
 
 
 def register_endpoint(router: APIRouter):
@@ -24,7 +24,10 @@ def register_endpoint(router: APIRouter):
                 'description': 'Popular auditories in descending order',
                 'content': {
                     'application/json': {
-                        "example": ["a-100", "a-101", "a-103", "a-102"]
+                        "example": [
+                            {"auditory_id": "a-100", "total_weight": 10},
+                            {"auditory_id": "a-101", "total_weight": 7},
+                        ]
                     }
                 }
             }
@@ -33,6 +36,5 @@ def register_endpoint(router: APIRouter):
     async def get_popular(
             db: AsyncSession = Depends(get_db)
     ) -> JSONResponse:
-        # TODO: restore after analytics refactor
-        data = await get_popular_auds_stub(db)
-        return JSONResponse(data, status_code=200)
+        data = await get_popular_audiences(db)
+        return JSONResponse([item.model_dump() for item in data], status_code=200)

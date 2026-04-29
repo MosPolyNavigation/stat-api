@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from datetime import date
 
 
 class Statistics(BaseModel):
@@ -17,7 +16,14 @@ class Statistics(BaseModel):
     unique_visitors: int
     visitor_count: int
     all_visits: int
-    period: date
+    period: str
+
+
+class PopularAudience(BaseModel):
+    """Популярная аудитория с рассчитанным весом."""
+
+    auditory_id: str
+    total_weight: int
 
 
 class AggregatedStatistics(BaseModel):

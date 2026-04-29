@@ -35,3 +35,15 @@ dev = [
 lint = [
     "flake8",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["app/tests"]
+norecursedirs = [
+    ".git",
+    ".venv",
+    ".pytest_cache",
+    "pytest-cache-files-*",
+    "node_modules",
+    "web",
+    "admin-panel",
+]

@@ -9,42 +9,42 @@ from .filter_handlers import _validated_limit
 from .permissions import ensure_reviews_view_permission
 from .problem import ProblemType, _to_problem
 from .review_status import ReviewStatusType, _to_review_status
-from .user_id import UserIdType, _to_user_id
+from app.routes.graphql.event_dict import ClientIdType, _to_client_id
 from app.models import Review
 
 
 @strawberry.type
 class ReviewType:
     id: int
-    user_id: str
+    client_id: int
     problem_id: str
     status_id: int
     text: str
     image_name: Optional[str]
     creation_date: datetime
     problem: Optional[ProblemType]
-    user: Optional[UserIdType]
+    client: Optional[ClientIdType]
     status: Optional[ReviewStatusType]
 
 
 def _to_review(model: Review) -> ReviewType:
     return ReviewType(
         id=model.id,
-        user_id=model.user_id,
+        client_id=model.client_id,
         problem_id=model.problem_id,
         status_id=model.review_status_id,
         text=model.text,
         image_name=model.image_name,
         creation_date=model.creation_date,
         problem=_to_problem(model.problem),
-        user=_to_user_id(model.user),
+        client=_to_client_id(model.client),
         status=_to_review_status(model.review_status)
     )
 
 
 async def resolve_reviews(
         info: Info,
-        user_id: Optional[str] = None,
+        client_id: Optional[int] = None,
         review_id: Optional[int] = None,
         problem_id: Optional[str] = None,
         status_id: Annotated[Optional[int], strawberry.argument(name="status_id")] = None,
@@ -54,14 +54,14 @@ async def resolve_reviews(
     statement = (
         select(Review)
         .options(
-            selectinload(Review.user),
+            selectinload(Review.client),
             selectinload(Review.problem),
             selectinload(Review.review_status)
         )
         .order_by(Review.creation_date.desc())
     )
-    if user_id:
-        statement = statement.where(Review.user_id == user_id)
+    if client_id:
+        statement = statement.where(Review.client_id == client_id)
     if review_id:
         statement = statement.where(Review.id == review_id)
     if problem_id:

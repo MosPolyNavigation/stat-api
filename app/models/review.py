@@ -4,7 +4,7 @@ from sqlalchemy import Column, Integer, String
 from datetime import datetime
 from typing import Optional
 from app.models.base import Base
-from app.models.stat.user_id import UserId
+from app.models.event import ClientId
 from app.models.problem import Problem
 
 
@@ -16,11 +16,11 @@ class Review(Base):
 
     Attributes:
         id: Идентификатор выбранной аудитории.
-        user_id: Идентификатор пользователя.
+        client_id: Внутренний идентификатор клиента.
         text: Отзыв пользователя.
         problem_id: Вид проблемы, с которой столкнулся пользователь.
         image_name: Id изображения в директории статических объектов.
-        user: Связь с таблицей "user_ids".
+        client: Связь с таблицей "client_ids".
         problem: Связь с таблицей "problem".
     """
     __tablename__ = "reviews"
@@ -30,8 +30,8 @@ class Review(Base):
         primary_key=True,
         index=True
     )
-    user_id: str = Column(
-        ForeignKey("user_ids.user_id"),
+    client_id: int = Column(
+        ForeignKey("client_ids.id"),
         nullable=False
     )
     text: str = Column(
@@ -58,7 +58,7 @@ class Review(Base):
         nullable=False
     )
 
-    user: Mapped["UserId"] = relationship()
+    client: Mapped["ClientId"] = relationship()
     problem: Mapped["Problem"] = relationship()
 
     # relation на статус

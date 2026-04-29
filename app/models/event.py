@@ -1,4 +1,5 @@
 from datetime import datetime
+from uuid import uuid4
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, relationship
@@ -27,8 +28,13 @@ class ClientId(Base):
     __tablename__ = "client_ids"
 
     id: int = Column(Integer, primary_key=True)
-    ident: str = Column(String(36), unique=True, nullable=False)
-    creation_date: datetime = Column(DateTime, nullable=False)
+    ident: str = Column(
+        String(36),
+        unique=True,
+        nullable=False,
+        default=lambda: str(uuid4()),
+    )
+    creation_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
 
     events: Mapped[list["Event"]] = relationship(
         "Event",

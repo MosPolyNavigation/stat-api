@@ -1,12 +1,14 @@
 from datetime import date, datetime, timedelta
-import strawberry
-from sqlalchemy.ext.asyncio import AsyncSession
-from strawberry import Info
 from typing import Optional
+
+import strawberry
+from strawberry import Info
+
+from app.constants import EVENT_TYPE_IDS_BY_CODE
+from app.handlers import get_aggregated_stats, get_period_stats
+from app.schemas import AggregatedStatistics, Statistics
+
 from .permissions import ensure_stats_view_permission
-from app.handlers import get_agr_endp_stats_stub, get_endpoint_stats_stub
-from app.schemas import Statistics, AggregatedStatistics, FilterQuery
-from app.schemas.filter import TargetEnum
 
 
 @strawberry.type
@@ -14,7 +16,7 @@ class EndpointStatisticsType:
     unique_visitors: int
     all_visits: int
     visitor_count: int
-    period: date
+    period: str
 
 
 @strawberry.input
@@ -44,30 +46,6 @@ def _to_endpoint_statistics(model: Statistics) -> EndpointStatisticsType:
     )
 
 
-def _fill_missing_dates(
-        stats: list[Statistics], start_date: date, end_date: date
-) -> list[Statistics]:
-    stats_map = {stat.period: stat for stat in stats}
-    filled_stats = []
-    current_date = start_date
-    end_date += timedelta(days=1)
-    while current_date < end_date:
-        if current_date in stats_map:
-            filled_stats.append(stats_map[current_date])
-        else:
-            filled_stats.append(
-                Statistics(
-                    period=current_date,
-                    all_visits=0,
-                    unique_visitors=0,
-                    visitor_count=0
-                )
-            )
-        current_date += timedelta(days=1)
-
-    return filled_stats
-
-
 def _validate_month_value(value: str, field_name: str) -> None:
     try:
         datetime.strptime(value, "%Y-%m")
@@ -76,72 +54,152 @@ def _validate_month_value(value: str, field_name: str) -> None:
 
 
 def _validate_year_value(value: str, field_name: str) -> None:
+    if len(value) != 4 or not value.isdigit():
+        raise ValueError(f"{field_name} must have format YYYY")
+
+
+def _add_month(value: date) -> date:
+    if value.month == 12:
+        return value.replace(year=value.year + 1, month=1)
+    return value.replace(month=value.month + 1)
+
+
+def _fill_missing_periods(
+    stats: list[Statistics],
+    period_type: str,
+    start: date,
+    end: date,
+) -> list[Statistics]:
+    stats_map = {item.period: item for item in stats}
+    filled_stats: list[Statistics] = []
+
+    if period_type == "day":
+        current = start
+        while current <= end:
+            key = current.isoformat()
+            filled_stats.append(
+                stats_map.get(
+                    key,
+                    Statistics(
+                        period=key,
+                        all_visits=0,
+                        unique_visitors=0,
+                        visitor_count=0,
+                    ),
+                )
+            )
+            current += timedelta(days=1)
+        return filled_stats
+
+    if period_type == "month":
+        current = start.replace(day=1)
+        end_month = end.replace(day=1)
+        while current <= end_month:
+            key = current.strftime("%Y-%m")
+            filled_stats.append(
+                stats_map.get(
+                    key,
+                    Statistics(
+                        period=key,
+                        all_visits=0,
+                        unique_visitors=0,
+                        visitor_count=0,
+                    ),
+                )
+            )
+            current = _add_month(current)
+        return filled_stats
+
+    current_year = start.year
+    while current_year <= end.year:
+        key = str(current_year)
+        filled_stats.append(
+            stats_map.get(
+                key,
+                Statistics(
+                    period=key,
+                    all_visits=0,
+                    unique_visitors=0,
+                    visitor_count=0,
+                ),
+            )
+        )
+        current_year += 1
+    return filled_stats
+
+
+def _resolve_event_type_id(
+    endpoint: Optional[str],
+    event_type_id: Optional[int],
+) -> Optional[int]:
+    if event_type_id is not None:
+        return event_type_id
+    if endpoint is None:
+        return None
     try:
-        datetime.strptime(value, "%Y")
-    except ValueError as exc:
-        raise ValueError(f"{field_name} must have format YYYY") from exc
+        return EVENT_TYPE_IDS_BY_CODE[endpoint]
+    except KeyError as exc:
+        raise ValueError("Unknown event endpoint") from exc
 
 
-async def resolve_endpoint_statistics(
-        info: Info,
-        endpoint: str,
-        by_date: Optional[EndpointStatisticsByDateInput] = None,
-        by_month: Optional[EndpointStatisticsByMonthInput] = None,
-        by_year: Optional[EndpointStatisticsByYearInput] = None,
-) -> list[EndpointStatisticsType]:
+def _resolve_period(
+    by_date: Optional[EndpointStatisticsByDateInput],
+    by_month: Optional[EndpointStatisticsByMonthInput],
+    by_year: Optional[EndpointStatisticsByYearInput],
+) -> tuple[str, date, date]:
     active_filters_count = sum(
         item is not None for item in (by_date, by_month, by_year)
     )
     if active_filters_count != 1:
-        raise ValueError(
-            "Exactly one filter must be provided: by_date, by_month, or by_year"
-        )
-
-    effective_start_date: Optional[date] = None
-    effective_end_date: Optional[date] = None
-    effective_start_month: Optional[str] = None
-    effective_end_month: Optional[str] = None
-    effective_start_year: Optional[str] = None
-    effective_end_year: Optional[str] = None
-    today = date.today()
+        raise ValueError("Exactly one date filter must be provided")
 
     if by_date is not None:
         if by_date.start > by_date.end:
             raise ValueError("by_date.start must be less than or equal to by_date.end")
-        effective_start_date = by_date.start
-        effective_end_date = min(by_date.end, today)
-        if effective_start_date > effective_end_date:
-            raise ValueError("by_date.start must not be greater than today's date")
-    elif by_month is not None:
+        return "day", by_date.start, by_date.end
+
+    if by_month is not None:
         _validate_month_value(by_month.start, "by_month.start")
         _validate_month_value(by_month.end, "by_month.end")
-        if by_month.start > by_month.end:
+        start = datetime.strptime(by_month.start, "%Y-%m").date().replace(day=1)
+        end = datetime.strptime(by_month.end, "%Y-%m").date().replace(day=1)
+        if start > end:
             raise ValueError("by_month.start must be less than or equal to by_month.end")
-        effective_start_month = by_month.start
-        effective_end_month = by_month.end
-    elif by_year is not None:
-        _validate_year_value(by_year.start, "by_year.start")
-        _validate_year_value(by_year.end, "by_year.end")
-        if by_year.start > by_year.end:
-            raise ValueError("by_year.start must be less than or equal to by_year.end")
-        effective_start_year = by_year.start
-        effective_end_year = by_year.end
+        return "month", start, _add_month(end) - timedelta(days=1)
 
-    session: AsyncSession = await ensure_stats_view_permission(info)
-    params = FilterQuery(
-        target=TargetEnum(endpoint),
-        start_date=effective_start_date,
-        end_date=effective_end_date,
-        start_month=effective_start_month,
-        end_month=effective_end_month,
-        start_year=effective_start_year,
-        end_year=effective_end_year,
+    if by_year is None:
+        raise ValueError("Date filter is required")
+    _validate_year_value(by_year.start, "by_year.start")
+    _validate_year_value(by_year.end, "by_year.end")
+    start_year = int(by_year.start)
+    end_year = int(by_year.end)
+    if start_year > end_year:
+        raise ValueError("by_year.start must be less than or equal to by_year.end")
+    return "year", date(start_year, 1, 1), date(end_year, 12, 31)
+
+
+async def resolve_endpoint_statistics(
+    info: Info,
+    endpoint: Optional[str] = None,
+    event_type_id: Optional[int] = None,
+    by_date: Optional[EndpointStatisticsByDateInput] = None,
+    by_month: Optional[EndpointStatisticsByMonthInput] = None,
+    by_year: Optional[EndpointStatisticsByYearInput] = None,
+) -> list[EndpointStatisticsType]:
+    session = await ensure_stats_view_permission(info)
+    effective_event_type_id = _resolve_event_type_id(endpoint, event_type_id)
+    period_type, start, end = _resolve_period(by_date, by_month, by_year)
+    stats = await get_period_stats(
+        session,
+        period_type,
+        start,
+        end,
+        effective_event_type_id,
     )
-    # TODO: restore after analytics refactor
-    stats = await get_endpoint_stats_stub(session, params)
-    if by_date is not None and effective_start_date is not None and effective_end_date is not None:
-        stats = _fill_missing_dates(stats, effective_start_date, effective_end_date)
-    return [_to_endpoint_statistics(stat) for stat in stats]
+    return [
+        _to_endpoint_statistics(item)
+        for item in _fill_missing_periods(stats, period_type, start, end)
+    ]
 
 
 @strawberry.type
@@ -155,7 +213,9 @@ class AggregatedEndpointStatisticsType:
     entries_count: int
 
 
-def _to_aggregated_endpoint_statistics(model: AggregatedStatistics) -> AggregatedEndpointStatisticsType:
+def _to_aggregated_statistics(
+    model: AggregatedStatistics,
+) -> AggregatedEndpointStatisticsType:
     return AggregatedEndpointStatisticsType(
         total_visits=model.total_all_visits,
         total_unique=model.total_unique_visitors,
@@ -168,60 +228,21 @@ def _to_aggregated_endpoint_statistics(model: AggregatedStatistics) -> Aggregate
 
 
 async def resolve_endpoint_statistics_avg(
-        info: Info,
-        endpoint: str,
-        by_date: Optional[EndpointStatisticsByDateInput] = None,
-        by_month: Optional[EndpointStatisticsByMonthInput] = None,
-        by_year: Optional[EndpointStatisticsByYearInput] = None,
+    info: Info,
+    endpoint: Optional[str] = None,
+    event_type_id: Optional[int] = None,
+    by_date: Optional[EndpointStatisticsByDateInput] = None,
+    by_month: Optional[EndpointStatisticsByMonthInput] = None,
+    by_year: Optional[EndpointStatisticsByYearInput] = None,
 ) -> AggregatedEndpointStatisticsType:
-    active_filters_count = sum(
-        item is not None for item in (by_date, by_month, by_year)
+    session = await ensure_stats_view_permission(info)
+    effective_event_type_id = _resolve_event_type_id(endpoint, event_type_id)
+    period_type, start, end = _resolve_period(by_date, by_month, by_year)
+    stats = await get_aggregated_stats(
+        session,
+        period_type,
+        start,
+        end,
+        effective_event_type_id,
     )
-    if active_filters_count != 1:
-        raise ValueError(
-            "Exactly one filter must be provided: by_date, by_month, or by_year"
-        )
-
-    effective_start_date: Optional[date] = None
-    effective_end_date: Optional[date] = None
-    effective_start_month: Optional[str] = None
-    effective_end_month: Optional[str] = None
-    effective_start_year: Optional[str] = None
-    effective_end_year: Optional[str] = None
-    today = date.today()
-
-    if by_date is not None:
-        if by_date.start > by_date.end:
-            raise ValueError("by_date.start must be less than or equal to by_date.end")
-        effective_start_date = by_date.start
-        effective_end_date = min(by_date.end, today)
-        if effective_start_date > effective_end_date:
-            raise ValueError("by_date.start must not be greater than today's date")
-    elif by_month is not None:
-        _validate_month_value(by_month.start, "by_month.start")
-        _validate_month_value(by_month.end, "by_month.end")
-        if by_month.start > by_month.end:
-            raise ValueError("by_month.start must be less than or equal to by_month.end")
-        effective_start_month = by_month.start
-        effective_end_month = by_month.end
-    elif by_year is not None:
-        _validate_year_value(by_year.start, "by_year.start")
-        _validate_year_value(by_year.end, "by_year.end")
-        if by_year.start > by_year.end:
-            raise ValueError("by_year.start must be less than or equal to by_year.end")
-        effective_start_year = by_year.start
-        effective_end_year = by_year.end
-
-    session: AsyncSession = await ensure_stats_view_permission(info)
-    params = FilterQuery(
-        target=TargetEnum(endpoint),
-        start_date=effective_start_date,
-        end_date=effective_end_date,
-        start_month=effective_start_month,
-        end_month=effective_end_month,
-        start_year=effective_start_year,
-        end_year=effective_end_year,
-    )
-    # TODO: restore after analytics refactor
-    aggregated_stats = await get_agr_endp_stats_stub(session, params)
-    return _to_aggregated_endpoint_statistics(aggregated_stats)
+    return _to_aggregated_statistics(stats)

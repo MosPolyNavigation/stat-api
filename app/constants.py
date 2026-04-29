@@ -29,6 +29,29 @@ ADMIN_GOAL_ID = 10
 REVIEWS_GOAL_ID = 11
 
 # =============================================================================
+# КОНСТАНТЫ НОВОЙ СХЕМЫ СОБЫТИЙ
+# =============================================================================
+
+EVENT_TYPE_SITE_ID = 1
+EVENT_TYPE_AUDS_ID = 2
+EVENT_TYPE_WAYS_ID = 3
+EVENT_TYPE_PLANS_ID = 4
+
+EVENT_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "site": EVENT_TYPE_SITE_ID,
+    "auds": EVENT_TYPE_AUDS_ID,
+    "ways": EVENT_TYPE_WAYS_ID,
+    "plans": EVENT_TYPE_PLANS_ID,
+}
+
+PAYLOAD_TYPE_ENDPOINT_ID = 1
+PAYLOAD_TYPE_AUDITORY_ID = 2
+PAYLOAD_TYPE_START_ID = 3
+PAYLOAD_TYPE_END_ID = 4
+PAYLOAD_TYPE_SUCCESS_ID = 5
+PAYLOAD_TYPE_PLAN_ID = 6
+
+# =============================================================================
 # КОНСТАНТЫ ПРАВ (RIGHTS)
 # =============================================================================
 

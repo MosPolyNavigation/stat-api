@@ -4,7 +4,7 @@ import aiofiles
 
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Response, UploadFile, File, Form, Depends
+from fastapi import APIRouter, HTTPException, Response, UploadFile, Form, Depends, status
 
 from app.database import get_db
 from app.config import get_settings
@@ -78,12 +78,21 @@ def register_endpoint(router: APIRouter):
     async def add_review(
             response: Response,
             image: Optional[UploadFile] = Depends(image_validator),
-            user_id: str = Form(
+            client_id: Optional[str] = Form(
+                default=None,
                 title="id",
-                description="Unique user id",
+                description="Unique client ident",
                 min_length=36,
                 max_length=36,
-                pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+                pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}"
+            ),
+            user_id: Optional[str] = Form(
+                default=None,
+                title="legacy id",
+                description="Legacy client ident",
+                min_length=36,
+                max_length=36,
+                pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}"
             ),
             problem: Problem = Form(
                 title="problem",
@@ -112,4 +121,10 @@ def register_endpoint(router: APIRouter):
                 await file.write(contents)
         else:
             image_name = None
-        return await insert_review(db, image_name, user_id, problem, text)
+        client_ident = client_id or user_id
+        if client_ident is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="client_id is required",
+            )
+        return await insert_review(db, image_name, client_ident, problem, text)

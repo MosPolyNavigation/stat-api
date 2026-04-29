@@ -47,7 +47,24 @@ from .nav import (
 from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
-from .user_id import UserIdType, resolve_user_ids
+from .event_dict import (
+    AllowedPayloadRuleConnection,
+    AllowedPayloadRuleType,
+    EventTypeConnection,
+    EventTypeType,
+    PayloadTypeConnection,
+    PayloadTypeType,
+    ValueTypeConnection,
+    ValueTypeType,
+    resolve_allowed_payload_rule,
+    resolve_allowed_payload_rules,
+    resolve_event_type,
+    resolve_event_types,
+    resolve_payload_type,
+    resolve_payload_types,
+    resolve_value_type,
+    resolve_value_types,
+)
 from .user_role import UserConnection, resolve_users, UserType, resolve_user
 from .user_role import RoleConnection, resolve_roles, RoleType, resolve_role
 from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, resolve_user_role
@@ -61,10 +78,6 @@ class Query:
     reviews: list[ReviewType] = strawberry.field(
         resolver=resolve_reviews,
         description="Get user reviews.",
-    )
-    user_ids: list[UserIdType] = strawberry.field(
-        resolver=resolve_user_ids,
-        description="Get user ids.",
     )
     problems: list[ProblemType] = strawberry.field(
         resolver=resolve_problems,
@@ -81,6 +94,38 @@ class Query:
     endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
         resolver=resolve_endpoint_statistics_avg,
         description="Get aggregated endpoint statistics for selected period.",
+    )
+    event_types: EventTypeConnection = strawberry.field(
+        resolver=resolve_event_types,
+        description="Get event types with pagination.",
+    )
+    event_type: Optional[EventTypeType] = strawberry.field(
+        resolver=resolve_event_type,
+        description="Get event type.",
+    )
+    value_types: ValueTypeConnection = strawberry.field(
+        resolver=resolve_value_types,
+        description="Get value types with pagination.",
+    )
+    value_type: Optional[ValueTypeType] = strawberry.field(
+        resolver=resolve_value_type,
+        description="Get value type.",
+    )
+    payload_types: PayloadTypeConnection = strawberry.field(
+        resolver=resolve_payload_types,
+        description="Get payload types with pagination.",
+    )
+    payload_type: Optional[PayloadTypeType] = strawberry.field(
+        resolver=resolve_payload_type,
+        description="Get payload type.",
+    )
+    allowed_payload_rules: AllowedPayloadRuleConnection = strawberry.field(
+        resolver=resolve_allowed_payload_rules,
+        description="Get allowed payload rules with pagination.",
+    )
+    allowed_payload_rule: Optional[AllowedPayloadRuleType] = strawberry.field(
+        resolver=resolve_allowed_payload_rule,
+        description="Get allowed payload rule.",
     )
 
     nav_floors: NavFloorConnection = strawberry.field(

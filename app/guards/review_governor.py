@@ -159,16 +159,16 @@ class ReviewRateLimiter:
         self._enforce_max_users(access_store)
     
     async def _extract_user_id(self, request: Request) -> Optional[str]:
-        """Извлекает user_id из multipart/form-data или JSON."""
+        """Извлекает идентификатор клиента из multipart/form-data или JSON."""
         try:
             content_type = request.headers.get("content-type", "")
             
             if "multipart/form-data" in content_type:
                 form = await request.form()
-                return form.get("user_id")
+                return form.get("client_id") or form.get("user_id")
             else:
                 body = await request.json()
-                return body.get("user_id")
+                return body.get("client_id") or body.get("user_id")
         except Exception:
             return None
     

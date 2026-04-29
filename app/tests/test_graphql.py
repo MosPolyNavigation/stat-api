@@ -226,9 +226,9 @@ class TestGraphQLOtherQueries:
                     id
                     name
                 }
-                user {
+                client {
                     id
-                    userId
+                    ident
                 }
             }
         }
@@ -251,14 +251,13 @@ class TestGraphQLOtherQueries:
         assert response.status_code == 200
         assert "data" in response.json()
 
-    def test_200_site_stats_with_nested_user(self):
+    def test_200_event_types_query(self):
         query = """
         {
-            siteStats(limit: 5) {
-                id
-                user {
+            eventTypes {
+                nodes {
                     id
-                    userId
+                    codeName
                 }
             }
         }

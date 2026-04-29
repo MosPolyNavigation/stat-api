@@ -1,5 +1,5 @@
-from .filter import Filter, FilterQuery, FilterRoute, TgFilterQuery
-from .statistics import Statistics, AggregatedStatistics
+from .filter import Filter, FilterQuery, FilterRoute
+from .statistics import AggregatedStatistics, PopularAudience, Statistics
 from .status import Status
 from .review import Problem
 from app.schemas.stat.user_id import UserId, UserIdCheck

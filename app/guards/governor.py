@@ -4,6 +4,7 @@ from collections import OrderedDict
 
 from fastapi import HTTPException, Request, status
 
+from app.scheme import EventCreateRequest
 from app.state import AppState
 
 
@@ -101,6 +102,12 @@ class RateLimiter:
             body = await request.json()
         except Exception:
             return None
+        if "ident" in self.id_fields:
+            try:
+                data = EventCreateRequest.model_validate(body)
+            except Exception:
+                return None
+            return f"{data.ident}:{data.event_type_id}"
         for field in self.id_fields:
             value = body.get(field)
             if value is not None:
@@ -180,6 +187,15 @@ stat_rate_limiter = RateLimiter(
     window_seconds=1.0,
     id_fields=["user_id"],
     error_detail="Too many requests for this user within one second",
+    ttl_seconds=3600,
+    max_users=1000,
+)
+
+stat_event_rate_limiter = RateLimiter(
+    window_seconds=1.0,
+    endpoint_key="stat_event",
+    id_fields=["ident"],
+    error_detail="Too many requests for this client event type within one second",
     ttl_seconds=3600,
     max_users=1000,
 )

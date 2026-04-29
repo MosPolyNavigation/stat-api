@@ -21,17 +21,13 @@ class ReviewOut(BaseModel):
     Этот класс содержит поля содержащие отзыв пользователя.
 
     Attributes:
-        user_id: Уникальный идентификатор пользователя;
+        client_id: Внутренний идентификатор клиента;
         problem_id: Тип проблемы, с которой столкнулся пользователь;
         text: Содержимое отзыва пользователя;
         image_name: Путь до картинки, загруженной пользователем;
         creation_date: Дата создания отзыва.
     """
-    user_id: str = Field(title="id",
-                         description="Unique user id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+    client_id: int = Field(title="client_id", description="Client database id")
     problem_id: Problem = Field(title="problem",
                                 serialization_alias="problem",
                                 description="User problem")

@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import datetime
 from pwdlib import PasswordHash
 from app.config import get_settings
 from fastapi.testclient import TestClient
@@ -32,41 +33,85 @@ async def create_db_and_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with AsyncSessionLocal.begin() as db:
-        user: models.UserId = models.UserId(
-            user_id="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec"
+        client = models.ClientId(
+            id=1,
+            ident="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+            creation_date=datetime(2025, 1, 1, 8, 0, 0),
         )
-        db.add(user)
+        client_2 = models.ClientId(
+            id=2,
+            ident="22e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+            creation_date=datetime(2025, 1, 2, 8, 0, 0),
+        )
+        db.add_all([client, client_2])
         review_statuses: list[models.ReviewStatus] = list([
             models.ReviewStatus(id=id_, name=name) for id_, name in review_status.items()
         ])
         db.add_all(review_statuses)
-        # await db.commit()
-        # plans_data: list[models.Plan] = list(map(
-        #     lambda x: models.Plan(id=x),
-        #     list(set(plans.split('\n')))
-        # ))
-        # db.add_all(plans_data)
-        # db.commit()
-        # auds_data: list[models.Auditory] = list(map(
-        #     lambda x: models.Auditory(id=x),
-        #     list(set(auds.split('\n')))
-        # ))
-        # db.add_all(auds_data)
-        # db.commit()
-        data_site_stat = models.SiteStat(user=user)
-        db.add(data_site_stat)
-        # await db.commit()
-        data_start_way = models.StartWay(
-            user=user, start_id="a-100", end_id="a-101"
+
+        db.add_all([
+            models.ValueType(id=1, name="int", description="Integer value"),
+            models.ValueType(id=2, name="string", description="String value"),
+            models.ValueType(id=3, name="bool", description="Boolean value"),
+        ])
+        db.add_all([
+            models.EventType(id=1, code_name="site", description="Site events"),
+            models.EventType(id=2, code_name="auds", description="Auditory selection events"),
+            models.EventType(id=3, code_name="ways", description="Route build events"),
+            models.EventType(id=4, code_name="plans", description="Plan change events"),
+        ])
+        db.add_all([
+            models.PayloadType(id=1, code_name="endpoint", description="Visited site endpoint", value_type_id=2),
+            models.PayloadType(id=2, code_name="auditory_id", description="Selected auditory identifier", value_type_id=2),
+            models.PayloadType(id=3, code_name="start_id", description="Route start identifier", value_type_id=2),
+            models.PayloadType(id=4, code_name="end_id", description="Route destination identifier", value_type_id=2),
+            models.PayloadType(id=5, code_name="success", description="Operation success flag", value_type_id=3),
+            models.PayloadType(id=6, code_name="plan_id", description="Selected plan identifier", value_type_id=2),
+        ])
+        db.add_all([
+            models.AllowedPayload(event_type_id=1, payload_type_id=1),
+            models.AllowedPayload(event_type_id=2, payload_type_id=2),
+            models.AllowedPayload(event_type_id=2, payload_type_id=5),
+            models.AllowedPayload(event_type_id=3, payload_type_id=3),
+            models.AllowedPayload(event_type_id=3, payload_type_id=4),
+            models.AllowedPayload(event_type_id=3, payload_type_id=5),
+            models.AllowedPayload(event_type_id=4, payload_type_id=6),
+        ])
+
+        site_event = models.Event(
+            id=1,
+            client=client,
+            event_type_id=1,
+            trigger_time=datetime(2025, 1, 1, 10, 0, 0),
         )
-        db.add(data_start_way)
-        # await db.commit()
-        data_select_aud = models.SelectAuditory(user=user, auditory_id="a-100")
-        db.add(data_select_aud)
-        # await db.commit()
-        data_change_plan = models.ChangePlan(user=user, plan_id="A-0")
-        db.add(data_change_plan)
-        # await db.commit()
+        aud_event = models.Event(
+            id=2,
+            client=client,
+            event_type_id=2,
+            trigger_time=datetime(2025, 1, 1, 11, 0, 0),
+        )
+        way_event = models.Event(
+            id=3,
+            client=client,
+            event_type_id=3,
+            trigger_time=datetime(2025, 1, 1, 12, 0, 0),
+        )
+        plan_event = models.Event(
+            id=4,
+            client=client_2,
+            event_type_id=4,
+            trigger_time=datetime(2025, 1, 2, 9, 0, 0),
+        )
+        db.add_all([site_event, aud_event, way_event, plan_event])
+        db.add_all([
+            models.Payload(id=1, event=site_event, type_id=1, value="site"),
+            models.Payload(id=2, event=aud_event, type_id=2, value="a-100"),
+            models.Payload(id=3, event=aud_event, type_id=5, value="true"),
+            models.Payload(id=4, event=way_event, type_id=3, value="a-100"),
+            models.Payload(id=5, event=way_event, type_id=4, value="a-101"),
+            models.Payload(id=6, event=way_event, type_id=5, value="true"),
+            models.Payload(id=7, event=plan_event, type_id=6, value="A-0"),
+        ])
         data_goals: list[models.Goal] = list([models.Goal(id=i, name=name) for i, name in goals.items()])
         data_roles: list[models.Role] = list([models.Role(id=i, name=name) for i, name in roles.items()])
         data_rights: list[models.Right] = list([models.Right(id=i, name=name) for i, name in rights.items()])
@@ -85,6 +130,13 @@ async def create_db_and_tables():
             token="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
         )
         db.add(data_user)
+        data_user_without_roles: models.User = models.User(
+            id=2,
+            login="viewer",
+            hash=PasswordHash.recommended().hash("sidecuter"),
+            token="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ee"
+        )
+        db.add(data_user_without_roles)
         # await db.commit()
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
