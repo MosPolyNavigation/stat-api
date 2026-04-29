@@ -21,7 +21,7 @@ def _period_expression(period_type: str):
         return func.strftime("%Y-%m", models.Event.trigger_time)
     if period_type == "year":
         return func.strftime("%Y", models.Event.trigger_time)
-    raise ValueError("period_type must be one of: day, month, year")
+    raise ValueError("period_type должен быть одним из: day, month, year")
 
 
 def _postgres_period_expression(period_type: str):
@@ -31,7 +31,7 @@ def _postgres_period_expression(period_type: str):
         return func.to_char(models.Event.trigger_time, "YYYY-MM")
     if period_type == "year":
         return func.to_char(models.Event.trigger_time, "YYYY")
-    raise ValueError("period_type must be one of: day, month, year")
+    raise ValueError("period_type должен быть одним из: day, month, year")
 
 
 def _period_expression_for_session(db: AsyncSession, period_type: str):

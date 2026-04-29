@@ -343,7 +343,7 @@ class TestGraphQLOtherQueries:
             createValueType(data: {
                 id: 99,
                 name: "json",
-                description: "JSON payload"
+                description: "JSON-значение payload"
             }) {
                 id
                 name
@@ -359,7 +359,7 @@ class TestGraphQLOtherQueries:
         mutation {
             updateValueType(
                 valueTypeId: 99,
-                data: {description: "Structured JSON payload"}
+                data: {description: "Структурированное JSON-значение payload"}
             ) {
                 id
                 description
@@ -368,7 +368,7 @@ class TestGraphQLOtherQueries:
         """
         update_response = graphql_query(update_query, ADMIN_HEADERS)
         assert update_response.status_code == 200
-        assert update_response.json()["data"]["updateValueType"]["description"] == "Structured JSON payload"
+        assert update_response.json()["data"]["updateValueType"]["description"] == "Структурированное JSON-значение payload"
 
         delete_query = """
         mutation {

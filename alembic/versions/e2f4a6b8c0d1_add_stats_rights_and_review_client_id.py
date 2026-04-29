@@ -1,4 +1,4 @@
-"""Add stats rights and review client relation
+"""Добавление прав stats и связи reviews с client_ids
 
 Revision ID: e2f4a6b8c0d1
 Revises: b1c9f0e2a113
@@ -34,27 +34,28 @@ def _role_right_goals_table() -> sa.Table:
     )
 
 
-def _insert_role_right_goal_if_missing(role_id: int, right_id: int, goal_id: int) -> None:
-    op.execute(
-        sa.text(
-            """
-            INSERT INTO role_right_goals (role_id, right_id, goal_id)
-            SELECT :role_id, :right_id, :goal_id
-            WHERE NOT EXISTS (
-                SELECT 1
-                FROM role_right_goals
-                WHERE role_id = :role_id
-                  AND right_id = :right_id
-                  AND goal_id = :goal_id
-            )
-            """
-        ).bindparams(role_id=role_id, right_id=right_id, goal_id=goal_id)
-    )
-
-
 def upgrade() -> None:
-    for right_id in (CREATE_RIGHT_ID, EDIT_RIGHT_ID, DELETE_RIGHT_ID):
-        _insert_role_right_goal_if_missing(ADMIN_ROLE_ID, right_id, STATS_GOAL_ID)
+    role_right_goals_table = _role_right_goals_table()
+    op.bulk_insert(
+        role_right_goals_table,
+        [
+            {
+                "role_id": ADMIN_ROLE_ID,
+                "right_id": CREATE_RIGHT_ID,
+                "goal_id": STATS_GOAL_ID,
+            },
+            {
+                "role_id": ADMIN_ROLE_ID,
+                "right_id": EDIT_RIGHT_ID,
+                "goal_id": STATS_GOAL_ID,
+            },
+            {
+                "role_id": ADMIN_ROLE_ID,
+                "right_id": DELETE_RIGHT_ID,
+                "goal_id": STATS_GOAL_ID,
+            },
+        ],
+    )
 
     op.execute(
         """

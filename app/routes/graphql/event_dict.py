@@ -537,7 +537,7 @@ async def update_allowed_payload_rule(
         )
     ).scalar_one_or_none()
     if item is None:
-        raise GraphQLError("Allowed payload rule not found")
+        raise GraphQLError("Правило допустимого payload не найдено")
     if not await _exists(session, EventType, payload.new_event_type_id):
         raise GraphQLError(f"EventType {payload.new_event_type_id} not found")
     if not await _exists(session, PayloadType, payload.new_payload_type_id):
@@ -578,7 +578,7 @@ async def delete_allowed_payload_rule(
         )
     ).scalar_one_or_none()
     if item is None:
-        raise GraphQLError("Allowed payload rule not found")
+        raise GraphQLError("Правило допустимого payload не найдено")
     await session.delete(item)
     await session.commit()
     return True

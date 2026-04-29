@@ -81,27 +81,27 @@ class Query:
     )
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
-        description="Get endpoint statistics for selected goal.",
+        description="Получить статистику событий для выбранного типа.",
     )
     endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
         resolver=resolve_endpoint_statistics_avg,
-        description="Get aggregated endpoint statistics for selected period.",
+        description="Получить агрегированную статистику событий за выбранный период.",
     )
     event_types: EventTypeConnection = strawberry.field(
         resolver=resolve_event_types,
-        description="Get event type dictionary records.",
+        description="Получить записи справочника типов событий.",
     )
     payload_types: PayloadTypeConnection = strawberry.field(
         resolver=resolve_payload_types,
-        description="Get payload type dictionary records.",
+        description="Получить записи справочника типов payload.",
     )
     value_types: ValueTypeConnection = strawberry.field(
         resolver=resolve_value_types,
-        description="Get value type dictionary records.",
+        description="Получить записи справочника типов значений.",
     )
     allowed_payload_rules: AllowedPayloadRuleConnection = strawberry.field(
         resolver=resolve_allowed_payload_rules,
-        description="Get allowed payload dictionary relations.",
+        description="Получить связи допустимых payload для типов событий.",
     )
 
     nav_floors: NavFloorConnection = strawberry.field(

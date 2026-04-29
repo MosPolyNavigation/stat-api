@@ -58,16 +58,16 @@ async def create_db_and_tables():
         db.add_all([client, second_client])
         db.add_all(
             [
-                models.EventType(id=EVENT_TYPE_SITE_ID, code_name="site", description="Site visits"),
-                models.EventType(id=EVENT_TYPE_AUDS_ID, code_name="auds", description="Auditory searches"),
-                models.EventType(id=EVENT_TYPE_WAYS_ID, code_name="ways", description="Route builds"),
-                models.EventType(id=EVENT_TYPE_PLANS_ID, code_name="plans", description="Plan changes"),
+                models.EventType(id=EVENT_TYPE_SITE_ID, code_name="site", description="Посещения сайта"),
+                models.EventType(id=EVENT_TYPE_AUDS_ID, code_name="auds", description="Поиск аудиторий"),
+                models.EventType(id=EVENT_TYPE_WAYS_ID, code_name="ways", description="Построение маршрутов"),
+                models.EventType(id=EVENT_TYPE_PLANS_ID, code_name="plans", description="Смена планов"),
             ]
         )
         db.add_all(
             [
-                models.ValueType(id=1, name="string", description="String value"),
-                models.ValueType(id=2, name="bool", description="Boolean value"),
+                models.ValueType(id=1, name="string", description="Строковое значение"),
+                models.ValueType(id=2, name="bool", description="Булево значение"),
             ]
         )
         db.add_all(

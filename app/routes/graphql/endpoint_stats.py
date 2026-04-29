@@ -75,25 +75,25 @@ def _validate_month_value(value: str, field_name: str) -> None:
     try:
         datetime.strptime(value, "%Y-%m")
     except ValueError as exc:
-        raise ValueError(f"{field_name} must have format YYYY-MM") from exc
+        raise ValueError(f"{field_name} должен быть в формате YYYY-MM") from exc
 
 
 def _validate_year_value(value: str, field_name: str) -> None:
     try:
         datetime.strptime(value, "%Y")
     except ValueError as exc:
-        raise ValueError(f"{field_name} must have format YYYY") from exc
+        raise ValueError(f"{field_name} должен быть в формате YYYY") from exc
 
 
 def _resolve_event_type_id(endpoint: Optional[str], event_type_id: Optional[int]) -> Optional[int]:
     if endpoint is not None and event_type_id is not None:
-        raise ValueError("Only one event type filter can be provided")
+        raise ValueError("Можно передать только один фильтр типа события")
     if event_type_id is not None:
         return event_type_id
     if endpoint is None:
         return None
     if endpoint not in EVENT_TYPE_IDS_BY_CODE:
-        raise ValueError(f"Unknown endpoint/event type code: {endpoint}")
+        raise ValueError(f"Неизвестный код endpoint/event type: {endpoint}")
     return EVENT_TYPE_IDS_BY_CODE[endpoint]
 
 
@@ -104,15 +104,15 @@ def _resolve_window(
 ) -> tuple[str, datetime, datetime, Optional[date], Optional[date]]:
     active_filters_count = sum(item is not None for item in (by_date, by_month, by_year))
     if active_filters_count != 1:
-        raise ValueError("Exactly one filter must be provided: by_date, by_month, or by_year")
+        raise ValueError("Нужно передать ровно один фильтр: by_date, by_month или by_year")
 
     if by_date is not None:
         if by_date.start > by_date.end:
-            raise ValueError("by_date.start must be less than or equal to by_date.end")
+            raise ValueError("by_date.start должен быть меньше или равен by_date.end")
         today = date.today()
         effective_end = min(by_date.end, today)
         if by_date.start > effective_end:
-            raise ValueError("by_date.start must not be greater than today's date")
+            raise ValueError("by_date.start не должен быть больше сегодняшней даты")
         return (
             "day",
             datetime.combine(by_date.start, time.min),
@@ -125,18 +125,18 @@ def _resolve_window(
         _validate_month_value(by_month.start, "by_month.start")
         _validate_month_value(by_month.end, "by_month.end")
         if by_month.start > by_month.end:
-            raise ValueError("by_month.start must be less than or equal to by_month.end")
+            raise ValueError("by_month.start должен быть меньше или равен by_month.end")
         start = datetime.strptime(by_month.start, "%Y-%m")
         end_month = datetime.strptime(by_month.end, "%Y-%m")
         end = datetime(end_month.year + (end_month.month == 12), end_month.month % 12 + 1, 1)
         return "month", start, end, None, None
 
     if by_year is None:
-        raise ValueError("One filter must be provided")
+        raise ValueError("Нужно передать один фильтр")
     _validate_year_value(by_year.start, "by_year.start")
     _validate_year_value(by_year.end, "by_year.end")
     if by_year.start > by_year.end:
-        raise ValueError("by_year.start must be less than or equal to by_year.end")
+        raise ValueError("by_year.start должен быть меньше или равен by_year.end")
     return (
         "year",
         datetime.strptime(by_year.start, "%Y"),

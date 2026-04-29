@@ -24,49 +24,49 @@ from .event_dict import (
 class EventDictionaryMutation:
     create_event_type: EventTypeType = strawberry.mutation(
         resolver=create_event_type,
-        description="Create event type.",
+        description="Создать тип события.",
     )
     update_event_type: EventTypeType = strawberry.mutation(
         resolver=update_event_type,
-        description="Update event type.",
+        description="Обновить тип события.",
     )
     delete_event_type: bool = strawberry.mutation(
         resolver=delete_event_type,
-        description="Delete event type.",
+        description="Удалить тип события.",
     )
     create_value_type: ValueTypeType = strawberry.mutation(
         resolver=create_value_type,
-        description="Create value type.",
+        description="Создать тип значения.",
     )
     update_value_type: ValueTypeType = strawberry.mutation(
         resolver=update_value_type,
-        description="Update value type.",
+        description="Обновить тип значения.",
     )
     delete_value_type: bool = strawberry.mutation(
         resolver=delete_value_type,
-        description="Delete value type.",
+        description="Удалить тип значения.",
     )
     create_payload_type: PayloadTypeType = strawberry.mutation(
         resolver=create_payload_type,
-        description="Create payload type.",
+        description="Создать тип payload.",
     )
     update_payload_type: PayloadTypeType = strawberry.mutation(
         resolver=update_payload_type,
-        description="Update payload type.",
+        description="Обновить тип payload.",
     )
     delete_payload_type: bool = strawberry.mutation(
         resolver=delete_payload_type,
-        description="Delete payload type.",
+        description="Удалить тип payload.",
     )
     create_allowed_payload_rule: AllowedPayloadRuleType = strawberry.mutation(
         resolver=create_allowed_payload_rule,
-        description="Create allowed payload rule.",
+        description="Создать правило допустимого payload.",
     )
     update_allowed_payload_rule: AllowedPayloadRuleType = strawberry.mutation(
         resolver=update_allowed_payload_rule,
-        description="Update allowed payload rule.",
+        description="Обновить правило допустимого payload.",
     )
     delete_allowed_payload_rule: bool = strawberry.mutation(
         resolver=delete_allowed_payload_rule,
-        description="Delete allowed payload rule.",
+        description="Удалить правило допустимого payload.",
     )
