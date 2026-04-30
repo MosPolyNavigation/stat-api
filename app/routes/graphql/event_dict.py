@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 
-from app import scheme
+from app import schemas
 from app.models import AllowedPayload, ClientId, EventType, PayloadType, ValueType
 
 from .pagination import PageInfo, PaginationInfo, PaginationInput
@@ -257,7 +257,7 @@ async def resolve_event_types(
     pagination: Optional[PaginationInput] = None,
 ) -> EventTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = scheme.EventTypeFilter(**(filter.__dict__ if filter else {}))
+    data = schemas.EventTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(EventType).order_by(EventType.id.asc())
     count_statement = select(func.count()).select_from(EventType)
     if data.id is not None:
@@ -283,7 +283,7 @@ async def resolve_value_types(
     pagination: Optional[PaginationInput] = None,
 ) -> ValueTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = scheme.ValueTypeFilter(**(filter.__dict__ if filter else {}))
+    data = schemas.ValueTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(ValueType).order_by(ValueType.id.asc())
     count_statement = select(func.count()).select_from(ValueType)
     if data.id is not None:
@@ -309,7 +309,7 @@ async def resolve_payload_types(
     pagination: Optional[PaginationInput] = None,
 ) -> PayloadTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = scheme.PayloadTypeFilter(**(filter.__dict__ if filter else {}))
+    data = schemas.PayloadTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(PayloadType).options(selectinload(PayloadType.value_type)).order_by(PayloadType.id.asc())
     count_statement = select(func.count()).select_from(PayloadType)
     if data.id is not None:
@@ -338,7 +338,7 @@ async def resolve_allowed_payload_rules(
     pagination: Optional[PaginationInput] = None,
 ) -> AllowedPayloadRuleConnection:
     session = await ensure_stats_view_permission(info)
-    data = scheme.AllowedPayloadRuleFilter(**(filter.__dict__ if filter else {}))
+    data = schemas.AllowedPayloadRuleFilter(**(filter.__dict__ if filter else {}))
     statement = (
         select(AllowedPayload)
         .options(
@@ -367,7 +367,7 @@ async def resolve_allowed_payload_rules(
 
 async def create_event_type(info: Info, data: EventTypeInput) -> EventTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = scheme.EventTypeCreate(**data.__dict__)
+    payload = schemas.EventTypeCreate(**data.__dict__)
     item = EventType(id=payload.id, code_name=payload.code_name, description=payload.description)
     session.add(item)
     await session.commit()
@@ -377,7 +377,7 @@ async def create_event_type(info: Info, data: EventTypeInput) -> EventTypeType:
 
 async def update_event_type(info: Info, event_type_id: int, data: EventTypeUpdateInput) -> EventTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = scheme.EventTypeUpdate(**data.__dict__)
+    payload = schemas.EventTypeUpdate(**data.__dict__)
     item = (await session.execute(select(EventType).where(EventType.id == event_type_id))).scalar_one_or_none()
     if item is None:
         raise GraphQLError(f"EventType {event_type_id} not found")
@@ -402,7 +402,7 @@ async def delete_event_type(info: Info, event_type_id: int) -> bool:
 
 async def create_value_type(info: Info, data: ValueTypeInput) -> ValueTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = scheme.ValueTypeCreate(**data.__dict__)
+    payload = schemas.ValueTypeCreate(**data.__dict__)
     item = ValueType(id=payload.id, name=payload.name, description=payload.description)
     session.add(item)
     await session.commit()
@@ -412,7 +412,7 @@ async def create_value_type(info: Info, data: ValueTypeInput) -> ValueTypeType:
 
 async def update_value_type(info: Info, value_type_id: int, data: ValueTypeUpdateInput) -> ValueTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = scheme.ValueTypeUpdate(**data.__dict__)
+    payload = schemas.ValueTypeUpdate(**data.__dict__)
     item = (await session.execute(select(ValueType).where(ValueType.id == value_type_id))).scalar_one_or_none()
     if item is None:
         raise GraphQLError(f"ValueType {value_type_id} not found")
@@ -437,7 +437,7 @@ async def delete_value_type(info: Info, value_type_id: int) -> bool:
 
 async def create_payload_type(info: Info, data: PayloadTypeInput) -> PayloadTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = scheme.PayloadTypeCreate(**data.__dict__)
+    payload = schemas.PayloadTypeCreate(**data.__dict__)
     if not await _exists(session, ValueType, payload.value_type_id):
         raise GraphQLError(f"ValueType {payload.value_type_id} not found")
     item = PayloadType(
@@ -460,7 +460,7 @@ async def create_payload_type(info: Info, data: PayloadTypeInput) -> PayloadType
 
 async def update_payload_type(info: Info, payload_type_id: int, data: PayloadTypeUpdateInput) -> PayloadTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = scheme.PayloadTypeUpdate(**data.__dict__)
+    payload = schemas.PayloadTypeUpdate(**data.__dict__)
     item = (
         await session.execute(
             select(PayloadType)
@@ -495,7 +495,7 @@ async def delete_payload_type(info: Info, payload_type_id: int) -> bool:
 
 async def create_allowed_payload_rule(info: Info, data: AllowedPayloadRuleInput) -> AllowedPayloadRuleType:
     session = await ensure_stats_create_permission(info)
-    payload = scheme.AllowedPayloadRuleCreate(**data.__dict__)
+    payload = schemas.AllowedPayloadRuleCreate(**data.__dict__)
     if not await _exists(session, EventType, payload.event_type_id):
         raise GraphQLError(f"EventType {payload.event_type_id} not found")
     if not await _exists(session, PayloadType, payload.payload_type_id):
@@ -524,7 +524,7 @@ async def update_allowed_payload_rule(
     data: AllowedPayloadRuleUpdateInput,
 ) -> AllowedPayloadRuleType:
     session = await ensure_stats_edit_permission(info)
-    payload = scheme.AllowedPayloadRuleUpdate(
+    payload = schemas.AllowedPayloadRuleUpdate(
         event_type_id=event_type_id,
         payload_type_id=payload_type_id,
         **data.__dict__,

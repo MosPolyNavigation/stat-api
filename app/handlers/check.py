@@ -31,12 +31,10 @@ def check_user(state: AppState, user_id) -> float:
 
 
 async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
-    user = (await db.execute(
-        Select(ClientId).filter_by(ident=data.user_id)
-    )).scalar_one_or_none()
-    if user is None:
-        raise LookupException("User")
-    return Status()
+    return await check_client_id(
+        db,
+        ClientIdCheck(client_id=data.user_id),
+    )
 
 
 async def check_client_id(db: AsyncSession, data: ClientIdCheck) -> Status:

@@ -57,37 +57,8 @@ def upgrade() -> None:
         ],
     )
 
-    op.execute(
-        """
-        INSERT INTO client_ids (id, ident, creation_date)
-        SELECT
-            (SELECT COALESCE(MAX(id), 0) FROM client_ids)
-                + ROW_NUMBER() OVER (ORDER BY reviews.user_id),
-            reviews.user_id,
-            MIN(reviews.creation_date)
-        FROM reviews
-        LEFT JOIN client_ids ON client_ids.ident = reviews.user_id
-        WHERE client_ids.id IS NULL
-        GROUP BY reviews.user_id
-        """
-    )
-
     with op.batch_alter_table("reviews") as batch_op:
-        batch_op.add_column(sa.Column("client_id", sa.Integer(), nullable=True))
-
-    op.execute(
-        """
-        UPDATE reviews
-        SET client_id = (
-            SELECT client_ids.id
-            FROM client_ids
-            WHERE client_ids.ident = reviews.user_id
-        )
-        """
-    )
-
-    with op.batch_alter_table("reviews") as batch_op:
-        batch_op.alter_column("client_id", existing_type=sa.Integer(), nullable=False)
+        batch_op.add_column(sa.Column("client_id", sa.Integer(), nullable=False))
         batch_op.create_foreign_key(
             "fk_reviews_client_id",
             "client_ids",
@@ -109,21 +80,7 @@ def downgrade() -> None:
     )
 
     with op.batch_alter_table("reviews") as batch_op:
-        batch_op.add_column(sa.Column("user_id", sa.String(length=36), nullable=True))
-
-    op.execute(
-        """
-        UPDATE reviews
-        SET user_id = (
-            SELECT client_ids.ident
-            FROM client_ids
-            WHERE client_ids.id = reviews.client_id
-        )
-        """
-    )
-
-    with op.batch_alter_table("reviews") as batch_op:
-        batch_op.alter_column("user_id", existing_type=sa.String(length=36), nullable=False)
+        batch_op.add_column(sa.Column("user_id", sa.String(length=36), nullable=False))
         batch_op.create_foreign_key(
             "fk_reviews_user_id",
             "user_ids",

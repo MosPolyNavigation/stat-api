@@ -1,11 +1,9 @@
-from datetime import datetime
-from uuid import uuid4
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.handlers import create_client_id
 from app.helpers.permissions import require_rights
 from app.models import ClientId
 from app.schemas import ClientIdentResponse, ClientRegisterRequest, Status
@@ -20,10 +18,7 @@ def register_endpoint(router: APIRouter):
     async def get_client_ident(
         db: AsyncSession = Depends(get_db),
     ) -> ClientIdentResponse:
-        ident = str(uuid4())
-        db.add(ClientId(ident=ident, creation_date=datetime.utcnow()))
-        await db.commit()
-        return ClientIdentResponse(ident=ident)
+        return await create_client_id(db)
 
     @router.post(
         "/client",

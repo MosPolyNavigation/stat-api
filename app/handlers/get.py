@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from typing import Optional
 
-from sqlalchemy import case, distinct, func, select
+from sqlalchemy import String, case, cast, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
@@ -15,30 +15,14 @@ from app.constants import (
 
 
 def _period_expression(period_type: str):
+    trigger_time = cast(models.Event.trigger_time, String)
     if period_type == "day":
-        return func.strftime("%Y-%m-%d", models.Event.trigger_time)
+        return func.substr(trigger_time, 1, 10)
     if period_type == "month":
-        return func.strftime("%Y-%m", models.Event.trigger_time)
+        return func.substr(trigger_time, 1, 7)
     if period_type == "year":
-        return func.strftime("%Y", models.Event.trigger_time)
+        return func.substr(trigger_time, 1, 4)
     raise ValueError("period_type должен быть одним из: day, month, year")
-
-
-def _postgres_period_expression(period_type: str):
-    if period_type == "day":
-        return func.to_char(models.Event.trigger_time, "YYYY-MM-DD")
-    if period_type == "month":
-        return func.to_char(models.Event.trigger_time, "YYYY-MM")
-    if period_type == "year":
-        return func.to_char(models.Event.trigger_time, "YYYY")
-    raise ValueError("period_type должен быть одним из: day, month, year")
-
-
-def _period_expression_for_session(db: AsyncSession, period_type: str):
-    dialect = db.bind.dialect.name if db.bind is not None else ""
-    if dialect == "postgresql":
-        return _postgres_period_expression(period_type)
-    return _period_expression(period_type)
 
 
 async def get_popular_audiences(
@@ -72,7 +56,7 @@ async def get_popular_audiences(
             )
             .where(models.Payload.event_id.in_(success_event_ids))
             .group_by(models.Payload.value)
-            .order_by(func.sum(weight).desc(), models.Payload.value.asc())
+            .order_by(func.sum(weight).desc())
             .limit(limit)
         )
     ).all()
@@ -93,9 +77,9 @@ async def get_period_stats(
     end: datetime,
     event_type_id: Optional[int] = None,
 ) -> list[schemas.Statistics]:
-    period = _period_expression_for_session(db, period_type).label("period")
-    event_day = func.date(models.Event.trigger_time)
-    client_creation_day = func.date(models.ClientId.creation_date)
+    period = _period_expression(period_type).label("period")
+    event_day = func.substr(cast(models.Event.trigger_time, String), 1, 10)
+    client_creation_day = func.substr(cast(models.ClientId.creation_date, String), 1, 10)
 
     statement = (
         select(
