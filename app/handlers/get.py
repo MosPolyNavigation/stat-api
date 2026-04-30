@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from typing import Optional
 
-from sqlalchemy import String, case, cast, distinct, func, select
+from sqlalchemy import Date, String, bindparam, case, cast, distinct, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
@@ -16,13 +16,14 @@ from app.constants import (
 
 def _period_expression(period_type: str):
     trigger_time = cast(models.Event.trigger_time, String)
-    if period_type == "day":
-        return func.substr(trigger_time, 1, 10)
-    if period_type == "month":
-        return func.substr(trigger_time, 1, 7)
-    if period_type == "year":
-        return func.substr(trigger_time, 1, 4)
-    raise ValueError("period_type должен быть одним из: day, month, year")
+    period_type_param = bindparam("period_type", value=period_type)
+    if period_type not in ("day", "month", "year"):
+        raise ValueError("period_type должен быть одним из: day, month, year")
+    return case(
+        (period_type_param == "day", func.substr(trigger_time, 1, 10)),
+        (period_type_param == "month", func.substr(trigger_time, 1, 7)),
+        (period_type_param == "year", func.substr(trigger_time, 1, 4)),
+    )
 
 
 async def get_popular_audiences(
@@ -78,13 +79,14 @@ async def get_period_stats(
     event_type_id: Optional[int] = None,
 ) -> list[schemas.Statistics]:
     period = _period_expression(period_type).label("period")
-    event_day = func.substr(cast(models.Event.trigger_time, String), 1, 10)
-    client_creation_day = func.substr(cast(models.ClientId.creation_date, String), 1, 10)
+    event_type_id_param = bindparam("event_type_id", value=event_type_id)
+    event_day = cast(models.Event.trigger_time, Date)
+    client_creation_day = cast(models.ClientId.creation_date, Date)
 
     statement = (
         select(
             period,
-            func.count(models.Event.id).label("all_visits"),
+            func.count().label("all_visits"),
             func.count(distinct(models.Event.client_id)).label("visitor_count"),
             func.count(
                 distinct(
@@ -101,9 +103,11 @@ async def get_period_stats(
         .join(models.ClientId, models.ClientId.id == models.Event.client_id)
         .where(models.Event.trigger_time >= start)
         .where(models.Event.trigger_time < end)
+        .where(
+            (event_type_id_param.is_(None))
+            | (models.Event.event_type_id == event_type_id_param)
+        )
     )
-    if event_type_id is not None:
-        statement = statement.where(models.Event.event_type_id == event_type_id)
     statement = statement.group_by(period).order_by(period)
 
     rows = (await db.execute(statement)).all()
@@ -146,6 +150,14 @@ async def get_aggregated_stats(
 def _stats_window_from_filter(
     params: schemas.FilterQuery,
 ) -> tuple[str, datetime, datetime]:
+    active_filters = [
+        params.start_date is not None or params.end_date is not None,
+        params.start_month is not None or params.end_month is not None,
+        params.start_year is not None or params.end_year is not None,
+    ]
+    if sum(active_filters) > 1:
+        raise ValueError("Можно передать только один фильтр периода")
+
     if params.start_date is not None and params.end_date is not None:
         return (
             "day",
@@ -161,6 +173,8 @@ def _stats_window_from_filter(
         start = datetime.strptime(params.start_year, "%Y")
         end = datetime(int(params.end_year) + 1, 1, 1)
         return "year", start, end
+    if any(active_filters):
+        raise ValueError("Фильтр периода должен содержать начало и конец")
     today = date.today()
     return (
         "day",

@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 
-from app import schemas
 from app.models import AllowedPayload, ClientId, EventType, PayloadType, ValueType
 
 from .pagination import PageInfo, PaginationInfo, PaginationInput
@@ -257,15 +256,14 @@ async def resolve_event_types(
     pagination: Optional[PaginationInput] = None,
 ) -> EventTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = schemas.EventTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(EventType).order_by(EventType.id.asc())
     count_statement = select(func.count()).select_from(EventType)
-    if data.id is not None:
-        statement = statement.where(EventType.id == data.id)
-        count_statement = count_statement.where(EventType.id == data.id)
-    if data.code_name:
-        statement = statement.where(EventType.code_name == data.code_name)
-        count_statement = count_statement.where(EventType.code_name == data.code_name)
+    if filter is not None and filter.id is not None:
+        statement = statement.where(EventType.id == filter.id)
+        count_statement = count_statement.where(EventType.id == filter.id)
+    if filter is not None and filter.code_name:
+        statement = statement.where(EventType.code_name == filter.code_name)
+        count_statement = count_statement.where(EventType.code_name == filter.code_name)
     limit, offset = _pagination_values(pagination)
     total = int((await session.execute(count_statement)).scalar_one())
     records = (await session.execute(statement.offset(offset).limit(limit))).scalars().all()
@@ -283,15 +281,14 @@ async def resolve_value_types(
     pagination: Optional[PaginationInput] = None,
 ) -> ValueTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = schemas.ValueTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(ValueType).order_by(ValueType.id.asc())
     count_statement = select(func.count()).select_from(ValueType)
-    if data.id is not None:
-        statement = statement.where(ValueType.id == data.id)
-        count_statement = count_statement.where(ValueType.id == data.id)
-    if data.name:
-        statement = statement.where(ValueType.name == data.name)
-        count_statement = count_statement.where(ValueType.name == data.name)
+    if filter is not None and filter.id is not None:
+        statement = statement.where(ValueType.id == filter.id)
+        count_statement = count_statement.where(ValueType.id == filter.id)
+    if filter is not None and filter.name:
+        statement = statement.where(ValueType.name == filter.name)
+        count_statement = count_statement.where(ValueType.name == filter.name)
     limit, offset = _pagination_values(pagination)
     total = int((await session.execute(count_statement)).scalar_one())
     records = (await session.execute(statement.offset(offset).limit(limit))).scalars().all()
@@ -309,18 +306,17 @@ async def resolve_payload_types(
     pagination: Optional[PaginationInput] = None,
 ) -> PayloadTypeConnection:
     session = await ensure_stats_view_permission(info)
-    data = schemas.PayloadTypeFilter(**(filter.__dict__ if filter else {}))
     statement = select(PayloadType).options(selectinload(PayloadType.value_type)).order_by(PayloadType.id.asc())
     count_statement = select(func.count()).select_from(PayloadType)
-    if data.id is not None:
-        statement = statement.where(PayloadType.id == data.id)
-        count_statement = count_statement.where(PayloadType.id == data.id)
-    if data.code_name:
-        statement = statement.where(PayloadType.code_name == data.code_name)
-        count_statement = count_statement.where(PayloadType.code_name == data.code_name)
-    if data.value_type_id is not None:
-        statement = statement.where(PayloadType.value_type_id == data.value_type_id)
-        count_statement = count_statement.where(PayloadType.value_type_id == data.value_type_id)
+    if filter is not None and filter.id is not None:
+        statement = statement.where(PayloadType.id == filter.id)
+        count_statement = count_statement.where(PayloadType.id == filter.id)
+    if filter is not None and filter.code_name:
+        statement = statement.where(PayloadType.code_name == filter.code_name)
+        count_statement = count_statement.where(PayloadType.code_name == filter.code_name)
+    if filter is not None and filter.value_type_id is not None:
+        statement = statement.where(PayloadType.value_type_id == filter.value_type_id)
+        count_statement = count_statement.where(PayloadType.value_type_id == filter.value_type_id)
     limit, offset = _pagination_values(pagination)
     total = int((await session.execute(count_statement)).scalar_one())
     records = (await session.execute(statement.offset(offset).limit(limit))).scalars().all()
@@ -338,7 +334,6 @@ async def resolve_allowed_payload_rules(
     pagination: Optional[PaginationInput] = None,
 ) -> AllowedPayloadRuleConnection:
     session = await ensure_stats_view_permission(info)
-    data = schemas.AllowedPayloadRuleFilter(**(filter.__dict__ if filter else {}))
     statement = (
         select(AllowedPayload)
         .options(
@@ -348,12 +343,12 @@ async def resolve_allowed_payload_rules(
         .order_by(AllowedPayload.event_type_id.asc(), AllowedPayload.payload_type_id.asc())
     )
     count_statement = select(func.count()).select_from(AllowedPayload)
-    if data.event_type_id is not None:
-        statement = statement.where(AllowedPayload.event_type_id == data.event_type_id)
-        count_statement = count_statement.where(AllowedPayload.event_type_id == data.event_type_id)
-    if data.payload_type_id is not None:
-        statement = statement.where(AllowedPayload.payload_type_id == data.payload_type_id)
-        count_statement = count_statement.where(AllowedPayload.payload_type_id == data.payload_type_id)
+    if filter is not None and filter.event_type_id is not None:
+        statement = statement.where(AllowedPayload.event_type_id == filter.event_type_id)
+        count_statement = count_statement.where(AllowedPayload.event_type_id == filter.event_type_id)
+    if filter is not None and filter.payload_type_id is not None:
+        statement = statement.where(AllowedPayload.payload_type_id == filter.payload_type_id)
+        count_statement = count_statement.where(AllowedPayload.payload_type_id == filter.payload_type_id)
     limit, offset = _pagination_values(pagination)
     total = int((await session.execute(count_statement)).scalar_one())
     records = (await session.execute(statement.offset(offset).limit(limit))).scalars().all()
@@ -367,8 +362,7 @@ async def resolve_allowed_payload_rules(
 
 async def create_event_type(info: Info, data: EventTypeInput) -> EventTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = schemas.EventTypeCreate(**data.__dict__)
-    item = EventType(id=payload.id, code_name=payload.code_name, description=payload.description)
+    item = EventType(id=data.id, code_name=data.code_name, description=data.description)
     session.add(item)
     await session.commit()
     await session.refresh(item)
@@ -377,14 +371,13 @@ async def create_event_type(info: Info, data: EventTypeInput) -> EventTypeType:
 
 async def update_event_type(info: Info, event_type_id: int, data: EventTypeUpdateInput) -> EventTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = schemas.EventTypeUpdate(**data.__dict__)
     item = (await session.execute(select(EventType).where(EventType.id == event_type_id))).scalar_one_or_none()
     if item is None:
         raise GraphQLError(f"EventType {event_type_id} not found")
-    if payload.code_name is not None:
-        item.code_name = payload.code_name
+    if data.code_name is not None:
+        item.code_name = data.code_name
     if data.description is not None:
-        item.description = payload.description
+        item.description = data.description
     await session.commit()
     await session.refresh(item)
     return _to_event_type(item)
@@ -402,8 +395,7 @@ async def delete_event_type(info: Info, event_type_id: int) -> bool:
 
 async def create_value_type(info: Info, data: ValueTypeInput) -> ValueTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = schemas.ValueTypeCreate(**data.__dict__)
-    item = ValueType(id=payload.id, name=payload.name, description=payload.description)
+    item = ValueType(id=data.id, name=data.name, description=data.description)
     session.add(item)
     await session.commit()
     await session.refresh(item)
@@ -412,14 +404,13 @@ async def create_value_type(info: Info, data: ValueTypeInput) -> ValueTypeType:
 
 async def update_value_type(info: Info, value_type_id: int, data: ValueTypeUpdateInput) -> ValueTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = schemas.ValueTypeUpdate(**data.__dict__)
     item = (await session.execute(select(ValueType).where(ValueType.id == value_type_id))).scalar_one_or_none()
     if item is None:
         raise GraphQLError(f"ValueType {value_type_id} not found")
-    if payload.name is not None:
-        item.name = payload.name
+    if data.name is not None:
+        item.name = data.name
     if data.description is not None:
-        item.description = payload.description
+        item.description = data.description
     await session.commit()
     await session.refresh(item)
     return _to_value_type(item)
@@ -437,14 +428,13 @@ async def delete_value_type(info: Info, value_type_id: int) -> bool:
 
 async def create_payload_type(info: Info, data: PayloadTypeInput) -> PayloadTypeType:
     session = await ensure_stats_create_permission(info)
-    payload = schemas.PayloadTypeCreate(**data.__dict__)
-    if not await _exists(session, ValueType, payload.value_type_id):
-        raise GraphQLError(f"ValueType {payload.value_type_id} not found")
+    if not await _exists(session, ValueType, data.value_type_id):
+        raise GraphQLError(f"ValueType {data.value_type_id} not found")
     item = PayloadType(
-        id=payload.id,
-        code_name=payload.code_name,
-        value_type_id=payload.value_type_id,
-        description=payload.description,
+        id=data.id,
+        code_name=data.code_name,
+        value_type_id=data.value_type_id,
+        description=data.description,
     )
     session.add(item)
     await session.commit()
@@ -460,7 +450,6 @@ async def create_payload_type(info: Info, data: PayloadTypeInput) -> PayloadType
 
 async def update_payload_type(info: Info, payload_type_id: int, data: PayloadTypeUpdateInput) -> PayloadTypeType:
     session = await ensure_stats_edit_permission(info)
-    payload = schemas.PayloadTypeUpdate(**data.__dict__)
     item = (
         await session.execute(
             select(PayloadType)
@@ -470,14 +459,14 @@ async def update_payload_type(info: Info, payload_type_id: int, data: PayloadTyp
     ).scalar_one_or_none()
     if item is None:
         raise GraphQLError(f"PayloadType {payload_type_id} not found")
-    if payload.value_type_id is not None:
-        if not await _exists(session, ValueType, payload.value_type_id):
-            raise GraphQLError(f"ValueType {payload.value_type_id} not found")
-        item.value_type_id = payload.value_type_id
-    if payload.code_name is not None:
-        item.code_name = payload.code_name
+    if data.value_type_id is not None:
+        if not await _exists(session, ValueType, data.value_type_id):
+            raise GraphQLError(f"ValueType {data.value_type_id} not found")
+        item.value_type_id = data.value_type_id
+    if data.code_name is not None:
+        item.code_name = data.code_name
     if data.description is not None:
-        item.description = payload.description
+        item.description = data.description
     await session.commit()
     await session.refresh(item, ["value_type"])
     return _to_payload_type(item)
@@ -495,12 +484,11 @@ async def delete_payload_type(info: Info, payload_type_id: int) -> bool:
 
 async def create_allowed_payload_rule(info: Info, data: AllowedPayloadRuleInput) -> AllowedPayloadRuleType:
     session = await ensure_stats_create_permission(info)
-    payload = schemas.AllowedPayloadRuleCreate(**data.__dict__)
-    if not await _exists(session, EventType, payload.event_type_id):
-        raise GraphQLError(f"EventType {payload.event_type_id} not found")
-    if not await _exists(session, PayloadType, payload.payload_type_id):
-        raise GraphQLError(f"PayloadType {payload.payload_type_id} not found")
-    item = AllowedPayload(event_type_id=payload.event_type_id, payload_type_id=payload.payload_type_id)
+    if not await _exists(session, EventType, data.event_type_id):
+        raise GraphQLError(f"EventType {data.event_type_id} not found")
+    if not await _exists(session, PayloadType, data.payload_type_id):
+        raise GraphQLError(f"PayloadType {data.payload_type_id} not found")
+    item = AllowedPayload(event_type_id=data.event_type_id, payload_type_id=data.payload_type_id)
     session.add(item)
     await session.commit()
     item = (
@@ -510,8 +498,8 @@ async def create_allowed_payload_rule(info: Info, data: AllowedPayloadRuleInput)
                 selectinload(AllowedPayload.event_type),
                 selectinload(AllowedPayload.payload_type).selectinload(PayloadType.value_type),
             )
-            .where(AllowedPayload.event_type_id == payload.event_type_id)
-            .where(AllowedPayload.payload_type_id == payload.payload_type_id)
+            .where(AllowedPayload.event_type_id == data.event_type_id)
+            .where(AllowedPayload.payload_type_id == data.payload_type_id)
         )
     ).scalar_one()
     return _to_allowed_payload_rule(item)
@@ -524,29 +512,24 @@ async def update_allowed_payload_rule(
     data: AllowedPayloadRuleUpdateInput,
 ) -> AllowedPayloadRuleType:
     session = await ensure_stats_edit_permission(info)
-    payload = schemas.AllowedPayloadRuleUpdate(
-        event_type_id=event_type_id,
-        payload_type_id=payload_type_id,
-        **data.__dict__,
-    )
     item = (
         await session.execute(
             select(AllowedPayload)
-            .where(AllowedPayload.event_type_id == payload.event_type_id)
-            .where(AllowedPayload.payload_type_id == payload.payload_type_id)
+            .where(AllowedPayload.event_type_id == event_type_id)
+            .where(AllowedPayload.payload_type_id == payload_type_id)
         )
     ).scalar_one_or_none()
     if item is None:
         raise GraphQLError("Правило допустимого payload не найдено")
-    if not await _exists(session, EventType, payload.new_event_type_id):
-        raise GraphQLError(f"EventType {payload.new_event_type_id} not found")
-    if not await _exists(session, PayloadType, payload.new_payload_type_id):
-        raise GraphQLError(f"PayloadType {payload.new_payload_type_id} not found")
+    if not await _exists(session, EventType, data.new_event_type_id):
+        raise GraphQLError(f"EventType {data.new_event_type_id} not found")
+    if not await _exists(session, PayloadType, data.new_payload_type_id):
+        raise GraphQLError(f"PayloadType {data.new_payload_type_id} not found")
     await session.delete(item)
     await session.flush()
     replacement = AllowedPayload(
-        event_type_id=payload.new_event_type_id,
-        payload_type_id=payload.new_payload_type_id,
+        event_type_id=data.new_event_type_id,
+        payload_type_id=data.new_payload_type_id,
     )
     session.add(replacement)
     await session.commit()
@@ -557,8 +540,8 @@ async def update_allowed_payload_rule(
                 selectinload(AllowedPayload.event_type),
                 selectinload(AllowedPayload.payload_type).selectinload(PayloadType.value_type),
             )
-            .where(AllowedPayload.event_type_id == payload.new_event_type_id)
-            .where(AllowedPayload.payload_type_id == payload.new_payload_type_id)
+            .where(AllowedPayload.event_type_id == data.new_event_type_id)
+            .where(AllowedPayload.payload_type_id == data.new_payload_type_id)
         )
     ).scalar_one()
     return _to_allowed_payload_rule(replacement)
