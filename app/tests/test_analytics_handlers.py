@@ -1,6 +1,9 @@
 import asyncio
 from datetime import datetime
 
+from sqlalchemy import delete
+
+from app import models
 from app.constants import EVENT_TYPE_WAYS_ID
 from app.database import AsyncSessionLocal
 from app.handlers import get_aggregated_stats, get_period_stats, get_popular_audiences
@@ -70,5 +73,42 @@ def test_aggregated_stats_wraps_period_stats():
         "avg_all_visits_per_day": 1.0,
         "avg_unique_visitors_per_day": 1.0,
         "avg_visitor_count_per_day": 1.0,
+        "entries_analized": 2,
+    }
+
+
+def test_aggregated_stats_counts_global_visitors_once():
+    async def run():
+        async with AsyncSessionLocal.begin() as db:
+            db.add(
+                models.Event(
+                    id=200,
+                    client_id=1,
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                    trigger_time=datetime(2026, 4, 26, 12, 0, 0),
+                )
+            )
+        try:
+            async with AsyncSessionLocal() as db:
+                return await get_aggregated_stats(
+                    db,
+                    period_type="day",
+                    start=datetime(2026, 4, 25),
+                    end=datetime(2026, 4, 27),
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                )
+        finally:
+            async with AsyncSessionLocal.begin() as db:
+                await db.execute(delete(models.Event).where(models.Event.id == 200))
+
+    result = asyncio.run(run())
+
+    assert result.model_dump() == {
+        "total_all_visits": 3,
+        "total_unique_visitors": 2,
+        "total_visitor_count": 2,
+        "avg_all_visits_per_day": 1.5,
+        "avg_unique_visitors_per_day": 1.0,
+        "avg_visitor_count_per_day": 1.5,
         "entries_analized": 2,
     }

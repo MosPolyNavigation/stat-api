@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from typing import Optional
 
-from sqlalchemy import Date, String, bindparam, case, cast, distinct, func, select
+from sqlalchemy import String, bindparam, case, cast, distinct, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
@@ -16,14 +16,13 @@ from app.constants import (
 
 def _period_expression(period_type: str):
     trigger_time = cast(models.Event.trigger_time, String)
-    period_type_param = bindparam("period_type", value=period_type)
-    if period_type not in ("day", "month", "year"):
-        raise ValueError("period_type должен быть одним из: day, month, year")
-    return case(
-        (period_type_param == "day", func.substr(trigger_time, 1, 10)),
-        (period_type_param == "month", func.substr(trigger_time, 1, 7)),
-        (period_type_param == "year", func.substr(trigger_time, 1, 4)),
-    )
+    if period_type == "day":
+        return func.substr(trigger_time, 1, 10)
+    if period_type == "month":
+        return func.substr(trigger_time, 1, 7)
+    if period_type == "year":
+        return func.substr(trigger_time, 1, 4)
+    raise ValueError("period_type должен быть одним из: day, month, year")
 
 
 async def get_popular_audiences(
@@ -80,8 +79,8 @@ async def get_period_stats(
 ) -> list[schemas.Statistics]:
     period = _period_expression(period_type).label("period")
     event_type_id_param = bindparam("event_type_id", value=event_type_id)
-    event_day = cast(models.Event.trigger_time, Date)
-    client_creation_day = cast(models.ClientId.creation_date, Date)
+    event_day = func.date(models.Event.trigger_time)
+    client_creation_day = func.date(models.ClientId.creation_date)
 
     statement = (
         select(
@@ -129,21 +128,88 @@ async def get_aggregated_stats(
     end: datetime,
     event_type_id: Optional[int] = None,
 ) -> schemas.AggregatedStatistics:
-    stats = await get_period_stats(db, period_type, start, end, event_type_id)
-    entries = len(stats)
+    period = _period_expression(period_type).label("period")
+    event_type_id_param = bindparam("event_type_id", value=event_type_id)
+    event_day = func.date(models.Event.trigger_time)
+    client_creation_day = func.date(models.ClientId.creation_date)
 
-    total_all_visits = sum(item.all_visits for item in stats)
-    total_visitor_count = sum(item.visitor_count for item in stats)
-    total_unique_visitors = sum(item.unique_visitors for item in stats)
+    base_filters = (
+        models.Event.trigger_time >= start,
+        models.Event.trigger_time < end,
+        (event_type_id_param.is_(None))
+        | (models.Event.event_type_id == event_type_id_param),
+    )
+    unique_visitor = case(
+        (
+            client_creation_day == event_day,
+            models.Event.client_id,
+        ),
+        else_=None,
+    )
+
+    period_stats = (
+        select(
+            period,
+            func.count().label("all_visits"),
+            func.count(distinct(models.Event.client_id)).label("visitor_count"),
+            func.count(distinct(unique_visitor)).label("unique_visitors"),
+        )
+        .join(models.ClientId, models.ClientId.id == models.Event.client_id)
+        .where(*base_filters)
+        .group_by(period)
+        .cte("period_stats")
+    )
+    global_stats = (
+        select(
+            func.count(distinct(models.Event.client_id)).label("total_visitor_count"),
+            func.count(distinct(unique_visitor)).label("total_unique_visitors"),
+        )
+        .join(models.ClientId, models.ClientId.id == models.Event.client_id)
+        .where(*base_filters)
+        .cte("global_stats")
+    )
+    period_agg = (
+        select(
+            func.sum(period_stats.c.all_visits).label("total_all_visits"),
+            func.round(
+                func.avg(period_stats.c.all_visits),
+                1,
+            ).label("avg_all_visits_per_period"),
+            func.round(
+                func.avg(period_stats.c.visitor_count),
+                1,
+            ).label("avg_visitor_count_per_period"),
+            func.round(
+                func.avg(period_stats.c.unique_visitors),
+                1,
+            ).label("avg_unique_visitors_per_period"),
+            func.count().label("entries_analyzed"),
+        )
+        .select_from(period_stats)
+        .cte("period_agg")
+    )
+    row = (
+        await db.execute(
+            select(
+                period_agg.c.total_all_visits,
+                period_agg.c.avg_all_visits_per_period,
+                period_agg.c.avg_visitor_count_per_period,
+                period_agg.c.avg_unique_visitors_per_period,
+                period_agg.c.entries_analyzed,
+                global_stats.c.total_visitor_count,
+                global_stats.c.total_unique_visitors,
+            ).select_from(period_agg.join(global_stats, true()))
+        )
+    ).one()
 
     return schemas.AggregatedStatistics(
-        total_all_visits=total_all_visits,
-        total_visitor_count=total_visitor_count,
-        total_unique_visitors=total_unique_visitors,
-        avg_all_visits_per_day=round(total_all_visits / entries, 1) if entries else 0,
-        avg_visitor_count_per_day=round(total_visitor_count / entries, 1) if entries else 0,
-        avg_unique_visitors_per_day=round(total_unique_visitors / entries, 1) if entries else 0,
-        entries_analized=entries,
+        total_all_visits=int(row.total_all_visits or 0),
+        total_visitor_count=int(row.total_visitor_count or 0),
+        total_unique_visitors=int(row.total_unique_visitors or 0),
+        avg_all_visits_per_day=float(row.avg_all_visits_per_period or 0),
+        avg_visitor_count_per_day=float(row.avg_visitor_count_per_period or 0),
+        avg_unique_visitors_per_day=float(row.avg_unique_visitors_per_period or 0),
+        entries_analized=int(row.entries_analyzed or 0),
     )
 
 
