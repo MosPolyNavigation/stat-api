@@ -25,6 +25,35 @@ def _period_expression(period_type: str):
     raise ValueError("period_type должен быть одним из: day, month, year")
 
 
+def _unique_visitor_expression(period_type: str, period):
+    client_creation = cast(models.ClientId.creation_date, String)
+    if period_type == "day":
+        client_period = func.substr(client_creation, 1, 10)
+    elif period_type == "month":
+        client_period = func.substr(client_creation, 1, 7)
+    elif period_type == "year":
+        client_period = func.substr(client_creation, 1, 4)
+    else:
+        raise ValueError("period_type должен быть одним из: day, month, year")
+    return case(
+        (
+            client_period == period,
+            models.Event.client_id,
+        ),
+        else_=None,
+    )
+
+
+def _format_period(period_type: str, period: str) -> str:
+    if period_type == "day":
+        return period
+    if period_type == "month":
+        return f"{period}-01"
+    if period_type == "year":
+        return f"{period}-01-01"
+    raise ValueError("period_type должен быть одним из: day, month, year")
+
+
 async def get_popular_audiences(
     db: AsyncSession,
     limit: int = 100,
@@ -79,25 +108,14 @@ async def get_period_stats(
 ) -> list[schemas.Statistics]:
     period = _period_expression(period_type).label("period")
     event_type_id_param = bindparam("event_type_id", value=event_type_id)
-    event_day = func.date(models.Event.trigger_time)
-    client_creation_day = func.date(models.ClientId.creation_date)
+    unique_visitor = _unique_visitor_expression(period_type, period)
 
     statement = (
         select(
             period,
             func.count().label("all_visits"),
             func.count(distinct(models.Event.client_id)).label("visitor_count"),
-            func.count(
-                distinct(
-                    case(
-                        (
-                            client_creation_day == event_day,
-                            models.Event.client_id,
-                        ),
-                        else_=None,
-                    )
-                )
-            ).label("unique_visitors"),
+            func.count(distinct(unique_visitor)).label("unique_visitors"),
         )
         .join(models.ClientId, models.ClientId.id == models.Event.client_id)
         .where(models.Event.trigger_time >= start)
@@ -112,7 +130,7 @@ async def get_period_stats(
     rows = (await db.execute(statement)).all()
     return [
         schemas.Statistics(
-            period=str(row.period),
+            period=_format_period(period_type, str(row.period)),
             all_visits=int(row.all_visits or 0),
             visitor_count=int(row.visitor_count or 0),
             unique_visitors=int(row.unique_visitors or 0),
@@ -130,8 +148,6 @@ async def get_aggregated_stats(
 ) -> schemas.AggregatedStatistics:
     period = _period_expression(period_type).label("period")
     event_type_id_param = bindparam("event_type_id", value=event_type_id)
-    event_day = func.date(models.Event.trigger_time)
-    client_creation_day = func.date(models.ClientId.creation_date)
 
     base_filters = (
         models.Event.trigger_time >= start,
@@ -139,13 +155,7 @@ async def get_aggregated_stats(
         (event_type_id_param.is_(None))
         | (models.Event.event_type_id == event_type_id_param),
     )
-    unique_visitor = case(
-        (
-            client_creation_day == event_day,
-            models.Event.client_id,
-        ),
-        else_=None,
-    )
+    unique_visitor = _unique_visitor_expression(period_type, period)
 
     period_stats = (
         select(

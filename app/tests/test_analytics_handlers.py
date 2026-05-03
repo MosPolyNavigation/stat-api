@@ -53,6 +53,50 @@ def test_period_stats_filters_by_period_and_event_type():
     ]
 
 
+def test_period_stats_counts_unique_visitors_by_requested_period():
+    async def run():
+        async with AsyncSessionLocal.begin() as db:
+            db.add(
+                models.ClientId(
+                    id=300,
+                    ident="33e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+                    creation_date=datetime(2026, 1, 1, 9, 0, 0),
+                )
+            )
+            db.add(
+                models.Event(
+                    id=300,
+                    client_id=300,
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                    trigger_time=datetime(2026, 4, 26, 12, 0, 0),
+                )
+            )
+        try:
+            async with AsyncSessionLocal() as db:
+                return await get_period_stats(
+                    db,
+                    period_type="year",
+                    start=datetime(2026, 1, 1),
+                    end=datetime(2027, 1, 1),
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                )
+        finally:
+            async with AsyncSessionLocal.begin() as db:
+                await db.execute(delete(models.Event).where(models.Event.id == 300))
+                await db.execute(delete(models.ClientId).where(models.ClientId.id == 300))
+
+    result = asyncio.run(run())
+
+    assert [item.model_dump() for item in result] == [
+        {
+            "period": "2026-01-01",
+            "all_visits": 3,
+            "visitor_count": 3,
+            "unique_visitors": 3,
+        },
+    ]
+
+
 def test_aggregated_stats_wraps_period_stats():
     async def run():
         async with AsyncSessionLocal() as db:
