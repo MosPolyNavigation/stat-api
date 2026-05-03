@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from sqlalchemy.exc import SQLAlchemyError
-from app.database import AsyncSessionLocal
+from app.database import get_session_maker
 from app.services.refresh_token_service import RefreshTokenService
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
@@ -10,7 +10,7 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 # отзывает все refresh-токены, срок действия которых уже истёк
 async def revoke_expired_refresh_tokens() -> None:
     try:
-        async with AsyncSessionLocal() as db:
+        async with get_session_maker()() as db:
             service = RefreshTokenService(db)
             revoked_count = await service.revoke_expired_tokens()
             await db.commit()
@@ -31,7 +31,7 @@ async def revoke_expired_refresh_tokens() -> None:
 # Удаляет refresh-токены, срок действия которых истек более 30 дней назад
 async def delete_old_refresh_tokens() -> None:
     try:
-        async with AsyncSessionLocal() as db:
+        async with get_session_maker()() as db:
             service = RefreshTokenService(db)
             deleted_count = await service.delete_expired_tokens()
             await db.commit()

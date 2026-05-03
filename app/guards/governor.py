@@ -53,7 +53,7 @@ class RateLimiter:
         if not self.enabled:
             return
         
-        state: AppState = request.app.state
+        state: AppState = request.app.state.app_state
         access_store = getattr(state, self.state_attr, None)
         
         if access_store is None:

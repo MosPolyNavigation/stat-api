@@ -22,7 +22,7 @@ def create_cleanup_job(
     """
     def cleanup_job():
         try:
-            state: AppState = app.state
+            state: AppState = app.state.app_state
             total_removed = 0
             
             for limiter in limiters:

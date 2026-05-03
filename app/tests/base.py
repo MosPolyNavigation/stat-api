@@ -1,39 +1,65 @@
 import asyncio
 import os
-os.environ["STATAPI_CONFIG"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.test.yaml")
-from pwdlib import PasswordHash
-from app.config import get_settings
-from fastapi.testclient import TestClient
-from fastapi_pagination import add_pagination
 from pathlib import Path
+
+# Должно стоять до любых импортов app.* — иначе get_settings() прочитает прод-конфиг.
+os.environ["STATAPI_CONFIG"] = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "config.test.yaml",
+)
+
+from fastapi.testclient import TestClient
+from pwdlib import PasswordHash
 from pydantic import RootModel
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
-path = get_settings().sqlalchemy_database_url.path.removeprefix("/")
-try:
-    os.remove(path)
-except FileNotFoundError:
-    pass
-
-from app.tests.app import app
-from app.models import Base
-from app.database import engine, AsyncSessionLocal
-from app.helpers.data import goals, roles, rights, roles_rights_goals
-from app.constants import REVIEW_STATUSES
 from app import models
+from app.config import load_settings
+from app.constants import REVIEW_STATUSES
+from app.factory import AppFactory
+from app.helpers.data import goals, rights, roles, roles_rights_goals
+from app.jobs.location_data.worker import fetch_location_data
+from app.models import Base
 from app.schemas.rasp.schedule import Auditory
-import app.globals as globals_
+from app.tests.hooks import TestHooks
 
-add_pagination(app)
+settings = load_settings()
 
 
 class Schedule(RootModel[dict[str, Auditory]]):
     pass
 
 
+# ── Тестовая БД: новый engine + session_maker, не общий с прод-кодом ─────────
+
+db_path = settings.sqlalchemy_database_url.path.removeprefix("/")
+try:
+    os.remove(db_path)
+except FileNotFoundError:
+    pass
+
+test_engine = create_async_engine(str(settings.sqlalchemy_database_url), future=True)
+test_session_maker = async_sessionmaker(
+    autoflush=True,
+    autocommit=False,
+    bind=test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+# AppFactory + TestHooks: TestHooks в __init__ вызывает override_database,
+# поэтому всё, что использует get_session_maker(), уже знает про тестовый engine.
+app = AppFactory(TestHooks(test_session_maker))(settings)
+
+
 async def create_db_and_tables():
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    async with AsyncSessionLocal.begin() as db:
+    async with test_session_maker.begin() as db:
         user: models.UserId = models.UserId(
             user_id="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec"
         )
@@ -72,8 +98,7 @@ async def create_db_and_tables():
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
 
-        # Добавляем навигационные данные для тестов
-        # Location
+        # Навигационные данные
         test_location = models.Location(
             id=1,
             id_sys="AV",
@@ -87,7 +112,6 @@ async def create_db_and_tables():
         )
         db.add(test_location)
 
-        # Corpus
         test_corpus = models.Corpus(
             id=1,
             id_sys="av-test",
@@ -99,14 +123,12 @@ async def create_db_and_tables():
         )
         db.add(test_corpus)
 
-        # Floor
         test_floor = models.Floor(
             id=1,
             name=1
         )
         db.add(test_floor)
 
-        # Plan
         test_plan = models.Plan(
             id=1,
             id_sys="test-plan-1",
@@ -123,14 +145,12 @@ async def create_db_and_tables():
         )
         db.add(test_plan)
 
-        # Type
         test_type = models.Type(
             id=1,
             name="Учебная аудитория"
         )
         db.add(test_type)
 
-        # Auditory
         test_auditory = models.Auditory(
             id=1,
             id_sys="test-101",
@@ -155,7 +175,7 @@ async def create_db_and_tables():
         )
         db.add(test_auditory_photo)
 
-        # DOD navigation dataset
+        # DOD-данные
         dod_location = models.DodLocation(
             id=1,
             id_sys="DD",
@@ -243,16 +263,14 @@ async def create_db_and_tables():
 
         await db.commit()
 
-    # Загружаем тестовое расписание в globals
+    # Загружаем тестовое расписание прямо в state приложения.
     schedule_path = Path(__file__).parent / "schedule_test.json"
     json_text = schedule_path.read_text(encoding="utf-8")
     schedule = Schedule.model_validate_json(json_text)
-    globals_.global_rasp = schedule.root
-    globals_.locker = False
+    app.state.app_state.global_rasp = schedule.root
 
-    # Инициализируем locationData для тестов
-    from app.jobs.location_data.worker import fetch_location_data
-    await fetch_location_data()
+    # Инициализируем locationData (читает БД через override_database).
+    await fetch_location_data(state=app.state.app_state)
 
 
 asyncio.run(create_db_and_tables())
