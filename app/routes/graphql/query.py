@@ -215,3 +215,7 @@ class Query:
         resolver=resolve_refresh_tokens,
         description="Get refresh tokens with pagination."
     )
+    refresh_tokens: RefreshTokenConnection = strawberry.field(
+        resolver=resolve_refresh_tokens,
+        description="Get refresh tokens with pagination."
+    )
