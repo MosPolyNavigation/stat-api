@@ -3,7 +3,7 @@ from sqlalchemy import Select
 from datetime import datetime, timedelta
 from app.state import AppState
 from app.schemas import ClientIdCheck, UserIdCheck, Status
-from app.models import ClientId, UserId
+from app.models import ClientId
 from app.helpers.errors import LookupException
 
 
@@ -31,12 +31,10 @@ def check_user(state: AppState, user_id) -> float:
 
 
 async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
-    user = (await db.execute(
-        Select(UserId).filter_by(user_id=data.user_id)
-    )).scalar_one_or_none()
-    if user is None:
-        raise LookupException("User")
-    return Status()
+    return await check_client_id(
+        db,
+        ClientIdCheck(client_id=data.user_id),
+    )
 
 
 async def check_client_id(db: AsyncSession, data: ClientIdCheck) -> Status:

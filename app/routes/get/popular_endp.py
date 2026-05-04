@@ -1,14 +1,14 @@
-from fastapi.responses import JSONResponse
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas import Status
+from app.schemas import PopularAudience, Status
 from app.database import get_db
-from app.handlers import get_popular_auds_stub
+from app.handlers import get_popular_audiences
 
 
 def register_endpoint(router: APIRouter):
     @router.get(
         "/popular",
+        response_model=list[PopularAudience],
         tags=["get"],
         responses={
             500: {
@@ -32,7 +32,5 @@ def register_endpoint(router: APIRouter):
     )
     async def get_popular(
             db: AsyncSession = Depends(get_db)
-    ) -> JSONResponse:
-        # TODO: restore after analytics refactor
-        data = await get_popular_auds_stub(db)
-        return JSONResponse(data, status_code=200)
+    ) -> list[PopularAudience]:
+        return await get_popular_audiences(db)

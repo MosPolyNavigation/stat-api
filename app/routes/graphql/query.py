@@ -26,6 +26,16 @@ from .endpoint_stats import (
     resolve_endpoint_statistics,
     resolve_endpoint_statistics_avg,
 )
+from .event_dict import (
+    AllowedPayloadRuleConnection,
+    EventTypeConnection,
+    PayloadTypeConnection,
+    ValueTypeConnection,
+    resolve_allowed_payload_rules,
+    resolve_event_types,
+    resolve_payload_types,
+    resolve_value_types,
+)
 from .nav import (
     NavAuditoryConnection,
     NavAuditoryPhotoConnection,
@@ -47,7 +57,6 @@ from .nav import (
 from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
-from .user_id import UserIdType, resolve_user_ids
 from .user_role import UserConnection, resolve_users, UserType, resolve_user
 from .user_role import RoleConnection, resolve_roles, RoleType, resolve_role
 from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, resolve_user_role
@@ -62,10 +71,6 @@ class Query:
         resolver=resolve_reviews,
         description="Get user reviews.",
     )
-    user_ids: list[UserIdType] = strawberry.field(
-        resolver=resolve_user_ids,
-        description="Get user ids.",
-    )
     problems: list[ProblemType] = strawberry.field(
         resolver=resolve_problems,
         description="Get problems list.",
@@ -76,11 +81,27 @@ class Query:
     )
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
-        description="Get endpoint statistics for selected goal.",
+        description="Получить статистику событий для выбранного типа.",
     )
     endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
         resolver=resolve_endpoint_statistics_avg,
-        description="Get aggregated endpoint statistics for selected period.",
+        description="Получить агрегированную статистику событий за выбранный период.",
+    )
+    event_types: EventTypeConnection = strawberry.field(
+        resolver=resolve_event_types,
+        description="Получить записи справочника типов событий.",
+    )
+    payload_types: PayloadTypeConnection = strawberry.field(
+        resolver=resolve_payload_types,
+        description="Получить записи справочника типов payload.",
+    )
+    value_types: ValueTypeConnection = strawberry.field(
+        resolver=resolve_value_types,
+        description="Получить записи справочника типов значений.",
+    )
+    allowed_payload_rules: AllowedPayloadRuleConnection = strawberry.field(
+        resolver=resolve_allowed_payload_rules,
+        description="Получить связи допустимых payload для типов событий.",
     )
 
     nav_floors: NavFloorConnection = strawberry.field(

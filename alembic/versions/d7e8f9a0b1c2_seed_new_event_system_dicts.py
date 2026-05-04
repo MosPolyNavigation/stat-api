@@ -1,4 +1,4 @@
-"""Seed new event system dictionaries and relations
+"""Заполнение справочников и связей новой системы событий
 
 Revision ID: d7e8f9a0b1c2
 Revises: c1a2f3e4d5b6
@@ -48,62 +48,62 @@ def upgrade() -> None:
     op.bulk_insert(
         value_types,
         [
-            {"id": 1, "name": "int", "description": "Integer value"},
-            {"id": 2, "name": "string", "description": "String value"},
-            {"id": 3, "name": "bool", "description": "Boolean value"},
+            {"id": 1, "name": "int", "description": "Целочисленное значение"},
+            {"id": 2, "name": "string", "description": "Строковое значение"},
+            {"id": 3, "name": "bool", "description": "Булево значение"},
         ],
     )
 
     op.bulk_insert(
         event_types,
         [
-            {"id": 1, "code_name": "site", "description": "Site events"},
-            {"id": 2, "code_name": "auds", "description": "Auditory selection events"},
-            {"id": 3, "code_name": "ways", "description": "Route build events"},
-            {"id": 4, "code_name": "plans", "description": "Plan change events"},
+            {"id": 1, "code_name": "site", "description": "События сайта"},
+            {"id": 2, "code_name": "auds", "description": "События выбора аудиторий"},
+            {"id": 3, "code_name": "ways", "description": "События построения маршрутов"},
+            {"id": 4, "code_name": "plans", "description": "События смены планов"},
         ],
     )
 
-    # Mapping decision (business-logic assumption):
-    # - endpoint/auditory_id/start_id/end_id/plan_id are stored as strings.
-    # - success is stored as bool.
+    # Решение по маппингу из бизнес-логики:
+    # - endpoint/auditory_id/start_id/end_id/plan_id хранятся как строки.
+    # - success хранится как bool.
     op.bulk_insert(
         payload_types,
         [
             {
                 "id": 1,
                 "code_name": "endpoint",
-                "description": "Visited site endpoint",
+                "description": "Посещённый endpoint сайта",
                 "value_type_id": 2,
             },
             {
                 "id": 2,
                 "code_name": "auditory_id",
-                "description": "Selected auditory identifier",
+                "description": "Идентификатор выбранной аудитории",
                 "value_type_id": 2,
             },
             {
                 "id": 3,
                 "code_name": "start_id",
-                "description": "Route start identifier",
+                "description": "Идентификатор начала маршрута",
                 "value_type_id": 2,
             },
             {
                 "id": 4,
                 "code_name": "end_id",
-                "description": "Route destination identifier",
+                "description": "Идентификатор назначения маршрута",
                 "value_type_id": 2,
             },
             {
                 "id": 5,
                 "code_name": "success",
-                "description": "Operation success flag",
+                "description": "Флаг успешности операции",
                 "value_type_id": 3,
             },
             {
                 "id": 6,
                 "code_name": "plan_id",
-                "description": "Selected plan identifier",
+                "description": "Идентификатор выбранного плана",
                 "value_type_id": 2,
             },
         ],
@@ -128,8 +128,8 @@ def downgrade() -> None:
         "DELETE FROM allowed_payloads WHERE event_type_id IN (1, 2, 3, 4) AND payload_type_id IN (1, 2, 3, 4, 5, 6)"
     )
 
-    # payloads/events are not cleaned explicitly.
-    # they are removed by FK cascades from deleted dictionary rows.
+    # payloads/events не очищаются явно.
+    # Они удаляются каскадом FK при удалении строк справочников.
     op.execute("DELETE FROM payload_types WHERE id IN (1, 2, 3, 4, 5, 6)")
     op.execute("DELETE FROM event_types WHERE id IN (1, 2, 3, 4)")
     op.execute("DELETE FROM value_types WHERE id IN (1, 2, 3)")

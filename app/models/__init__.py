@@ -33,6 +33,5 @@ from app.models.event import (
     PayloadType,
     ValueType,
 )
-from app.models.stat.user_id import UserId
 from app.models.auth.refresh_token import RefreshToken
 

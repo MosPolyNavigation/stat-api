@@ -74,7 +74,8 @@ async def _ensure_destination_empty(conn: AsyncConnection) -> None:
                 SELECT
                     (SELECT COUNT(*) FROM client_ids) AS client_ids_count,
                     (SELECT COUNT(*) FROM events) AS events_count,
-                    (SELECT COUNT(*) FROM payloads) AS payloads_count
+                    (SELECT COUNT(*) FROM payloads) AS payloads_count,
+                    (SELECT COUNT(*) FROM reviews) AS reviews_count
                 """
             )
         )
@@ -83,7 +84,7 @@ async def _ensure_destination_empty(conn: AsyncConnection) -> None:
     if any(int(counts[key]) > 0 for key in counts):
         raise RuntimeError(
             "Destination tables are not empty. "
-            "This one-time script expects empty client_ids/events/payloads tables."
+            "This one-time script expects empty client_ids/events/payloads/reviews tables."
         )
 
 
@@ -249,6 +250,75 @@ async def _migrate_events(
     return stats
 
 
+async def _migrate_reviews(
+    old_conn: AsyncConnection,
+    new_conn: AsyncConnection,
+    client_map: dict[str, int],
+) -> dict[str, int]:
+    rows = (
+        await old_conn.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    user_id,
+                    text,
+                    problem_id,
+                    image_name,
+                    creation_date,
+                    review_status_id
+                FROM reviews
+                ORDER BY id
+                """
+            )
+        )
+    ).mappings().all()
+
+    stats = {"reviews": 0, "skipped_reviews": 0}
+    for row in rows:
+        client_id = client_map.get(str(row["user_id"]))
+        if client_id is None:
+            stats["skipped_reviews"] += 1
+            continue
+
+        await new_conn.execute(
+            text(
+                """
+                INSERT INTO reviews (
+                    id,
+                    client_id,
+                    text,
+                    problem_id,
+                    image_name,
+                    creation_date,
+                    review_status_id
+                )
+                VALUES (
+                    :id,
+                    :client_id,
+                    :text,
+                    :problem_id,
+                    :image_name,
+                    :creation_date,
+                    :review_status_id
+                )
+                """
+            ),
+            {
+                "id": row["id"],
+                "client_id": client_id,
+                "text": row["text"],
+                "problem_id": row["problem_id"],
+                "image_name": row["image_name"],
+                "creation_date": row["creation_date"],
+                "review_status_id": row["review_status_id"] or 1,
+            },
+        )
+        stats["reviews"] += 1
+
+    return stats
+
+
 async def _run(old_db_url: str) -> None:
     old_async_url = _to_async_dsn(old_db_url)
     new_async_url = _to_async_dsn(str(get_settings().sqlalchemy_database_url))
@@ -262,6 +332,7 @@ async def _run(old_db_url: str) -> None:
             await _ensure_destination_empty(new_conn)
             client_map = await _insert_client_ids(old_conn, new_conn)
             stats = await _migrate_events(old_conn, new_conn, client_map)
+            review_stats = await _migrate_reviews(old_conn, new_conn, client_map)
 
         print("Migration completed.")
         print(f"Inserted client_ids: {len(client_map)}")
@@ -271,6 +342,8 @@ async def _run(old_db_url: str) -> None:
         print(f"Inserted plans events: {stats['plans_events']}")
         print(f"Inserted payloads: {stats['payloads']}")
         print(f"Skipped rows: {stats['skipped_rows']}")
+        print(f"Inserted reviews: {review_stats['reviews']}")
+        print(f"Skipped reviews: {review_stats['skipped_reviews']}")
     finally:
         await old_engine.dispose()
         await new_engine.dispose()

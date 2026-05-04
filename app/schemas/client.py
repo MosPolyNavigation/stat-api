@@ -8,6 +8,7 @@ class ClientIdentResponse(BaseModel):
         min_length=36,
         max_length=36,
     )
+    creation_date: datetime
 
 
 class ClientRegisterRequest(BaseModel):
