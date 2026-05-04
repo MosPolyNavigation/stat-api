@@ -18,7 +18,7 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
-CLIENT_GOAL_ID = 12
+CLIENT_GOAL_ID = 13
 ADMIN_ROLE_ID = 1
 CREATE_RIGHT_ID = 2
 
