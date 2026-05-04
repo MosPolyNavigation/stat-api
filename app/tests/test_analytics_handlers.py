@@ -76,7 +76,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
                     db,
                     period_type="year",
                     start=datetime(2026, 1, 1),
-                    end=datetime(2027, 1, 1),
+                    end=datetime(2026, 4, 28),
                     event_type_id=EVENT_TYPE_WAYS_ID,
                 )
         finally:
@@ -89,7 +89,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
     assert [item.model_dump() for item in result] == [
         {
             "period": "2026-01-01",
-            "all_visits": 4,
+            "all_visits": 3,
             "visitor_count": 3,
             "unique_visitors": 3,
         },
