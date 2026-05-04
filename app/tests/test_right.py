@@ -89,8 +89,8 @@ class TestRightQueries:
         assert "pageInfo" in result
         assert "paginationInfo" in result
         assert isinstance(result["nodes"], list)
-        assert len(result["nodes"]) == 5  # view, create, edit, delete, grant
-        assert result["paginationInfo"]["totalCount"] == 5
+        assert len(result["nodes"]) == 4  # view, create, edit, delete
+        assert result["paginationInfo"]["totalCount"] == 4
 
     def test_rights_query_with_filter_id(self):
         """Фильтрация прав по id"""
@@ -104,13 +104,13 @@ class TestRightQueries:
             }
         }
         """
-        
+
         response = graphql_query(
             query,
             variables={"filter": {"id": 1}},
             headers=ADMIN_HEADERS
         )
-        
+
         result = assert_graphql_success(response, "rights")
         assert len(result["nodes"]) == 1
         assert result["nodes"][0]["id"] == 1
@@ -128,13 +128,13 @@ class TestRightQueries:
             }
         }
         """
-        
+
         response = graphql_query(
             query,
             variables={"filter": {"name": "create"}},
             headers=ADMIN_HEADERS
         )
-        
+
         result = assert_graphql_success(response, "rights")
         assert len(result["nodes"]) == 1
         assert result["nodes"][0]["name"] == "create"
@@ -162,7 +162,7 @@ class TestRightQueries:
             }
         }
         """
-        
+
         # Первая страница (limit=2)
         response1 = graphql_query(
             query,
@@ -170,7 +170,7 @@ class TestRightQueries:
             headers=ADMIN_HEADERS
         )
         result1 = assert_graphql_success(response1, "rights")
-        
+
         # Вторая страница
         response2 = graphql_query(
             query,
@@ -178,10 +178,10 @@ class TestRightQueries:
             headers=ADMIN_HEADERS
         )
         result2 = assert_graphql_success(response2, "rights")
-        
+
         # Проверяем что данные разные
         assert result1["nodes"][0]["id"] != result2["nodes"][0]["id"]
-        
+
         # Проверяем pageInfo
         assert result1["pageInfo"]["hasPreviousPage"] is False
         assert result1["pageInfo"]["hasNextPage"] is True
@@ -198,18 +198,17 @@ class TestRightQueries:
             }
         }
         """
-        
+
         response = graphql_query(query, headers=ADMIN_HEADERS)
         result = assert_graphql_success(response, "rights")
-        
+
         # Проверяем наличие всех прав
         rights_map = {r["id"]: r["name"] for r in result["nodes"]}
-        
+
         assert rights_map.get(1) == "view"
         assert rights_map.get(2) == "create"
         assert rights_map.get(3) == "edit"
         assert rights_map.get(4) == "delete"
-        assert rights_map.get(5) == "grant"
 
     def test_rights_query_no_permission(self):
         """Ошибка при отсутствии прав на просмотр ролей"""

@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from starlette.responses import Response
 
 from app.helpers.permissions import require_rights
-from app.jobs import fetch_cur_rasp
+from app.jobs.rasp import fetch_cur_rasp
 from app.schemas import Status
-import app.globals as globals_
+from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
@@ -27,11 +27,13 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def start_schedule_job(
+        request: Request,
         response: Response,
         background_tasks: BackgroundTasks
     ):
-        if globals_.locker:
+        state: AppState = request.app.state.app_state
+        if state._rasp_lock.locked():
             response.status_code = 409
             return Status(status="Сейчас идет выполнение этой задачи")
-        background_tasks.add_task(fetch_cur_rasp)
+        background_tasks.add_task(fetch_cur_rasp, state=state)
         return Status()

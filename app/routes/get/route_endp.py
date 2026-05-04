@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Depends, Response
-import app.globals as globals_
-from app.schemas import Status, FilterRoute
+from fastapi import APIRouter, Depends, Request, Response
+
+from app.schemas import FilterRoute, Status
 from app.schemas.graph.graph import ShortestWayOut, VertexOut
+from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
@@ -111,11 +112,13 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def get_route(
+            request: Request,
             response: Response,
             query: FilterRoute = Depends()
     ):
+        state: AppState = request.app.state.app_state
         try:
-            graph_bs = globals_.global_graph[query.loc.removeprefix("campus_")]
+            graph_bs = state.global_graph[query.loc.removeprefix("campus_")]
         except KeyError:
             response.status_code = 500
             return Status(

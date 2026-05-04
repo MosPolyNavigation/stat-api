@@ -13,8 +13,6 @@ from app.routes.graphql.filter_handlers import (
 )
 from app.routes.graphql.permissions import (
     ensure_roles_view_permission,
-    ensure_roles_grant_permission,
-    validate_user_permissions_by_ids
 )
 from app.services.permission_service import PermissionService
 from app.models import UserRole, User, Role, RoleRightGoal
@@ -165,11 +163,10 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     """Мутация для назначения роли(ей) пользователю.
     
     ВАЖНО: 
-    1. Пользователь должен иметь право roles -> grant
-    2. Нельзя назначить роль, если у тебя нет прав, которые есть в этой роли
+    Нельзя назначить роль, если у пользователя нет соответствующих прав с can_grant = True, которые содержатся в этой роли.
     (защита от эскалации привилегий)
     """
-    session: AsyncSession = await ensure_roles_grant_permission(info)
+    session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
     
@@ -214,15 +211,14 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     required_permissions = list(required_permissions_set)
     
     # === Проверяем права пользователя через единую функцию ===
-    missing = await validate_user_permissions_by_ids(
-        current_user.id, 
-        service, 
+    missing = await service.check_grant_permissions(
+        current_user.id,
         required_permissions
     )
     
     if missing:
         raise GraphQLError(
-            f"Невозможно назначить роли. Обнаружена попытка эскалации привилегий. "
+            f"Недостаточно прав для назначения ролей. Обнаружена попытка эскалации привилегий. "
             f"У вас нет следующих прав, которые присутствуют в назначаемых ролях: "
             f"{', '.join(missing)}. "
             f"Вы можете назначать только те роли, права которых не превышают ваши собственные."
@@ -287,15 +283,38 @@ async def revoke_role(
     """Мутация для отзыва роли у пользователя.
     
     ВАЖНО:
-    1. Пользователь должен иметь право roles -> grant
-    2. Нельзя отозвать роль, если у тебя нет прав, которые есть в этой роли
+    Нельзя отозвать роль, если у пользователя нет соответствующих прав с can_grant = True, которые содержатся в этой роли.
     (защита от злоупотреблений)
     """
     
-    session: AsyncSession = await ensure_roles_grant_permission(info)
+    session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
-    
+
+    # === Проверяем права на эскалацию (аналогично grant_role) ===
+    role_rights_result = await session.execute(
+        select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
+    )
+    role_rights = role_rights_result.scalars().all()
+
+    required_permissions_set = set()
+    for rrg in role_rights:
+        required_permissions_set.add((rrg.right_id, rrg.goal_id))
+
+    required_permissions = list(required_permissions_set)
+
+    missing = await service.check_grant_permissions(
+        current_user.id,
+        required_permissions
+    )
+
+    if missing:
+        raise GraphQLError(
+            f"Невозможно отозвать роль. У вас недостаточно прав, которые присутствуют в этой роли: "
+            f"{', '.join(missing)}. "
+            f"Вы можете отзывать только те роли, права которых не превышают ваши собственные."
+        )
+
     # Проверяем существование связи
     user_role = (
         await session.execute(
@@ -305,37 +324,9 @@ async def revoke_role(
             )
         )
     ).scalars().first()
-    
+
     if not user_role:
         raise GraphQLError(f"Связь пользователь-роль не найдена (user_id={user_id}, role_id={role_id})")
-    
-    # === Проверяем права на эскалацию (аналогично grant_role) ===
-    # Загружаем права отзываемой роли
-    role_rights_result = await session.execute(
-        select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
-    )
-    role_rights = role_rights_result.scalars().all()
-    
-    # Собираем уникальные права из роли
-    required_permissions_set = set()
-    for rrg in role_rights:
-        required_permissions_set.add((rrg.right_id, rrg.goal_id))
-    
-    required_permissions = list(required_permissions_set)
-    
-    # Проверяем, есть ли у текущего пользователя эти права
-    missing = await validate_user_permissions_by_ids(
-        current_user.id, 
-        service, 
-        required_permissions
-    )
-    
-    if missing:
-        raise GraphQLError(
-            f"Невозможно отозвать роль. У вас нет следующих прав, которые присутствуют в этой роли: "
-            f"{', '.join(missing)}. "
-            f"Вы можете отзывать только те роли, права которых не превышают ваши собственные."
-        )
     
     # === Отзыв роли ===
     await session.delete(user_role)

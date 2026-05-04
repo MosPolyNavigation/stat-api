@@ -21,6 +21,7 @@ class RoleRightGoalType:
     role_id: int
     right_id: int
     goal_id: int
+    can_grant: bool
     role: Optional["RoleType"] = None
     right: Optional[RightType] = None
     goal: Optional[GoalType] = None

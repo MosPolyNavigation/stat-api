@@ -545,7 +545,7 @@ class TestCreateRoleMutation:
 
     def test_create_role_escalation_prevention(self):
         """Защита от эскалации привилегий при создании роли"""
-        # Создаём пользователя без прав grant
+        # Создаём пользователя без прав на создание ролей
         test_login = f"limited_{uuid.uuid4().hex[:8]}"
         create_user_query = """
         mutation CreateUser($data: CreateUserInput!) {
@@ -560,7 +560,7 @@ class TestCreateRoleMutation:
             variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
             headers=ADMIN_HEADERS
         )
-        
+
         # Получаем токен пользователя
         token_response = client.post(
             "/api/auth/token",
@@ -568,8 +568,8 @@ class TestCreateRoleMutation:
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
-        
-        # Пытаемся создать роль с правами grant (которых нет у пользователя)
+
+        # Пытаемся создать роль с правами, которых пользователь не может делегировать
         create_query = """
         mutation CreateRole($data: CreateRoleInput!) {
             createRole(data: $data) {
@@ -578,14 +578,14 @@ class TestCreateRoleMutation:
             }
         }
         """
-        
+
         response = graphql_query(
             create_query,
             variables={
                 "data": {
                     "name": unique_role_name("escalation"),
                     "roleRightGoals": [
-                        {"rightId": 5, "goalId": 4}  # grant -> roles
+                        {"rightId": 1, "goalId": 4, "canGrant": True}
                     ]
                 }
             },

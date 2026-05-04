@@ -1,9 +1,8 @@
-import re
 import pickle
-import pytest
-import app.globals as globals_
+import re
+
+from .base import app, client
 from .load_graph import graph_b
-from .base import client
 
 
 def test_get_user_id():
@@ -26,7 +25,7 @@ def test_get_popular():
 
 
 def test_get_route():
-    globals_.global_graph["BS"] = pickle.loads(graph_b)
+    app.state.app_state.global_graph["BS"] = pickle.loads(graph_b)
     response = client.get("/api/get/route?from_p=a-100&to_p=a-101&loc=campus_BS")
     assert response.status_code == 200
     json_data = response.json()

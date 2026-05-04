@@ -34,7 +34,7 @@ def register_endpoint(router: APIRouter):
         """
         offset = (page - 1) * size
         result = review_rate_limiter.get_banned_users(
-            state=request.app.state,
+            state=request.app.state.app_state,
             limit=size,
             offset=offset,
         )
@@ -65,7 +65,7 @@ def register_endpoint(router: APIRouter):
         Возвращает детальную информацию о бане пользователя.
         """
         info = review_rate_limiter.get_user_ban_info(
-            state=request.app.state,
+            state=request.app.state.app_state,
             user_id=user_id,
         )
         if info is None:
@@ -103,7 +103,7 @@ def register_endpoint(router: APIRouter):
         Снимает перманентный бан с пользователя.
         """
         success = review_rate_limiter.unban_user(
-            state=rq.app.state,
+            state=rq.app.state.app_state,
             user_id=user_id,
         )
         if not success:

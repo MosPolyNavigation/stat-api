@@ -51,8 +51,8 @@ class RateLimiter:
         data = await self._extract_event_request(request)
         if data is None:
             return
-
-        state: AppState = request.app.state
+        
+        state: AppState = request.app.state.app_state
         access_store = getattr(state, self.state_attr, None)
         if access_store is None:
             access_store = OrderedDict()

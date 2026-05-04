@@ -5,15 +5,14 @@ from sqlalchemy import delete
 
 from app import models
 from app.constants import EVENT_TYPE_WAYS_ID
-from app.database import AsyncSessionLocal
 from app.handlers import get_aggregated_stats, get_period_stats, get_popular_audiences
 
-from .base import client  # noqa: F401
+from .base import client, test_session_maker  # noqa: F401
 
 
 def test_popular_audiences_uses_weighted_successful_events():
     async def run():
-        async with AsyncSessionLocal() as db:
+        async with test_session_maker.begin() as db:
             return await get_popular_audiences(db)
 
     result = asyncio.run(run())
@@ -26,7 +25,7 @@ def test_popular_audiences_uses_weighted_successful_events():
 
 def test_period_stats_filters_by_period_and_event_type():
     async def run():
-        async with AsyncSessionLocal() as db:
+        async with test_session_maker.begin() as db:
             return await get_period_stats(
                 db,
                 period_type="day",
@@ -55,7 +54,7 @@ def test_period_stats_filters_by_period_and_event_type():
 
 def test_period_stats_counts_unique_visitors_by_requested_period():
     async def run():
-        async with AsyncSessionLocal.begin() as db:
+        async with test_session_maker.begin() as db:
             db.add(
                 models.ClientId(
                     id=300,
@@ -72,7 +71,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
                 )
             )
         try:
-            async with AsyncSessionLocal() as db:
+            async with test_session_maker.begin() as db:
                 return await get_period_stats(
                     db,
                     period_type="year",
@@ -81,7 +80,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
                     event_type_id=EVENT_TYPE_WAYS_ID,
                 )
         finally:
-            async with AsyncSessionLocal.begin() as db:
+            async with test_session_maker.begin() as db:
                 await db.execute(delete(models.Event).where(models.Event.id == 300))
                 await db.execute(delete(models.ClientId).where(models.ClientId.id == 300))
 
@@ -99,7 +98,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
 
 def test_aggregated_stats_wraps_period_stats():
     async def run():
-        async with AsyncSessionLocal() as db:
+        async with test_session_maker.begin() as db:
             return await get_aggregated_stats(
                 db,
                 period_type="day",
@@ -123,7 +122,7 @@ def test_aggregated_stats_wraps_period_stats():
 
 def test_aggregated_stats_counts_global_visitors_once():
     async def run():
-        async with AsyncSessionLocal.begin() as db:
+        async with test_session_maker.begin() as db:
             db.add(
                 models.Event(
                     id=200,
@@ -133,7 +132,7 @@ def test_aggregated_stats_counts_global_visitors_once():
                 )
             )
         try:
-            async with AsyncSessionLocal() as db:
+            async with test_session_maker.begin() as db:
                 return await get_aggregated_stats(
                     db,
                     period_type="day",
@@ -142,7 +141,7 @@ def test_aggregated_stats_counts_global_visitors_once():
                     event_type_id=EVENT_TYPE_WAYS_ID,
                 )
         finally:
-            async with AsyncSessionLocal.begin() as db:
+            async with test_session_maker.begin() as db:
                 await db.execute(delete(models.Event).where(models.Event.id == 200))
 
     result = asyncio.run(run())

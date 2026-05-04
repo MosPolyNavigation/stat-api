@@ -15,6 +15,7 @@ USER_PASS_GOAL_NAME = "user_pass"
 ADMIN_GOAL_NAME = "admin"
 REVIEWS_GOAL_NAME = "reviews"
 CLIENT_GOAL_NAME = "client"
+REFRESH_TOKEN_GOAL_NAME = "refresh_token"
 
 # ID целей
 STATS_GOAL_ID = 1
@@ -28,7 +29,8 @@ NAV_GOAL_ID = 8
 USER_PASS_GOAL_ID = 9
 ADMIN_GOAL_ID = 10
 REVIEWS_GOAL_ID = 11
-CLIENT_GOAL_ID = 12
+REFRESH_TOKEN_GOAL_ID = 12
+CLIENT_GOAL_ID = 13
 
 # =============================================================================
 # КОНСТАНТЫ НОВОЙ СХЕМЫ СОБЫТИЙ
@@ -62,14 +64,12 @@ VIEW_RIGHT_NAME = "view"
 CREATE_RIGHT_NAME = "create"
 EDIT_RIGHT_NAME = "edit"
 DELETE_RIGHT_NAME = "delete"
-GRANT_RIGHT_NAME = "grant"
 
 # ID прав
 VIEW_RIGHT_ID = 1
 CREATE_RIGHT_ID = 2
 EDIT_RIGHT_ID = 3
 DELETE_RIGHT_ID = 4
-GRANT_RIGHT_ID = 5
 
 # =============================================================================
 # СЛОВАРИ ДЛЯ МАППИНГА (ID ↔ NAME)
@@ -87,7 +87,8 @@ GOALS_BY_ID: dict[int, str] = {
     9: "user_pass",
     10: "admin",
     11: "reviews",
-    12: "client",
+    12: "refresh_token",
+    13: "client"
 }
 
 GOALS_BY_NAME: dict[str, int] = {
@@ -102,7 +103,8 @@ GOALS_BY_NAME: dict[str, int] = {
     "user_pass": 9,
     "admin": 10,
     "reviews": 11,
-    "client": 12,
+    "refresh_token": 12,
+    "client": 13
 }
 
 RIGHTS_BY_ID: dict[int, str] = {
@@ -110,7 +112,6 @@ RIGHTS_BY_ID: dict[int, str] = {
     2: "create",
     3: "edit",
     4: "delete",
-    5: "grant",
 }
 
 RIGHTS_BY_NAME: dict[str, int] = {
@@ -118,76 +119,39 @@ RIGHTS_BY_NAME: dict[str, int] = {
     "create": 2,
     "edit": 3,
     "delete": 4,
-    "grant": 5,
 }
 
 # =============================================================================
-# ХЕЛПЕРЫ ДЛЯ ПРОВЕРКИ ПРАВ (CORTEGES ID)
+# КОНСТАНТЫ проблем (Problems)
 # =============================================================================
 
-# Все права для каждой цели (для удобной проверки)
-PERMISSIONS_BY_GOAL: dict[int, list[tuple[int, int]]] = {
-    STATS_GOAL_ID: [
-        (VIEW_RIGHT_ID, STATS_GOAL_ID),
-        (CREATE_RIGHT_ID, STATS_GOAL_ID),
-        (EDIT_RIGHT_ID, STATS_GOAL_ID),
-        (DELETE_RIGHT_ID, STATS_GOAL_ID),
-    ],
-    DASHBOARDS_GOAL_ID: [
-        (VIEW_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (CREATE_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (EDIT_RIGHT_ID, DASHBOARDS_GOAL_ID),
-        (DELETE_RIGHT_ID, DASHBOARDS_GOAL_ID),
-    ],
-    USERS_GOAL_ID: [
-        (VIEW_RIGHT_ID, USERS_GOAL_ID),
-        (CREATE_RIGHT_ID, USERS_GOAL_ID),
-        (EDIT_RIGHT_ID, USERS_GOAL_ID),
-        (DELETE_RIGHT_ID, USERS_GOAL_ID),
-    ],
-    ROLES_GOAL_ID: [
-        (VIEW_RIGHT_ID, ROLES_GOAL_ID),
-        (CREATE_RIGHT_ID, ROLES_GOAL_ID),
-        (EDIT_RIGHT_ID, ROLES_GOAL_ID),
-        (DELETE_RIGHT_ID, ROLES_GOAL_ID),
-        (GRANT_RIGHT_ID, ROLES_GOAL_ID),
-    ],
-    TABLES_GOAL_ID: [
-        (VIEW_RIGHT_ID, TABLES_GOAL_ID),
-        (CREATE_RIGHT_ID, TABLES_GOAL_ID),
-        (EDIT_RIGHT_ID, TABLES_GOAL_ID),
-        (DELETE_RIGHT_ID, TABLES_GOAL_ID),
-    ],
-    RESOURCES_GOAL_ID: [
-        (VIEW_RIGHT_ID, RESOURCES_GOAL_ID),
-        (CREATE_RIGHT_ID, RESOURCES_GOAL_ID),
-        (EDIT_RIGHT_ID, RESOURCES_GOAL_ID),
-        (DELETE_RIGHT_ID, RESOURCES_GOAL_ID),
-    ],
-    TASKS_GOAL_ID: [
-        (VIEW_RIGHT_ID, TASKS_GOAL_ID),
-        (CREATE_RIGHT_ID, TASKS_GOAL_ID),
-        (EDIT_RIGHT_ID, TASKS_GOAL_ID),
-        (DELETE_RIGHT_ID, TASKS_GOAL_ID),
-    ],
-    NAV_GOAL_ID: [
-        (VIEW_RIGHT_ID, NAV_GOAL_ID),
-        (CREATE_RIGHT_ID, NAV_GOAL_ID),
-        (EDIT_RIGHT_ID, NAV_GOAL_ID),
-        (DELETE_RIGHT_ID, NAV_GOAL_ID),
-    ],
-    USER_PASS_GOAL_ID: [
-        (EDIT_RIGHT_ID, USER_PASS_GOAL_ID),
-    ],
-    ADMIN_GOAL_ID: [
-        (VIEW_RIGHT_ID, ADMIN_GOAL_ID),
-        (EDIT_RIGHT_ID, ADMIN_GOAL_ID),
-    ],
-    REVIEWS_GOAL_ID: [
-        (VIEW_RIGHT_ID, REVIEWS_GOAL_ID),
-        (EDIT_RIGHT_ID, REVIEWS_GOAL_ID),
-    ],
-    CLIENT_GOAL_ID: [
-        (CREATE_RIGHT_ID, CLIENT_GOAL_ID),
-    ]
+# Названия
+WAY_PROBLEM_NAME = "way"
+OTHER_PROBLEM_NAME = "other"
+PLAN_PROBLEM_NAME = "plan"
+WORK_PROBLEM_NAME = "work"
+
+# =============================================================================
+# СЛОВАРИ ДЛЯ МАППИНГА ПРОБЛЕМ
+# =============================================================================
+
+PROBLEMS: list[str] = [
+    WAY_PROBLEM_NAME,
+    OTHER_PROBLEM_NAME,
+    PLAN_PROBLEM_NAME,
+    WORK_PROBLEM_NAME,
+]
+
+# =============================================================================
+# СЛОВАРИ ДЛЯ МАППИНГА СТАТУСОВ ОТЗЫВОВ
+# =============================================================================
+
+REVIEW_STATUSES: dict[int, str] = {
+    1: "бэклог",
+    2: "на рассмотрении",
+    3: "принят в работу",
+    4: "ждет проверки",
+    5: "исправлен",
+    6: "не требует исправления",
+    7: "исправление отложено",
 }

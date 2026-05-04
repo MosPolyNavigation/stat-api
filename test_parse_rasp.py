@@ -1,11 +1,14 @@
 import asyncio
 import json
-from app.database import AsyncSessionLocal
+from app.config import load_settings
+from app.database import get_session_maker, init_database
 from app.jobs.rasp import parse
 
 
 async def main():
-    async with AsyncSessionLocal() as db:
+    init_database(load_settings())
+    session_maker = get_session_maker()
+    async with session_maker() as db:
         schedule = await parse(db)
     schedule_json_ready = {
         auditory_id: json.loads(auditory.model_dump_json())

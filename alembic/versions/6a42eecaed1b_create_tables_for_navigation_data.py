@@ -32,10 +32,10 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=25), nullable=False),
     sa.Column('short', sa.String(length=2), nullable=False),
     sa.Column('ready', sa.Boolean(), nullable=False),
-    sa.Column('address', sa.String(length=100), nullable=False),
-    sa.Column('metro', sa.String(length=100), nullable=False),
+    sa.Column('address', sa.String(length=255), nullable=False),
+    sa.Column('metro', sa.String(length=255), nullable=False),
     sa.Column('crossings', sa.Text(), nullable=True),
-    sa.Column('comments', sa.String(length=100), nullable=True),
+    sa.Column('comments', sa.String(length=255), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('id_sys')
     )

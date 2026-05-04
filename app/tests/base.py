@@ -1,23 +1,22 @@
 import asyncio
 import os
-from datetime import datetime
-from pwdlib import PasswordHash
-from app.config import get_settings
-from fastapi.testclient import TestClient
-from fastapi_pagination import add_pagination
 from pathlib import Path
+
+# Должно стоять до любых импортов app.* — иначе get_settings() прочитает прод-конфиг.
+os.environ["STATAPI_CONFIG"] = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    "config.test.yaml",
+)
+
+from fastapi.testclient import TestClient
+from pwdlib import PasswordHash
 from pydantic import RootModel
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 
-path = get_settings().sqlalchemy_database_url.path.removeprefix("/")
-try:
-    os.remove(path)
-except FileNotFoundError:
-    pass
-
-from app.tests.app import app
-from app.models import Base
-from app.database import engine, AsyncSessionLocal
-from app.helpers.data import goals, roles, rights, roles_rights_goals, review_status
 from app import models
 from app.constants import (
     EVENT_TYPE_AUDS_ID,
@@ -31,20 +30,52 @@ from app.constants import (
     PAYLOAD_TYPE_START_ID,
     PAYLOAD_TYPE_SUCCESS_ID,
 )
+from datetime import datetime
+from pwdlib import PasswordHash
+from fastapi.testclient import TestClient
+from fastapi_pagination import add_pagination
+from app.config import load_settings
+from app.constants import REVIEW_STATUSES
+from app.factory import AppFactory
+from app.helpers.data import goals, rights, roles, roles_rights_goals
+from app.jobs.location_data.worker import fetch_location_data
+from app.models import Base
 from app.schemas.rasp.schedule import Auditory
-import app.globals as globals_
+from app.tests.hooks import TestHooks
 
-add_pagination(app)
+settings = load_settings()
 
 
 class Schedule(RootModel[dict[str, Auditory]]):
     pass
 
 
+# ── Тестовая БД: новый engine + session_maker, не общий с прод-кодом ─────────
+
+db_path = settings.sqlalchemy_database_url.path.removeprefix("/")
+try:
+    os.remove(db_path)
+except FileNotFoundError:
+    pass
+
+test_engine = create_async_engine(str(settings.sqlalchemy_database_url), future=True)
+test_session_maker = async_sessionmaker(
+    autoflush=True,
+    autocommit=False,
+    bind=test_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+# AppFactory + TestHooks: TestHooks в __init__ вызывает override_database,
+# поэтому всё, что использует get_session_maker(), уже знает про тестовый engine.
+app = AppFactory(TestHooks(test_session_maker))(settings)
+
+
 async def create_db_and_tables():
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    async with AsyncSessionLocal.begin() as db:
+    async with test_session_maker.begin() as db:
         client: models.ClientId = models.ClientId(
             id=1,
             ident="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
@@ -133,7 +164,7 @@ async def create_db_and_tables():
             ]
         )
         review_statuses: list[models.ReviewStatus] = list([
-            models.ReviewStatus(id=id_, name=name) for id_, name in review_status.items()
+            models.ReviewStatus(id=id_, name=name) for id_, name in REVIEW_STATUSES.items()
         ])
         db.add_all(review_statuses)
         db.add_all(
@@ -154,28 +185,15 @@ async def create_db_and_tables():
                 creation_date=datetime(2026, 4, 25, 12, 0, 0),
             )
         )
-        # await db.commit()
-        # plans_data: list[models.Plan] = list(map(
-        #     lambda x: models.Plan(id=x),
-        #     list(set(plans.split('\n')))
-        # ))
-        # db.add_all(plans_data)
-        # db.commit()
-        # auds_data: list[models.Auditory] = list(map(
-        #     lambda x: models.Auditory(id=x),
-        #     list(set(auds.split('\n')))
-        # ))
-        # db.add_all(auds_data)
-        # db.commit()
+
         data_goals: list[models.Goal] = list([models.Goal(id=i, name=name) for i, name in goals.items()])
         data_roles: list[models.Role] = list([models.Role(id=i, name=name) for i, name in roles.items()])
         data_rights: list[models.Right] = list([models.Right(id=i, name=name) for i, name in rights.items()])
         db.add_all(data_goals)
         db.add_all(data_roles)
         db.add_all(data_rights)
-        # await db.commit()
         data_role_right_goals: list[models.RoleRightGoal] = list(
-            [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2]) for x in roles_rights_goals]
+            [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2], can_grant=x[0] == 1) for x in roles_rights_goals]
         )
         db.add_all(data_role_right_goals)
         data_user: models.User = models.User(
@@ -185,12 +203,10 @@ async def create_db_and_tables():
             token="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
         )
         db.add(data_user)
-        # await db.commit()
         data_user_roles: models.UserRole = models.UserRole(user_id=1, role_id=1)
         db.add(data_user_roles)
 
-        # Добавляем навигационные данные для тестов
-        # Location
+        # Навигационные данные
         test_location = models.Location(
             id=1,
             id_sys="AV",
@@ -204,7 +220,6 @@ async def create_db_and_tables():
         )
         db.add(test_location)
 
-        # Corpus
         test_corpus = models.Corpus(
             id=1,
             id_sys="av-test",
@@ -216,14 +231,12 @@ async def create_db_and_tables():
         )
         db.add(test_corpus)
 
-        # Floor
         test_floor = models.Floor(
             id=1,
             name=1
         )
         db.add(test_floor)
 
-        # Plan
         test_plan = models.Plan(
             id=1,
             id_sys="test-plan-1",
@@ -240,14 +253,12 @@ async def create_db_and_tables():
         )
         db.add(test_plan)
 
-        # Type
         test_type = models.Type(
             id=1,
             name="Учебная аудитория"
         )
         db.add(test_type)
 
-        # Auditory
         test_auditory = models.Auditory(
             id=1,
             id_sys="test-101",
@@ -272,7 +283,7 @@ async def create_db_and_tables():
         )
         db.add(test_auditory_photo)
 
-        # DOD navigation dataset
+        # DOD-данные
         dod_location = models.DodLocation(
             id=1,
             id_sys="DD",
@@ -360,16 +371,14 @@ async def create_db_and_tables():
 
         await db.commit()
 
-    # Загружаем тестовое расписание в globals
+    # Загружаем тестовое расписание прямо в state приложения.
     schedule_path = Path(__file__).parent / "schedule_test.json"
     json_text = schedule_path.read_text(encoding="utf-8")
     schedule = Schedule.model_validate_json(json_text)
-    globals_.global_rasp = schedule.root
-    globals_.locker = False
+    app.state.app_state.global_rasp = schedule.root
 
-    # Инициализируем locationData для тестов
-    from app.jobs.location_data.worker import fetch_location_data
-    await fetch_location_data()
+    # Инициализируем locationData (читает БД через override_database).
+    await fetch_location_data(state=app.state.app_state)
 
 
 asyncio.run(create_db_and_tables())

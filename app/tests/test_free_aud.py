@@ -1,8 +1,17 @@
 """Тесты для эндпоинтов поиска свободных аудиторий /api/free-aud"""
 
-import pytest
-from .base import client
-import app.globals as globals_
+from .base import app, client
+
+
+class _ForceLocked:
+    """Стаб asyncio.Lock для тестов: всегда возвращает True из .locked().
+
+    Применяется через подмену state._rasp_lock на инстанс этого класса —
+    чтобы из синхронного теста можно было сэмулировать «расписание сейчас грузится».
+    """
+
+    def locked(self) -> bool:
+        return True
 
 
 class TestFreeAudByAud:
@@ -95,12 +104,11 @@ class TestFreeAudByAud:
 
     def test_425_free_aud_by_aud_schedule_not_loaded(self):
         """Тест для проверки статуса 425 когда расписание не загружено"""
-        # Сохраняем текущее состояние
-        original_locker = globals_.locker
+        state = app.state.app_state
+        original_lock = state._rasp_lock
 
         try:
-            # Устанавливаем locker=True для имитации загрузки расписания
-            globals_.locker = True
+            state._rasp_lock = _ForceLocked()
 
             response = client.get(
                 "/api/free-aud/by-aud",
@@ -114,8 +122,7 @@ class TestFreeAudByAud:
             assert "status" in data
             assert "not loaded" in data["status"].lower()
         finally:
-            # Восстанавливаем состояние
-            globals_.locker = original_locker
+            state._rasp_lock = original_lock
 
 
 class TestFreeAudByPlan:
@@ -170,10 +177,11 @@ class TestFreeAudByPlan:
 
     def test_425_free_aud_by_plan_schedule_not_loaded(self):
         """Тест для проверки статуса 425 когда расписание не загружено"""
-        original_locker = globals_.locker
+        state = app.state.app_state
+        original_lock = state._rasp_lock
 
         try:
-            globals_.locker = True
+            state._rasp_lock = _ForceLocked()
 
             response = client.get(
                 "/api/free-aud/by-plan",
@@ -187,7 +195,7 @@ class TestFreeAudByPlan:
             assert "status" in data
             assert "not loaded" in data["status"].lower()
         finally:
-            globals_.locker = original_locker
+            state._rasp_lock = original_lock
 
 
 class TestFreeAudByCorpus:
@@ -241,10 +249,11 @@ class TestFreeAudByCorpus:
 
     def test_425_free_aud_by_corpus_schedule_not_loaded(self):
         """Тест для проверки статуса 425 когда расписание не загружено"""
-        original_locker = globals_.locker
+        state = app.state.app_state
+        original_lock = state._rasp_lock
 
         try:
-            globals_.locker = True
+            state._rasp_lock = _ForceLocked()
 
             response = client.get(
                 "/api/free-aud/by-corpus",
@@ -258,7 +267,7 @@ class TestFreeAudByCorpus:
             assert "status" in data
             assert "not loaded" in data["status"].lower()
         finally:
-            globals_.locker = original_locker
+            state._rasp_lock = original_lock
 
 
 class TestFreeAudByLocation:
@@ -313,10 +322,11 @@ class TestFreeAudByLocation:
 
     def test_425_free_aud_by_loc_schedule_not_loaded(self):
         """Тест для проверки статуса 425 когда расписание не загружено"""
-        original_locker = globals_.locker
+        state = app.state.app_state
+        original_lock = state._rasp_lock
 
         try:
-            globals_.locker = True
+            state._rasp_lock = _ForceLocked()
 
             response = client.get(
                 "/api/free-aud/by-loc",
@@ -330,7 +340,7 @@ class TestFreeAudByLocation:
             assert "status" in data
             assert "not loaded" in data["status"].lower()
         finally:
-            globals_.locker = original_locker
+            state._rasp_lock = original_lock
 
     def test_200_free_aud_different_days(self):
         """Проверка разных дней недели"""
