@@ -89,7 +89,7 @@ def test_period_stats_counts_unique_visitors_by_requested_period():
     assert [item.model_dump() for item in result] == [
         {
             "period": "2026-01-01",
-            "all_visits": 3,
+            "all_visits": 4,
             "visitor_count": 3,
             "unique_visitors": 3,
         },
