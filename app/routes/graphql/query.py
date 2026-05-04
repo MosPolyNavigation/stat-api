@@ -1,17 +1,62 @@
-﻿import strawberry
 from typing import Optional
-from .change_plan import ChangePlanType, resolve_change_plans
-from .dod import DodNavAuditoryConnection, DodNavAuditoryPhotoConnection, DodNavCampusConnection, DodNavFloorConnection, DodNavLocationConnection, DodNavPlanConnection, DodNavStaticConnection, DodNavTypeConnection, resolve_dod_nav_auditories, resolve_dod_nav_auditory_photos, resolve_dod_nav_campuses, resolve_dod_nav_floors, resolve_dod_nav_locations, resolve_dod_nav_plans, resolve_dod_nav_statics, resolve_dod_nav_types
-from .endpoint_stats import AggregatedEndpointStatisticsType, EndpointStatisticsType, resolve_endpoint_statistics, resolve_endpoint_statistics_avg
-from .nav import NavAuditoryConnection, NavAuditoryPhotoConnection, NavCampusConnection, NavFloorConnection, NavLocationConnection, NavPlanConnection, NavStaticConnection, NavTypeConnection, resolve_nav_auditories, resolve_nav_auditory_photos, resolve_nav_campuses, resolve_nav_floors, resolve_nav_locations, resolve_nav_plans, resolve_nav_statics, resolve_nav_types
+
+import strawberry
+
+from .dod import (
+    DodNavAuditoryConnection,
+    DodNavAuditoryPhotoConnection,
+    DodNavCampusConnection,
+    DodNavFloorConnection,
+    DodNavLocationConnection,
+    DodNavPlanConnection,
+    DodNavStaticConnection,
+    DodNavTypeConnection,
+    resolve_dod_nav_auditories,
+    resolve_dod_nav_auditory_photos,
+    resolve_dod_nav_campuses,
+    resolve_dod_nav_floors,
+    resolve_dod_nav_locations,
+    resolve_dod_nav_plans,
+    resolve_dod_nav_statics,
+    resolve_dod_nav_types,
+)
+from .endpoint_stats import (
+    AggregatedEndpointStatisticsType,
+    EndpointStatisticsType,
+    resolve_endpoint_statistics,
+    resolve_endpoint_statistics_avg,
+)
+from .event_dict import (
+    AllowedPayloadRuleConnection,
+    EventTypeConnection,
+    PayloadTypeConnection,
+    ValueTypeConnection,
+    resolve_allowed_payload_rules,
+    resolve_event_types,
+    resolve_payload_types,
+    resolve_value_types,
+)
+from .nav import (
+    NavAuditoryConnection,
+    NavAuditoryPhotoConnection,
+    NavCampusConnection,
+    NavFloorConnection,
+    NavLocationConnection,
+    NavPlanConnection,
+    NavStaticConnection,
+    NavTypeConnection,
+    resolve_nav_auditories,
+    resolve_nav_auditory_photos,
+    resolve_nav_campuses,
+    resolve_nav_floors,
+    resolve_nav_locations,
+    resolve_nav_plans,
+    resolve_nav_statics,
+    resolve_nav_types,
+)
 from .problem import ProblemType, resolve_problems
 from .review import ReviewType, resolve_reviews
 from .review_status import ReviewStatusType, resolve_review_status
-from .select_auditory import SelectAuditoryType, resolve_select_auditories
-from .site_stat import SiteStatType, resolve_site_stats
-from .start_way import StartWayType, resolve_start_ways
-from .tg_bot import TgBotEventKindType, TgBotEventStatisticType, TgBotEventType, TgBotUserType, resolve_tg_bot_event_statistics, resolve_tg_bot_event_types, resolve_tg_bot_events, resolve_tg_bot_users, AggregatedTgStatisticsType, TgStatisticsType, resolve_tg_bot_event_statistics, resolve_tg_statistics, resolve_tg_statistics_avg
-from .user_id import UserIdType, resolve_user_ids
 from .user_role import UserConnection, resolve_users, UserType, resolve_user
 from .user_role import RoleConnection, resolve_roles, RoleType, resolve_role
 from .user_role import UserRoleConnection, resolve_user_roles, UserRoleType, resolve_user_role
@@ -23,29 +68,9 @@ from .auth import RefreshTokenConnection, resolve_refresh_tokens
 
 @strawberry.type
 class Query:
-    change_plans: list[ChangePlanType] = strawberry.field(
-        resolver=resolve_change_plans,
-        description="Get plan changes history.",
-    )
     reviews: list[ReviewType] = strawberry.field(
         resolver=resolve_reviews,
         description="Get user reviews.",
-    )
-    start_ways: list[StartWayType] = strawberry.field(
-        resolver=resolve_start_ways,
-        description="Get start way statistics.",
-    )
-    select_auditories: list[SelectAuditoryType] = strawberry.field(
-        resolver=resolve_select_auditories,
-        description="Get selected auditories statistics.",
-    )
-    site_stats: list[SiteStatType] = strawberry.field(
-        resolver=resolve_site_stats,
-        description="Get site visits statistics.",
-    )
-    user_ids: list[UserIdType] = strawberry.field(
-        resolver=resolve_user_ids,
-        description="Get user ids.",
     )
     problems: list[ProblemType] = strawberry.field(
         resolver=resolve_problems,
@@ -57,42 +82,27 @@ class Query:
     )
     endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
         resolver=resolve_endpoint_statistics,
-        description="Get endpoint statistics for selected goal.",
+        description="Получить статистику событий для выбранного типа.",
     )
     endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
         resolver=resolve_endpoint_statistics_avg,
-        description="Get aggregated endpoint statistics for selected period.",
+        description="Получить агрегированную статистику событий за выбранный период.",
     )
-    tg_bot_users: list[TgBotUserType] = strawberry.field(
-        resolver=resolve_tg_bot_users,
-        description="Get Telegram bot users.",
+    event_types: EventTypeConnection = strawberry.field(
+        resolver=resolve_event_types,
+        description="Получить записи справочника типов событий.",
     )
-    tg_bot_event_types: list[TgBotEventKindType] = strawberry.field(
-        resolver=resolve_tg_bot_event_types,
-        description="Get Telegram bot event kinds.",
+    payload_types: PayloadTypeConnection = strawberry.field(
+        resolver=resolve_payload_types,
+        description="Получить записи справочника типов payload.",
     )
-    tg_bot_events: list[TgBotEventType] = strawberry.field(
-        resolver=resolve_tg_bot_events,
-        description="Get Telegram bot events.",
+    value_types: ValueTypeConnection = strawberry.field(
+        resolver=resolve_value_types,
+        description="Получить записи справочника типов значений.",
     )
-    tg_bot_event_statistics: list[TgBotEventStatisticType] = strawberry.field(
-        resolver=resolve_tg_bot_event_statistics,
-        description="Get Telegram bot event statistics.",
-    )
-    tg_stats: list[TgStatisticsType] = strawberry.field(
-        name="TgStats",
-        resolver=resolve_tg_statistics,
-        description="Get Telegram bot statistics grouped by selected period.",
-    )
-    tg_event_type: list[TgBotEventKindType] = strawberry.field(
-        name="TgEventType",
-        resolver=resolve_tg_bot_event_types,
-        description="Get Telegram bot event types.",
-    )
-    tg_stats_avg: AggregatedTgStatisticsType = strawberry.field(
-        name="TgStatsAvg",
-        resolver=resolve_tg_statistics_avg,
-        description="Get aggregated Telegram bot statistics for selected period.",
+    allowed_payload_rules: AllowedPayloadRuleConnection = strawberry.field(
+        resolver=resolve_allowed_payload_rules,
+        description="Получить связи допустимых payload для типов событий.",
     )
 
     nav_floors: NavFloorConnection = strawberry.field(
@@ -163,43 +173,47 @@ class Query:
 
     users: UserConnection = strawberry.field(
         resolver=resolve_users,
-        description="Get users with pagination."
+        description="Get users with pagination.",
     )
     user: Optional[UserType] = strawberry.field(
         resolver=resolve_user,
-        description="Get user."
+        description="Get user.",
     )
     roles: RoleConnection = strawberry.field(
         resolver=resolve_roles,
-        description="Get roles with pagination."
+        description="Get roles with pagination.",
     )
     role: Optional[RoleType] = strawberry.field(
         resolver=resolve_role,
-        description="Get role."
+        description="Get role.",
     )
     user_roles: UserRoleConnection = strawberry.field(
         resolver=resolve_user_roles,
-        description="Get user_roles with pagination."
+        description="Get user_roles with pagination.",
     )
     user_role: Optional[UserRoleType] = strawberry.field(
         resolver=resolve_user_role,
-        description="Get user_role."
+        description="Get user_role.",
     )
     role_right_goals: RoleRightGoalConnection = strawberry.field(
         resolver=resolve_role_right_goals,
-        description="Get role_right_goals with pagination."
+        description="Get role_right_goals with pagination.",
     )
     role_right_goal: Optional[RoleRightGoalType] = strawberry.field(
         resolver=resolve_role_right_goal,
-        description="Get role_right_goal."
+        description="Get role_right_goal.",
     )
     rights: RightConnection = strawberry.field(
         resolver=resolve_rights,
-        description="Get rights with pagination."
+        description="Get rights with pagination.",
     )
     goals: GoalConnection = strawberry.field(
         resolver=resolve_goals,
-        description="Get goals with pagination."
+        description="Get goals with pagination.",
+    )
+    refresh_tokens: RefreshTokenConnection = strawberry.field(
+        resolver=resolve_refresh_tokens,
+        description="Get refresh tokens with pagination."
     )
     refresh_tokens: RefreshTokenConnection = strawberry.field(
         resolver=resolve_refresh_tokens,

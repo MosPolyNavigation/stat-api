@@ -6,10 +6,10 @@ ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 
 
-def graphql_query(query: str, headers: dict = None):
+def graphql_query(query: str, headers: dict = None, variables: dict = None):
     return client.post(
         "/api/graphql",
-        json={"query": query},
+        json={"query": query, "variables": variables or {}},
         headers=headers or {},
     )
 
@@ -224,11 +224,10 @@ class TestGraphQLOtherQueries:
                 text
                 problem {
                     id
-                    name
                 }
-                user {
+                client {
                     id
-                    userId
+                    ident
                 }
             }
         }
@@ -242,8 +241,6 @@ class TestGraphQLOtherQueries:
         {
             problems {
                 id
-                name
-                description
             }
         }
         """
@@ -251,21 +248,136 @@ class TestGraphQLOtherQueries:
         assert response.status_code == 200
         assert "data" in response.json()
 
-    def test_200_site_stats_with_nested_user(self):
+    def test_200_endpoint_statistics_by_event_type(self):
         query = """
         {
-            siteStats(limit: 5) {
-                id
-                user {
+            endpointStatistics(
+                eventTypeId: 3,
+                byDate: {start: "2026-04-25", end: "2026-04-26"}
+            ) {
+                period
+                allVisits
+                visitorCount
+                uniqueVisitors
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        stats = response.json()["data"]["endpointStatistics"]
+        assert stats == [
+            {
+                "period": "2026-04-25",
+                "allVisits": 1,
+                "visitorCount": 1,
+                "uniqueVisitors": 1,
+            },
+            {
+                "period": "2026-04-26",
+                "allVisits": 1,
+                "visitorCount": 1,
+                "uniqueVisitors": 1,
+            },
+        ]
+
+    def test_200_endpoint_statistics_avg(self):
+        query = """
+        {
+            endpointStatisticsAvg(
+                eventTypeId: 3,
+                byDate: {start: "2026-04-25", end: "2026-04-26"}
+            ) {
+                totalVisits
+                totalVisitorCount
+                totalUnique
+                avgVisits
+                entriesCount
+            }
+        }
+        """
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
+        assert response.json()["data"]["endpointStatisticsAvg"] == {
+            "totalVisits": 2,
+            "totalVisitorCount": 2,
+            "totalUnique": 2,
+            "avgVisits": 1.0,
+            "entriesCount": 2,
+        }
+
+    def test_200_event_dictionary_queries(self):
+        query = """
+        {
+            eventTypes(filter: {codeName: "ways"}) {
+                nodes {
                     id
-                    userId
+                    codeName
+                }
+            }
+            payloadTypes(filter: {codeName: "success"}) {
+                nodes {
+                    id
+                    valueType {
+                        name
+                    }
+                }
+            }
+            allowedPayloadRules(filter: {eventTypeId: 3}) {
+                nodes {
+                    eventTypeId
+                    payloadTypeId
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        assert "data" in response.json()
+        data = response.json()["data"]
+        assert data["eventTypes"]["nodes"][0]["codeName"] == "ways"
+        assert data["payloadTypes"]["nodes"][0]["valueType"]["name"] == "bool"
+        assert len(data["allowedPayloadRules"]["nodes"]) >= 3
+
+    def test_200_event_dictionary_crud_with_admin_rights(self):
+        create_query = """
+        mutation {
+            createValueType(data: {
+                id: 99,
+                name: "json",
+                description: "JSON-значение payload"
+            }) {
+                id
+                name
+                description
+            }
+        }
+        """
+        create_response = graphql_query(create_query, ADMIN_HEADERS)
+        assert create_response.status_code == 200
+        assert create_response.json()["data"]["createValueType"]["name"] == "json"
+
+        update_query = """
+        mutation {
+            updateValueType(
+                valueTypeId: 99,
+                data: {description: "Структурированное JSON-значение payload"}
+            ) {
+                id
+                description
+            }
+        }
+        """
+        update_response = graphql_query(update_query, ADMIN_HEADERS)
+        assert update_response.status_code == 200
+        assert update_response.json()["data"]["updateValueType"]["description"] == "Структурированное JSON-значение payload"
+
+        delete_query = """
+        mutation {
+            deleteValueType(valueTypeId: 99)
+        }
+        """
+        delete_response = graphql_query(delete_query, ADMIN_HEADERS)
+        assert delete_response.status_code == 200
+        assert delete_response.json()["data"]["deleteValueType"] is True
 
     def test_200_multiple_queries_in_one_request(self):
         query = """

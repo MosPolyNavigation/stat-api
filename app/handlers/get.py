@@ -1,356 +1,287 @@
-from sqlalchemy import Select, func, union_all, select, case, String, literal
+from datetime import date, datetime, time, timedelta
+from typing import Optional
+
+from sqlalchemy import String, bindparam, case, cast, distinct, func, select, true
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import aliased
-from typing import Dict
-from datetime import date
-from .filter import filter_by_date, filter_by_month, filter_by_year
-from app import schemas, models
+
+from app import models, schemas
+from app.constants import (
+    EVENT_TYPE_IDS_BY_CODE,
+    PAYLOAD_TYPE_AUDITORY_ID,
+    PAYLOAD_TYPE_END_ID,
+    PAYLOAD_TYPE_START_ID,
+    PAYLOAD_TYPE_SUCCESS_ID,
+)
 
 
-async def get_endpoint_stats(db: AsyncSession, params: schemas.FilterQuery) -> list[schemas.Statistics]:
-    """
-    Функция для получения статистики по эндпоинту.
-
-    Эта функция получает статистику по эндпоинту.
-
-    Args:
-        db: Сессия базы данных;
-        params: Параметры фильтрации.
-
-    Returns:
-        Статистика по эндпоинту.
-    """
-    borders = filter_by_date(params)
-    period_expr = func.cast(func.date(params.model.visit_date), String)
-    unique_visitors_expr = case(
-        (func.date(models.UserId.creation_date) == func.date(params.model.visit_date), models.UserId.user_id)
-    )
-
-    month_borders = filter_by_month(params)
-    if month_borders is not None:
-        borders = month_borders
-        period_expr = func.substr(func.cast(func.date(params.model.visit_date), String), 1, 7)
-        unique_visitors_expr = case(
-            (
-                func.substr(func.cast(func.date(models.UserId.creation_date), String), 1, 7) == period_expr,
-                models.UserId.user_id
-            )
-        )
-
-    year_borders = filter_by_year(params)
-    if year_borders is not None:
-        borders = year_borders
-        period_expr = func.substr(func.cast(func.date(params.model.visit_date), String), 1, 4)
-        unique_visitors_expr = case(
-            (
-                func.substr(func.cast(func.date(models.UserId.creation_date), String), 1, 4) == period_expr,
-                models.UserId.user_id
-            )
-        )
-
-    query = (
-        select(
-            period_expr.label("period_str"),
-            func.count(params.model.user_id).label("all_visits"),
-            func.count(params.model.user_id.distinct()).label("visitor_count"),
-            func.count(unique_visitors_expr.distinct()).label("unique_visits")
-        ).select_from(params.model)
-        .join(models.UserId, params.model.user_id == models.UserId.user_id)
-        .group_by(period_expr)
-        .order_by(period_expr)
-    )
-    if borders is not None:
-        query = (
-            query
-            .where(params.model.visit_date >= borders[0])
-            .where(params.model.visit_date < borders[1])
-        )
-    rows = (await db.execute(query)).fetchall()
-    if params.start_month is not None and params.end_month is not None:
-        stats = [
-            schemas.Statistics(
-                period=date.fromisoformat(f"{row.period_str}-01"),
-                all_visits=row.all_visits,
-                visitor_count=row.visitor_count,
-                unique_visitors=row.unique_visits
-            )
-            for row in rows
-        ]
-        return stats
-
-    if params.start_year is not None and params.end_year is not None:
-        stats = [
-            schemas.Statistics(
-                period=date.fromisoformat(f"{row.period_str}-01-01"),
-                all_visits=row.all_visits,
-                visitor_count=row.visitor_count,
-                unique_visitors=row.unique_visits
-            )
-            for row in rows
-        ]
-        return stats
-
-    stats = [
-        schemas.Statistics(
-            period=date.fromisoformat(row.period_str),
-            all_visits=row.all_visits,
-            visitor_count=row.visitor_count,
-            unique_visitors=row.unique_visits
-        )
-        for row in rows
-    ]
-    return stats
+def _period_expression(period_type: str):
+    trigger_time = cast(models.Event.trigger_time, String)
+    if period_type == "day":
+        return func.substr(trigger_time, 1, 10)
+    if period_type == "month":
+        return func.substr(trigger_time, 1, 7)
+    if period_type == "year":
+        return func.substr(trigger_time, 1, 4)
+    raise ValueError("period_type должен быть одним из: day, month, year")
 
 
-async def get_agr_endp_stats(db: AsyncSession, params: schemas.FilterQuery) -> schemas.AggregatedStatistics:
-    """
-    Функция для получения агрегированной статистики по эндпоинту.
-
-    Эта функция агрегирует результаты за период по эндпоинту.
-
-    Args:
-        db: Сессия базы данных;
-        params: Параметры фильтрации.
-
-    Returns:
-        Агрегированная статистика по эндпоинту.
-    """
-    stats = await get_endpoint_stats(db, params)
-
-    if not stats:
-        return schemas.AggregatedStatistics(
-            total_all_visits=0,
-            total_unique_visitors=0,
-            total_visitor_count=0,
-            avg_all_visits_per_day=0.0,
-            avg_unique_visitors_per_day=0.0,
-            avg_visitor_count_per_day=0.0,
-            entries_analized=0
-        )
-
-    total_all_visits = sum(stat.all_visits for stat in stats)
-    total_unique_visitors = sum(stat.unique_visitors for stat in stats)
-    total_visitor_count = sum(stat.visitor_count for stat in stats)
-    entries_count = len(stats)
-
-    avg_all_visits = round(total_all_visits / entries_count, 1)
-    avg_unique_visitors = round(total_unique_visitors / entries_count, 1)
-    avg_visitor_count = round(total_visitor_count / entries_count, 1)
-
-    return schemas.AggregatedStatistics(
-        total_all_visits=total_all_visits,
-        total_unique_visitors=total_unique_visitors,
-        total_visitor_count=total_visitor_count,
-        avg_all_visits_per_day=avg_all_visits,
-        avg_unique_visitors_per_day=avg_unique_visitors,
-        avg_visitor_count_per_day=avg_visitor_count,
-        entries_analized=entries_count
-    )
-
-
-def get_popular_auds_query():
-    """
-        Query in basis:
-        ```sql
-            WITH sw AS (
-                SELECT start_id, end_id FROM started_ways
-            )
-            SELECT ID
-            FROM (
-                SELECT auditory_id AS ID, 1 AS weight
-                FROM selected_auditories
-                WHERE success = 1
-
-                UNION ALL
-                SELECT start_id, 3 FROM sw
-
-                UNION ALL
-                SELECT end_id, 3 FROM sw
-            ) AS tr
-            GROUP BY ID
-            ORDER BY SUM(weight) DESC;
-        ```
-    """
-    sw_cte = select(
-        models.StartWay.start_id,
-        models.StartWay.end_id
-    ).cte('sw')
-
-    # Три части UNION ALL
-    part1 = select(
-        models.SelectAuditory.auditory_id.label('ID'),
-        literal(1).label('weight')
-    ).where(models.SelectAuditory.success == 1)
-
-    part2 = select(
-        sw_cte.c.start_id.label('ID'),
-        literal(3).label('weight')
-    )
-
-    part3 = select(
-        sw_cte.c.end_id.label('ID'),
-        literal(3).label('weight')
-    )
-    return union_all(part1, part2, part3).alias('tr')
-
-
-async def get_popular_auds(db: AsyncSession):
-    union_query = get_popular_auds_query()
-    query = select(union_query.c.ID).group_by(union_query.c.ID).order_by(
-        func.sum(union_query.c.weight).desc()
-    )
-    popular = (await db.execute(query)).scalars().all()
-    return popular
-
-
-async def get_popular_auds_with_count(db: AsyncSession):
-    union_query = get_popular_auds_query()
-    query = select(
-        union_query.c.ID,
-        func.sum(union_query.c.weight)
-    ).group_by(union_query.c.ID).order_by(
-        func.sum(union_query.c.weight).desc()
-    )
-    popular = (await db.execute(query)).scalars().all()
-    return with_count
-
-
-async def get_tg_stats(db: AsyncSession, params: schemas.TgFilterQuery) -> list[schemas.Statistics]:
-    """
-    Функция для получения статистики по событиям телеграм-бота.
-
-    Args:
-        db: Сессия базы данных;
-        params: Параметры фильтрации.
-
-    Returns:
-        Статистика по событиям телеграм-бота.
-    """
-    borders = filter_by_date(params)
-    period_expr = func.cast(func.date(models.TgEvent.time), String)
-    unique_visitors_expr = case(
+def _unique_visitor_expression(period_type: str, period):
+    client_creation = cast(models.ClientId.creation_date, String)
+    if period_type == "day":
+        client_period = func.substr(client_creation, 1, 10)
+    elif period_type == "month":
+        client_period = func.substr(client_creation, 1, 7)
+    elif period_type == "year":
+        client_period = func.substr(client_creation, 1, 4)
+    else:
+        raise ValueError("period_type должен быть одним из: day, month, year")
+    return case(
         (
-            func.date(models.TgUser.creation_date) == func.date(models.TgEvent.time),
-            models.TgUser.id
-        )
+            client_period == period,
+            models.Event.client_id,
+        ),
+        else_=None,
     )
 
-    month_borders = filter_by_month(params)
-    if month_borders is not None:
-        borders = month_borders
-        period_expr = func.substr(func.cast(func.date(models.TgEvent.time), String), 1, 7)
-        unique_visitors_expr = case(
-            (
-                func.substr(func.cast(func.date(models.TgUser.creation_date), String), 1, 7) == period_expr,
-                models.TgUser.id
-            )
-        )
 
-    year_borders = filter_by_year(params)
-    if year_borders is not None:
-        borders = year_borders
-        period_expr = func.substr(func.cast(func.date(models.TgEvent.time), String), 1, 4)
-        unique_visitors_expr = case(
-            (
-                func.substr(func.cast(func.date(models.TgUser.creation_date), String), 1, 4) == period_expr,
-                models.TgUser.id
-            )
-        )
+def _format_period(period_type: str, period: str) -> str:
+    if period_type == "day":
+        return period
+    if period_type == "month":
+        return f"{period}-01"
+    if period_type == "year":
+        return f"{period}-01-01"
+    raise ValueError("period_type должен быть одним из: day, month, year")
 
-    query = (
-        select(
-            period_expr.label("period_str"),
-            func.count(models.TgEvent.id).label("all_visits"),
-            func.count(models.TgEvent.tg_user_id.distinct()).label("visitor_count"),
-            func.count(unique_visitors_expr.distinct()).label("unique_visits")
-        )
-        .select_from(models.TgEvent)
-        .join(models.TgUser, models.TgEvent.tg_user_id == models.TgUser.id)
-        .group_by(period_expr)
-        .order_by(period_expr)
+
+async def get_popular_audiences(
+    db: AsyncSession,
+    limit: int = 100,
+) -> list[schemas.PopularAudience]:
+    success_event_ids = (
+        select(models.Payload.event_id)
+        .where(models.Payload.type_id == PAYLOAD_TYPE_SUCCESS_ID)
+        .where(func.lower(models.Payload.value) == "true")
     )
-
-    if params.event_type_id is not None:
-        query = query.where(models.TgEvent.event_type_id == params.event_type_id)
-    if params.is_dod is not None:
-        query = query.where(models.TgEvent.is_dod.is_(params.is_dod))
-    if borders is not None:
-        query = (
-            query
-            .where(models.TgEvent.time >= borders[0])
-            .where(models.TgEvent.time < borders[1])
+    weight = case(
+        (models.Payload.type_id == PAYLOAD_TYPE_AUDITORY_ID, 1),
+        (models.Payload.type_id.in_([PAYLOAD_TYPE_START_ID, PAYLOAD_TYPE_END_ID]), 3),
+        else_=0,
+    )
+    rows = (
+        await db.execute(
+            select(
+                models.Payload.value.label("auditory_id"),
+                func.sum(weight).label("total_weight"),
+            )
+            .where(
+                models.Payload.type_id.in_(
+                    [
+                        PAYLOAD_TYPE_AUDITORY_ID,
+                        PAYLOAD_TYPE_START_ID,
+                        PAYLOAD_TYPE_END_ID,
+                    ]
+                )
+            )
+            .where(models.Payload.event_id.in_(success_event_ids))
+            .group_by(models.Payload.value)
+            .order_by(func.sum(weight).desc())
+            .limit(limit)
         )
-
-    rows = (await db.execute(query)).fetchall()
-    if params.start_month is not None and params.end_month is not None:
-        return [
-            schemas.Statistics(
-                period=date.fromisoformat(f"{row.period_str}-01"),
-                all_visits=row.all_visits,
-                visitor_count=row.visitor_count,
-                unique_visitors=row.unique_visits
-            )
-            for row in rows
-        ]
-
-    if params.start_year is not None and params.end_year is not None:
-        return [
-            schemas.Statistics(
-                period=date.fromisoformat(f"{row.period_str}-01-01"),
-                all_visits=row.all_visits,
-                visitor_count=row.visitor_count,
-                unique_visitors=row.unique_visits
-            )
-            for row in rows
-        ]
+    ).all()
 
     return [
-        schemas.Statistics(
-            period=date.fromisoformat(row.period_str),
-            all_visits=row.all_visits,
-            visitor_count=row.visitor_count,
-            unique_visitors=row.unique_visits
+        schemas.PopularAudience(
+            auditory_id=str(row.auditory_id),
+            total_weight=int(row.total_weight or 0),
         )
         for row in rows
     ]
 
 
-async def get_agr_tg_stats(db: AsyncSession, params: schemas.TgFilterQuery) -> schemas.AggregatedStatistics:
-    """
-    Функция для получения агрегированной статистики по событиям телеграм-бота.
+async def get_period_stats(
+    db: AsyncSession,
+    period_type: str,
+    start: datetime,
+    end: datetime,
+    event_type_id: Optional[int] = None,
+) -> list[schemas.Statistics]:
+    period = _period_expression(period_type).label("period")
+    event_type_id_param = bindparam("event_type_id", value=event_type_id)
+    unique_visitor = _unique_visitor_expression(period_type, period)
 
-    Args:
-        db: Сессия базы данных;
-        params: Параметры фильтрации.
-
-    Returns:
-        Агрегированная статистика по событиям телеграм-бота.
-    """
-    stats = await get_tg_stats(db, params)
-
-    if not stats:
-        return schemas.AggregatedStatistics(
-            total_all_visits=0,
-            total_unique_visitors=0,
-            total_visitor_count=0,
-            avg_all_visits_per_day=0.0,
-            avg_unique_visitors_per_day=0.0,
-            avg_visitor_count_per_day=0.0,
-            entries_analized=0
+    statement = (
+        select(
+            period,
+            func.count().label("all_visits"),
+            func.count(distinct(models.Event.client_id)).label("visitor_count"),
+            func.count(distinct(unique_visitor)).label("unique_visitors"),
         )
+        .join(models.ClientId, models.ClientId.id == models.Event.client_id)
+        .where(models.Event.trigger_time >= start)
+        .where(models.Event.trigger_time < end)
+        .where(
+            (event_type_id_param.is_(None))
+            | (models.Event.event_type_id == event_type_id_param)
+        )
+    )
+    statement = statement.group_by(period).order_by(period)
 
-    total_all_visits = sum(stat.all_visits for stat in stats)
-    total_unique_visitors = sum(stat.unique_visitors for stat in stats)
-    total_visitor_count = sum(stat.visitor_count for stat in stats)
-    entries_count = len(stats)
+    rows = (await db.execute(statement)).all()
+    return [
+        schemas.Statistics(
+            period=_format_period(period_type, str(row.period)),
+            all_visits=int(row.all_visits or 0),
+            visitor_count=int(row.visitor_count or 0),
+            unique_visitors=int(row.unique_visitors or 0),
+        )
+        for row in rows
+    ]
+
+
+async def get_aggregated_stats(
+    db: AsyncSession,
+    period_type: str,
+    start: datetime,
+    end: datetime,
+    event_type_id: Optional[int] = None,
+) -> schemas.AggregatedStatistics:
+    period = _period_expression(period_type).label("period")
+    event_type_id_param = bindparam("event_type_id", value=event_type_id)
+
+    base_filters = (
+        models.Event.trigger_time >= start,
+        models.Event.trigger_time < end,
+        (event_type_id_param.is_(None))
+        | (models.Event.event_type_id == event_type_id_param),
+    )
+    unique_visitor = _unique_visitor_expression(period_type, period)
+
+    period_stats = (
+        select(
+            period,
+            func.count().label("all_visits"),
+            func.count(distinct(models.Event.client_id)).label("visitor_count"),
+            func.count(distinct(unique_visitor)).label("unique_visitors"),
+        )
+        .join(models.ClientId, models.ClientId.id == models.Event.client_id)
+        .where(*base_filters)
+        .group_by(period)
+        .cte("period_stats")
+    )
+    global_stats = (
+        select(
+            func.count(distinct(models.Event.client_id)).label("total_visitor_count"),
+            func.count(distinct(unique_visitor)).label("total_unique_visitors"),
+        )
+        .join(models.ClientId, models.ClientId.id == models.Event.client_id)
+        .where(*base_filters)
+        .cte("global_stats")
+    )
+    period_agg = (
+        select(
+            func.sum(period_stats.c.all_visits).label("total_all_visits"),
+            func.round(
+                func.avg(period_stats.c.all_visits),
+                1,
+            ).label("avg_all_visits_per_period"),
+            func.round(
+                func.avg(period_stats.c.visitor_count),
+                1,
+            ).label("avg_visitor_count_per_period"),
+            func.round(
+                func.avg(period_stats.c.unique_visitors),
+                1,
+            ).label("avg_unique_visitors_per_period"),
+            func.count().label("entries_analyzed"),
+        )
+        .select_from(period_stats)
+        .cte("period_agg")
+    )
+    row = (
+        await db.execute(
+            select(
+                period_agg.c.total_all_visits,
+                period_agg.c.avg_all_visits_per_period,
+                period_agg.c.avg_visitor_count_per_period,
+                period_agg.c.avg_unique_visitors_per_period,
+                period_agg.c.entries_analyzed,
+                global_stats.c.total_visitor_count,
+                global_stats.c.total_unique_visitors,
+            ).select_from(period_agg.join(global_stats, true()))
+        )
+    ).one()
 
     return schemas.AggregatedStatistics(
-        total_all_visits=total_all_visits,
-        total_unique_visitors=total_unique_visitors,
-        total_visitor_count=total_visitor_count,
-        avg_all_visits_per_day=round(total_all_visits / entries_count, 1),
-        avg_unique_visitors_per_day=round(total_unique_visitors / entries_count, 1),
-        avg_visitor_count_per_day=round(total_visitor_count / entries_count, 1),
-        entries_analized=entries_count
+        total_all_visits=int(row.total_all_visits or 0),
+        total_visitor_count=int(row.total_visitor_count or 0),
+        total_unique_visitors=int(row.total_unique_visitors or 0),
+        avg_all_visits_per_day=float(row.avg_all_visits_per_period or 0),
+        avg_visitor_count_per_day=float(row.avg_visitor_count_per_period or 0),
+        avg_unique_visitors_per_day=float(row.avg_unique_visitors_per_period or 0),
+        entries_analized=int(row.entries_analyzed or 0),
     )
 
+
+def _stats_window_from_filter(
+    params: schemas.FilterQuery,
+) -> tuple[str, datetime, datetime]:
+    active_filters = [
+        params.start_date is not None or params.end_date is not None,
+        params.start_month is not None or params.end_month is not None,
+        params.start_year is not None or params.end_year is not None,
+    ]
+    if sum(active_filters) > 1:
+        raise ValueError("Можно передать только один фильтр периода")
+
+    if params.start_date is not None and params.end_date is not None:
+        return (
+            "day",
+            datetime.combine(params.start_date, time.min),
+            datetime.combine(params.end_date + timedelta(days=1), time.min),
+        )
+    if params.start_month is not None and params.end_month is not None:
+        start = datetime.strptime(params.start_month, "%Y-%m")
+        end_month = datetime.strptime(params.end_month, "%Y-%m")
+        end = datetime(end_month.year + (end_month.month == 12), end_month.month % 12 + 1, 1)
+        return "month", start, end
+    if params.start_year is not None and params.end_year is not None:
+        start = datetime.strptime(params.start_year, "%Y")
+        end = datetime(int(params.end_year) + 1, 1, 1)
+        return "year", start, end
+    if any(active_filters):
+        raise ValueError("Фильтр периода должен содержать начало и конец")
+    today = date.today()
+    return (
+        "day",
+        datetime.combine(today, time.min),
+        datetime.combine(today + timedelta(days=1), time.min),
+    )
+
+
+async def get_endpoint_stats(
+    db: AsyncSession,
+    params: schemas.FilterQuery,
+) -> list[schemas.Statistics]:
+    period_type, start, end = _stats_window_from_filter(params)
+    return await get_period_stats(
+        db,
+        period_type=period_type,
+        start=start,
+        end=end,
+        event_type_id=EVENT_TYPE_IDS_BY_CODE[params.target.value],
+    )
+
+
+async def get_agr_endp_stats(
+    db: AsyncSession,
+    params: schemas.FilterQuery,
+) -> schemas.AggregatedStatistics:
+    period_type, start, end = _stats_window_from_filter(params)
+    return await get_aggregated_stats(
+        db,
+        period_type=period_type,
+        start=start,
+        end=end,
+        event_type_id=EVENT_TYPE_IDS_BY_CODE[params.target.value],
+    )

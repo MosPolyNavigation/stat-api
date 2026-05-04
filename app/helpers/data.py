@@ -11,6 +11,7 @@ goals: dict[int, str] = {
     10: "admin",
     11: "reviews",
     12: "refresh_token",
+    13: "client",
 }
 
 rights: dict[int, str] = {
@@ -26,6 +27,9 @@ roles: dict[int, str] = {
 
 roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 1, 1),
+    (1, 2, 1),
+    (1, 3, 1),
+    (1, 4, 1),
     (1, 1, 2),
     (1, 1, 3),
     (1, 2, 3),
@@ -55,4 +59,5 @@ roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 1, 12),
     (1, 3, 12),
     (1, 4, 12),
+    (1, 2, 13),
 ]

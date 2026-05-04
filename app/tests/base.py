@@ -18,6 +18,22 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app import models
+from app.constants import (
+    EVENT_TYPE_AUDS_ID,
+    EVENT_TYPE_PLANS_ID,
+    EVENT_TYPE_SITE_ID,
+    EVENT_TYPE_WAYS_ID,
+    PAYLOAD_TYPE_AUDITORY_ID,
+    PAYLOAD_TYPE_ENDPOINT_ID,
+    PAYLOAD_TYPE_END_ID,
+    PAYLOAD_TYPE_PLAN_ID,
+    PAYLOAD_TYPE_START_ID,
+    PAYLOAD_TYPE_SUCCESS_ID,
+)
+from datetime import datetime
+from pwdlib import PasswordHash
+from fastapi.testclient import TestClient
+from fastapi_pagination import add_pagination
 from app.config import load_settings
 from app.constants import REVIEW_STATUSES
 from app.factory import AppFactory
@@ -60,24 +76,116 @@ async def create_db_and_tables():
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with test_session_maker.begin() as db:
-        user: models.UserId = models.UserId(
-            user_id="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec"
+        client: models.ClientId = models.ClientId(
+            id=1,
+            ident="11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+            creation_date=datetime(2026, 4, 25, 9, 0, 0),
         )
-        db.add(user)
+        second_client: models.ClientId = models.ClientId(
+            id=2,
+            ident="22e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+            creation_date=datetime(2026, 4, 26, 9, 0, 0),
+        )
+        db.add_all([client, second_client])
+        db.add_all(
+            [
+                models.EventType(id=EVENT_TYPE_SITE_ID, code_name="site", description="Посещения сайта"),
+                models.EventType(id=EVENT_TYPE_AUDS_ID, code_name="auds", description="Поиск аудиторий"),
+                models.EventType(id=EVENT_TYPE_WAYS_ID, code_name="ways", description="Построение маршрутов"),
+                models.EventType(id=EVENT_TYPE_PLANS_ID, code_name="plans", description="Смена планов"),
+            ]
+        )
+        db.add_all(
+            [
+                models.ValueType(id=1, name="string", description="Строковое значение"),
+                models.ValueType(id=2, name="bool", description="Булево значение"),
+            ]
+        )
+        db.add_all(
+            [
+                models.PayloadType(id=PAYLOAD_TYPE_ENDPOINT_ID, code_name="endpoint", value_type_id=1),
+                models.PayloadType(id=PAYLOAD_TYPE_AUDITORY_ID, code_name="auditory_id", value_type_id=1),
+                models.PayloadType(id=PAYLOAD_TYPE_START_ID, code_name="start_id", value_type_id=1),
+                models.PayloadType(id=PAYLOAD_TYPE_END_ID, code_name="end_id", value_type_id=1),
+                models.PayloadType(id=PAYLOAD_TYPE_SUCCESS_ID, code_name="success", value_type_id=2),
+                models.PayloadType(id=PAYLOAD_TYPE_PLAN_ID, code_name="plan_id", value_type_id=1),
+            ]
+        )
+        db.add_all(
+            [
+                models.AllowedPayload(event_type_id=EVENT_TYPE_SITE_ID, payload_type_id=PAYLOAD_TYPE_ENDPOINT_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_AUDS_ID, payload_type_id=PAYLOAD_TYPE_AUDITORY_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_AUDS_ID, payload_type_id=PAYLOAD_TYPE_SUCCESS_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_WAYS_ID, payload_type_id=PAYLOAD_TYPE_START_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_WAYS_ID, payload_type_id=PAYLOAD_TYPE_END_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_WAYS_ID, payload_type_id=PAYLOAD_TYPE_SUCCESS_ID),
+                models.AllowedPayload(event_type_id=EVENT_TYPE_PLANS_ID, payload_type_id=PAYLOAD_TYPE_PLAN_ID),
+            ]
+        )
+        db.add_all(
+            [
+                models.Event(
+                    id=1,
+                    client_id=1,
+                    event_type_id=EVENT_TYPE_AUDS_ID,
+                    trigger_time=datetime(2026, 4, 25, 10, 0, 0),
+                ),
+                models.Event(
+                    id=2,
+                    client_id=1,
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                    trigger_time=datetime(2026, 4, 25, 11, 0, 0),
+                ),
+                models.Event(
+                    id=3,
+                    client_id=2,
+                    event_type_id=EVENT_TYPE_WAYS_ID,
+                    trigger_time=datetime(2026, 4, 26, 11, 0, 0),
+                ),
+                models.Event(
+                    id=4,
+                    client_id=2,
+                    event_type_id=EVENT_TYPE_SITE_ID,
+                    trigger_time=datetime(2026, 4, 26, 12, 0, 0),
+                ),
+            ]
+        )
+        db.add_all(
+            [
+                models.Payload(id=1, event_id=1, type_id=PAYLOAD_TYPE_AUDITORY_ID, value="a-100"),
+                models.Payload(id=2, event_id=1, type_id=PAYLOAD_TYPE_SUCCESS_ID, value="true"),
+                models.Payload(id=3, event_id=2, type_id=PAYLOAD_TYPE_START_ID, value="a-100"),
+                models.Payload(id=4, event_id=2, type_id=PAYLOAD_TYPE_END_ID, value="a-101"),
+                models.Payload(id=5, event_id=2, type_id=PAYLOAD_TYPE_SUCCESS_ID, value="true"),
+                models.Payload(id=6, event_id=3, type_id=PAYLOAD_TYPE_START_ID, value="a-101"),
+                models.Payload(id=7, event_id=3, type_id=PAYLOAD_TYPE_END_ID, value="a-102"),
+                models.Payload(id=8, event_id=3, type_id=PAYLOAD_TYPE_SUCCESS_ID, value="false"),
+                models.Payload(id=9, event_id=4, type_id=PAYLOAD_TYPE_ENDPOINT_ID, value="/api/get/route"),
+            ]
+        )
         review_statuses: list[models.ReviewStatus] = list([
             models.ReviewStatus(id=id_, name=name) for id_, name in REVIEW_STATUSES.items()
         ])
         db.add_all(review_statuses)
-        data_site_stat = models.SiteStat(user=user)
-        db.add(data_site_stat)
-        data_start_way = models.StartWay(
-            user=user, start_id="a-100", end_id="a-101"
+        db.add_all(
+            [
+                models.Problem(id="way"),
+                models.Problem(id="other"),
+                models.Problem(id="plan"),
+                models.Problem(id="work"),
+            ]
         )
-        db.add(data_start_way)
-        data_select_aud = models.SelectAuditory(user=user, auditory_id="a-100")
-        db.add(data_select_aud)
-        data_change_plan = models.ChangePlan(user=user, plan_id="A-0")
-        db.add(data_change_plan)
+        db.add(
+            models.Review(
+                id=1,
+                client_id=1,
+                problem_id="way",
+                text="test review",
+                review_status_id=1,
+                creation_date=datetime(2026, 4, 25, 12, 0, 0),
+            )
+        )
+
         data_goals: list[models.Goal] = list([models.Goal(id=i, name=name) for i, name in goals.items()])
         data_roles: list[models.Role] = list([models.Role(id=i, name=name) for i, name in roles.items()])
         data_rights: list[models.Right] = list([models.Right(id=i, name=name) for i, name in rights.items()])
