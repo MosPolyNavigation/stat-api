@@ -5,7 +5,8 @@ from pydantic import BaseModel
 from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import text
-from app.database import AsyncSessionLocal
+from app.config import load_settings
+from app.database import get_session_maker, init_database
 from app.models.nav.location import Location as LocationModel
 from app.models.nav.corpus import Corpus as CorpusModel
 from app.models.nav.plan import Plan as PlanModel
@@ -274,7 +275,9 @@ async def main():
     plans = load_plans_from_csv()
     auds = load_auditories_from_csv()
     types_ = get_types(auds)
-    async with AsyncSessionLocal() as db:
+    init_database(load_settings())
+    session_maker = get_session_maker()
+    async with session_maker() as db:
         await clear_tables(db)
         loc_ids: StrIntId = await fill_locations(db, locations)
         cor_ids: StrIntId = await fill_corpuses(db, corpuses, loc_ids)

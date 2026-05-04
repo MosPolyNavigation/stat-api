@@ -1,12 +1,13 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.params import Depends
 from starlette.responses import Response
+
 from app.handlers.filter import filter_svobodn
 from app.helpers.svobodn import auditory_is_empty
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnForAud
 from app.schemas.rasp.schedule import ScheduleOut
-import app.globals as globals_
+from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
@@ -16,13 +17,15 @@ def register_endpoint(router: APIRouter):
         tags=["free-aud"]
     )
     async def by_aud(
+        request: Request,
         response: Response,
         filter_: FilterSvobodnForAud = Depends()
     ):
-        if globals_.locker:
+        state: AppState = request.app.state.app_state
+        if state._rasp_lock.locked():
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
-        schedule = {filter_.aud_id: globals_.global_rasp[filter_.aud_id]}
+        schedule = {filter_.aud_id: state.global_rasp[filter_.aud_id]}
         schedule = filter_svobodn(schedule, filter_)
         auditories = [filter_.aud_id,]
 

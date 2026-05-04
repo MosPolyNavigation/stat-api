@@ -1,8 +1,6 @@
 """Тесты для эндпоинта GET /api/get/schedule"""
 
-import pytest
-from .base import client
-import app.globals as globals_
+from .base import app, client
 
 
 class TestGetSchedule:
@@ -66,12 +64,11 @@ class TestGetSchedule:
 
     def test_425_schedule_not_loaded(self):
         """Тест для проверки статуса 425 когда расписание не загружено (global_rasp=None)"""
-        # Сохраняем текущее состояние
-        original_rasp = globals_.global_rasp
+        state = app.state.app_state
+        original_rasp = state.global_rasp
 
         try:
-            # Устанавливаем global_rasp=None для имитации отсутствия расписания
-            globals_.global_rasp = None
+            state.global_rasp = None
 
             response = client.get("/api/get/schedule")
             assert response.status_code == 425
@@ -79,8 +76,7 @@ class TestGetSchedule:
             assert "status" in data
             assert "not loaded" in data["status"].lower()
         finally:
-            # Восстанавливаем состояние
-            globals_.global_rasp = original_rasp
+            state.global_rasp = original_rasp
 
     def test_200_schedule_with_multiple_lessons(self):
         """Проверка расписания с несколькими занятиями в разные дни"""

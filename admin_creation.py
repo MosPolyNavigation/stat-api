@@ -2,7 +2,8 @@ import argparse
 import asyncio
 from pwdlib import PasswordHash
 from sqlalchemy import Select
-from app.database import AsyncSessionLocal
+from app.config import load_settings
+from app.database import get_session_maker, init_database
 from app.models.auth.user import User
 from app.models.auth.user_role import UserRole
 
@@ -18,7 +19,9 @@ async def main():
     login = args.login
     password = args.password
 
-    async with AsyncSessionLocal() as db:
+    init_database(load_settings())
+    session_maker = get_session_maker()
+    async with session_maker() as db:
         try:
             # Проверка, существует ли уже пользователь с таким логином
             existing_user = (await db.execute(Select(User).filter(User.login == login))).scalar_one_or_none()

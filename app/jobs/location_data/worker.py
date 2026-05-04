@@ -1,31 +1,27 @@
 import json
 import logging
 from typing import Any, Dict, List
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.database import AsyncSessionLocal
+from app.database import get_session_maker
+from app.jobs.manager import scheduled_task
+from app.jobs.schedule.get_graph import parse_corpus, parse_location, parse_plan
 from app.models.nav.auditory import Auditory
 from app.models.nav.corpus import Corpus
-
 from app.models.nav.location import Location
 from app.models.nav.plan import Plan
-
-from app.schemas import DataDto
+from app.schemas import DataDto, Graph
 from app.schemas.graph.graph import DataEntry
-from app.schemas import Graph
-
-
-from app.jobs.schedule.get_graph import parse_location, parse_corpus, parse_plan
-import app.globals as globals_
-from app.jobs.manager import scheduled_task
+from app.state import AppState
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
 def safe_json_loads(raw: str | None, default):
-    """ Парсинг JSON-строки из БД. При ошибке  возвращается default """
+    """Парсинг JSON-строки из БД. При ошибке возвращается default."""
     if not raw:
         return default
     try:
@@ -35,11 +31,10 @@ def safe_json_loads(raw: str | None, default):
 
 
 async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
-    """Сбор структуры locationData """
+    """Сбор структуры locationData."""
     locs = (await db.execute(select(Location).where(Location.ready.is_(True)))).scalars().all()
 
     locations_json: List[Dict[str, Any]] = []
-    # Локации
     for loc in locs:
         locations_json.append(
             {
@@ -52,7 +47,6 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
             }
         )
 
-    # Корпуса
     corpuses = (
         await db.execute(
             select(Corpus)
@@ -73,7 +67,6 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
             }
         )
 
-    # планы
     plans = (
         await db.execute(
             select(Plan)
@@ -106,7 +99,6 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
             }
         )
 
-    # Комнаты (auditories)
     rooms = (
         await db.execute(
             select(Auditory)
@@ -138,46 +130,37 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
 
 
 def build_data_entry(dto: DataDto) -> DataEntry:
-    """Преобразование DataDto в DataEntry (структура, из которой строится граф)"""
+    """Преобразование DataDto в DataEntry (структура, из которой строится граф)."""
     locations = list(map(parse_location, dto.locations))
     corpuses = [parse_corpus(x, locations) for x in dto.corpuses]
     plans = [parse_plan(x, corpuses) for x in dto.plans]
     return DataEntry(Locations=locations, Corpuses=corpuses, Plans=plans)
 
-# Воркер
-@scheduled_task(name="fetch_location_data")
-async def fetch_location_data():
-    """ Воркер. собирает json и обновляет графы в памяти """
 
-    # Защита от параллельного запуска
-    if globals_.location_data_locker:
+@scheduled_task(name="fetch_location_data")
+async def fetch_location_data(state: AppState):
+    """Воркер: собирает locationData JSON и пересобирает графы навигации в state."""
+    if state._location_lock.locked():
         return
 
-    globals_.location_data_locker = True
-    try:
-        logger.info("Starting locationData fetching")
+    async with state._location_lock:
+        try:
+            logger.info("Starting locationData fetching")
 
-        # Собраем JSON из БД
-        async with AsyncSessionLocal() as db:
-            raw_json = await build_location_data_json(db)
-        # Привеодим к нужной схеме
-        dto = DataDto(**raw_json)
+            session_maker = get_session_maker()
+            async with session_maker() as db:
+                raw_json = await build_location_data_json(db)
 
-        # Сначала сохраняем JSOn в память
-        globals_.location_data_json = dto.model_dump(mode="json", exclude_none=True)
+            dto = DataDto(**raw_json)
+            state.location_data_json = dto.model_dump(mode="json", exclude_none=True)
 
-        # Строим графы
-        data_entry = build_data_entry(dto)
-        new_graphs: Dict[str, Graph] = {}
-        for loc_id in map(lambda loc: loc.id, data_entry.Locations):
-            location = next((x for x in data_entry.Locations if x.id == loc_id))
-            new_graphs[loc_id] = Graph(location, data_entry.Plans, data_entry.Corpuses)
+            data_entry = build_data_entry(dto)
+            new_graphs: Dict[str, Graph] = {}
+            for loc_id in map(lambda loc: loc.id, data_entry.Locations):
+                location = next((x for x in data_entry.Locations if x.id == loc_id))
+                new_graphs[loc_id] = Graph(location, data_entry.Plans, data_entry.Corpuses)
+            state.global_graph = new_graphs
 
-        #Сохраняем граф
-        globals_.global_graph = new_graphs
-
-        logger.info("locationData fetching finished successful")
-    except Exception:
-        logger.exception("locationData fetching failed with error")
-    finally:
-        globals_.location_data_locker = False
+            logger.info("locationData fetching finished successful")
+        except Exception:
+            logger.exception("locationData fetching failed with error")
