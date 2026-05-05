@@ -7,7 +7,7 @@ from app.models import User
 from app.schemas import Status
 from app.services.permission_service import PermissionService
 from app.services.refresh_token_service import RefreshTokenService
-
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
 
 
@@ -28,6 +28,7 @@ def register_endpoint(router: APIRouter):
         jti: str = Body(..., embed=True),
         current_user: Annotated[User, Depends(get_current_active_user)] = None,
         db: AsyncSession = Depends(get_db),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         """
             Отзывает refresh-токен по его jti.
@@ -57,6 +58,7 @@ def register_endpoint(router: APIRouter):
                 "edit",
             )
             if not has_permission:
+                logger.log(current_user, "Попытка отзыва без прав")
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Недостаточно прав для отзыва токена другого пользователя",
@@ -64,6 +66,7 @@ def register_endpoint(router: APIRouter):
 
         await refresh_token_service.revoke_token(refresh_token)
         await db.commit()
+        logger.log(current_user, f"Отзыв refresh-токена (себя/пользователя {refresh_token.user_id})")
         return Status()
 
 

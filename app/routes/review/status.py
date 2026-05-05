@@ -7,7 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models.review import Review
 from app.models.review_status import ReviewStatus
-from app.helpers.permissions import require_rights
+from app.helpers.permissions import require_rights_with_logging
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
+from app.helpers.auth_utils import get_current_active_user
+from app.models import User
 
 
 def register_endpoint(router: APIRouter):
@@ -18,13 +21,23 @@ def register_endpoint(router: APIRouter):
         description="Назначение статуса отзыву по ID статуса",
         tags=["review"],
         status_code=status.HTTP_200_OK,
-        dependencies=[Depends(require_rights("reviews", "edit"))],
     )
     async def set_review_status(
         review_id: int,
         status_id: int = Form(...),
         db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
+        await require_rights_with_logging(
+            db,
+            current_user,
+            logger,
+            "reviews",
+            "Попытка смены статуса без прав",
+            "edit",
+        )
+
         review: Union[Review, None] = (
             await db.execute(
                 Select(Review).filter(Review.id == review_id)
@@ -53,7 +66,8 @@ def register_endpoint(router: APIRouter):
         status_name = status_obj.name
         await db.commit()
         await db.refresh(review)
-            
+
+        logger.log(current_user, f"Смена статуса {review_id} на {status_name}")
         return {
             "message": "Статус отзыва обновлён",
             "review_id": review.id,

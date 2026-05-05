@@ -7,7 +7,10 @@ from app.schemas import Status
 from app.schemas.ban import BanListOut, BanInfoOut, UnbanRequest
 from app.guards.review_governor import review_rate_limiter
 from app.state import AppState
-from app.helpers.permissions import require_rights
+from app.helpers.permissions import require_rights_with_logging
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
+from app.models import User
+from app.helpers.auth_utils import get_current_active_user
 
 
 def register_endpoint(router: APIRouter):
@@ -16,7 +19,6 @@ def register_endpoint(router: APIRouter):
         description="Получение списка забаненных пользователей для отзывов",
         response_model=BanListOut,
         tags=["admin"],
-        dependencies=[Depends(require_rights('admin', "view"))],
         responses={
             200: {"model": BanListOut, "description": "Список забаненных пользователей"},
             401: {"description": "Требуется аутентификация"},
@@ -27,17 +29,30 @@ def register_endpoint(router: APIRouter):
         request: Request,
         page: int = Query(1, ge=1, description="Номер страницы"),
         size: int = Query(100, ge=1, le=500, description="Размер страницы"),
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Возвращает пагинированный список пользователей, забаненных
         за нарушения при отправке отзывов.
         """
+        await require_rights_with_logging(
+            db,
+            current_user,
+            logger,
+            "admin",
+            "Попытка просмотра без прав",
+            "view",
+        )
+
         offset = (page - 1) * size
         result = review_rate_limiter.get_banned_users(
             state=request.app.state.app_state,
             limit=size,
             offset=offset,
         )
+        logger.log(current_user, "Запрос списка забаненных клиентов")
         return result
     
     @router.get(
@@ -55,24 +70,38 @@ def register_endpoint(router: APIRouter):
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
         },
-        dependencies=[Depends(require_rights('admin', "view"))],
     )
     async def get_user_ban_info(
         user_id: str,
         request: Request,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Возвращает детальную информацию о бане пользователя.
         """
+        await require_rights_with_logging(
+            db,
+            current_user,
+            logger,
+            "admin",
+            "Попытка доступа к несуществующей записи/без прав",
+            "view",
+        )
+
         info = review_rate_limiter.get_user_ban_info(
             state=request.app.state.app_state,
             user_id=user_id,
         )
         if info is None:
+            logger.log(current_user, "Попытка доступа к несуществующей записи/без прав")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not banned or not found",
             )
+
+        logger.log(current_user, f"Запрос информации по забаненному клиенту {user_id}")
         return info
     
     @router.post(
@@ -92,16 +121,27 @@ def register_endpoint(router: APIRouter):
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
         },
-        dependencies=[Depends(require_rights('admin', "edit"))],
     )
     async def unban_user(
         rq: Request,
         user_id: str,
         request: UnbanRequest = None,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_active_user),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Снимает перманентный бан с пользователя.
         """
+        await require_rights_with_logging(
+            db,
+            current_user,
+            logger,
+            "admin",
+            "Попытка снятия бана без прав",
+            "edit",
+        )
+
         success = review_rate_limiter.unban_user(
             state=rq.app.state.app_state,
             user_id=user_id,
@@ -111,9 +151,11 @@ def register_endpoint(router: APIRouter):
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found or not banned",
             )
-        
+
         # Опционально: логирование для аудита
         reason = request.reason if request and request.reason else "No reason provided"
         # logger.info(f"Admin unbanned user {user_id}: {reason}")
-        
+
+        logger.log(current_user, f"Снятие бана с пользователя {user_id}")
+
         return Status(status="User unbanned successfully")

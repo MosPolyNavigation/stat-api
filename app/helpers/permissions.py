@@ -8,6 +8,7 @@ from app.models import User, Goal
 from app.helpers.auth_utils import get_current_active_user
 from app.services.permission_service import PermissionService
 from app.constants import RIGHTS_BY_ID, GOALS_BY_ID
+from app.services.user_logger_service import UserLoggerService
 
 
 def group_rights_by_goals(rights_goals: set[tuple[int, int]]) -> dict[str, list[str]]:
@@ -52,3 +53,35 @@ def require_rights(goal_name: str, *rights: str):
         return True
 
     return check_rights
+
+
+async def require_rights_with_logging(
+    db: AsyncSession,
+    current_user: User,
+    logger: UserLoggerService,
+    goal_name: str,
+    error_text: str,
+    *rights: str,
+):
+    """
+    Проверяет наличие требуемого права у пользователя и, если право отсутствует,
+    записывает указанное сообщение в лог через UserLoggerService, после чего
+    выбрасывает HTTPException со статусом 403
+    """
+    service: PermissionService = PermissionService(db)
+    rights_goals = await service.get_user_permissions(current_user.id)
+    user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
+
+    missing_rights = [right for right in rights if right not in user_rights]
+    if missing_rights:
+        logger.log(current_user, error_text)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=(
+                f"Пользователь не имеет права(а) "
+                f"{', '.join(missing_rights)} для цели '{goal_name}'"
+            ),
+        )
+
+    return True
+
