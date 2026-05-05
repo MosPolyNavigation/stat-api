@@ -24,11 +24,14 @@ from app.models.dod.location import DodLocation
 from app.models.dod.plan import DodPlan
 from app.models.dod.static import DodStatic
 from app.models.dod.types import DodType
-from app.models.stat.change_plan import ChangePlan
-from app.models.stat.select_auditory import SelectAuditory
-from app.models.stat.site_stat import SiteStat
-from app.models.stat.start_way import StartWay
-from app.models.stat.tg_bot import TgEvent, TgEventType, TgUser
-from app.models.stat.user_id import UserId
+from app.models.event import (
+    AllowedPayload,
+    ClientId,
+    Event,
+    EventType,
+    Payload,
+    PayloadType,
+    ValueType,
+)
 from app.models.auth.refresh_token import RefreshToken
 

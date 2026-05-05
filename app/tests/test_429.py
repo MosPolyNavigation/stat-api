@@ -1,20 +1,20 @@
-from .base import client
 from time import sleep
 
+from app.constants import EVENT_TYPE_AUDS_ID, PAYLOAD_TYPE_AUDITORY_ID
 
-def test_429_stat_aud():
+from .base import client
+
+
+def test_429_stat_event():
+    body = {
+        "ident": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+        "event_type_id": EVENT_TYPE_AUDS_ID,
+        "payloads": {PAYLOAD_TYPE_AUDITORY_ID: "a-100"},
+    }
     sleep(1)
-    _ = client.put("/api/stat/select-aud", json={
-        "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-        "auditory_id": "a-100",
-        "success": True
-    })
-    response = client.put("/api/stat/select-aud", json={
-        "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-        "auditory_id": "a-100",
-        "success": True
-    })
+    _ = client.post("/api/stat/event", json=body)
+    response = client.post("/api/stat/event", json=body)
     assert response.status_code == 429
     assert response.json() == {
-        "detail": "Too many requests for this user within one second"
+        "detail": "Too many requests for this event type within one second"
     }

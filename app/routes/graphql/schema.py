@@ -1,7 +1,13 @@
 import strawberry
 from strawberry.extensions import QueryDepthLimiter
-from .mutation import Mutation
+from .event_mutation import EventDictionaryMutation
+from .mutation import Mutation as BaseMutation
 from .query import Query
+
+
+@strawberry.type
+class Mutation(EventDictionaryMutation, BaseMutation):
+    pass
 
 schema = strawberry.Schema(
     query=Query,

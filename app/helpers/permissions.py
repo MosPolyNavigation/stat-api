@@ -35,13 +35,13 @@ def require_rights(goal_name: str, *rights: str):
         # Находим цель по имени
         service: PermissionService = PermissionService(db)
         rights_goals = await service.get_user_permissions(current_user.id)
-        user_rights = group_rights_by_goals(rights_goals)[goal_name]
+        user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
 
         # Проверяем наличие всех нужных прав
         missing_rights = [r for r in rights if r not in user_rights]
         if missing_rights:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
                     f"Пользователь не имеет права(а) "
                     f"{', '.join(missing_rights)} для цели '{goal_name}'"

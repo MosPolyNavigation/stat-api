@@ -1,7 +1,7 @@
 """add refresh_token goal and admin permissions
 
 Revision ID: b5a10313c59b
-Revises: 82ace2d0f349
+Revises: db677cf8a2ba
 Create Date: 2026-04-15 21:24:15.812276
 
 """

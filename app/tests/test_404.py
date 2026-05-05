@@ -1,110 +1,54 @@
 import pytest
+
+from app.constants import (
+    EVENT_TYPE_AUDS_ID,
+    PAYLOAD_TYPE_AUDITORY_ID,
+    PAYLOAD_TYPE_ENDPOINT_ID,
+)
+
 from .base import client
-from time import sleep
 
 
-def test_404_stat_site():
-    response = client.put("/api/stat/site", json={
-        "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1"
-    })
-    assert response.status_code == 404
-    assert response.json() == {"status": "User not found"}
-
-
-@pytest.mark.parametrize("data, body", [
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1",
-            "auditory_id": "a-100",
+def test_400_stat_event_unknown_client():
+    response = client.post(
+        "/api/stat/event",
+        json={
+            "ident": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1",
+            "event_type_id": EVENT_TYPE_AUDS_ID,
+            "payloads": {PAYLOAD_TYPE_AUDITORY_ID: "a-100"},
         },
-        {"status": "User not found"}
-    ),
-    # (
-    #     {
-    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-    #         "auditory_id": "a-12122",
-    #     },
-    #     {"status": "Auditory not found"}
-    # )
-])
-def test_404_stat_aud(data, body):
-    sleep(1)
-    response = client.put("/api/stat/select-aud", json={
-        "success": True,
-        **data
-    })
-    assert response.status_code == 404
-    assert response.json() == body
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Unknown client ident=11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1"
+    }
 
 
-@pytest.mark.parametrize("data, body", [
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e5",
-            "start_id": "a-100",
-            "end_id": "a-101",
-            "success": True
+def test_400_stat_event_payload_not_allowed():
+    response = client.post(
+        "/api/stat/event",
+        json={
+            "ident": "22e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
+            "event_type_id": EVENT_TYPE_AUDS_ID,
+            "payloads": {PAYLOAD_TYPE_ENDPOINT_ID: "/api/get/route"},
         },
-        {"status": "User not found"}
-    ),
-    # (
-    #     {
-    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-    #         "start_id": "a-10011",
-    #         "end_id": "a-101",
-    #     },
-    #     {"status": "Start auditory not found"}
-    # ),
-    # (
-    #     {
-    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-    #         "start_id": "a-100",
-    #         "end_id": "a-10111",
-    #     },
-    #     {"status": "End auditory not found"}
-    # )
-])
-def test_404_stat_way(data, body):
-    response = client.put("/api/stat/start-way", json={
-        **data
-    })
-    assert response.status_code == 404
-    assert response.json() == body
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Payload type 1 is not allowed for event_type_id=2"
+    }
 
 
-@pytest.mark.parametrize("data, body", [
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e6",
-            "plan_id": "A-0"
-        },
-        {"status": "User not found"}
-    ),
-    # (
-    #     {
-    #         "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ec",
-    #         "plan_id": "A-6",
-    #     },
-    #     {"status": "Changed plan not found"}
-    # )
-])
-def test_404_stat_plan(data, body):
-    response = client.put("/api/stat/change-plan", json={
-        **data
-    })
-    assert response.status_code == 404
-    assert response.json() == body
-
-
-@pytest.mark.parametrize("data, body", [
-    (
-        {
-            "user_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1"
-        },
-        {"status": "User not found"}
-    ),
-])
-def test_404_check_user_id(data, body):
-    response = client.get("/api/check/user-id", params=data)
+@pytest.mark.parametrize(
+    "data, body",
+    [
+        (
+            {"client_id": "11e1a4b8-7fa7-4501-9faa-541a5e0ff1e1"},
+            {"status": "Client not found"},
+        ),
+    ],
+)
+def test_404_check_client_id(data, body):
+    response = client.get("/api/check/client-id", params=data)
     assert response.status_code == 404
     assert response.json() == body

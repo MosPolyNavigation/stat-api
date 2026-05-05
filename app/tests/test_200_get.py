@@ -18,7 +18,10 @@ def test_get_user_id():
 def test_get_popular():
     response = client.get("/api/get/popular")
     assert response.status_code == 200
-    assert len(response.json()) == 2
+    assert response.json()[:2] == [
+        {"auditory_id": "a-100", "total_weight": 4},
+        {"auditory_id": "a-101", "total_weight": 3},
+    ]
 
 
 def test_get_route():
