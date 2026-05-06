@@ -64,6 +64,7 @@ from .user_role import RoleRightGoalConnection, resolve_role_right_goals, RoleRi
 from .user_role import RightConnection, resolve_rights
 from .user_role import GoalConnection, resolve_goals
 from .auth import RefreshTokenConnection, resolve_refresh_tokens
+from .dashboards import DashboardType, resolve_dashboards, resolve_dashboard
 
 
 @strawberry.type
@@ -215,7 +216,11 @@ class Query:
         resolver=resolve_refresh_tokens,
         description="Get refresh tokens with pagination."
     )
-    refresh_tokens: RefreshTokenConnection = strawberry.field(
-        resolver=resolve_refresh_tokens,
-        description="Get refresh tokens with pagination."
+    dashboards: list[DashboardType] = strawberry.field(
+        resolver=resolve_dashboards,
+        description="Get dashboards filtered by dashboard_type_id.",
+    )
+    dashboard: DashboardType = strawberry.field(
+        resolver=resolve_dashboard,
+        description="Get single dashboard by ID.",
     )
