@@ -37,7 +37,8 @@ from fastapi_pagination import add_pagination
 from app.config import load_settings
 from app.constants import REVIEW_STATUSES
 from app.factory import AppFactory
-from app.helpers.data import goals, rights, roles, roles_rights_goals
+# from app.helpers.data import goals, rights, roles, roles_rights_goals
+from app.constants import RIGHTS_BY_ID, GOALS_BY_ID, GOAL_RIGHTS
 from app.jobs.location_data.worker import fetch_location_data
 from app.models import Base
 from app.schemas.rasp.schedule import Auditory
@@ -186,14 +187,14 @@ async def create_db_and_tables():
             )
         )
 
-        data_goals: list[models.Goal] = list([models.Goal(id=i, name=name) for i, name in goals.items()])
-        data_roles: list[models.Role] = list([models.Role(id=i, name=name) for i, name in roles.items()])
-        data_rights: list[models.Right] = list([models.Right(id=i, name=name) for i, name in rights.items()])
+        data_goals: list[models.Goal] = list([models.Goal(id=_id, name=name) for _id, name in GOALS_BY_ID.items()])
+        data_roles: list[models.Role] = list([models.Role(id=_id, name=name) for _id, name in [(1, "admin"),]])
+        data_rights: list[models.Right] = list([models.Right(id=_id, name=name) for _id, name in RIGHTS_BY_ID.items()])
         db.add_all(data_goals)
         db.add_all(data_roles)
         db.add_all(data_rights)
         data_role_right_goals: list[models.RoleRightGoal] = list(
-            [models.RoleRightGoal(role_id=x[0], right_id=x[1], goal_id=x[2], can_grant=x[0] == 1) for x in roles_rights_goals]
+            [models.RoleRightGoal(role_id=1, right_id=x[1], goal_id=x[0], can_grant=True) for x in GOAL_RIGHTS]
         )
         db.add_all(data_role_right_goals)
         data_user: models.User = models.User(
