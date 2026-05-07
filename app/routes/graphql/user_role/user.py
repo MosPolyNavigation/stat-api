@@ -23,6 +23,7 @@ from app.routes.graphql.permissions import (
 from app.models import User, UserRole
 from .types import UserType, DeleteResult, ChangePasswordResult
 from .inputs import CreateUserInput, UpdateUserInput, ChangeUserPasswordInput
+from app.routes.graphql.logging import _extract_updated_fields
 
 
 password_hash = PasswordHash.recommended()
@@ -161,7 +162,9 @@ async def resolve_user(info: Info, user_id: int) -> Optional[UserType]:
 async def create_user(info: Info, data: CreateUserInput) -> UserType:
     """Мутация для создания нового пользователя."""
     session: AsyncSession = await ensure_users_create_permission(info)
-    
+    current_user = info.context["current_user"]
+    logger = info.context["user_logger"]
+
     # Проверка на уникальность login
     existing_user = (
         await session.execute(
@@ -170,7 +173,6 @@ async def create_user(info: Info, data: CreateUserInput) -> UserType:
     ).scalars().first()
     
     if existing_user:
-        from graphql import GraphQLError
         raise GraphQLError("Пользователь с таким логином уже существует")
     
     # Хэширование пароля
@@ -187,7 +189,7 @@ async def create_user(info: Info, data: CreateUserInput) -> UserType:
     session.add(user)
     await session.commit()
     await session.refresh(user)
-    
+    logger.log(current_user, f"Создание пользователя {user.login}")
     return _to_user_safe(user)
 
 
@@ -195,7 +197,8 @@ async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserTy
     """Мутация для редактирования пользователя."""
     session: AsyncSession = await ensure_users_edit_permission(info)
     current_user = info.context["current_user"]
-    
+    logger = info.context["user_logger"]
+
     # Проверяем существование пользователя
     user = (
         await session.execute(
@@ -222,6 +225,7 @@ async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserTy
     
     await session.commit()
     await session.refresh(user)
+    fields = _extract_updated_fields(data)
     
     # Перезагружаем с ролями для возврата полных данных
     statement = (
@@ -234,6 +238,7 @@ async def update_user(info: Info, user_id: int, data: UpdateUserInput) -> UserTy
     )
     
     user_with_roles = (await session.execute(statement)).scalars().first()
+    logger.log(current_user, f"Обновление пользователя {user_with_roles.login}. Поля: {fields}")
     return _to_user(user_with_roles)
 
 
@@ -241,7 +246,8 @@ async def delete_user(info: Info, user_id: int) -> DeleteResult:
     """Мутация для удаления пользователя."""
     session: AsyncSession = await ensure_users_delete_permission(info)
     current_user = info.context["current_user"]
-    
+    logger = info.context["user_logger"]
+
     # Проверяем существование пользователя
     user = (
         await session.execute(
@@ -255,11 +261,13 @@ async def delete_user(info: Info, user_id: int) -> DeleteResult:
     # Защита: нельзя удалить самого себя
     if user.id == current_user.id:
         raise GraphQLError("Нельзя удалить самого себя")
-    
+
+    deleted_login = user.login
+
     # Удаляем пользователя (связи user_roles удалятся каскадно)
     await session.delete(user)
     await session.commit()
-    
+    logger.log(current_user, f"Удален пользователь {deleted_login}")
     return DeleteResult(
         success=True,
         message=f"Пользователь {user_id} успешно удалён",
@@ -277,7 +285,8 @@ async def change_user_password(info: Info, data: ChangeUserPasswordInput) -> Cha
     """
     session: AsyncSession = await ensure_user_pass_edit_permission(info)
     current_user = info.context["current_user"]
-    
+    logger = info.context["user_logger"]
+
     # Проверяем существование пользователя
     user = (
         await session.execute(
@@ -303,7 +312,7 @@ async def change_user_password(info: Info, data: ChangeUserPasswordInput) -> Cha
     user.updated_at = datetime.now()
     
     await session.commit()
-    
+    logger.log(current_user, f"Изменен пароль для {user.login}")
     return ChangePasswordResult(
         success=True,
         message=f"Пароль пользователя {user.login} успешно изменён",
