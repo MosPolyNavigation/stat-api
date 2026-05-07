@@ -33,7 +33,6 @@ role_right_goals_table = sa.sql.table(
     sa.sql.column('role_id', sa.Integer),
     sa.sql.column('right_id', sa.Integer),
     sa.sql.column('goal_id', sa.Integer),
-    sa.sql.column('can_grant', sa.Boolean),
 )
 
 
@@ -49,9 +48,9 @@ def upgrade() -> None:
     op.bulk_insert(
         role_right_goals_table,
         [
-            {'role_id': 1, 'right_id': VIEW_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID, 'can_grant': True},
-            {'role_id': 1, 'right_id': EDIT_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID, 'can_grant': True},
-            {'role_id': 1, 'right_id': DELETE_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID, 'can_grant': True},
+            {'role_id': 1, 'right_id': VIEW_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID},
+            {'role_id': 1, 'right_id': EDIT_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID},
+            {'role_id': 1, 'right_id': DELETE_RIGHT_ID, 'goal_id': REFRESH_TOKEN_GOAL_ID},
         ]
     )
 

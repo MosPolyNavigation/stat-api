@@ -91,7 +91,6 @@ def data_upgrades():
         sa.sql.column('role_id', sa.Integer),
         sa.sql.column('right_id', sa.Integer),
         sa.sql.column('goal_id', sa.Integer),
-        sa.sql.column('can_grant', sa.Boolean),
     )
 
     op.bulk_insert(
@@ -108,7 +107,7 @@ def data_upgrades():
     )
     op.bulk_insert(
         role_right_goals_table,
-        list([{'role_id': x[0], 'right_id': x[1], 'goal_id': x[2], 'can_grant': True} for x in roles_rights_goals])
+        list([{'role_id': x[0], 'right_id': x[1], 'goal_id': x[2]} for x in roles_rights_goals])
     )
 
 

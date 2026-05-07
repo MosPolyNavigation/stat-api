@@ -31,7 +31,6 @@ def _role_right_goals_table() -> sa.Table:
         sa.sql.column("role_id", sa.Integer),
         sa.sql.column("right_id", sa.Integer),
         sa.sql.column("goal_id", sa.Integer),
-        sa.sql.column("can_grant", sa.Boolean),
     )
 
 
@@ -44,19 +43,16 @@ def upgrade() -> None:
                 "role_id": ADMIN_ROLE_ID,
                 "right_id": CREATE_RIGHT_ID,
                 "goal_id": STATS_GOAL_ID,
-                "can_grant": True,
             },
             {
                 "role_id": ADMIN_ROLE_ID,
                 "right_id": EDIT_RIGHT_ID,
                 "goal_id": STATS_GOAL_ID,
-                "can_grant": True,
             },
             {
                 "role_id": ADMIN_ROLE_ID,
                 "right_id": DELETE_RIGHT_ID,
                 "goal_id": STATS_GOAL_ID,
-                "can_grant": True,
             },
         ],
     )

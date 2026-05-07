@@ -19,7 +19,6 @@ rights: dict[int, str] = {
     2: "create",
     3: "edit",
     4: "delete",
-    5: "grant",
 }
 
 roles: dict[int, str] = {
@@ -43,7 +42,6 @@ roles_rights_goals: list[tuple[int, int, int]] = [
     (1, 2, 4),
     (1, 3, 4),
     (1, 4, 4),
-    (1, 5, 4),
     (1, 1, 5),
     (1, 3, 5),
     (1, 1, 6),

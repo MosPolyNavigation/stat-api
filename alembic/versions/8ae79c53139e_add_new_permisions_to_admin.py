@@ -31,7 +31,6 @@ def upgrade() -> None:
         sa.sql.column('role_id', sa.Integer),
         sa.sql.column('right_id', sa.Integer),
         sa.sql.column('goal_id', sa.Integer),
-        sa.sql.column('can_grant', sa.Boolean),
     )
     
     # === 1. Добавляем новую цель user_pass (ID: 9) ===
@@ -47,10 +46,10 @@ def upgrade() -> None:
     op.bulk_insert(
         role_right_goals_table,
         [
-            {'role_id': 1, 'right_id': 1, 'goal_id': 10, 'can_grant': True},
-            {'role_id': 1, 'right_id': 3, 'goal_id': 10, 'can_grant': True},
-            {'role_id': 1, 'right_id': 1, 'goal_id': 11, 'can_grant': True},
-            {'role_id': 1, 'right_id': 3, 'goal_id': 11, 'can_grant': True},
+            {'role_id': 1, 'right_id': 1, 'goal_id': 10},
+            {'role_id': 1, 'right_id': 3, 'goal_id': 10},
+            {'role_id': 1, 'right_id': 1, 'goal_id': 11},
+            {'role_id': 1, 'right_id': 3, 'goal_id': 11},
         ]
     )
 
