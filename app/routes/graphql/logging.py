@@ -104,11 +104,24 @@ def build_graphql_error_log(field_name: str | None, error: GraphQLError) -> str 
     return f"GraphQL-запрос завершился с ошибкой: {error_type}"
 
 
-def build_public_graphql_error_message(message: str) -> str:
+GRAPHQL_PERMISSION_ERROR_TOKENS = (
+    "недостаточно прав",
+    "forbidden",
+    "unauthorized",
+    "not authorized",
+)
+
+
+def is_graphql_permission_error_message(message: str) -> bool:
     lowered = message.lower()
-    if any(token in lowered for token in ["недостаточно прав", "forbidden", "unauthorized", "not authorized"]):
+    return any(token in lowered for token in GRAPHQL_PERMISSION_ERROR_TOKENS)
+
+
+def build_public_graphql_error_message(message: str) -> str:
+    if is_graphql_permission_error_message(message):
         return "Недостаточно прав для выполнения операции"
-    return "GraphQL-запрос завершился с ошибкой"
+
+    return message
 
 
 class GraphQLLoggingExtension(FieldExtension):
@@ -126,7 +139,7 @@ class GraphQLLoggingExtension(FieldExtension):
 
         text = build_graphql_success_log(field_name, kwargs, result)
         if text:
-            await logger.log_now(current_user, text)
+            logger.log(current_user, text)
 
         return result
 

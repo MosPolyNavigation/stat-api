@@ -1,4 +1,5 @@
 ﻿import strawberry
+from .event_mutation import EventDictionaryMutation
 from .dashboards import (
     DashboardType,
     create_dashboard,
@@ -51,7 +52,7 @@ from .logging import graphql_mutation
 
 
 @strawberry.type
-class Mutation:
+class Mutation(EventDictionaryMutation):
     create_nav_floor: NavFloorType = graphql_mutation(
         resolver=create_nav_floor,
         description="Create navigation floor.",
