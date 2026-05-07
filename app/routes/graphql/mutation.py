@@ -1,4 +1,11 @@
 ﻿import strawberry
+from .dashboards import (
+    DashboardType,
+    create_dashboard,
+    create_dashboards,
+    update_dashboard,
+    delete_dashboard,
+)
 from .dod import (
     DodNavAuditoryType, DodNavCampusType, DodNavFloorType,
     DodNavLocationType, DodNavPlanType, DodNavStaticType,
@@ -248,4 +255,20 @@ class Mutation:
     revoke_role: GrantRoleResult = strawberry.mutation(
         resolver=revoke_role,
         description="Revoke role from user."
+    )
+    create_dashboard: DashboardType = strawberry.mutation(
+        resolver=create_dashboard,
+        description="Create a new dashboard.",
+    )
+    create_dashboards: list[DashboardType] = strawberry.mutation(
+        resolver=create_dashboards,
+        description="Create multiple dashboards in a single operation.",
+    )
+    update_dashboard: DashboardType = strawberry.mutation(
+        resolver=update_dashboard,
+        description="Update an existing dashboard.",
+    )
+    delete_dashboard: bool = strawberry.mutation(
+        resolver=delete_dashboard,
+        description="Delete a dashboard.",
     )

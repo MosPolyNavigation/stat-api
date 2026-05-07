@@ -22,6 +22,10 @@ class EventType(Base):
         "AllowedPayload",
         back_populates="event_type",
     )
+    dashboards: Mapped[list["Dashboard"]] = relationship(
+        "Dashboard",
+        back_populates="event_type",
+    )
 
 
 class ClientId(Base):

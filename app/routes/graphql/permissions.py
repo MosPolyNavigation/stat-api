@@ -237,3 +237,35 @@ async def ensure_roles_delete_permission(info: Info) -> AsyncSession:
         info, [(DELETE_RIGHT_ID, ROLES_GOAL_ID)], "Недостаточно прав для удаления ролей"
     )
 
+
+async def _ensure_dashboards_view_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(VIEW_RIGHT_ID, DASHBOARDS_GOAL_ID)],
+        "Недостаточно прав для просмотра дашбордов",
+    )
+
+
+async def _ensure_dashboards_create_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(CREATE_RIGHT_ID, DASHBOARDS_GOAL_ID)],
+        "Недостаточно прав для создания дашбордов",
+    )
+
+
+async def _ensure_dashboards_edit_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(EDIT_RIGHT_ID, DASHBOARDS_GOAL_ID)],
+        "Недостаточно прав для редактирования дашбордов",
+    )
+
+
+async def _ensure_dashboards_delete_permission(info: Info) -> AsyncSession:
+    return await ensure_permissions_by_ids(
+        info,
+        [(DELETE_RIGHT_ID, DASHBOARDS_GOAL_ID)],
+        "Недостаточно прав для удаления дашбордов",
+    )
+

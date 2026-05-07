@@ -1,4 +1,4 @@
-from typing import Optional, TypeVar
+from typing import Optional
 
 import strawberry
 from graphql import GraphQLError
@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 
+from app.helpers.db import _exists
 from app.models import AllowedPayload, ClientId, EventType, PayloadType, ValueType
 
 from .pagination import PageInfo, PaginationInfo, PaginationInput
@@ -16,9 +17,6 @@ from .permissions import (
     ensure_stats_edit_permission,
     ensure_stats_view_permission,
 )
-
-
-T = TypeVar("T")
 
 
 @strawberry.type
@@ -242,12 +240,6 @@ def _page_info(total: int, limit: int, offset: int) -> tuple[PageInfo, Paginatio
             total_pages=total_pages,
         ),
     )
-
-
-async def _exists(session: AsyncSession, model: type[T], item_id: int) -> bool:
-    return (
-        await session.execute(select(model).where(model.id == item_id))
-    ).scalar_one_or_none() is not None
 
 
 async def resolve_event_types(
