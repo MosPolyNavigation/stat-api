@@ -2,6 +2,7 @@
 from .dashboards import (
     DashboardType,
     create_dashboard,
+    create_dashboards,
     update_dashboard,
     delete_dashboard,
 )
@@ -258,6 +259,10 @@ class Mutation:
     create_dashboard: DashboardType = strawberry.mutation(
         resolver=create_dashboard,
         description="Create a new dashboard.",
+    )
+    create_dashboards: list[DashboardType] = strawberry.mutation(
+        resolver=create_dashboards,
+        description="Create multiple dashboards in a single operation.",
     )
     update_dashboard: DashboardType = strawberry.mutation(
         resolver=update_dashboard,

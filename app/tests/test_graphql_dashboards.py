@@ -525,6 +525,78 @@ class TestDashboardMutations:
         assert "errors" in payload
         assert "title_text не может быть пустым" in payload["errors"][0]["message"]
 
+    def test_create_dashboards(self):
+        """Create multiple dashboards in a single mutation, verify all returned."""
+        mutation = """
+        mutation ($inputs: [DashboardTypeInput!]!) {
+            createDashboards(inputs: $inputs) {
+                id
+                displayOrder
+                eventTypeId
+                dashboardTypeId
+                titleText
+            }
+        }
+        """
+        resp = graphql_query(
+            mutation,
+            ADMIN_HEADERS,
+            {
+                "inputs": [
+                    {
+                        "displayOrder": 1,
+                        "eventTypeId": 1,
+                        "dashboardTypeId": 1,
+                        "titleText": "Bulk A",
+                    },
+                    {
+                        "displayOrder": 2,
+                        "eventTypeId": 1,
+                        "dashboardTypeId": 1,
+                        "titleText": "Bulk B",
+                    },
+                    {
+                        "displayOrder": 3,
+                        "eventTypeId": 2,
+                        "dashboardTypeId": 2,
+                        "titleText": "Bulk C",
+                    },
+                ]
+            },
+        )
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert "errors" not in payload, payload.get("errors")
+        created = payload["data"]["createDashboards"]
+        assert len(created) == 3
+
+        # Verify each returned object has expected fields
+        assert created[0]["displayOrder"] == 1
+        assert created[0]["titleText"] == "Bulk A"
+        assert created[0]["dashboardTypeId"] == 1
+        assert isinstance(created[0]["id"], int)
+        assert created[0]["id"] > 0
+
+        assert created[1]["displayOrder"] == 2
+        assert created[1]["titleText"] == "Bulk B"
+
+        assert created[2]["displayOrder"] == 3
+        assert created[2]["titleText"] == "Bulk C"
+        assert created[2]["eventTypeId"] == 2
+        assert created[2]["dashboardTypeId"] == 2
+
+        # All IDs should be distinct
+        ids = [d["id"] for d in created]
+        assert len(set(ids)) == 3
+
+        # Cleanup
+        for dash_id in ids:
+            graphql_query(
+                "mutation ($id: Int!) { deleteDashboard(id: $id) }",
+                ADMIN_HEADERS,
+                {"id": dash_id},
+            )
+
     def test_update_dashboard(self):
         """Update an existing dashboard, verify changes."""
         # Create
@@ -705,6 +777,34 @@ class TestDashboardPermissions:
                     "dashboardTypeId": 1,
                     "titleText": "No Perm",
                 }
+            },
+        )
+        assert resp.status_code == 200
+        payload = resp.json()
+        assert "errors" in payload
+        assert "Недостаточно прав" in payload["errors"][0]["message"]
+
+    def test_create_dashboards_no_permission(self):
+        """Verify permission denied for user without create right on bulk create."""
+        mutation = """
+        mutation ($inputs: [DashboardTypeInput!]!) {
+            createDashboards(inputs: $inputs) {
+                id
+            }
+        }
+        """
+        resp = graphql_query(
+            mutation,
+            USER_NO_PERM_HEADERS,
+            {
+                "inputs": [
+                    {
+                        "displayOrder": 1,
+                        "eventTypeId": 1,
+                        "dashboardTypeId": 1,
+                        "titleText": "No Perm Bulk",
+                    },
+                ]
             },
         )
         assert resp.status_code == 200

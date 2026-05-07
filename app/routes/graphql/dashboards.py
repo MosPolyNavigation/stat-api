@@ -7,17 +7,16 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 
-from app.constants import (
-    CREATE_RIGHT_ID,
-    DASHBOARDS_GOAL_ID,
-    DELETE_RIGHT_ID,
-    EDIT_RIGHT_ID,
-    VIEW_RIGHT_ID,
-)
+from app.helpers.db import _exists
 from app.models.dashboard import Dashboard, DashboardType as DashboardTypeModel
 from app.models.event import EventType
 
-from .permissions import ensure_permissions_by_ids
+from .permissions import (
+    _ensure_dashboards_view_permission,
+    _ensure_dashboards_create_permission,
+    _ensure_dashboards_edit_permission,
+    _ensure_dashboards_delete_permission,
+)
 
 
 # =============================================================================
@@ -71,51 +70,8 @@ class DashboardTypeInput:
 
 
 # =============================================================================
-# Permission Helpers
-# =============================================================================
-
-
-async def _ensure_dashboards_view_permission(info: Info) -> AsyncSession:
-    return await ensure_permissions_by_ids(
-        info,
-        [(VIEW_RIGHT_ID, DASHBOARDS_GOAL_ID)],
-        "Недостаточно прав для просмотра дашбордов",
-    )
-
-
-async def _ensure_dashboards_create_permission(info: Info) -> AsyncSession:
-    return await ensure_permissions_by_ids(
-        info,
-        [(CREATE_RIGHT_ID, DASHBOARDS_GOAL_ID)],
-        "Недостаточно прав для создания дашбордов",
-    )
-
-
-async def _ensure_dashboards_edit_permission(info: Info) -> AsyncSession:
-    return await ensure_permissions_by_ids(
-        info,
-        [(EDIT_RIGHT_ID, DASHBOARDS_GOAL_ID)],
-        "Недостаточно прав для редактирования дашбордов",
-    )
-
-
-async def _ensure_dashboards_delete_permission(info: Info) -> AsyncSession:
-    return await ensure_permissions_by_ids(
-        info,
-        [(DELETE_RIGHT_ID, DASHBOARDS_GOAL_ID)],
-        "Недостаточно прав для удаления дашбордов",
-    )
-
-
-# =============================================================================
 # Validation Helpers
 # =============================================================================
-
-
-async def _exists(session: AsyncSession, model: type, item_id: int) -> bool:
-    return (
-        await session.execute(select(model).where(model.id == item_id))
-    ).scalar_one_or_none() is not None
 
 
 def _validate_dashboard_input(data: DashboardTypeInput) -> None:
@@ -211,6 +167,56 @@ async def create_dashboard(
     await session.refresh(dashboard)
 
     return _to_dashboard(dashboard)
+
+
+async def create_dashboards(
+    info: Info,
+    inputs: List[DashboardTypeInput],
+) -> List[DashboardType]:
+    """Create multiple dashboards in a single operation."""
+    session = await _ensure_dashboards_create_permission(info)
+
+    if not inputs:
+        raise GraphQLError("inputs не может быть пустым")
+
+    # Validate each input
+    for i, input_data in enumerate(inputs):
+        _validate_dashboard_input(input_data)
+
+    # Collect unique foreign key IDs and validate them
+    unique_event_type_ids = {inp.event_type_id for inp in inputs}
+    unique_dashboard_type_ids = {inp.dashboard_type_id for inp in inputs}
+
+    for event_type_id in unique_event_type_ids:
+        if not await _exists(session, EventType, event_type_id):
+            raise GraphQLError(f"EventType с id={event_type_id} не найден")
+
+    for dashboard_type_id in unique_dashboard_type_ids:
+        if not await _exists(session, DashboardTypeModel, dashboard_type_id):
+            raise GraphQLError(
+                f"DashboardType с id={dashboard_type_id} не найден"
+            )
+
+    # Build all dashboard objects
+    dashboards = [
+        Dashboard(
+            display_order=inp.display_order,
+            event_type_id=inp.event_type_id,
+            dashboard_type_id=inp.dashboard_type_id,
+            title_text=inp.title_text.strip(),
+        )
+        for inp in inputs
+    ]
+
+    # Bulk insert
+    session.add_all(dashboards)
+    await session.commit()
+
+    # Refresh to get generated IDs
+    for dashboard in dashboards:
+        await session.refresh(dashboard)
+
+    return [_to_dashboard(d) for d in dashboards]
 
 
 async def update_dashboard(
