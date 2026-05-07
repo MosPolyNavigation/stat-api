@@ -71,11 +71,12 @@ class TestGraphQLLogging:
         os.environ["STATAPI_LOGGING"] = "1"
 
         try:
-            before_logs = asyncio.run(get_logs())
             guest_login, guest_password = asyncio.run(ensure_guest_user())
 
             guest_token = get_access_token(guest_login, guest_password)
             headers = {"Authorization": f"Bearer {guest_token}"}
+
+            before_logs = asyncio.run(get_logs())
 
             response = graphql_query(
                 """

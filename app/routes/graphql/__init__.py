@@ -1,6 +1,6 @@
 from typing import Any
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry.fastapi import GraphQLRouter
 from strawberry.http import GraphQLHTTPResponse
@@ -20,10 +20,11 @@ from app.services.user_logger_service import UserLoggerService
 
 async def get_context(
     request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> dict[str, Any]:
-    user_logger = UserLoggerService(db)
+    user_logger = UserLoggerService(db, background_tasks)
 
     request.state.current_user = current_user
     request.state.user_logger = user_logger

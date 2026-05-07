@@ -2,7 +2,7 @@ import asyncio
 import os
 from typing import Optional
 
-from fastapi import Depends
+from fastapi import Depends, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.database import get_db
 from app.models import User, UserLog
@@ -18,8 +18,13 @@ async def background_log(db_session: AsyncSession, log_record: UserLog) -> None:
 
 
 class UserLoggerService:
-    def __init__(self, db_session: Optional[AsyncSession] = None):
+    def __init__(
+        self,
+        db_session: Optional[AsyncSession] = None,
+        background_tasks: Optional[BackgroundTasks] = None,
+    ):
         self._session = db_session
+        self._background_tasks = background_tasks
         self._session_factory = get_db
 
     # Создаёт независимую сессию БД для фонового логирования
@@ -66,8 +71,15 @@ class UserLoggerService:
         if user is None:
             return None
 
+        if self._background_tasks is not None:
+            self._background_tasks.add_task(self.background_log, user, text)
+            return None
+
         try:
-            asyncio.create_task(self.background_log(user, text))
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.background_log(user, text))
+        except RuntimeError:
+            return None
         except Exception:
             return None
 
@@ -85,6 +97,7 @@ class UserLoggerService:
 
 
 def get_user_logger_service(
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ) -> UserLoggerService:
-    return UserLoggerService(db)
+    return UserLoggerService(db, background_tasks)
