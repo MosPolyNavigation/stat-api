@@ -26,18 +26,11 @@ def register_endpoint(router: APIRouter):
         review_id: int,
         status_id: int = Form(...),
         db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
+        current_user: User = Depends(
+            require_rights_with_logging("reviews", "edit",  error_text="Попытка смены статуса без прав",)
+        ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
-        await require_rights_with_logging(
-            db,
-            current_user,
-            logger,
-            "reviews",
-            "Попытка смены статуса без прав",
-            "edit",
-        )
-
         review: Union[Review, None] = (
             await db.execute(
                 Select(Review).filter(Review.id == review_id)
@@ -67,7 +60,7 @@ def register_endpoint(router: APIRouter):
         await db.commit()
         await db.refresh(review)
 
-        logger.log(current_user, f"Смена статуса {review_id} на {status_name}")
+        logger.log(current_user, f"Смена статуса отзыва {review_id} на {status_name}")
         return {
             "message": "Статус отзыва обновлён",
             "review_id": review.id,

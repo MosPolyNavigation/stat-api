@@ -10,7 +10,6 @@ from app.state import AppState
 from app.helpers.permissions import require_rights_with_logging
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 from app.models import User
-from app.helpers.auth_utils import get_current_active_user
 
 
 def register_endpoint(router: APIRouter):
@@ -29,23 +28,15 @@ def register_endpoint(router: APIRouter):
         request: Request,
         page: int = Query(1, ge=1, description="Номер страницы"),
         size: int = Query(100, ge=1, le=500, description="Размер страницы"),
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
+        current_user: User = Depends(
+            require_rights_with_logging("admin", "view",  error_text="Попытка просмотра без прав",)
+        ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Возвращает пагинированный список пользователей, забаненных
         за нарушения при отправке отзывов.
         """
-        await require_rights_with_logging(
-            db,
-            current_user,
-            logger,
-            "admin",
-            "Попытка просмотра без прав",
-            "view",
-        )
-
         offset = (page - 1) * size
         result = review_rate_limiter.get_banned_users(
             state=request.app.state.app_state,
@@ -74,22 +65,14 @@ def register_endpoint(router: APIRouter):
     async def get_user_ban_info(
         user_id: str,
         request: Request,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
-        logger: UserLoggerService = Depends(get_user_logger_service),
+            current_user: User = Depends(
+                require_rights_with_logging("admin", "view",  error_text="Попытка доступа к несуществующей записи/без прав",)
+            ),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Возвращает детальную информацию о бане пользователя.
         """
-        await require_rights_with_logging(
-            db,
-            current_user,
-            logger,
-            "admin",
-            "Попытка доступа к несуществующей записи/без прав",
-            "view",
-        )
-
         info = review_rate_limiter.get_user_ban_info(
             state=request.app.state.app_state,
             user_id=user_id,
@@ -126,22 +109,14 @@ def register_endpoint(router: APIRouter):
         rq: Request,
         user_id: str,
         request: UnbanRequest = None,
-        db: AsyncSession = Depends(get_db),
-        current_user: User = Depends(get_current_active_user),
+        current_user: User = Depends(
+            require_rights_with_logging("admin", "edit",  error_text="Попытка снятия бана без прав",)
+        ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Снимает перманентный бан с пользователя.
         """
-        await require_rights_with_logging(
-            db,
-            current_user,
-            logger,
-            "admin",
-            "Попытка снятия бана без прав",
-            "edit",
-        )
-
         success = review_rate_limiter.unban_user(
             state=rq.app.state.app_state,
             user_id=user_id,

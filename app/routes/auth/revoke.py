@@ -28,7 +28,7 @@ def register_endpoint(router: APIRouter):
         jti: str = Body(..., embed=True),
         current_user: Annotated[User, Depends(get_current_active_user)] = None,
         db: AsyncSession = Depends(get_db),
-            logger: UserLoggerService = Depends(get_user_logger_service),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         """
             Отзывает refresh-токен по его jti.

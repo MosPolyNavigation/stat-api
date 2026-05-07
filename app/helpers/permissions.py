@@ -1,6 +1,5 @@
 from typing import Annotated
 from collections import defaultdict
-from sqlalchemy import Select
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
@@ -8,7 +7,7 @@ from app.models import User, Goal
 from app.helpers.auth_utils import get_current_active_user
 from app.services.permission_service import PermissionService
 from app.constants import RIGHTS_BY_ID, GOALS_BY_ID
-from app.services.user_logger_service import UserLoggerService
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
 
 def group_rights_by_goals(rights_goals: set[tuple[int, int]]) -> dict[str, list[str]]:
@@ -55,33 +54,38 @@ def require_rights(goal_name: str, *rights: str):
     return check_rights
 
 
-async def require_rights_with_logging(
-    db: AsyncSession,
-    current_user: User,
-    logger: UserLoggerService,
-    goal_name: str,
-    error_text: str,
-    *rights: str,
-):
+def require_rights_with_logging(goal_name: str, *rights: str, error_text: str):
     """
-    Проверяет наличие требуемого права у пользователя и, если право отсутствует,
-    записывает указанное сообщение в лог через UserLoggerService, после чего
-    выбрасывает HTTPException со статусом 403
+    Возвращает dependency для проверки, что текущий пользователь имеет указанные
+    права для заданной цели. Если хотя бы одного права не хватает,
+    записывает указанное сообщение в лог через UserLoggerService и выбрасывает
+    HTTPException со статусом 403.
+
+    Args:
+        goal_name: имя цели (субъекта доступа)
+        *rights: список прав, которые должны быть у пользователя
+        error_text: текст, который будет записан в лог при отказе в доступе
     """
-    service: PermissionService = PermissionService(db)
-    rights_goals = await service.get_user_permissions(current_user.id)
-    user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
+    async def check_rights(
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        db: AsyncSession = Depends(get_db),
+        logger: UserLoggerService = Depends(get_user_logger_service),
+    ) -> User:
+        service = PermissionService(db)
 
-    missing_rights = [right for right in rights if right not in user_rights]
-    if missing_rights:
-        logger.log(current_user, error_text)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=(
-                f"Пользователь не имеет права(а) "
-                f"{', '.join(missing_rights)} для цели '{goal_name}'"
-            ),
-        )
+        rights_goals = await service.get_user_permissions(current_user.id)
+        user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
 
-    return True
+        missing_rights = [right for right in rights if right not in user_rights]
+        if missing_rights:
+            logger.log(current_user, error_text)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"Пользователь не имеет права(а) "
+                    f"{', '.join(missing_rights)} для цели '{goal_name}'"
+                ),
+            )
+        return current_user
+    return check_rights
 

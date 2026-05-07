@@ -1,7 +1,7 @@
 """add user_action_log table
 
 Revision ID: 339fbd54bbee
-Revises: 4c0d829691b1
+Revises: 213a69474d75
 Create Date: 2026-05-03 17:22:55.039808
 
 """

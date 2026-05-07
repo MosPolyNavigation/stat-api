@@ -73,6 +73,16 @@ class UserLoggerService:
 
         return None
 
+    async def log_now(self, user: Optional[User], text: str):
+        if os.getenv("STATAPI_LOGGING", "1") == "0":
+            return None
+
+        if user is None:
+            return None
+
+        await self.background_log(user, text)
+        return None
+
 
 def get_user_logger_service(
     db: AsyncSession = Depends(get_db),
