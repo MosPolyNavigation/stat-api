@@ -64,163 +64,164 @@ from .user_role import RoleRightGoalConnection, resolve_role_right_goals, RoleRi
 from .user_role import RightConnection, resolve_rights
 from .user_role import GoalConnection, resolve_goals
 from .auth import RefreshTokenConnection, resolve_refresh_tokens
+from .logging import graphql_field
 from .dashboards import DashboardType, resolve_dashboards, resolve_dashboard
 
 
 @strawberry.type
 class Query:
-    reviews: list[ReviewType] = strawberry.field(
+    reviews: list[ReviewType] = graphql_field(
         resolver=resolve_reviews,
         description="Get user reviews.",
     )
-    problems: list[ProblemType] = strawberry.field(
+    problems: list[ProblemType] = graphql_field(
         resolver=resolve_problems,
         description="Get problems list.",
     )
-    review_statuses: list[ReviewStatusType] = strawberry.field(
+    review_statuses: list[ReviewStatusType] = graphql_field(
         resolver=resolve_review_status,
         description="Get review statuses list.",
     )
-    endpoint_statistics: list[EndpointStatisticsType] = strawberry.field(
+    endpoint_statistics: list[EndpointStatisticsType] = graphql_field(
         resolver=resolve_endpoint_statistics,
         description="Получить статистику событий для выбранного типа.",
     )
-    endpoint_statistics_avg: AggregatedEndpointStatisticsType = strawberry.field(
+    endpoint_statistics_avg: AggregatedEndpointStatisticsType = graphql_field(
         resolver=resolve_endpoint_statistics_avg,
         description="Получить агрегированную статистику событий за выбранный период.",
     )
-    event_types: EventTypeConnection = strawberry.field(
+    event_types: EventTypeConnection = graphql_field(
         resolver=resolve_event_types,
         description="Получить записи справочника типов событий.",
     )
-    payload_types: PayloadTypeConnection = strawberry.field(
+    payload_types: PayloadTypeConnection = graphql_field(
         resolver=resolve_payload_types,
         description="Получить записи справочника типов payload.",
     )
-    value_types: ValueTypeConnection = strawberry.field(
+    value_types: ValueTypeConnection = graphql_field(
         resolver=resolve_value_types,
         description="Получить записи справочника типов значений.",
     )
-    allowed_payload_rules: AllowedPayloadRuleConnection = strawberry.field(
+    allowed_payload_rules: AllowedPayloadRuleConnection = graphql_field(
         resolver=resolve_allowed_payload_rules,
         description="Получить связи допустимых payload для типов событий.",
     )
 
-    nav_floors: NavFloorConnection = strawberry.field(
+    nav_floors: NavFloorConnection = graphql_field(
         resolver=resolve_nav_floors,
         description="Get navigation floors with pagination.",
     )
-    nav_locations: NavLocationConnection = strawberry.field(
+    nav_locations: NavLocationConnection = graphql_field(
         resolver=resolve_nav_locations,
         description="Get navigation locations with pagination.",
     )
-    nav_campuses: NavCampusConnection = strawberry.field(
+    nav_campuses: NavCampusConnection = graphql_field(
         resolver=resolve_nav_campuses,
         description="Get navigation campuses with pagination.",
     )
-    nav_plans: NavPlanConnection = strawberry.field(
+    nav_plans: NavPlanConnection = graphql_field(
         resolver=resolve_nav_plans,
         description="Get navigation plans with pagination.",
     )
-    nav_statics: NavStaticConnection = strawberry.field(
+    nav_statics: NavStaticConnection = graphql_field(
         resolver=resolve_nav_statics,
         description="Get navigation static resources with pagination.",
     )
-    nav_types: NavTypeConnection = strawberry.field(
+    nav_types: NavTypeConnection = graphql_field(
         resolver=resolve_nav_types,
         description="Get navigation auditory types with pagination.",
     )
-    nav_auditories: NavAuditoryConnection = strawberry.field(
+    nav_auditories: NavAuditoryConnection = graphql_field(
         resolver=resolve_nav_auditories,
         description="Get navigation auditories with pagination.",
     )
-    nav_auditory_photos: NavAuditoryPhotoConnection = strawberry.field(
+    nav_auditory_photos: NavAuditoryPhotoConnection = graphql_field(
         resolver=resolve_nav_auditory_photos,
         description="Get navigation auditory photos with pagination.",
     )
 
-    dod_nav_floors: DodNavFloorConnection = strawberry.field(
+    dod_nav_floors: DodNavFloorConnection = graphql_field(
         resolver=resolve_dod_nav_floors,
         description="Get DOD navigation floors with pagination.",
     )
-    dod_nav_locations: DodNavLocationConnection = strawberry.field(
+    dod_nav_locations: DodNavLocationConnection = graphql_field(
         resolver=resolve_dod_nav_locations,
         description="Get DOD navigation locations with pagination.",
     )
-    dod_nav_campuses: DodNavCampusConnection = strawberry.field(
+    dod_nav_campuses: DodNavCampusConnection = graphql_field(
         resolver=resolve_dod_nav_campuses,
         description="Get DOD navigation campuses with pagination.",
     )
-    dod_nav_plans: DodNavPlanConnection = strawberry.field(
+    dod_nav_plans: DodNavPlanConnection = graphql_field(
         resolver=resolve_dod_nav_plans,
         description="Get DOD navigation plans with pagination.",
     )
-    dod_nav_statics: DodNavStaticConnection = strawberry.field(
+    dod_nav_statics: DodNavStaticConnection = graphql_field(
         resolver=resolve_dod_nav_statics,
         description="Get DOD navigation static resources with pagination.",
     )
-    dod_nav_types: DodNavTypeConnection = strawberry.field(
+    dod_nav_types: DodNavTypeConnection = graphql_field(
         resolver=resolve_dod_nav_types,
         description="Get DOD navigation auditory types with pagination.",
     )
-    dod_nav_auditories: DodNavAuditoryConnection = strawberry.field(
+    dod_nav_auditories: DodNavAuditoryConnection = graphql_field(
         resolver=resolve_dod_nav_auditories,
         description="Get DOD navigation auditories with pagination.",
     )
-    dod_nav_auditory_photos: DodNavAuditoryPhotoConnection = strawberry.field(
+    dod_nav_auditory_photos: DodNavAuditoryPhotoConnection = graphql_field(
         resolver=resolve_dod_nav_auditory_photos,
         description="Get DOD navigation auditory photos with pagination.",
     )
 
-    users: UserConnection = strawberry.field(
+    users: UserConnection = graphql_field(
         resolver=resolve_users,
         description="Get users with pagination.",
     )
-    user: Optional[UserType] = strawberry.field(
+    user: Optional[UserType] = graphql_field(
         resolver=resolve_user,
         description="Get user.",
     )
-    roles: RoleConnection = strawberry.field(
+    roles: RoleConnection = graphql_field(
         resolver=resolve_roles,
         description="Get roles with pagination.",
     )
-    role: Optional[RoleType] = strawberry.field(
+    role: Optional[RoleType] = graphql_field(
         resolver=resolve_role,
         description="Get role.",
     )
-    user_roles: UserRoleConnection = strawberry.field(
+    user_roles: UserRoleConnection = graphql_field(
         resolver=resolve_user_roles,
         description="Get user_roles with pagination.",
     )
-    user_role: Optional[UserRoleType] = strawberry.field(
+    user_role: Optional[UserRoleType] = graphql_field(
         resolver=resolve_user_role,
         description="Get user_role.",
     )
-    role_right_goals: RoleRightGoalConnection = strawberry.field(
+    role_right_goals: RoleRightGoalConnection = graphql_field(
         resolver=resolve_role_right_goals,
         description="Get role_right_goals with pagination.",
     )
-    role_right_goal: Optional[RoleRightGoalType] = strawberry.field(
+    role_right_goal: Optional[RoleRightGoalType] = graphql_field(
         resolver=resolve_role_right_goal,
         description="Get role_right_goal.",
     )
-    rights: RightConnection = strawberry.field(
+    rights: RightConnection = graphql_field(
         resolver=resolve_rights,
         description="Get rights with pagination.",
     )
-    goals: GoalConnection = strawberry.field(
+    goals: GoalConnection = graphql_field(
         resolver=resolve_goals,
         description="Get goals with pagination.",
     )
-    refresh_tokens: RefreshTokenConnection = strawberry.field(
+    refresh_tokens: RefreshTokenConnection = graphql_field(
         resolver=resolve_refresh_tokens,
-        description="Get refresh tokens with pagination."
+        description="Get refresh tokens with pagination.",
     )
-    dashboards: list[DashboardType] = strawberry.field(
+    dashboards: list[DashboardType] = graphql_field(
         resolver=resolve_dashboards,
         description="Get dashboards filtered by dashboard_type_id.",
     )
-    dashboard: DashboardType = strawberry.field(
+    dashboard: DashboardType = graphql_field(
         resolver=resolve_dashboard,
         description="Get single dashboard by ID.",
     )
