@@ -257,19 +257,19 @@ class Mutation:
         resolver=revoke_role,
         description="Revoke role from user."
     )
-    create_dashboard: DashboardType = strawberry.mutation(
+    create_dashboard: DashboardType = graphql_mutation(
         resolver=create_dashboard,
         description="Create a new dashboard.",
     )
-    create_dashboards: list[DashboardType] = strawberry.mutation(
+    create_dashboards: list[DashboardType] = graphql_mutation(
         resolver=create_dashboards,
         description="Create multiple dashboards in a single operation.",
     )
-    update_dashboard: DashboardType = strawberry.mutation(
+    update_dashboard: DashboardType = graphql_mutation(
         resolver=update_dashboard,
         description="Update an existing dashboard.",
     )
-    delete_dashboard: bool = strawberry.mutation(
+    delete_dashboard: bool = graphql_mutation(
         resolver=delete_dashboard,
         description="Delete a dashboard.",
     )
