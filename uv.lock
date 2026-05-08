@@ -373,20 +373,6 @@ wheels = [
 ]
 
 [[package]]
-name = "fastapi-pagination"
-version = "0.15.12"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "fastapi" },
-    { name = "pydantic" },
-    { name = "typing-extensions" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/11/71/7381bf08f9fb6a890ec41a7ee5191ca564e0af94b899c2006fddaf07d78f/fastapi_pagination-0.15.12.tar.gz", hash = "sha256:914b41e07b8556de34c12d3568c9b7137eb62a3558420061a4acbebf7e729a08", size = 595227, upload-time = "2026-03-28T12:51:03.14Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/d2/2f/644fd77ecac100da965221751ae4f7604e149c58c46c1d96c37e828bb5f7/fastapi_pagination-0.15.12-py3-none-any.whl", hash = "sha256:758e21157b2844feecb2409072f1433e24f2dc9526ae7906aa1a1b28622a970a", size = 60921, upload-time = "2026-03-28T12:51:04.288Z" },
-]
-
-[[package]]
 name = "flake8"
 version = "7.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1036,7 +1022,6 @@ dependencies = [
     { name = "argparse" },
     { name = "asyncpg" },
     { name = "fastapi" },
-    { name = "fastapi-pagination" },
     { name = "httpx" },
     { name = "pillow" },
     { name = "pwdlib", extra = ["argon2"] },
@@ -1071,7 +1056,6 @@ requires-dist = [
     { name = "argparse" },
     { name = "asyncpg" },
     { name = "fastapi" },
-    { name = "fastapi-pagination" },
     { name = "httpx" },
     { name = "pillow" },
     { name = "pwdlib", extras = ["argon2"] },

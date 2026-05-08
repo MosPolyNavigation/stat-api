@@ -7,7 +7,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
-from fastapi_pagination import add_pagination
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import JobsConfig, Settings
@@ -83,7 +82,6 @@ class DefaultHooks(BaseHooks):
             allow_credentials=settings.allow_credentials,
         )
         app.add_middleware(GZipMiddleware, minimum_size=1024)
-        add_pagination(app)
 
     def setup_routers(self, app: FastAPI) -> None:
         # Состояние привязано к приложению ДО роутеров: guard-зависимости

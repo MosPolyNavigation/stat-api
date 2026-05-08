@@ -34,7 +34,6 @@ from app.constants import (
 from datetime import datetime
 from pwdlib import PasswordHash
 from fastapi.testclient import TestClient
-from fastapi_pagination import add_pagination
 from app.config import load_settings
 from app.constants import REVIEW_STATUSES
 from app.factory import AppFactory
