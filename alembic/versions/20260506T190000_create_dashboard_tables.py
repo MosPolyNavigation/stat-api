@@ -1,7 +1,7 @@
 """Create dashboard tables
 
 Revision ID: a1b2c3d4e5f6
-Revises: 213a69474d75
+Revises: 339fbd54bbee
 Create Date: 2026-05-06 19:00:00.000000
 
 """
@@ -16,7 +16,7 @@ from app.models.dashboard import Dashboard, DashboardType  # noqa: F401
 
 # revision identifiers, used by Alembic.
 revision: str = "a1b2c3d4e5f6"
-down_revision: Union[str, None] = "213a69474d75"
+down_revision: Union[str, None] = "339fbd54bbee"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
