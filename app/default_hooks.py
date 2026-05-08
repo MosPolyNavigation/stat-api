@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 from os import makedirs, path
-from typing import List
+from typing import List, Any
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -66,22 +66,25 @@ class DefaultHooks(BaseHooks):
     из app/jobs/__init__.py через сегментированный API.
     """
 
+    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+        kwargs = super().setup_app_arguments(settings)
+        kwargs["version"] = APP_VERSION
+        kwargs["openapi_tags"] = TAGS_METADATA
+        return kwargs
+
     # ── Сегменты конфигурации ────────────────────────────────────────────────
 
     def setup_middlewares(self, app: FastAPI, settings: Settings) -> None:
-        # Поля, которые нельзя задать во фабрике без расширения её сигнатуры,
-        # ставим прямо здесь — это ближе всего к моменту создания FastAPI.
-        app.version = APP_VERSION
-        app.openapi_tags = TAGS_METADATA
-
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.allowed_hosts,
-            allow_methods=settings.allowed_methods,
-            allow_headers=settings.allowed_headers,
-            allow_credentials=settings.allow_credentials,
-        )
-        app.add_middleware(GZipMiddleware, minimum_size=1024)
+        if settings.server.cors:
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=settings.allowed_hosts,
+                allow_methods=settings.allowed_methods,
+                allow_headers=settings.allowed_headers,
+                allow_credentials=settings.allow_credentials,
+            )
+        if settings.server.compression and settings.server.compression.enable:
+            app.add_middleware(GZipMiddleware, minimum_size=settings.server.compression.minimum_size)
 
     def setup_routers(self, app: FastAPI) -> None:
         # Состояние привязано к приложению ДО роутеров: guard-зависимости

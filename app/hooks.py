@@ -18,6 +18,16 @@ class BaseHooks:
     например, в TestHooks отключить on_startup, чтобы не поднимать JobManager.
     """
 
+    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+        kwargs = dict()
+        if not settings.server.docs.openapi:
+            kwargs["openapi_url"] = None
+        if not settings.server.docs.docs:
+            kwargs["docs_url"] = None
+        if not settings.server.docs.redoc:
+            kwargs["redoc_url"] = None
+        return kwargs
+
     def on_config_loaded(self, settings: Settings) -> Settings:
         """Хук обработки настроек после загрузки. Возвращает (возможно изменённые) настройки."""
         return settings

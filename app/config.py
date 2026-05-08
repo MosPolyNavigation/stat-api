@@ -93,6 +93,12 @@ class JobsConfig(BaseModel):
     tasks: list[JobConfig] = Field(default=[], alias="list")
 
 
+class DocsConfig(BaseModel):
+    openapi: bool = False
+    docs: bool = False
+    redoc: bool = False
+
+
 class CorsConfig(BaseModel):
     allowed_hosts: list[str] = []
     allowed_methods: list[str] = ["*"]
@@ -122,11 +128,13 @@ class StaticConfig(BaseModel):
 
 class CompressionConfig(BaseModel):
     enable: bool = True
+    minimum_size: int = 1024
 
 
 class ServerConfig(BaseModel):
     host: str = "localhost"
     port: int = 8080
+    docs: DocsConfig = DocsConfig()
     cors: CorsConfig | None = None
     static: StaticConfig | None = None
     compression: CompressionConfig | None = None

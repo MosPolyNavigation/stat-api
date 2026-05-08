@@ -24,6 +24,8 @@ class AppFactory:
     def __call__(self, settings: Optional[Settings] = None) -> FastAPI:
         cfg = settings or load_settings()
         cfg = self.hooks.on_config_loaded(cfg)
+        
+        app_kwargs = self.hooks.setup_app_arguments(cfg)
 
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator[AppLifespanState, None]:
@@ -35,9 +37,7 @@ class AppFactory:
 
         app = FastAPI(
             lifespan=lifespan,
-            docs_url=None,
-            redoc_url=None,
-            openapi_url=None,
+            **app_kwargs
         )
         app.state.config = cfg
         app.state.hooks = self.hooks
