@@ -6,7 +6,6 @@ Create Date: 2025-03-24 12:31:57.493891
 
 """
 from typing import Sequence, Union
-from app.constants import PROBLEMS
 
 from alembic import op
 import sqlalchemy as sa
@@ -17,18 +16,6 @@ revision: str = '9098dc1d4b10'
 down_revision: Union[str, None] = 'ca63b3dbe208'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
-
-
-def data_upgrades():
-    problem = sa.sql.table("problems", sa.sql.column('id', sa.String))
-
-    op.bulk_insert(
-        problem,
-        list(map(
-            lambda x: {'id': x},
-            PROBLEMS
-        ))
-    )
 
 
 def upgrade() -> None:
@@ -57,7 +44,6 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_reviews_id'), 'reviews', ['id'], unique=False)
-    data_upgrades()
     # ### end Alembic commands ###
 
 

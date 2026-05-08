@@ -1,7 +1,7 @@
 """Add role based auth models
 
 Revision ID: 63ec4b49750b
-Revises: 36eaca93b5fb
+Revises: 9098dc1d4b10
 Create Date: 2025-09-30 17:12:08.887623
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '63ec4b49750b'
-down_revision: Union[str, None] = '36eaca93b5fb'
+down_revision: Union[str, None] = '9098dc1d4b10'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

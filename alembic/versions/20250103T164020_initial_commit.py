@@ -64,6 +64,7 @@ def upgrade() -> None:
         sa.Column('visit_date', sa.DateTime(), nullable=False),
         sa.Column('start_id', sa.String(length=50), nullable=False),
         sa.Column('end_id', sa.String(length=50), nullable=False),
+        sa.Column('success', sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(['user_id'], ['user_ids.user_id'], ),
         sa.PrimaryKeyConstraint('id')
     )

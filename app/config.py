@@ -142,6 +142,7 @@ class ServerConfig(BaseModel):
 
 class DatabaseConfig(BaseModel):
     uri: SqliteDsn | PostgresDsn
+    auto_seed: bool = False
 
 
 class JwtTokenConfig(BaseModel):

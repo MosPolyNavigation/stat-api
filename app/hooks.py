@@ -1,9 +1,10 @@
-from __future__ import annotations
+from typing import Type
 
 from fastapi import FastAPI
 
 from app.config import Settings
 from app.jobs import AppLifespanState
+from app.seed.base_seeder import BaseSeeder
 
 
 class BaseHooks:
@@ -27,6 +28,9 @@ class BaseHooks:
         if not settings.server.docs.redoc:
             kwargs["redoc_url"] = None
         return kwargs
+    
+    def setup_seeders(self) -> dict[Type[BaseSeeder]]:
+        return []
 
     def on_config_loaded(self, settings: Settings) -> Settings:
         """Хук обработки настроек после загрузки. Возвращает (возможно изменённые) настройки."""

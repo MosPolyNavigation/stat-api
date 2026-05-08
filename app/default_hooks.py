@@ -1,7 +1,7 @@
 import logging
 from functools import partial
 from os import makedirs, path
-from typing import List, Any
+from typing import List, Any, Type
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,6 +37,7 @@ from app.routes import (
     stat,
 )
 from app.state import AppState
+from app.seed.base_seeder import BaseSeeder
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,36 @@ class DefaultHooks(BaseHooks):
     Хуки по умолчанию: воспроизводят прежнее поведение app/app.py + lifespan
     из app/jobs/__init__.py через сегментированный API.
     """
+
+    def setup_seeders(self) -> dict[Type[BaseSeeder]]:
+        from app.seed import (
+            AllowedPayloadSeeder,
+            DashboardTypeSeeder,
+            EventTypeSeeder,
+            FloorSeeder,
+            GoalSeeder,
+            PayloadTypeSeeder,
+            ProblemSeeder,
+            ReviewStatusSeeder,
+            RightSeeder,
+            RoleRightGoalSeeder,
+            RoleSeeder,
+            ValueTypeSeeder,
+        )
+        return [
+            ProblemSeeder(),
+            ReviewStatusSeeder(),
+            GoalSeeder(),
+            RightSeeder(),
+            RoleSeeder(),
+            RoleRightGoalSeeder(),
+            FloorSeeder(),
+            ValueTypeSeeder(),
+            EventTypeSeeder(),
+            PayloadTypeSeeder(),
+            AllowedPayloadSeeder(),
+            DashboardTypeSeeder()
+        ]
 
     def setup_app_arguments(self, settings: Settings) -> dict[Any]:
         kwargs = super().setup_app_arguments(settings)
