@@ -13,6 +13,7 @@ from app.schemas import UserOut
 from app.services.permission_service import PermissionService
 from app.helpers.token_utils import REFRESH_COOKIE_NAME, clear_refresh_cookie, create_access_token, create_refresh_token_session, decode_refresh_token, hash_token_value, normalize_token_error, set_refresh_cookie, validate_refresh_payload, get_refresh_session
 from app.schemas.auth import AuthScheme
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
@@ -83,10 +84,14 @@ def register_endpoint(router: APIRouter):
             request: Request,
             response: Response,
             form_data: Annotated[AuthScheme, Form()],
-            db: AsyncSession = Depends(get_db)
+            db: AsyncSession = Depends(get_db),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
+        target_user = await get_user_by_login(db, form_data.username)
         user = await authenticate_user(db, form_data.username, form_data.password)
         if not user:
+            if target_user is not None:
+                logger.log(target_user, "Неудачная попытка входа в аккаунт")
             raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
 
         access_token = await create_access_token(user, db)
@@ -101,6 +106,7 @@ def register_endpoint(router: APIRouter):
             )
             await db.commit()
 
+        logger.log(user, "Запрос авторизации (разовый/постоянный вход)")
         return Token(access_token=access_token, token_type="bearer")
 
     """Эндпоинт для получения данных пользователя по токену"""
@@ -114,6 +120,7 @@ def register_endpoint(router: APIRouter):
     async def read_users_me(
             current_user: Annotated[User, Depends(get_current_active_user)],
             db: AsyncSession = Depends(get_db),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """Возвращает актуальные данные текущего пользователя"""
         await db.refresh(current_user)
@@ -126,6 +133,7 @@ def register_endpoint(router: APIRouter):
         )
         rights_goals = await service.get_user_permissions(current_user.id)
         result.rights_by_goals = group_rights_by_goals(rights_goals)
+        logger.log(current_user, "Запрос сведений о пользователе")
         return result
 
     """Эндпоинт для обновления пары токенов по refresh cookie"""
@@ -142,6 +150,7 @@ def register_endpoint(router: APIRouter):
             db: AsyncSession = Depends(get_db),
             user_ip: str | None = Form(default=None),
             refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         # Refresh токен должен приходить в cookie
         if not refresh_token:
@@ -158,10 +167,15 @@ def register_endpoint(router: APIRouter):
                 detail=normalize_token_error(exc, refresh=True),
             ) from exc
 
+        # Получаем пользователя, которому принадлежит refresh токен
+        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+
         # Ищем активную refresh сессию в БД
         session = await get_refresh_session(db, user_id, raw_jti)
         if not session or session.revoked:
             clear_refresh_cookie(response, request)
+            if user is not None:
+                logger.log(user, "Неудачная попытка ротации токена")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="Refresh сессия не найдена или отозвана")
 
@@ -170,10 +184,10 @@ def register_endpoint(router: APIRouter):
             session.revoked = True
             await db.commit()
             clear_refresh_cookie(response, request)
+            if user is not None:
+                logger.log(user, "Неудачная попытка ротации токена")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Срок действия refresh токена истёк")
 
-        # Получаем пользователя, которому принадлежит refresh токен
-        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
         if not user:
             session.revoked = True
             await db.commit()
@@ -185,6 +199,7 @@ def register_endpoint(router: APIRouter):
             session.revoked = True
             await db.commit()
             clear_refresh_cookie(response, request)
+            logger.log(user, "Неудачная попытка ротации токена")
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Неактивный пользователь")
 
         # Ротация refresh токена: старую сессию отзываем
@@ -203,4 +218,5 @@ def register_endpoint(router: APIRouter):
         )
         await db.commit()
 
+        logger.log(user, "Ротация refresh-токена, получение нового access")
         return Token(access_token=access_token, token_type="bearer")

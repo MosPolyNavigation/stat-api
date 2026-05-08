@@ -23,6 +23,7 @@ from app.services.permission_service import PermissionService
 from app.models import Role, UserRole, RoleRightGoal
 from .types import RoleType, DeleteResult
 from .inputs import RoleRightGoalInput, CreateRoleInput, UpdateRoleInput
+from app.routes.graphql.logging import _extract_role_rights
 
 
 @strawberry.type
@@ -160,7 +161,8 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
     session: AsyncSession = await ensure_roles_create_permission(info)
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
-    
+    logger = info.context["user_logger"]
+
     # 1. Проверка на уникальность name
     existing_role = (
         await session.execute(
@@ -224,6 +226,7 @@ async def create_role(info: Info, data: CreateRoleInput) -> RoleType:
     )
     
     role_with_relations = (await session.execute(statement)).scalars().first()
+    logger.log(current_user, f"Создана роль с правами: {_extract_role_rights(role_with_relations)}")
     return _to_role_safe_2(role_with_relations)
 
 
@@ -238,6 +241,7 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
     session: AsyncSession = await ensure_roles_edit_permission(info)
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
+    logger = info.context["user_logger"]
 
     if role_id == 1:
         raise GraphQLError(f"Нельзя изменить роль с ID 1")
@@ -329,6 +333,7 @@ async def update_role(info: Info, role_id: int, data: UpdateRoleInput) -> RoleTy
     )
     
     role_with_relations = (await session.execute(statement)).scalars().first()
+    logger.log(current_user, f"Роли назначены новые права: {_extract_role_rights(role_with_relations)}")
     return _to_role(role_with_relations)
 
 
@@ -342,6 +347,8 @@ async def delete_role(info: Info, role_id: int) -> DeleteResult:
     """
     session: AsyncSession = await ensure_roles_delete_permission(info)
     current_user = info.context["current_user"]
+    service: PermissionService = info.context["permission_service"]
+    logger = info.context["user_logger"]
 
     if role_id == 1:
         raise GraphQLError(f"Нельзя удалить роль с ID 1")
@@ -401,6 +408,7 @@ async def delete_role(info: Info, role_id: int) -> DeleteResult:
     # === Удаляем роль (связи удалятся каскадно) ===
     await session.delete(role)
     await session.commit()
+    logger.log(current_user, f"Удалена роль {role.id}")
 
     return DeleteResult(
         success=True,

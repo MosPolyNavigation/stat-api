@@ -34,6 +34,7 @@ def upgrade() -> None:
         sa.sql.column("role_id", sa.Integer),
         sa.sql.column("right_id", sa.Integer),
         sa.sql.column("goal_id", sa.Integer),
+        sa.sql.column("can_grant", sa.Boolean),
     )
 
     op.bulk_insert(
@@ -48,6 +49,7 @@ def upgrade() -> None:
                 "role_id": ADMIN_ROLE_ID,
                 "right_id": CREATE_RIGHT_ID,
                 "goal_id": CLIENT_GOAL_ID,
+                "can_grant": True,
             }
         ],
     )
