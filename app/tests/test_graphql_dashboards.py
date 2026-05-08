@@ -5,22 +5,8 @@ mutations (create, update, delete with validation),
 and permission checks (denied for users without required rights).
 """
 
-import asyncio
-
 from pwdlib import PasswordHash
-from sqlalchemy import select
-
-from app.constants import (
-    CREATE_RIGHT_ID,
-    DASHBOARDS_GOAL_ID,
-    DELETE_RIGHT_ID,
-    EDIT_RIGHT_ID,
-    VIEW_RIGHT_ID,
-)
-from app.models import RoleRightGoal, User
-from app.models.dashboard import DashboardType as DashboardTypeModel
-
-from .base import client, test_session_maker
+from .base import client
 
 # =============================================================================
 # Tokens / Headers
@@ -46,90 +32,6 @@ def graphql_query(query: str, headers: dict = None, variables: dict = None):
         json={"query": query, "variables": variables or {}},
         headers=headers or {},
     )
-
-
-def _seed_dashboard_test_data():
-    """Ensure dashboard_types, admin CRUD permissions, and a no-perm user exist.
-
-    Called once at module import time, after ``base.py`` has already created
-    the test database, admin user, roles, rights, goals, and event_types.
-    """
-
-    async def _seed():
-        async with test_session_maker() as session:
-            # ── Dashboard types (id=1 "chart", id=2 "avg") ─────────────────
-            existing_types = (
-                await session.execute(
-                    select(DashboardTypeModel).where(
-                        DashboardTypeModel.id.in_([1, 2])
-                    )
-                )
-            ).scalars().all()
-            if not existing_types:
-                session.add_all([
-                    DashboardTypeModel(
-                        id=1,
-                        code_name="chart",
-                        description="График статистики",
-                    ),
-                    DashboardTypeModel(
-                        id=2,
-                        code_name="avg",
-                        description="Агрегированная статистика",
-                    ),
-                ])
-
-            # ── Admin CRUD permissions for dashboards goal ─────────────────
-            existing_perm = (
-                await session.execute(
-                    select(RoleRightGoal).where(
-                        RoleRightGoal.role_id == 1,
-                        RoleRightGoal.goal_id == DASHBOARDS_GOAL_ID,
-                        RoleRightGoal.right_id == CREATE_RIGHT_ID,
-                    )
-                )
-            ).scalar_one_or_none()
-            if not existing_perm:
-                session.add_all([
-                    RoleRightGoal(
-                        role_id=1,
-                        right_id=CREATE_RIGHT_ID,
-                        goal_id=DASHBOARDS_GOAL_ID,
-                    ),
-                    RoleRightGoal(
-                        role_id=1,
-                        right_id=EDIT_RIGHT_ID,
-                        goal_id=DASHBOARDS_GOAL_ID,
-                    ),
-                    RoleRightGoal(
-                        role_id=1,
-                        right_id=DELETE_RIGHT_ID,
-                        goal_id=DASHBOARDS_GOAL_ID,
-                    ),
-                ])
-
-            # ── Second user with NO dashboard permissions ──────────────────
-            existing_user = (
-                await session.execute(
-                    select(User).where(User.id == 2)
-                )
-            ).scalar_one_or_none()
-            if not existing_user:
-                user2 = User(
-                    id=2,
-                    login="noperm",
-                    hash=PasswordHash.recommended().hash("noperm"),
-                    token=USER_NO_PERM_TOKEN,
-                )
-                session.add(user2)
-                # Intentionally no UserRole — zero permissions.
-
-            await session.commit()
-
-    asyncio.run(_seed())
-
-
-_seed_dashboard_test_data()
 
 
 # =============================================================================

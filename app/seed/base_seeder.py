@@ -34,7 +34,7 @@ class BaseSeeder(ABC):
 
         if new_objs:
             session.add_all(new_objs)
-            await session.commit()
+            await session.flush()
 
     async def remove_present(self, session: AsyncSession) -> None:
         """Удаляет из БД записи, которые соответствуют переданным данным."""

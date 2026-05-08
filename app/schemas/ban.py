@@ -1,5 +1,5 @@
 # app/schemas.py
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 
 
@@ -13,8 +13,8 @@ class BanInfoOut(BaseModel):
     requests_count: int = Field(0, description="Количество запросов в истории")
     last_request: Optional[str] = Field(None, description="Время последнего запроса (ISO 8601)")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "user_id": "550e8400-e29b-41d4-a716-446655440000",
                 "banned": True,
@@ -25,6 +25,7 @@ class BanInfoOut(BaseModel):
                 "last_request": "2024-03-18T14:29:55"
             }
         }
+    )
 
 
 class BanListOut(BaseModel):
@@ -35,8 +36,8 @@ class BanListOut(BaseModel):
     size: int = Field(..., description="Размер страницы")
     pages: int = Field(..., description="Всего страниц")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "items": [
                     {
@@ -55,13 +56,15 @@ class BanListOut(BaseModel):
                 "pages": 1
             }
         }
+    )
 
 
 class UnbanRequest(BaseModel):
     """Запрос на снятие бана (для аудита)."""
     reason: Optional[str] = Field(None, description="Причина разбана")
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {"reason": "False positive, user verified"}
         }
+    )

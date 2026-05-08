@@ -1,5 +1,6 @@
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from typing import Sequence, Any
 
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from fastapi import FastAPI
 
 from app.config import Settings
@@ -8,6 +9,7 @@ from app.default_hooks import DefaultHooks
 from app.jobs import AppLifespanState
 from app.routes import auth, check, free_aud, get, graphql, nav, review, stat
 from app.state import AppState
+from app.seed.base_seeder import BaseSeeder
 
 
 class TestHooks(DefaultHooks):
@@ -23,6 +25,13 @@ class TestHooks(DefaultHooks):
         — статика не монтируется и директории не создаются;
         — on_startup / on_shutdown не запускают JobManager и не пишут банов.
     """
+
+    def setup_seeders(self) -> Sequence[BaseSeeder]:
+        # 2. Добавляем тест-специфичные сидеры
+        return []
+    
+    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+        return dict()
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
         super().__init__()

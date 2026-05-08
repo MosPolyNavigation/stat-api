@@ -72,3 +72,4 @@ class AppFactory:
             for seeder in seeders:
                 await seeder.add_missing(session)
                 logger.debug(f"  ↳ {seeder.model.__name__} processed")
+            await session.commit()
