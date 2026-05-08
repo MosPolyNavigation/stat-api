@@ -169,7 +169,8 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
-    
+    logger = info.context["user_logger"]
+
     # Проверяем существование пользователя
     target_user = (
         await session.execute(
@@ -267,7 +268,14 @@ async def grant_role(info: Info, data: GrantRoleInput) -> GrantRoleResult:
     message = f"Успешно назначено ролей: {assigned_count}"
     if skipped_count > 0:
         message += f" (пропущено уже назначенных: {skipped_count})"
-    
+
+    result_user = _to_user(user_with_roles)
+
+    if len(data.role_ids) == 1:
+        logger.log(current_user, f"Назначена роль {data.role_ids[0]} для {result_user.login}")
+    else:
+        logger.log(current_user, f"Назначены роли {data.role_ids} для {result_user.login}")
+
     return GrantRoleResult(
         success=True,
         message=message,
@@ -290,6 +298,7 @@ async def revoke_role(
     session: AsyncSession = info.context["db"]
     current_user = info.context["current_user"]
     service: PermissionService = info.context["permission_service"]
+    logger = info.context["user_logger"]
 
     # === Проверяем права на эскалацию (аналогично grant_role) ===
     role_rights_result = await session.execute(
@@ -345,7 +354,11 @@ async def revoke_role(
     user_with_roles = (await session.execute(statement)).scalars().first()
     
     from .user import _to_user
-    
+
+    result_user = _to_user(user_with_roles) if user_with_roles else None
+    target = result_user.login if result_user is not None else user_id
+    logger.log(current_user, f"Отозвана роль {role_id} для {target}")
+
     return GrantRoleResult(
         success=True,
         message=f"Роль {role_id} успешно отозвана у пользователя {user_id}",

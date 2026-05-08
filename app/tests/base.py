@@ -7,6 +7,7 @@ os.environ["STATAPI_CONFIG"] = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     "config.test.yaml",
 )
+os.environ["STATAPI_LOGGING"] = os.environ.get("STATAPI_LOGGING", "0")
 
 from fastapi.testclient import TestClient
 from pwdlib import PasswordHash

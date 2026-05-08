@@ -12,12 +12,14 @@ from app.config import get_settings
 from app.database import get_db
 from app.helpers.errors import LookupException
 from app.helpers.path import ALLOWED_EXTENSIONS, secure_image_path
-from app.helpers.permissions import require_rights
+from app.helpers.permissions import require_rights_with_logging
 from app.helpers.thumbnail import create_thumbnail_async
 from app.models.nav.aud_photo import AudPhoto
 from app.models.nav.auditory import Auditory
 from app.schemas import Status
 from app.guards.file_checker import photo_validator
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
+from app.models import User
 
 
 def register_endpoint(router: APIRouter):
@@ -25,7 +27,6 @@ def register_endpoint(router: APIRouter):
         "/auditory/photos/upload",
         tags=["nav"],
         response_model=Status,
-        dependencies=[Depends(require_rights("resources", "create"))],
         responses={
             404: {"model": Status, "description": "Auditory not found"},
             415: {"model": Status, "description": "Unsupported Media Type"},
@@ -35,6 +36,10 @@ def register_endpoint(router: APIRouter):
         aud_id: str = Form(..., description="Auditory id"),
         photos: list[UploadFile] = Depends(photo_validator),
         db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(
+            require_rights_with_logging("resources", "create", error_text="Попытка загрузки без прав/ошибка валидации",)
+        ),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         auditory = (
             await db.execute(
@@ -42,6 +47,7 @@ def register_endpoint(router: APIRouter):
             )
         ).scalar_one_or_none()
         if auditory is None:
+            logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
             raise HTTPException(status_code=404, detail="Auditory not found")
 
         base_path = os.path.join(get_settings().static_files, "auditories")
@@ -52,10 +58,12 @@ def register_endpoint(router: APIRouter):
         photos_to_create: list[AudPhoto] = []
         for photo in photos:
             if not photo.content_type or photo.content_type.split("/")[0] != "image":
+                logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
                 raise HTTPException(status_code=415, detail="This endpoint accepts only images")
 
             ext = os.path.splitext(photo.filename or "")[-1].lower().lstrip(".")
             if not ext or ext not in ALLOWED_EXTENSIONS:
+                logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
                 raise HTTPException(status_code=415, detail="Unsupported image extension")
 
             image_name = f"{uuid.uuid4().hex}.{ext}"
@@ -81,6 +89,8 @@ def register_endpoint(router: APIRouter):
 
         db.add_all(photos_to_create)
         await db.commit()
+        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",
+        )
         return Status(status=f"Uploaded {len(photos_to_create)} image(s)")
 
     @router.get(
