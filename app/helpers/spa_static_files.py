@@ -3,6 +3,7 @@ from starlette.responses import FileResponse
 from starlette.exceptions import HTTPException
 from pathlib import Path
 
+
 class SPAStaticFiles(StaticFiles):
     def __init__(self, directory: str, html: bool):
         self.index_file = "index.html"

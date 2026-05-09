@@ -7,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry import Info
 
-from app.helpers.db import _exists
+from app.helpers.db import exists
 from app.models.dashboard import Dashboard, DashboardType as DashboardTypeModel
 from app.models.event import EventType
 
@@ -89,10 +89,10 @@ async def _validate_foreign_keys(
     dashboard_type_id: int,
 ) -> None:
     """Validate that foreign key references exist."""
-    if not await _exists(session, EventType, event_type_id):
+    if not await exists(session, EventType, event_type_id):
         raise GraphQLError(f"EventType с id={event_type_id} не найден")
 
-    if not await _exists(session, DashboardTypeModel, dashboard_type_id):
+    if not await exists(session, DashboardTypeModel, dashboard_type_id):
         raise GraphQLError(f"DashboardType с id={dashboard_type_id} не найден")
 
 
@@ -188,11 +188,11 @@ async def create_dashboards(
     unique_dashboard_type_ids = {inp.dashboard_type_id for inp in inputs}
 
     for event_type_id in unique_event_type_ids:
-        if not await _exists(session, EventType, event_type_id):
+        if not await exists(session, EventType, event_type_id):
             raise GraphQLError(f"EventType с id={event_type_id} не найден")
 
     for dashboard_type_id in unique_dashboard_type_ids:
-        if not await _exists(session, DashboardTypeModel, dashboard_type_id):
+        if not await exists(session, DashboardTypeModel, dashboard_type_id):
             raise GraphQLError(
                 f"DashboardType с id={dashboard_type_id} не найден"
             )

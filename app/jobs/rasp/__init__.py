@@ -11,10 +11,10 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 @scheduled_task(name="fetch_cur_rasp")
 async def fetch_cur_rasp(state: AppState):
     # Скип, если воркер уже выполняется (другой триггер планировщика или ручной вызов).
-    if state._rasp_lock.locked():
+    if state.rasp_lock.locked():
         return
 
-    async with state._rasp_lock:
+    async with state.rasp_lock:
         try:
             logger.info("Starting schedule fetching")
             session_maker = get_session_maker()

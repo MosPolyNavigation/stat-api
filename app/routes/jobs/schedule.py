@@ -37,7 +37,7 @@ def register_endpoint(router: APIRouter):
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         state: AppState = request.app.state.app_state
-        if state._rasp_lock.locked():
+        if state.rasp_lock.locked():
             response.status_code = 409
             return Status(status="Сейчас идет выполнение этой задачи")
         background_tasks.add_task(fetch_cur_rasp, state=state)

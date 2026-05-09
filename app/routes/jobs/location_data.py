@@ -25,7 +25,7 @@ def register_endpoint(router: APIRouter):
         logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         state: AppState = request.app.state.app_state
-        if state._location_lock.locked():
+        if state.location_lock.locked():
             response.status_code = 409
             return Status(status="Сейчас идет выполнение этой задачи")
         background_tasks.add_task(fetch_location_data, state=state)

@@ -2,13 +2,12 @@ from typing import List, Optional
 from datetime import datetime
 
 import strawberry
-from graphql import GraphQLError
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 
-from app.models import RefreshToken, User
+from app.models import RefreshToken
 from app.routes.graphql.filter_handlers import (
     _create_pagination_info,
     _validated_limit_2,
@@ -19,7 +18,6 @@ from app.routes.graphql.permissions import ensure_permissions_by_ids
 from app.constants import VIEW_RIGHT_ID, REFRESH_TOKEN_GOAL_ID
 from app.routes.graphql.user_role.types import UserType
 from app.routes.graphql.user_role.user import _to_user_safe
-from app.services.refresh_token_service import RefreshTokenService
 
 
 @strawberry.type

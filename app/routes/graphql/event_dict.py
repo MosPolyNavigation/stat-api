@@ -3,11 +3,10 @@ from typing import Optional
 import strawberry
 from graphql import GraphQLError
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from strawberry import Info
 
-from app.helpers.db import _exists
+from app.helpers.db import exists
 from app.models import AllowedPayload, ClientId, EventType, PayloadType, ValueType
 
 from .pagination import PageInfo, PaginationInfo, PaginationInput
@@ -420,7 +419,7 @@ async def delete_value_type(info: Info, value_type_id: int) -> bool:
 
 async def create_payload_type(info: Info, data: PayloadTypeInput) -> PayloadTypeType:
     session = await ensure_stats_create_permission(info)
-    if not await _exists(session, ValueType, data.value_type_id):
+    if not await exists(session, ValueType, data.value_type_id):
         raise GraphQLError(f"ValueType {data.value_type_id} not found")
     item = PayloadType(
         id=data.id,
@@ -452,7 +451,7 @@ async def update_payload_type(info: Info, payload_type_id: int, data: PayloadTyp
     if item is None:
         raise GraphQLError(f"PayloadType {payload_type_id} not found")
     if data.value_type_id is not None:
-        if not await _exists(session, ValueType, data.value_type_id):
+        if not await exists(session, ValueType, data.value_type_id):
             raise GraphQLError(f"ValueType {data.value_type_id} not found")
         item.value_type_id = data.value_type_id
     if data.code_name is not None:
@@ -476,9 +475,9 @@ async def delete_payload_type(info: Info, payload_type_id: int) -> bool:
 
 async def create_allowed_payload_rule(info: Info, data: AllowedPayloadRuleInput) -> AllowedPayloadRuleType:
     session = await ensure_stats_create_permission(info)
-    if not await _exists(session, EventType, data.event_type_id):
+    if not await exists(session, EventType, data.event_type_id):
         raise GraphQLError(f"EventType {data.event_type_id} not found")
-    if not await _exists(session, PayloadType, data.payload_type_id):
+    if not await exists(session, PayloadType, data.payload_type_id):
         raise GraphQLError(f"PayloadType {data.payload_type_id} not found")
     item = AllowedPayload(event_type_id=data.event_type_id, payload_type_id=data.payload_type_id)
     session.add(item)
@@ -513,9 +512,9 @@ async def update_allowed_payload_rule(
     ).scalar_one_or_none()
     if item is None:
         raise GraphQLError("Правило допустимого payload не найдено")
-    if not await _exists(session, EventType, data.new_event_type_id):
+    if not await exists(session, EventType, data.new_event_type_id):
         raise GraphQLError(f"EventType {data.new_event_type_id} not found")
-    if not await _exists(session, PayloadType, data.new_payload_type_id):
+    if not await exists(session, PayloadType, data.new_payload_type_id):
         raise GraphQLError(f"PayloadType {data.new_payload_type_id} not found")
     await session.delete(item)
     await session.flush()

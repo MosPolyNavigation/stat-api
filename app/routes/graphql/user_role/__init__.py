@@ -67,8 +67,8 @@ __all__ = [
     "resolve_user_roles",
     "UserRoleType",
     "UserRoleConnection",
-    "resolve_role_right_goal"
     "resolve_role_right_goals",
+    "resolve_role_right_goal",
     "RoleRightGoalType",
     "RoleRightGoalConnection",
     "grant_role",

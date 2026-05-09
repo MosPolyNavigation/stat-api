@@ -140,10 +140,10 @@ def build_data_entry(dto: DataDto) -> DataEntry:
 @scheduled_task(name="fetch_location_data")
 async def fetch_location_data(state: AppState):
     """Воркер: собирает locationData JSON и пересобирает графы навигации в state."""
-    if state._location_lock.locked():
+    if state.location_lock.locked():
         return
 
-    async with state._location_lock:
+    async with state.location_lock:
         try:
             logger.info("Starting locationData fetching")
 

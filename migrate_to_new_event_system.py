@@ -1,7 +1,7 @@
 import argparse
 import asyncio
 from collections.abc import Sequence
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 
 from sqlalchemy import text
@@ -111,7 +111,7 @@ async def _insert_client_ids(
         ident = str(row["user_id"])
         creation_date = row["creation_date"]
         if creation_date is None:
-            creation_date = datetime.utcnow()
+            creation_date = datetime.now(UTC)
         if ident in mapping:
             continue
 

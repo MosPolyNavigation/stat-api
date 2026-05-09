@@ -25,6 +25,9 @@ dependencies = [
     "PyJWT",
     "user-agents",
     "pyyaml",
+    "pydantic",
+    "graphql-core",
+    "starlette",
 ]
 
 [dependency-groups]
