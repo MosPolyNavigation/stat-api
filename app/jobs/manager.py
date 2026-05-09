@@ -3,7 +3,7 @@ import logging
 import uuid
 from datetime import datetime, timezone
 from os import path
-from typing import Any, Callable, Awaitable
+from typing import Any, Callable, Awaitable, Optional
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import BackgroundTasks
@@ -16,6 +16,7 @@ from app.jobs.queue_db import (
     log_job_error,
     get_job_history,
 )
+from app.state import AppState
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +77,7 @@ def scheduled_task(name: str, **overrides: Any) -> Callable:
                     "Task '%s' already has %d/%d running instance(s), skipping",
                     name, current, max_instances,
                 )
-                return
+                return None
 
             run_id = _run_id or str(uuid.uuid4())
             _RUNNING_TASKS[name] = current + 1
@@ -133,10 +134,12 @@ class JobManager:
         static_path: str,
         queue_type: str = "sqlite",
         queue_db: str = "queue.db",
+        state: Optional[AppState] = None,
     ):
         self._db_path = path.join(static_path, queue_db)
         self._scheduler: AsyncIOScheduler | None = None
         self._job_configs: dict[str, JobConfig] = {}
+        self._state = state
 
     @property
     def db_path(self) -> str:
@@ -172,6 +175,11 @@ class JobManager:
                 continue
 
             func = registry_by_name[job_cfg.name]["func"]
+
+            # ← NEW: если есть state — инжектим его в задачу (по соглашению)
+            if self._state is not None:
+                func = functools.partial(func, state=self._state)
+
             self._scheduler.add_job(func, **self._build_apscheduler_kwargs(job_cfg))
             logger.info("Scheduled job '%s' with trigger '%s'", job_cfg.name, job_cfg.trigger)
 

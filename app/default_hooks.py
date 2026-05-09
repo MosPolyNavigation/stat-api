@@ -1,7 +1,6 @@
 import logging
-from functools import partial
 from os import makedirs, path
-from typing import List, Any, Type
+from typing import List, Any, LiteralString
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -67,7 +66,7 @@ class DefaultHooks(BaseHooks):
     из app/jobs/__init__.py через сегментированный API.
     """
 
-    def setup_seeders(self) -> dict[Type[BaseSeeder]]:
+    def setup_seeders(self) -> list[BaseSeeder]:
         from app.seed import (
             AllowedPayloadSeeder,
             DashboardTypeSeeder,
@@ -97,7 +96,7 @@ class DefaultHooks(BaseHooks):
             DashboardTypeSeeder()
         ]
 
-    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+    def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
         kwargs = super().setup_app_arguments(settings)
         kwargs["version"] = APP_VERSION
         kwargs["openapi_tags"] = TAGS_METADATA
@@ -138,7 +137,7 @@ class DefaultHooks(BaseHooks):
         project_dir = path.dirname(current_file_dir)
         admin_dir = path.join(project_dir, "dist-panel")
 
-        directories: List[str] = [
+        directories: List[str | LiteralString | bytes] = [
             path.join(settings.static_files, "images"),
             path.join(settings.static_files, "auditories"),
             path.join(settings.static_files, "plans"),
@@ -188,14 +187,9 @@ class DefaultHooks(BaseHooks):
             static_path=settings.static_files,
             queue_type=jobs_config.queue,
             queue_db=jobs_config.url,
+            state=state
         )
         job_manager.setup_from_config(jobs_config)
-
-        # setup_from_config зарегистрировал воркеры из реестра @scheduled_task,
-        # но без аргументов. Пере-регистрируем их через partial(state=state) —
-        # replace_existing=True заменит запись в APScheduler. Расписание берём
-        # из YAML, чтобы не дублировать его в коде.
-        self._reschedule_with_state(job_manager, jobs_config, state)
 
         # Системные задачи (не входят в публичный реестр @scheduled_task)
         job_manager.add_job(
@@ -270,39 +264,3 @@ class DefaultHooks(BaseHooks):
         if isinstance(jobs_config_data, JobsConfig):
             return jobs_config_data
         return JobsConfig.model_validate(jobs_config_data)
-
-    @staticmethod
-    def _reschedule_with_state(
-        job_manager: JobManager,
-        jobs_config: JobsConfig,
-        state: AppState,
-    ) -> None:
-        """
-        Переопределяет регистрации воркеров, требующих AppState.
-
-        setup_from_config регистрирует чистый wrapper из @scheduled_task (без
-        аргументов), но воркеры fetch_location_data / fetch_cur_rasp требуют
-        state. Делаем повторный add_job с partial(state=...) и replace_existing=True
-        — APScheduler заменит запись по тому же id. Триггеры берутся из YAML-конфига.
-        """
-        from app.jobs.manager import get_task_registry  # локальный импорт во избежание циклов
-
-        registry_by_name = {entry["name"]: entry for entry in get_task_registry()}
-        stateful_names = {"fetch_location_data", "fetch_cur_rasp"}
-
-        for job_cfg in jobs_config.tasks:
-            if not job_cfg.enabled or job_cfg.name not in stateful_names:
-                continue
-
-            entry = registry_by_name.get(job_cfg.name)
-            if entry is None:
-                logger.warning(
-                    "Stateful worker '%s' is in config but not in @scheduled_task registry",
-                    job_cfg.name,
-                )
-                continue
-
-            wrapped = partial(entry["func"], state=state)
-            kwargs = JobManager._build_apscheduler_kwargs(job_cfg)
-            kwargs["replace_existing"] = True
-            job_manager.add_job(wrapped, **kwargs)
