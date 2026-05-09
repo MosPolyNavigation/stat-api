@@ -23,13 +23,13 @@ from app.jobs.refresh_token import (
     delete_old_refresh_tokens,
     revoke_expired_refresh_tokens,
 )
+from app.graphql.schema import graphql_router
 from app.routes import (
     admin,
     auth,
     check,
     free_aud,
     get,
-    graphql,
     jobs,
     nav,
     review,
@@ -126,7 +126,7 @@ class DefaultHooks(BaseHooks):
         app.include_router(review.router)
         app.include_router(check.router)
         app.include_router(auth.router)
-        app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
+        app.include_router(graphql_router, prefix="/api/graphql", tags=["graphql"])
         app.include_router(jobs.router)
         app.include_router(free_aud.router)
         app.include_router(nav.router)

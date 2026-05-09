@@ -15,6 +15,7 @@ from app.routes.graphql.logging import (
 )
 
 from .context import GraphQLContext
+from .loaders import create_loaders
 
 
 async def get_context(
@@ -36,6 +37,7 @@ async def get_context(
         permission_service=PermissionService(db),
         user_logger=user_logger,
         request=request,
+        loaders=create_loaders(db),
     )
 
 

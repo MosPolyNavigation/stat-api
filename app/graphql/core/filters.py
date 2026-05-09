@@ -88,10 +88,11 @@ def _build_column_conditions(col: ColumnElement, f: BaseFilterInput) -> Optional
         conditions.append(~col.in_(is_not_in))
 
     # Сравнения (числа/даты)
-    for op in ("gt", "gte", "lt", "lte"):
-        val: Optional[int] = getattr(f, op, None)
+    op_map = {"gt": "__gt__", "gte": "__ge__", "lt": "__lt__", "lte": "__le__"}
+    for op, sa_op in op_map.items():
+        val = getattr(f, op, None)
         if val is not None:
-            conditions.append(getattr(col, f"__{op}__")(val))
+            conditions.append(getattr(col, sa_op)(val))
 
     # Диапазоны
     between: Optional[list[int]] = getattr(f, "between", None)
@@ -148,21 +149,21 @@ def _build_filter_condition(model: Type[DeclarativeBase], filters: BaseFilterInp
         if field.name == "and_":
             sub_filters: List[BaseFilterInput] = val if val is not None else []
             sub = [_build_filter_condition(model, f) for f in sub_filters]
-            valid = [c for c in sub if c]
+            valid = [c for c in sub if c is not None]
             if valid:
                 conditions.append(and_(*valid))
 
         elif field.name == "or_":
             sub_filters: List[BaseFilterInput] = val if val is not None else []
             sub = [_build_filter_condition(model, f) for f in sub_filters]
-            valid = [c for c in sub if c]
+            valid = [c for c in sub if c is not None]
             if valid:
                 conditions.append(or_(*valid))
 
         elif field.name == "not_":
             sub_filter: BaseFilterInput = val
             cond = _build_filter_condition(model, sub_filter)
-            if cond:
+            if cond is not None:
                 conditions.append(not_(cond))
 
         else:
@@ -171,7 +172,7 @@ def _build_filter_condition(model: Type[DeclarativeBase], filters: BaseFilterInp
             if col is None:
                 raise ValueError(f"Model {model.__name__} не имеет колонки '{field.name}'")
             cond = _build_column_conditions(col, val)
-            if cond:
+            if cond is not None:
                 conditions.append(cond)
 
     return and_(*conditions) if conditions else None
@@ -190,4 +191,4 @@ def apply_filters(stmt: Select, model: Type[DeclarativeBase], filters: BaseFilte
     ✅ Поддерживает вложенные and/or/not
     """
     cond = _build_filter_condition(model, filters)
-    return stmt.where(cond) if cond else stmt
+    return stmt.where(cond) if cond is not None else stmt
