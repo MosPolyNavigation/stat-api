@@ -3,22 +3,24 @@ import uvicorn
 
 from app.default_hooks import DefaultHooks
 from app.factory import AppFactory
-
-CONFIG_ENV_NOTE = "\n🌍 STATAPI_CONFIG — путь к YAML-файлу конфигурации (по умолчанию: config.yaml)"
+from scripts.db import db_cli
+from scripts import CONFIG_ENV_NOTE
 
 app_cli = typer.Typer(
     name="stat-api",
     help=f"🚀 Backend для проекта mospolynavigation.{CONFIG_ENV_NOTE}",
     add_completion=False,
-    no_args_is_help=True,  # ← Показывать справку, если не передана подкоманда
+    no_args_is_help=True,
 )
 
 
-# ← Корневой коллбэк: фиксирует структуру "статус → подкоманда"
 @app_cli.callback()
 def root_callback() -> None:
-    """🚀 Backend для mospolynavigation."""
     pass
+
+
+# 🔌 Подключаем группу db
+app_cli.add_typer(db_cli, name="db")
 
 
 @app_cli.command(name="serve", help=f"🌐 Запуск FastAPI-сервера через Uvicorn.{CONFIG_ENV_NOTE}")
@@ -28,15 +30,10 @@ def serve(
     reload: bool = typer.Option(False, help="Автоперезагрузка при изменении кода"),
     workers: int = typer.Option(1, help="Количество worker-процессов Uvicorn"),
 ) -> None:
-    """Запуск HTTP-сервера."""
     app_factory = AppFactory(DefaultHooks())
-    app = app_factory()
     cfg = app_factory.cfg
-
-    final_host: str = host or cfg.server.host
-    final_port: int = port or cfg.server.port
-
-    uvicorn.run(app, host=final_host, port=final_port, reload=reload, workers=workers)
+    app = app_factory()
+    uvicorn.run(app, host=host or cfg.server.host, port=port or cfg.server.port, reload=reload, workers=workers)
 
 
 if __name__ == "__main__":

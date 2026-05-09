@@ -1,8 +1,14 @@
-import asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy import select, text
-import logging
+from pathlib import Path
 
+import asyncio
+import logging
+import typer
+from pydantic import PostgresDsn
+from sqlalchemy import select, text
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from typing import Annotated
+
+from app.config import load_settings
 from app.models import (
     Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus,
     ClientId, User, RefreshToken, UserLog, ValueType,
@@ -16,15 +22,7 @@ from app.models import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-SQLITE_DSN = "sqlite+aiosqlite:///database.db"
-POSTGRES_DSN = "postgresql+asyncpg://user:pass@localhost:5432/database"
-
-sqlite_engine = create_async_engine(SQLITE_DSN, future=True)
-pg_engine = create_async_engine(POSTGRES_DSN, future=True)
-
-SqliteSession = async_sessionmaker(sqlite_engine, expire_on_commit=False)
-PgSession = async_sessionmaker(pg_engine, expire_on_commit=False)
-
+# Порядок миграции — тот же, что в оригинальном скрипте
 MIGRATION_ORDER = [
     ValueType, Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus, User,
     ClientId, RefreshToken, UserLog, EventType, PayloadType,
@@ -34,18 +32,15 @@ MIGRATION_ORDER = [
     DodCorpus, DodPlan, DodAuditory, DodAudPhoto,
     Event, AllowedPayload, Payload,
 ]
-
 CLEANUP_ORDER = list(reversed(MIGRATION_ORDER))
 
 
 def get_pk_column(model) -> str | None:
-    """Получить имя первичного ключа модели."""
     pk = model.__mapper__.primary_key
     return pk[0].name if len(pk) == 1 else None
 
 
 def is_autoincrement_pk(model):
-    """Проверить, является ли ПК автоинкрементным integer."""
     pk = model.__mapper__.primary_key
     if len(pk) != 1:
         return False
@@ -54,7 +49,6 @@ def is_autoincrement_pk(model):
 
 
 async def get_existing_ids(session: AsyncSession, model) -> set:
-    """Получить множество существующих PK в целевой БД."""
     pk = get_pk_column(model)
     if not pk:
         return set()
@@ -64,7 +58,6 @@ async def get_existing_ids(session: AsyncSession, model) -> set:
 
 
 async def update_sequence(session: AsyncSession, model):
-    """Сбросить sequence для автоинкрементных полей в PostgreSQL."""
     pk = get_pk_column(model)
     if not pk or not is_autoincrement_pk(model):
         return
@@ -80,10 +73,8 @@ async def update_sequence(session: AsyncSession, model):
 
 
 async def clear_table(session: AsyncSession, model):
-    """Очистить таблицу в PostgreSQL с каскадным удалением."""
     table = model.__tablename__
     try:
-        # TRUNCATE ... CASCADE удалит все связанные записи [[11]]
         await session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
         await session.commit()
         logger.info(f"  ✓ Таблица {table} очищена")
@@ -94,7 +85,6 @@ async def clear_table(session: AsyncSession, model):
 
 
 async def clear_all_tables(session: AsyncSession):
-    """Очистить все таблицы в обратном порядке зависимостей."""
     logger.info("🧹 Очистка всех таблиц PostgreSQL...")
     for model in CLEANUP_ORDER:
         try:
@@ -106,29 +96,23 @@ async def clear_all_tables(session: AsyncSession):
 
 
 async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, model):
-    """Мигрировать данные одной модели из SQLite в PostgreSQL."""
     logger.info(f"🔄 Миграция {model.__tablename__}...")
 
-    # 1. Получаем все записи из SQLite
     result = await session_sqlite.execute(select(model))
     sqlite_objs = result.scalars().all()
     if not sqlite_objs:
         logger.info(f"  ℹ Нет данных в SQLite")
         return
 
-    # 2. Проверяем существующие записи (для idempotency)
     existing_pks = await get_existing_ids(session_pg, model)
     pk_attr = get_pk_column(model)
 
-    # 3. Подготовка объектов для вставки
     new_objects = []
     for obj in sqlite_objs:
         if pk_attr:
             pk_value = getattr(obj, pk_attr)
             if pk_value in existing_pks:
-                continue  # Пропускаем дубликаты
-
-        # Копируем только колонки таблицы (исключаем отношения)
+                continue
         data = {c.key: getattr(obj, c.key) for c in obj.__table__.columns}
         new_obj = model(**data)
         new_objects.append(new_obj)
@@ -137,7 +121,6 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
         logger.info(f"  ℹ Все записи уже существуют")
         return
 
-    # 4. Пакетная вставка [[2]]
     batch_size = 500
     total = len(new_objects)
 
@@ -147,24 +130,81 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
         await session_pg.commit()
         logger.info(f"  ✓ Вставлено {len(batch)}/{total} записей")
 
-    # 5. Обновляем sequence для автоинкремента
     await update_sequence(session_pg, model)
     logger.info(f"✅ {model.__tablename__} мигрирована")
 
 
-async def main(clean_before_migrate: bool = True):
-    """Точка входа миграции."""
-    async with SqliteSession() as session_sqlite, PgSession() as session_pg:
-        if clean_before_migrate:
-            await clear_all_tables(session_pg)
+async def _run_migration(sqlite_dsn: str, pg_dsn: str, clean_before: bool):
+    """Внутренняя логика: создание движков и запуск миграции."""
+    sqlite_engine = create_async_engine(sqlite_dsn, future=True)
+    pg_engine = create_async_engine(pg_dsn, future=True)
 
-        for model in MIGRATION_ORDER:
-            try:
-                await migrate_model(session_sqlite, session_pg, model)
-            except Exception as e:
-                logger.error(f"Ошибка при миграции {model.__tablename__}: {e}")
-                await session_pg.rollback()
+    sqlite_session = async_sessionmaker(sqlite_engine, expire_on_commit=False)
+    pg_session = async_sessionmaker(pg_engine, expire_on_commit=False)
 
-if __name__ == "__main__":
-    # Запуск: clean_before_migrate=False для повторной миграции без очистки
-    asyncio.run(main(clean_before_migrate=True))
+    try:
+        async with sqlite_session() as session_sqlite, pg_session() as session_pg:
+            if clean_before:
+                await clear_all_tables(session_pg)
+
+            for model in MIGRATION_ORDER:
+                try:
+                    await migrate_model(session_sqlite, session_pg, model)
+                except Exception as e:
+                    logger.error(f"Ошибка при миграции {model.__tablename__}: {e}")
+                    await session_pg.rollback()
+                    raise
+    finally:
+        await sqlite_engine.dispose()
+        await pg_engine.dispose()
+
+
+# ── Typer-команда ──────────────────────────────────────────────────────
+
+def sqlite_to_pg_command(
+    sqlite_path: Annotated[
+        Path,
+        typer.Argument(..., help="Путь к файлу SQLite-базы (например, app.db)"),
+    ],
+    clean: Annotated[
+        bool,
+        typer.Option("--clean", help="Очистить целевую БД перед миграцией"),
+    ] = True,
+    pg_dsn_override: Annotated[
+        str | None,
+        typer.Option("--pg-dsn", help="Переопределить PostgreSQL DSN из конфига"),
+    ] = None,
+) -> None:
+    """
+    Миграция данных из SQLite в PostgreSQL.
+    PostgreSQL-строка подключения берётся из конфига (переменная STATAPI_CONFIG).
+    """
+    # 1. Загружаем конфиг
+    settings = load_settings()
+
+    # 2. Получаем и валидируем PostgreSQL DSN
+    pg_dsn = pg_dsn_override or str(settings.sqlalchemy_database_url)
+    try:
+        # Валидация через Pydantic PostgresDsn
+        PostgresDsn(pg_dsn)
+    except Exception as e:
+        typer.echo(f"❌ Некорректный PostgreSQL DSN: {e}")
+        raise typer.Exit(1)
+
+    # 3. Формируем SQLite DSN из аргумента
+    sqlite_dsn = f"sqlite+aiosqlite:///{sqlite_path.resolve()}"
+    if not sqlite_path.exists():
+        typer.echo(f"❌ Файл не найден: {sqlite_path}")
+        raise typer.Exit(1)
+
+    typer.echo(f"🔌 SQLite: {sqlite_dsn}")
+    typer.echo(f"🔌 PostgreSQL: {pg_dsn}")
+    typer.echo(f"🧹 Очистка перед миграцией: {clean}")
+
+    # 4. Запускаем асинхронную миграцию
+    try:
+        asyncio.run(_run_migration(sqlite_dsn, pg_dsn, clean_before=clean))
+        typer.echo("✅ Миграция завершена успешно")
+    except Exception as e:
+        typer.echo(f"💥 Ошибка миграции: {e}")
+        raise typer.Exit(1)

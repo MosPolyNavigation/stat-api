@@ -1,14 +1,14 @@
-import argparse
 import asyncio
 from collections.abc import Sequence
 from datetime import datetime, UTC
-from typing import Any
+from typing import Annotated, Any
 
+import typer
+from pydantic import PostgresDsn
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
-from app.config import get_settings
-
+from app.config import load_settings
 
 EVENT_CODES = ("site", "auds", "ways", "plans")
 PAYLOAD_CODES = ("endpoint", "auditory_id", "start_id", "end_id", "success", "plan_id")
@@ -319,9 +319,9 @@ async def _migrate_reviews(
     return stats
 
 
-async def _run(old_db_url: str) -> None:
+async def _run_migration(old_db_url: str, new_db_url: str) -> None:
     old_async_url = _to_async_dsn(old_db_url)
-    new_async_url = _to_async_dsn(str(get_settings().sqlalchemy_database_url))
+    new_async_url = _to_async_dsn(new_db_url)
 
     old_engine = create_async_engine(old_async_url)
     new_engine = create_async_engine(new_async_url)
@@ -334,32 +334,53 @@ async def _run(old_db_url: str) -> None:
             stats = await _migrate_events(old_conn, new_conn, client_map)
             review_stats = await _migrate_reviews(old_conn, new_conn, client_map)
 
-        print("Migration completed.")
-        print(f"Inserted client_ids: {len(client_map)}")
-        print(f"Inserted site events: {stats['site_events']}")
-        print(f"Inserted auds events: {stats['auds_events']}")
-        print(f"Inserted ways events: {stats['ways_events']}")
-        print(f"Inserted plans events: {stats['plans_events']}")
-        print(f"Inserted payloads: {stats['payloads']}")
-        print(f"Skipped rows: {stats['skipped_rows']}")
-        print(f"Inserted reviews: {review_stats['reviews']}")
-        print(f"Skipped reviews: {review_stats['skipped_reviews']}")
+        typer.echo("✅ Migration completed.")
+        typer.echo(f"Inserted client_ids: {len(client_map)}")
+        typer.echo(f"Inserted site events: {stats['site_events']}")
+        typer.echo(f"Inserted auds events: {stats['auds_events']}")
+        typer.echo(f"Inserted ways events: {stats['ways_events']}")
+        typer.echo(f"Inserted plans events: {stats['plans_events']}")
+        typer.echo(f"Inserted payloads: {stats['payloads']}")
+        typer.echo(f"Skipped rows: {stats['skipped_rows']}")
+        typer.echo(f"Inserted reviews: {review_stats['reviews']}")
+        typer.echo(f"Skipped reviews: {review_stats['skipped_reviews']}")
     finally:
         await old_engine.dispose()
         await new_engine.dispose()
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="One-time migration to the new event storage system.",
-    )
-    parser.add_argument(
-        "old_db_url",
-        help="Connection string to the old database.",
-    )
-    args = parser.parse_args()
-    asyncio.run(_run(args.old_db_url))
+# ── Функция без декоратора — чистая бизнес-логика ───────────────────────
+def old_events_to_new_command(
+    old_db_url: Annotated[
+        str,
+        typer.Argument(..., help="Строка подключения к старой базе данных"),
+    ],
+    new_db_url_override: Annotated[
+        str | None,
+        typer.Option("--new-db", help="Переопределить DSN новой БД из конфига"),
+    ] = None,
+) -> None:
+    """
+    Одноразовая миграция в новую систему хранения событий.
+    Новая БД берётся из конфига (переменная STATAPI_CONFIG).
+    """
+    from scripts import CONFIG_ENV_NOTE  # noqa: F401
 
+    # Загружаем конфиг и получаем DSN новой БД
+    settings = load_settings()
+    new_db_url = new_db_url_override or str(settings.sqlalchemy_database_url)
 
-if __name__ == "__main__":
-    main()
+    # Валидация старой БД (разрешаем SQLite/Postgres)
+    old_db_normalized = _to_async_dsn(old_db_url)
+    if not any(old_db_normalized.startswith(p) for p in ("sqlite+aiosqlite:///", "postgresql+asyncpg://")):
+        typer.echo(f"❌ Некорректный DSN старой БД: {old_db_url}")
+        raise typer.Exit(1)
+
+    typer.echo(f"🔌 Старая БД: {old_db_normalized}")
+    typer.echo(f"🔌 Новая БД: {new_db_url}")
+
+    try:
+        asyncio.run(_run_migration(old_db_url, new_db_url))
+    except Exception as e:
+        typer.echo(f"💥 Ошибка миграции: {e}")
+        raise typer.Exit(1)
