@@ -112,3 +112,27 @@ class ClientIdFilterInput(BaseFilterInput):
     and_: Optional[List["ClientIdFilterInput"]] = strawberry.field(name="and", default=None)
     or_: Optional[List["ClientIdFilterInput"]] = strawberry.field(name="or", default=None)
     not_: Optional["ClientIdFilterInput"] = strawberry.field(name="not", default=None)
+
+
+# =============================================================================
+# Event & Payload Filters
+# =============================================================================
+@strawberry.input
+class EventFilterInput(BaseFilterInput):
+    id: Optional[IntFilterInput] = None
+    client_id: Optional[IntFilterInput] = None
+    event_type_id: Optional[IntFilterInput] = None
+    and_: Optional[List["EventFilterInput"]] = strawberry.field(name="and", default=None)
+    or_: Optional[List["EventFilterInput"]] = strawberry.field(name="or", default=None)
+    not_: Optional["EventFilterInput"] = strawberry.field(name="not", default=None)
+
+
+@strawberry.input
+class PayloadFilterInput(BaseFilterInput):
+    id: Optional[IntFilterInput] = None
+    event_id: Optional[IntFilterInput] = None
+    type_id: Optional[IntFilterInput] = None
+    value: Optional[StringFilterInput] = None
+    and_: Optional[List["PayloadFilterInput"]] = strawberry.field(name="and", default=None)
+    or_: Optional[List["PayloadFilterInput"]] = strawberry.field(name="or", default=None)
+    not_: Optional["PayloadFilterInput"] = strawberry.field(name="not", default=None)

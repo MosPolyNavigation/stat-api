@@ -13,6 +13,8 @@ from app.models import (
     AllowedPayload as APModel,
     ReviewStatus as RSModel,
     ClientId as CIModel,
+    Event as EventModel,
+    Payload as PayloadModel,
 )
 from app.graphql.core.context import GraphQLContext
 
@@ -87,6 +89,24 @@ def _review_from_model(model) -> Optional["ReviewType"]:
         text=model.text,  # type: ignore[call-arg]
         image_name=model.image_name,  # type: ignore[call-arg]
         creation_date=model.creation_date,  # type: ignore[call-arg]
+    )
+
+
+def _event_from_model(model: EventModel) -> "Event":
+    return Event(
+        db_id=model.id,  # type: ignore[call-arg]
+        client_id=model.client_id,  # type: ignore[call-arg]
+        event_type_id=model.event_type_id,  # type: ignore[call-arg]
+        trigger_time=model.trigger_time,  # type: ignore[call-arg]
+    )
+
+
+def _payload_from_model(model: PayloadModel) -> "Payload":
+    return Payload(
+        db_id=model.id,  # type: ignore[call-arg]
+        event_id=model.event_id,  # type: ignore[call-arg]
+        type_id=model.type_id,  # type: ignore[call-arg]
+        value=model.value,  # type: ignore[call-arg]
     )
 
 
@@ -383,4 +403,99 @@ class ReviewType(relay.Node):
             elif required:
                 raise ValueError(f"Review {rid} not found")
 
+        return [n for n in nodes if n is not None]
+
+
+# =============================================================================
+# Event & Payload Relay Nodes
+# =============================================================================
+@strawberry.type
+class Event(relay.Node):
+    """Событие, сгенерированное клиентом."""
+    db_id: relay.NodeID[int]
+    client_id: int
+    event_type_id: int
+    trigger_time: datetime
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def client(self, info: strawberry.Info) -> Optional[ClientIdType]:
+        ctx: GraphQLContext = info.context
+        ci_model = await ctx.loaders["client_id"].load(self.client_id)
+        return ClientIdType(
+            db_id=ci_model.id,
+            ident=ci_model.ident,
+            creation_date=ci_model.creation_date
+        ) if ci_model else None  # type: ignore[call-arg]
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
+        ctx: GraphQLContext = info.context
+        et_model = await ctx.loaders["event_type"].load(self.event_type_id)
+        return EventType(
+            db_id=et_model.id,
+            code_name=et_model.code_name,
+            description=et_model.description
+        ) if et_model else None  # type: ignore[call-arg]
+
+    @classmethod
+    async def resolve_nodes(cls, *, info, node_ids, required=False):
+        ctx: GraphQLContext = info.context
+        raw_ids = node_ids
+        stmt = select(EventModel).where(EventModel.id.in_(raw_ids))
+        result = {item.id: item for item in (await ctx.db.execute(stmt)).scalars().all()}
+        nodes = []
+        for rid in raw_ids:
+            model = result.get(int(rid))
+            if model:
+                nodes.append(_event_from_model(model))  # type: ignore[arg-type]
+            elif required:
+                raise ValueError(f"Event {rid} not found")
+        return [n for n in nodes if n is not None]
+
+
+@strawberry.type
+class Payload(relay.Node):
+    """Полезная нагрузка события."""
+    db_id: relay.NodeID[int]
+    event_id: int
+    type_id: int
+    value: str
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def event(self, info: strawberry.Info) -> Optional[Event]:
+        ctx: GraphQLContext = info.context
+        ev_model = await ctx.db.get(EventModel, self.event_id)
+        if ev_model:
+            return Event(
+                db_id=ev_model.id,  # type: ignore[call-arg]
+                client_id=ev_model.client_id,  # type: ignore[call-arg]
+                event_type_id=ev_model.event_type_id,  # type: ignore[call-arg]
+                trigger_time=ev_model.trigger_time,  # type: ignore[call-arg]
+            )
+        return None
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def payload_type(self, info: strawberry.Info) -> Optional[PayloadType]:
+        ctx: GraphQLContext = info.context
+        pt_model = await ctx.loaders["payload_type"].load(self.type_id)
+        return PayloadType(
+            db_id=pt_model.id,
+            code_name=pt_model.code_name,
+            description=pt_model.description,
+            value_type_id=pt_model.value_type_id
+        ) if pt_model else None  # type: ignore[call-arg]
+
+    @classmethod
+    async def resolve_nodes(cls, *, info, node_ids, required=False):
+        ctx: GraphQLContext = info.context
+        raw_ids = node_ids
+        stmt = select(PayloadModel).where(PayloadModel.id.in_(raw_ids))
+        result = {item.id: item for item in (await ctx.db.execute(stmt)).scalars().all()}
+        nodes = []
+        for rid in raw_ids:
+            model = result.get(int(rid))
+            if model:
+                nodes.append(_payload_from_model(model))  # type: ignore[arg-type]
+            elif required:
+                raise ValueError(f"Payload {rid} not found")
         return [n for n in nodes if n is not None]

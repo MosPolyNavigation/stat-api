@@ -7,7 +7,8 @@ from sqlalchemy.orm import selectinload
 
 from app.models import (
     EventType, PayloadType, ValueType,
-    AllowedPayload, Review as ReviewModel, ClientId as CIModel
+    AllowedPayload, Review as ReviewModel, ClientId as CIModel,
+    Event as EventModel, Payload as PayloadModel
 )
 from app.graphql.core.permissions import require_permissions, P
 from app.graphql.core.filters import apply_filters
@@ -21,6 +22,17 @@ from .types import (
     AllowedPayloadRule as AllowedPayloadRuleType,
     ReviewType,
     ClientIdType,
+    Event,
+    Payload,
+)
+from .types import (
+    _event_type_from_model,
+    _value_type_from_model,
+    _payload_type_from_model,
+    _client_id_from_model,
+    _review_from_model,
+    _event_from_model,
+    _payload_from_model,
 )
 from .inputs import (
     EventTypeFilterInput,
@@ -29,55 +41,9 @@ from .inputs import (
     AllowedPayloadRuleFilterInput,
     ReviewFilterInput,
     ClientIdFilterInput,
+    EventFilterInput,
+    PayloadFilterInput,
 )
-
-
-# =============================================================================
-# Локальные конвертеры (для передачи в fetch_relay_page)
-# =============================================================================
-def _event_type_from_model(model: EventType) -> EventTypeType:
-    return EventTypeType(
-        db_id=model.id,  # type: ignore[call-arg]
-        code_name=model.code_name,  # type: ignore[call-arg]
-        description=model.description,  # type: ignore[call-arg]
-    )
-
-
-def _payload_type_from_model(model: PayloadType) -> PayloadTypeType:
-    return PayloadTypeType(
-        db_id=model.id,  # type: ignore[call-arg]
-        code_name=model.code_name,  # type: ignore[call-arg]
-        description=model.description,  # type: ignore[call-arg]
-        value_type_id=model.value_type_id,  # type: ignore[call-arg]
-    )
-
-
-def _value_type_from_model(model: ValueType) -> ValueTypeType:
-    return ValueTypeType(
-        db_id=model.id,  # type: ignore[call-arg]
-        name=model.name,  # type: ignore[call-arg]
-        description=model.description,  # type: ignore[call-arg]
-    )
-
-
-def _client_id_from_model(model: CIModel) -> ClientIdType:
-    return ClientIdType(
-        db_id=model.id,  # type: ignore[call-arg]
-        ident=model.ident,  # type: ignore[call-arg]
-        creation_date=model.creation_date,  # type: ignore[call-arg]
-    )
-
-
-def _review_from_model(model: ReviewModel) -> ReviewType:
-    return ReviewType(
-        db_id=model.id,  # type: ignore[call-arg]
-        client_id=model.client_id,  # type: ignore[call-arg]
-        problem_id=model.problem_id,  # type: ignore[call-arg]
-        status_id=model.review_status_id,  # type: ignore[call-arg]
-        text=model.text,  # type: ignore[call-arg]
-        image_name=model.image_name,  # type: ignore[call-arg]
-        creation_date=model.creation_date,  # type: ignore[call-arg]
-    )
 
 
 @strawberry.type
@@ -107,7 +73,7 @@ class Query:
             after=after,
             model=EventType,
             cursor_fields="id",
-            convert=_event_type_from_model,
+            convert=_event_type_from_model,  # type: ignore
         )
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -144,7 +110,7 @@ class Query:
             after=after,
             model=PayloadType,
             cursor_fields="id",
-            convert=_payload_type_from_model,
+            convert=_payload_type_from_model,  # type: ignore
         )
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -181,7 +147,7 @@ class Query:
             after=after,
             model=ValueType,
             cursor_fields="id",
-            convert=_value_type_from_model,
+            convert=_value_type_from_model,  # type: ignore
         )
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -270,7 +236,7 @@ class Query:
             after=after,
             model=CIModel,
             cursor_fields="id",  # ← курсор по стабильному полю
-            convert=_client_id_from_model,
+            convert=_client_id_from_model,  # type: ignore
         )
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -314,9 +280,9 @@ class Query:
             first=first,
             after=after,
             model=ReviewModel,
-            cursor_fields="id",  # ← id как tiebreaker для стабильности
+            cursor_fields="id",
             convert=_review_from_model,
-        )
+        )  # type: ignore[return-value]
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def review(
@@ -327,3 +293,77 @@ class Query:
         """Получение одного отзыва по глобальному ID."""
         await require_permissions(info, P.REVIEWS_VIEW)
         return await id.resolve_node(info, ensure_type=ReviewType)
+
+    # -------------------------------------------------------------------------
+    # Event
+    # -------------------------------------------------------------------------
+    @relay.connection(relay.ListConnection[Event])
+    async def events(
+            self,
+            info: Info,
+            first: Optional[int] = None,
+            after: Optional[str] = None,
+            filter: Optional[EventFilterInput] = None,
+    ) -> Iterable[Event]:
+        await require_permissions(info, P.STATS_VIEW)  # или P.EVENTS_VIEW
+        ctx: GraphQLContext = info.context
+
+        stmt = select(EventModel).order_by(EventModel.id.asc())
+        if filter:
+            stmt = apply_filters(stmt, EventModel, filter)
+
+        return await fetch_relay_page(
+            session=ctx.db,
+            stmt=stmt,
+            first=first,
+            after=after,
+            model=EventModel,
+            cursor_fields="id",
+            convert=_event_from_model,
+        )
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def event(
+            self,
+            info: Info,
+            id: relay.GlobalID,
+    ) -> Optional[Event]:
+        await require_permissions(info, P.STATS_VIEW)
+        return await id.resolve_node(info, ensure_type=Event)
+
+    # -------------------------------------------------------------------------
+    # Payload
+    # -------------------------------------------------------------------------
+    @relay.connection(relay.ListConnection[Payload])
+    async def payloads(
+            self,
+            info: Info,
+            first: Optional[int] = None,
+            after: Optional[str] = None,
+            filter: Optional[PayloadFilterInput] = None,
+    ) -> Iterable[Payload]:
+        await require_permissions(info, P.STATS_VIEW)
+        ctx: GraphQLContext = info.context
+
+        stmt = select(PayloadModel).order_by(PayloadModel.id.asc())
+        if filter:
+            stmt = apply_filters(stmt, PayloadModel, filter)
+
+        return await fetch_relay_page(
+            session=ctx.db,
+            stmt=stmt,
+            first=first,
+            after=after,
+            model=PayloadModel,
+            cursor_fields="id",
+            convert=_payload_from_model,
+        )
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def payload(
+            self,
+            info: Info,
+            id: relay.GlobalID,
+    ) -> Optional[Payload]:
+        await require_permissions(info, P.STATS_VIEW)
+        return await id.resolve_node(info, ensure_type=Payload)
