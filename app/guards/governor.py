@@ -79,8 +79,8 @@ class RateLimiter:
 
         self._update_access(access_store, ident, event_key, now)
 
+    @staticmethod
     async def _extract_event_request(
-        self,
         request: Request,
     ) -> Optional[EventCreateRequest]:
         try:
