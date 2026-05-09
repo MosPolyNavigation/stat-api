@@ -29,6 +29,7 @@ class AppFactory:
     def __call__(self, settings: Optional[Settings] = None) -> FastAPI:
         cfg = settings or load_settings()
         cfg = self.hooks.on_config_loaded(cfg)
+        self._cfg = cfg
         
         app_kwargs = self.hooks.setup_app_arguments(cfg)
 
@@ -59,3 +60,7 @@ class AppFactory:
         self.hooks.setup_exception_handlers(app)
 
         return app
+
+    @property
+    def cfg(self) -> Settings:
+        return self._cfg
