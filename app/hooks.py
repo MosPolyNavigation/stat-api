@@ -1,4 +1,4 @@
-from typing import Type, Any
+from typing import Any, Sequence
 
 from fastapi import FastAPI
 
@@ -19,7 +19,7 @@ class BaseHooks:
     например, в TestHooks отключить on_startup, чтобы не поднимать JobManager.
     """
 
-    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+    def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
         kwargs = dict()
         if not settings.server.docs.openapi:
             kwargs["openapi_url"] = None
@@ -29,7 +29,7 @@ class BaseHooks:
             kwargs["redoc_url"] = None
         return kwargs
     
-    def setup_seeders(self) -> dict[Type[BaseSeeder]]:
+    def setup_seeders(self) -> Sequence[BaseSeeder]:
         return []
 
     def on_config_loaded(self, settings: Settings) -> Settings:

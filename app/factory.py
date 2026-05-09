@@ -1,13 +1,13 @@
 import logging
 
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Optional, Sequence
+from typing import AsyncGenerator, Optional
 
 from fastapi import FastAPI
 
 from app.config import Settings, load_settings
-from app.seed.base_seeder import BaseSeeder
 from app.hooks import BaseHooks
+from app.helpers.seeder import apply_seeding
 from app.jobs import AppLifespanState
 
 logger = logging.getLogger(__name__)
@@ -36,12 +36,10 @@ class AppFactory:
         async def lifespan(app: FastAPI) -> AsyncGenerator[AppLifespanState, None]:
             lifespan_state = await self.hooks.on_startup(app, cfg)
 
-            if cfg.database.auto_seed:
+            if getattr(cfg.database, "auto_seed", False):
                 seeders = self.hooks.setup_seeders()
                 if seeders:
-                    logger.info("🌱 Applying database seeders...")
-                    await self._apply_seeding(seeders, cfg)
-                    logger.info("✅ Database seeded successfully.")
+                    await apply_seeding(seeders)
 
             try:
                 yield lifespan_state
@@ -61,15 +59,3 @@ class AppFactory:
         self.hooks.setup_exception_handlers(app)
 
         return app
-    
-    async def _apply_seeding(self, seeders: Sequence["BaseSeeder"], settings: Settings) -> None:
-        """Выполняет добавление отсутствующих данных для всех переданных сидеров."""
-        from app.database import get_session_maker
-        maker = get_session_maker()
-        
-        # Каждая транзакция изолирована. Если один сидер упадёт, остальные не пострадают.
-        async with maker() as session:
-            for seeder in seeders:
-                await seeder.add_missing(session)
-                logger.debug(f"  ↳ {seeder.model.__name__} processed")
-            await session.commit()

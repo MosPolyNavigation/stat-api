@@ -4,6 +4,7 @@ from pydantic import RootModel
 from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncEngine
 from fastapi import FastAPI
 
+from app.helpers.seeder import apply_seeding
 from app.models import Base
 from app.schemas.rasp.schedule import Auditory
 from app.jobs.location_data.worker import fetch_location_data
@@ -25,7 +26,7 @@ async def init_test_database(test_engine: AsyncEngine, test_session_maker: async
     """Инициализирует тестовую БД: создаёт таблицы + применяет сидеры + загружает state."""
     # 1️⃣ Создаём таблицы
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+        await conn.run_sync(Base.metadata.create_all())
 
     # 2️⃣ Применяем сидеры (и апп, и тест-специфичные)
     seeders: list[BaseSeeder] = [
@@ -36,10 +37,7 @@ async def init_test_database(test_engine: AsyncEngine, test_session_maker: async
         *TEST_ONLY_SEEDERS,
     ]
     
-    async with test_session_maker() as session:
-        for seeder in seeders:
-            await seeder.add_missing(session)
-        await session.commit()
+    await apply_seeding(seeders, session_maker=test_session_maker)
 
     # 3️⃣ Загружаем расписание в app.state
     schedule_path = Path(__file__).parent / "schedule_test.json"
