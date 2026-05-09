@@ -2,9 +2,12 @@ import typer
 import uvicorn
 
 from app.default_hooks import DefaultHooks
+from app.logging import setup_logging
 from app.factory import AppFactory
 from scripts.db import db_cli
 from scripts import CONFIG_ENV_NOTE
+
+setup_logging(level="INFO", use_colors=True)
 
 app_cli = typer.Typer(
     name="stat-api",
@@ -31,8 +34,8 @@ def serve(
     workers: int = typer.Option(1, help="Количество worker-процессов Uvicorn"),
 ) -> None:
     app_factory = AppFactory(DefaultHooks())
-    cfg = app_factory.cfg
     app = app_factory()
+    cfg = app_factory.cfg
     uvicorn.run(app, host=host or cfg.server.host, port=port or cfg.server.port, reload=reload, workers=workers)
 
 

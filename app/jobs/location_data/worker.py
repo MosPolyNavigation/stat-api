@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -138,8 +138,12 @@ def build_data_entry(dto: DataDto) -> DataEntry:
 
 
 @scheduled_task(name="fetch_location_data")
-async def fetch_location_data(state: AppState):
+async def fetch_location_data(state: Optional[AppState] = None):
     """Воркер: собирает locationData JSON и пересобирает графы навигации в state."""
+    if state is None:
+        logger.error("Вызов воркера без инициализированного состояния")
+        return
+
     if state.location_lock.locked():
         return
 

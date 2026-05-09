@@ -177,8 +177,7 @@ class JobManager:
             func = registry_by_name[job_cfg.name]["func"]
 
             # ← NEW: если есть state — инжектим его в задачу (по соглашению)
-            if self._state is not None:
-                func = functools.partial(func, state=self._state)
+            func = self._inject_state(func)
 
             self._scheduler.add_job(func, **self._build_apscheduler_kwargs(job_cfg))
             logger.info("Scheduled job '%s' with trigger '%s'", job_cfg.name, job_cfg.trigger)
@@ -219,7 +218,8 @@ class JobManager:
             raise KeyError(f"Task '{name}' not found in registry")
 
         run_id = str(uuid.uuid4())
-        background_tasks.add_task(entry["func"], _triggered_by="api", _run_id=run_id)
+        func = self._inject_state(entry["func"])
+        background_tasks.add_task(func, _triggered_by="api", _run_id=run_id)
         return run_id
 
     def is_running(self, name: str) -> bool:
@@ -325,3 +325,10 @@ class JobManager:
             kwargs["misfire_grace_time"] = s.misfire_grace_time
 
         return kwargs
+
+    def _inject_state(self, func: Callable) -> Callable:
+        """Инжектит state в функцию, если он задан и функция его принимает."""
+        if self._state is None:
+            return func
+        # Проверка сигнатуры опциональна, но полезна для отладки
+        return functools.partial(func, state=self._state)
