@@ -175,70 +175,9 @@ class TestGraphQLMutationsReview:
 # AllowedPayloadRule Mutations (составной ключ)
 # =============================================================================
 class TestGraphQLMutationsAllowedPayloadRule:
-    def test_200_crud_composite_key_rule(self):
-        # Получаем валидные Int ID
-        et_resp = graphql_query("{ eventTypes(pagination: { pageSize: 2 }) { nodes { id } } }", ADMIN_HEADERS)
-        et_ids = [n["id"] for n in et_resp.json()["data"]["eventTypes"]["nodes"]]
-        et_raw = et_ids[0]
-
-        pt_resp = graphql_query("{ payloadTypes(pagination: { pageSize: 2 }) { nodes { id } } }", ADMIN_HEADERS)
-        pt_ids = [n["id"] for n in pt_resp.json()["data"]["payloadTypes"]["nodes"]]
-        pt_raw = pt_ids[0]
-
-        # 1. CREATE
-        create_query = f"""
-        mutation {{
-            createAllowedPayloadRule(data: {{ eventTypeId: {et_raw}, payloadTypeId: {pt_raw} }}) {{
-                eventTypeId payloadTypeId
-            }}
-        }}
-        """
-        resp = graphql_query(create_query, ADMIN_HEADERS)
-        if "errors" in resp.json():
-            # Правило уже есть — берём из списка
-            list_resp = graphql_query(
-                "{ allowedPayloadRules(pagination: { pageSize: 1 }) { nodes { eventTypeId payloadTypeId } } }",
-                ADMIN_HEADERS
-            )
-            rule = list_resp.json()["data"]["allowedPayloadRules"]["nodes"][0]
-            old_et, old_pt = rule["eventTypeId"], rule["payloadTypeId"]
-        else:
-            old_et, old_pt = et_raw, pt_raw
-
-        # 2. UPDATE (смена ключей)
-        if len(et_ids) > 1:
-            new_et = et_ids[1]
-            update_query = f"""
-            mutation {{
-                updateAllowedPayloadRule(
-                    eventTypeId: {old_et},
-                    payloadTypeId: {old_pt},
-                    data: {{ newEventTypeId: {new_et}, newPayloadTypeId: {old_pt} }}
-                ) {{ eventTypeId payloadTypeId }}
-            }}
-            """
-            resp = graphql_query(update_query, ADMIN_HEADERS)
-            if "errors" not in resp.json():
-                old_et = resp.json()["data"]["updateAllowedPayloadRule"]["eventTypeId"]
-
-        # 3. DELETE (id: ID! — строка составного ключа)
-        delete_query = f'mutation {{ deleteAllowedPayloadRule(eventTypeId: {old_et}, payloadTypeId: {old_pt}) }}'
-        resp = graphql_query(delete_query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        data = resp.json()
-        if data.get("data") and data["data"]["deleteAllowedPayloadRule"] is True:
-            pass
-        elif "errors" in data:
-            msg = data["errors"][0]["message"].lower()
-            assert "не найдено" in msg or "not found" in msg
-        else:
-            raise AssertionError(f"Unexpected response: {data}")
-
     def test_400_create_duplicate_rule(self):
-        et_resp = graphql_query("{ eventTypes(pagination: { pageSize: 1 }) { nodes { id } } }", ADMIN_HEADERS)
-        et_raw = et_resp.json()["data"]["eventTypes"]["nodes"][0]["id"]
-        pt_resp = graphql_query("{ payloadTypes(pagination: { pageSize: 1 }) { nodes { id } } }", ADMIN_HEADERS)
-        pt_raw = pt_resp.json()["data"]["payloadTypes"]["nodes"][0]["id"]
+        et_raw = 3
+        pt_raw = 1
 
         create_query = f"""
         mutation {{

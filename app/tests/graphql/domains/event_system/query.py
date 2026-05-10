@@ -314,10 +314,8 @@ class TestGraphQLEventsAndPayloads:
             event(id: {event_id}) {{
                 id
                 triggerTime
-                payloads(pagination: {{ pageSize: 2 }}) {{
-                    nodes {{ id value payloadType {{ codeName }} }}
-                    pageInfo {{ hasNextPage }}
-                    paginationInfo {{ totalCount }}
+                payloads(first: 2) {{
+                    id value payloadType {{ codeName }}
                 }}
             }}
         }}
@@ -325,7 +323,7 @@ class TestGraphQLEventsAndPayloads:
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
         event = response.json()["data"]["event"]
-        payloads = event["payloads"]["nodes"]
+        payloads = event["payloads"]
         assert len(payloads) <= 2
         if payloads:
             assert "value" in payloads[0]

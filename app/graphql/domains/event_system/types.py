@@ -254,7 +254,7 @@ class Event:
     ) -> List["Payload"]:
         limit = min(100, first)
         ctx: GraphQLContext = info.context
-        p_models = await ctx.loaders["nav_plan_by_cor_id"].load(self.id)
+        p_models = await ctx.loaders["payloads_by_event_id"].load(self.id)
         return [_payload_from_model(p_model) for p_model in p_models[:limit]]
 
 

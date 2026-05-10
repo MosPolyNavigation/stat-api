@@ -12,6 +12,7 @@ from .dod_seeders import (
     DodLocationSeeder, DodCorpusSeeder, DodFloorSeeder, DodStaticSeeder,
     DodPlanSeeder, DodTypeSeeder, DodAuditorySeeder, DodAudPhotoSeeder
 )
+from .dashboard_seeder import DashboardSeeder
 
 # Порядок важен из-за внешних ключей
 TEST_ONLY_SEEDERS = [
@@ -31,4 +32,6 @@ TEST_ONLY_SEEDERS = [
     # DOD
     DodLocationSeeder(), DodCorpusSeeder(), DodFloorSeeder(), DodStaticSeeder(),
     DodPlanSeeder(), DodTypeSeeder(), DodAuditorySeeder(), DodAudPhotoSeeder(),
+
+    DashboardSeeder()
 ]
