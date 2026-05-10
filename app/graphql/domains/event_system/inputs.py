@@ -1,6 +1,7 @@
 from typing import Optional, List
 import strawberry
 from app.graphql.core.filters import BaseFilterInput, StringFilterInput, IntFilterInput
+from app.graphql.core.ordering import BaseOrderByInput, OrderDir
 
 
 # =============================================================================
@@ -166,3 +167,84 @@ class DashboardFilterInput(BaseFilterInput):
     and_: Optional[List["DashboardFilterInput"]] = strawberry.field(name="and", default=None)
     or_: Optional[List["DashboardFilterInput"]] = strawberry.field(name="or", default=None)
     not_: Optional["DashboardFilterInput"] = strawberry.field(name="not", default=None)
+
+
+@strawberry.input
+class EventTypeOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    code_name: Optional[OrderDir] = None
+    then_by: Optional["EventTypeOrderByInput"] = None
+
+
+@strawberry.input
+class PayloadTypeOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    code_name: Optional[OrderDir] = None
+    value_type_id: Optional[OrderDir] = None
+    then_by: Optional["PayloadTypeOrderByInput"] = None
+
+
+@strawberry.input
+class ValueTypeOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    name: Optional[OrderDir] = None
+    then_by: Optional["ValueTypeOrderByInput"] = None
+
+
+@strawberry.input
+class AllowedPayloadRuleOrderByInput(BaseOrderByInput):
+    event_type_id: Optional[OrderDir] = None
+    payload_type_id: Optional[OrderDir] = None
+    then_by: Optional["AllowedPayloadRuleOrderByInput"] = None
+
+
+@strawberry.input
+class ReviewOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    client_id: Optional[OrderDir] = None
+    problem_id: Optional[OrderDir] = None
+    review_status_id: Optional[OrderDir] = None
+    creation_date: Optional[OrderDir] = None
+    then_by: Optional["ReviewOrderByInput"] = None
+
+
+@strawberry.input
+class ClientIdOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    ident: Optional[OrderDir] = None
+    creation_date: Optional[OrderDir] = None
+    then_by: Optional["ClientIdOrderByInput"] = None
+
+
+@strawberry.input
+class EventOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    client_id: Optional[OrderDir] = None
+    event_type_id: Optional[OrderDir] = None
+    trigger_time: Optional[OrderDir] = None
+    then_by: Optional["EventOrderByInput"] = None
+
+
+@strawberry.input
+class PayloadOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    event_id: Optional[OrderDir] = None
+    type_id: Optional[OrderDir] = None
+    then_by: Optional["PayloadOrderByInput"] = None
+
+
+@strawberry.input
+class DashboardTypeOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    code_name: Optional[OrderDir] = None
+    then_by: Optional["DashboardTypeOrderByInput"] = None
+
+
+@strawberry.input
+class DashboardOrderByInput(BaseOrderByInput):
+    id: Optional[OrderDir] = None
+    display_order: Optional[OrderDir] = None
+    event_type_id: Optional[OrderDir] = None
+    dashboard_type_id: Optional[OrderDir] = None
+    title_text: Optional[OrderDir] = None
+    then_by: Optional["DashboardOrderByInput"] = None

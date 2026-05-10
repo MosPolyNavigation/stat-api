@@ -220,7 +220,7 @@ class TestGraphQLClientsAndReviews:
         """Проверка кастомной сортировки (creation_date DESC)."""
         query = """
         {
-            clientIds(first: 3) {
+            clientIds(first: 3, orderBy: {creationDate: DESC}) {
                 edges {
                     node {
                         id

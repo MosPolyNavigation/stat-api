@@ -8,6 +8,7 @@ from graphql import GraphQLError
 from .resource import ResourceConfig
 from .permissions import require_permissions
 from .filters import apply_filters
+from .ordering import apply_order_by
 from .pagination import fetch_relay_page
 from .context import GraphQLContext
 from .logging import GraphQLLoggingExtension, should_skip_graphql_logging
@@ -37,15 +38,20 @@ def create_query_resource(
     attrs: dict[str, Any] = {"config": config}
 
     if enable_list:
-        async def _list_resolver(self, info, first=None, after=None, filter=None):
+        async def _list_resolver(self, info, first=None, after=None, filter=None, order_by=None):
             if config.permissions.view:
                 await require_permissions(info, config.permissions.view)
             ctx: GraphQLContext = info.context
             stmt = select(config.model)
-            order_by = config.order_by if config.order_by is not None else getattr(config.model, "id").asc()
-            stmt = stmt.order_by(order_by)
             if filter:
                 stmt = apply_filters(stmt, config.model, filter)
+
+            if order_by is not None and config.order_by_input:
+                stmt = apply_order_by(stmt, config.model, order_by)
+            elif config.order_by is not None:
+                stmt = stmt.order_by(config.order_by)
+            else:
+                stmt = stmt.order_by(getattr(config.model, "id").asc())
             return await fetch_relay_page(
                 session=ctx.db, stmt=stmt, first=first, after=after,
                 model=config.model, cursor_fields=config.cursor_field,
@@ -58,6 +64,7 @@ def create_query_resource(
             "first": Optional[int],
             "after": Optional[str],
             "filter": Optional[config.filter_input],  # type: ignore
+            "order_by": Optional[config.order_by_input],  # type: ignore
             "return": Iterable[_node_type],  # type: ignore
         }
 

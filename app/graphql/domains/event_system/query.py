@@ -3,6 +3,7 @@ import strawberry
 from strawberry import relay, Info
 from sqlalchemy import select
 
+from app.graphql.core.ordering import apply_order_by
 from app.graphql.core.resource_factory import create_query_resource
 from app.graphql.domains.event_system.resources import (
     EventTypeResource,
@@ -23,7 +24,10 @@ from app.graphql.core.context import GraphQLContext
 from app.graphql.domains.event_system.types import (
     AllowedPayloadRule as AllowedPayloadRuleType,
 )
-from app.graphql.domains.event_system.inputs import AllowedPayloadRuleFilterInput
+from app.graphql.domains.event_system.inputs import (
+    AllowedPayloadRuleFilterInput,
+    AllowedPayloadRuleOrderByInput
+)
 
 # =============================================================================
 # Генерация ресурсов через фабрику
@@ -96,16 +100,16 @@ class AllowedPayloadRuleQuery:
             first: Optional[int] = None,
             after: Optional[str] = None,
             filter: Optional[AllowedPayloadRuleFilterInput] = None,
+            order_by: Optional[AllowedPayloadRuleOrderByInput] = None
     ) -> Iterable[AllowedPayloadRuleType]:
         await require_permissions(info, P.STATS_VIEW)
         ctx: GraphQLContext = info.context
 
-        stmt = select(AllowedPayload).order_by(
-            AllowedPayload.event_type_id.asc(),
-            AllowedPayload.payload_type_id.asc()
-        )
+        stmt = select(AllowedPayload)
         if filter:
             stmt = apply_filters(stmt, AllowedPayload, filter)
+        if order_by:
+            stmt = apply_order_by(stmt, AllowedPayload, order_by)
 
         return await fetch_relay_page(
             session=ctx.db,
@@ -156,7 +160,7 @@ class Query(
     - payload_types / payload_type
     - value_types / value_type
     - client_ids / client_id
-    - reviews (только список)
+    - reviews / review
     - events / event
     - payloads / payload
     - dashboards / dashboard

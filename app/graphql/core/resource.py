@@ -5,12 +5,13 @@ from sqlalchemy.orm import DeclarativeBase
 
 from app.graphql.core.permissions import Permission
 from app.graphql.core.filters import BaseFilterInput
+from app.graphql.core.ordering import BaseOrderByInput
 
 # Типы для обобщения
 M = TypeVar("M", bound=DeclarativeBase)  # SQLAlchemy модель
 T = TypeVar("T")  # GraphQL Strawberry тип
 F = TypeVar("F", bound=BaseFilterInput)  # Filter Input
-C = TypeVar("C", bound=Callable[[M], T])  # Конвертер модель → тип
+C = TypeVar("C", bound=Callable[[M], T])  # noqa # Конвертер модель → тип
 
 
 @dataclass
@@ -28,6 +29,8 @@ class ResourceConfig(Generic[M, T, F]):
     cursor_field: str | list[str] = "id"
     cursor_separator: str = ":"
     order_by: Optional[Any] = None
+
+    order_by_input: Optional[Type[BaseOrderByInput]] = None
 
     # Валидация
     validators: Dict[str, Callable[[Any], bool | str]] = None

@@ -36,6 +36,15 @@ from app.graphql.domains.event_system.inputs import (
     PayloadFilterInput,
     DashboardFilterInput,
     DashboardTypeFilterInput,
+    EventOrderByInput,
+    EventTypeOrderByInput,
+    PayloadOrderByInput,
+    PayloadTypeOrderByInput,
+    ValueTypeOrderByInput,
+    ReviewOrderByInput,
+    ClientIdOrderByInput,
+    DashboardOrderByInput,
+    DashboardTypeOrderByInput
 )
 
 
@@ -55,12 +64,13 @@ EventTypeResource = ResourceConfig(
         edit=P.STATS_EDIT,
         delete=P.STATS_DELETE,
     ),
+    order_by_input=EventTypeOrderByInput,
     enable_logging=True,
     enable_logging_list=False,  # ❌ Не логируем event_types (много запросов)
     enable_logging_get=False,    # ✅ Не логируем event_type
-    enable_logging_create=True, # ✅ Логируем создание
-    enable_logging_update=True, # ✅ Логируем обновление
-    enable_logging_delete=True, # ✅ Логируем удаление
+    enable_logging_create=True,  # ✅ Логируем создание
+    enable_logging_update=True,  # ✅ Логируем обновление
+    enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
         "code_name": lambda v: len(v) <= 20 or "code_name не должен превышать 20 символов",
         "description": lambda v: not v or len(v) <= 100 or "Описание не должно превышать 100 символов",
@@ -79,12 +89,13 @@ PayloadTypeResource = ResourceConfig(
         edit=P.STATS_EDIT,
         delete=P.STATS_DELETE,
     ),
+    order_by_input=PayloadTypeOrderByInput,
     enable_logging=True,
     enable_logging_list=False,  # ❌ Не логируем payload_types (много запросов)
     enable_logging_get=False,    # ✅ Логируем payload_type
-    enable_logging_create=True, # ✅ Логируем создание
-    enable_logging_update=True, # ✅ Логируем обновление
-    enable_logging_delete=True, # ✅ Логируем удаление
+    enable_logging_create=True,  # ✅ Логируем создание
+    enable_logging_update=True,  # ✅ Логируем обновление
+    enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
         "code_name": lambda v: len(v) <= 20 or "code_name не должен превышать 20 символов",
     }
@@ -102,6 +113,7 @@ ValueTypeResource = ResourceConfig(
         edit=P.STATS_EDIT,
         delete=P.STATS_DELETE,
     ),
+    order_by_input=ValueTypeOrderByInput,
     validators={
         "name": lambda v: len(v) <= 20 or "name не должен превышать 20 символов",
     }
@@ -113,7 +125,7 @@ ClientIdResource = ResourceConfig(
     filter_input=ClientIdFilterInput,
     convert=_client_id_from_model,  # type: ignore
     cursor_field="id",
-    order_by=CIModel.creation_date.desc(),
+    order_by_input=ClientIdOrderByInput,
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
     )
@@ -125,7 +137,7 @@ ReviewResource = ResourceConfig(
     filter_input=ReviewFilterInput,
     convert=_review_from_model,
     cursor_field="id",
-    order_by=ReviewModel.creation_date.desc(),
+    order_by_input=ReviewOrderByInput,
     enable_logging=True,
     enable_logging_list=False,
     enable_logging_get=False,
@@ -143,6 +155,7 @@ EventResource = ResourceConfig(
     graphql_type=Event,
     filter_input=EventFilterInput,
     convert=_event_from_model,
+    order_by_input=EventOrderByInput,
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
@@ -154,6 +167,7 @@ PayloadResource = ResourceConfig(
     graphql_type=Payload,
     filter_input=PayloadFilterInput,
     convert=_payload_from_model,
+    order_by_input=PayloadOrderByInput,
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
@@ -165,6 +179,7 @@ DashboardTypeResource = ResourceConfig(
     graphql_type=DashboardTypeType,
     filter_input=DashboardTypeFilterInput,
     convert=_dashboard_type_from_model,
+    order_by_input=DashboardTypeOrderByInput,
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.DASHBOARDS_VIEW,
@@ -176,8 +191,8 @@ DashboardResource = ResourceConfig(
     graphql_type=DashboardType,
     filter_input=DashboardFilterInput,
     convert=_dashboard_from_model,
+    order_by_input=DashboardOrderByInput,
     cursor_field="id",
-    order_by=DashboardModel.dashboard_type_id.desc(),
     permissions=ResourcePermissions(
         view=P.DASHBOARDS_VIEW,
     )
