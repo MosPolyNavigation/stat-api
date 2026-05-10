@@ -10,6 +10,8 @@ GRAPHQL_EXCLUDED_FIELDS = {
     "payloads",
     "endpoint_statistics",
     "endpoint_statistics_avg",
+    "user_log",
+    "user_logs",
 }
 
 

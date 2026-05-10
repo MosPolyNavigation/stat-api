@@ -79,6 +79,15 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
     from app.models.nav.aud_photo import AudPhoto
     from app.models.nav.static import Static
 
+    from app.models.auth.goal import Goal
+    from app.models.auth.right import Right
+    from app.models.auth.role import Role
+    from app.models.auth.user import User
+    from app.models.auth.user_role import UserRole
+    from app.models.auth.role_right_goal import RoleRightGoal
+    from app.models.auth.refresh_token import RefreshToken
+    from app.models.auth.user_log import UserLog
+
     return {
         # === event_system ===
         "value_type": SQLAlchemyLoader(session, ValueType),
@@ -103,4 +112,18 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         "nav_plan_by_cor_id": ForeignKeyLoader(session, Plan, "cor_id"),
         "nav_auditory_by_plan_id": ForeignKeyLoader(session, Auditory, "plan_id"),
         "nav_photos_by_aud_id": ForeignKeyLoader(session, AudPhoto, "aud_id"),
+
+        # === auth ===
+        "goal": SQLAlchemyLoader(session, Goal),
+        "right": SQLAlchemyLoader(session, Right),
+        "role": SQLAlchemyLoader(session, Role),
+        "user": SQLAlchemyLoader(session, User),
+
+        "role_right_goal_by_goal_id": ForeignKeyLoader(session, RoleRightGoal, "goal_id"),
+        "role_right_goal_by_right_id": ForeignKeyLoader(session, RoleRightGoal, "right_id"),
+        "role_right_goal_by_role_id": ForeignKeyLoader(session, RoleRightGoal, "role_id"),
+        "user_role_by_role_id": ForeignKeyLoader(session, UserRole, "role_id"),
+        "user_role_by_user_id": ForeignKeyLoader(session, UserRole, "user_id"),
+        "refresh_token_by_user_id": ForeignKeyLoader(session, RefreshToken, "user_id"),
+        "user_log_by_user_id": ForeignKeyLoader(session, UserLog, "user_id"),
     }
