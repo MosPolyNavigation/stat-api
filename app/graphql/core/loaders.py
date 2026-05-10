@@ -22,7 +22,7 @@ class SQLAlchemyLoader(DataLoader[int, M]):
         if not keys:
             return []
 
-        stmt = select(self.model).where(self.model.id.in_(keys))
+        stmt = select(self.model).where(self.model.id.in_(keys))  # noqa
         result = await self.session.execute(stmt)
         items = {item.id: item for item in result.scalars().all()}
 

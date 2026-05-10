@@ -22,15 +22,15 @@ class ResourceConfig(Generic[M, T, F]):
     model: Type[M]
     graphql_type: Type[T]
     filter_input: Type[F]
+    order_by_input: Type[BaseOrderByInput]
     convert: C  # noqa
     permissions: "ResourcePermissions"
 
     # Пагинация
     cursor_field: str | list[str] = "id"
     cursor_separator: str = ":"
-    order_by: Optional[Any] = None
 
-    order_by_input: Optional[Type[BaseOrderByInput]] = None
+    page_size_default: int = 10
 
     # Валидация
     validators: Dict[str, Callable[[Any], bool | str]] = None

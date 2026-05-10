@@ -1,4 +1,4 @@
-from typing import Type, Optional, Any, cast, Iterable
+from typing import Type, Optional, Any, cast
 import re
 import strawberry
 from strawberry import relay, Info
@@ -9,20 +9,16 @@ from .resource import ResourceConfig
 from .permissions import require_permissions
 from .filters import apply_filters
 from .ordering import apply_order_by
-from .pagination import fetch_relay_page
+from .pagination import paginate_query, PaginationInput, Connection
 from .context import GraphQLContext
 from .logging import GraphQLLoggingExtension, should_skip_graphql_logging
 
 
 def _make_base_name(name: str) -> str:
-    """Превращает 'EventType' или 'ReviewModel' в 'event_type'."""
     base = name.removesuffix("Type").removesuffix("Model")
     return re.sub(r'(?<!^)(?=[A-Z])', '_', base).lower()
 
 
-# =============================================================================
-# Фабрика Query
-# =============================================================================
 def create_query_resource(
         config: ResourceConfig,
         *,
@@ -30,71 +26,90 @@ def create_query_resource(
         enable_get: bool = True,
         name_list: Optional[str] = None,
         name_get: Optional[str] = None,
+        page_size_default: int = 10,
 ) -> Type[Any]:
-    """Создаёт Strawberry-класс Query с настраиваемыми методами."""
     base_name = _make_base_name(config.graphql_type.__name__)
     list_name = name_list or f"{base_name}s"
     get_name = name_get or base_name
     attrs: dict[str, Any] = {"config": config}
 
     if enable_list:
-        async def _list_resolver(self, info, first=None, after=None, filter=None, order_by=None):
+        _node_type = cast(type, config.graphql_type)
+
+        # 🔹 Пишем резолвер НАПРЯМУЮ с правильными аннотациями
+        async def _list_resolver(
+            self,
+            info: Info,
+            pagination: Optional[PaginationInput] = None,
+            filter=None,
+            order_by=None,
+        ) -> Connection[_node_type]:  # noqa
             if config.permissions.view:
                 await require_permissions(info, config.permissions.view)
             ctx: GraphQLContext = info.context
+
             stmt = select(config.model)
             if filter:
                 stmt = apply_filters(stmt, config.model, filter)
-
-            if order_by is not None and config.order_by_input:
+            if config.order_by_input:
                 stmt = apply_order_by(stmt, config.model, order_by)
-            elif config.order_by is not None:
-                stmt = stmt.order_by(config.order_by)
-            else:
-                stmt = stmt.order_by(getattr(config.model, "id").asc())
-            return await fetch_relay_page(
-                session=ctx.db, stmt=stmt, first=first, after=after,
-                model=config.model, cursor_fields=config.cursor_field,
-                cursor_separator=config.cursor_separator, convert=config.convert,
+
+            if pagination is None:
+                pagination = PaginationInput(page=1, page_size=page_size_default)  # noqa
+
+            return await paginate_query(
+                session=ctx.db,
+                stmt=stmt,
+                pagination=pagination,
+                convert=config.convert,
             )
 
-        _node_type = cast(type, config.graphql_type)
+        # 🔹 Аннотации с реальными типами-объектами
         _list_resolver.__annotations__ = {
             "info": Info,
-            "first": Optional[int],
-            "after": Optional[str],
+            "pagination": Optional[PaginationInput],
             "filter": Optional[config.filter_input],  # type: ignore
-            "order_by": Optional[config.order_by_input],  # type: ignore
-            "return": Iterable[_node_type],  # type: ignore
+            "order_by": Optional[config.order_by_input] if config.order_by_input else Optional[Any],  # type: ignore
+            "return": Connection[_node_type],  # noqa
         }
 
-        # 🔹 Логирование: проверяем флаги + глобальные исключения
+        # 🔹 Логирование
         extensions = []
         if config.should_log("list") and not should_skip_graphql_logging(list_name):
             extensions.append(GraphQLLoggingExtension())
 
-        connection_type = relay.ListConnection.__class_getitem__(_node_type)  # noqa
-        _list_resolver = relay.connection(connection_type, extensions=extensions)(_list_resolver)
+        _list_resolver = strawberry.field(extensions=extensions)(_list_resolver)
         _list_resolver.__name__ = list_name
         attrs[list_name] = _list_resolver
 
     if enable_get:
+        pk_column = next(iter(config.model.__table__.primary_key.columns), None)
+        _ID_TYPE_MAP = {
+            "INTEGER": int, "BIGINT": int, "SMALLINT": int,
+            "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
+        }
+        id_python_type = (
+            _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int)  # noqa
+            if pk_column is not None else int
+        )
+
         async def _get_resolver(self, info, id):
             if config.permissions.view:
                 await require_permissions(info, config.permissions.view)
-            return await id.resolve_node(info, ensure_type=config.graphql_type)
+            ctx: GraphQLContext = info.context
+            model_instance = await ctx.db.get(config.model, id)
+            return config.convert(model_instance) if model_instance else None
 
         _get_resolver.__annotations__ = {
             "info": Info,
-            "id": relay.GlobalID,
+            "id": id_python_type,
             "return": Optional[config.graphql_type],  # type: ignore
         }
-        
-        # 🔹 Логирование для одиночного запроса
+
         extensions = []
         if config.should_log("get") and not should_skip_graphql_logging(get_name):
             extensions.append(GraphQLLoggingExtension())
-        
+
         _get_resolver = strawberry.field(extensions=extensions)(_get_resolver)
         _get_resolver.__name__ = get_name
         attrs[get_name] = _get_resolver

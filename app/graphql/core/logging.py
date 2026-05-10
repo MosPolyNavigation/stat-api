@@ -1,6 +1,5 @@
 from graphql import GraphQLError
 import strawberry
-from sqlalchemy.sql.functions import current_user
 from strawberry.extensions import FieldExtension
 
 
@@ -45,7 +44,7 @@ def _extract_role_rights(role) -> list[str]:
         right = getattr(role_right_goal, "right", None)
         goal = getattr(role_right_goal, "goal", None)
         if right is not None and goal is not None:
-            rights.append(f"{right.name} -> {goal.name}")
+            rights.append(f"{right.name} -> {goal.name}")  # noqa
             continue
 
         right_id = getattr(role_right_goal, "right_id", None)
@@ -59,7 +58,17 @@ def build_graphql_success_log(field_name: str, kwargs: dict, result) -> str | No
     if should_skip_graphql_logging(field_name):
         return None
 
-    if field_name in {"create_user", "update_user", "delete_user", "change_user_password", "create_role", "update_role", "delete_role", "grant_role", "revoke_role"}:
+    if field_name in {
+        "create_user",
+        "update_user",
+        "delete_user",
+        "change_user_password",
+        "create_role",
+        "update_role",
+        "delete_role",
+        "grant_role",
+        "revoke_role"
+    }:
         return None
 
     operation = field_name.lower()
@@ -139,7 +148,7 @@ class GraphQLLoggingExtension(FieldExtension):
 
         text = build_graphql_success_log(field_name, kwargs, result)
         if text:
-            logger.log(current_user, text)
+            logger.log(current_user, text)  # type: ignore
 
         return result
 

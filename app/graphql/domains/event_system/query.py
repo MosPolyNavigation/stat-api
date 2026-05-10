@@ -1,9 +1,10 @@
-from typing import Optional, Iterable
+from typing import Optional
 import strawberry
-from strawberry import relay, Info
+from strawberry import Info
 from sqlalchemy import select
 
 from app.graphql.core.ordering import apply_order_by
+from app.graphql.core.pagination import paginate_query, PaginationInput, Connection
 from app.graphql.core.resource_factory import create_query_resource
 from app.graphql.domains.event_system.resources import (
     EventTypeResource,
@@ -19,7 +20,6 @@ from app.graphql.domains.event_system.resources import (
 from app.models import AllowedPayload
 from app.graphql.core.permissions import require_permissions, P
 from app.graphql.core.filters import apply_filters
-from app.graphql.core.pagination import fetch_relay_page
 from app.graphql.core.context import GraphQLContext
 from app.graphql.domains.event_system.types import (
     AllowedPayloadRule as AllowedPayloadRuleType,
@@ -93,15 +93,16 @@ DashboardTypeQuery = create_query_resource(
 # =============================================================================
 @strawberry.type
 class AllowedPayloadRuleQuery:
-    @relay.connection(relay.ListConnection[AllowedPayloadRuleType])
+    # 🔹 Используем наш кастомный декоратор пагинации
+    @strawberry.field()
     async def allowed_payload_rules(
             self,
             info: Info,
-            first: Optional[int] = None,
-            after: Optional[str] = None,
+            pagination: Optional[PaginationInput] = None,
             filter: Optional[AllowedPayloadRuleFilterInput] = None,
-            order_by: Optional[AllowedPayloadRuleOrderByInput] = None
-    ) -> Iterable[AllowedPayloadRuleType]:
+            order_by: Optional[AllowedPayloadRuleOrderByInput] = None,
+    ) -> Connection[AllowedPayloadRuleType]:
+        """Построение запроса для правил — декоратор применит пагинацию."""
         await require_permissions(info, P.STATS_VIEW)
         ctx: GraphQLContext = info.context
 
@@ -111,29 +112,43 @@ class AllowedPayloadRuleQuery:
         if order_by:
             stmt = apply_order_by(stmt, AllowedPayload, order_by)
 
-        return await fetch_relay_page(
+        if pagination is None:
+            pagination = PaginationInput(page=1, page_size=10)  # noqa
+
+        return await paginate_query(
             session=ctx.db,
             stmt=stmt,
-            first=first,
-            after=after,
-            model=AllowedPayload,
-            cursor_fields=["event_type_id", "payload_type_id"],
-            cursor_separator=":",
+            pagination=pagination,
             convert=lambda m: AllowedPayloadRuleType(
                 event_type_id=m.event_type_id,  # type: ignore[call-arg]
                 payload_type_id=m.payload_type_id,  # type: ignore[call-arg]
-                _composite_key=f"{m.event_type_id}:{m.payload_type_id}"  # type: ignore[call-arg]
             ),
         )
 
+    # 🔹 Одиночный запрос с составным ключом (два int аргумента)
     @strawberry.field  # type: ignore[unresolved-reference]
     async def allowed_payload_rule(
             self,
             info: Info,
-            id: relay.GlobalID,
+            event_type_id: int,
+            payload_type_id: int,
     ) -> Optional[AllowedPayloadRuleType]:
+        """Получение правила по составному ключу."""
         await require_permissions(info, P.STATS_VIEW)
-        return await id.resolve_node(info, ensure_type=AllowedPayloadRuleType)
+        ctx: GraphQLContext = info.context
+
+        stmt = select(AllowedPayload).where(
+            AllowedPayload.event_type_id == event_type_id,
+            AllowedPayload.payload_type_id == payload_type_id,
+        )
+        model = (await ctx.db.execute(stmt)).scalar_one_or_none()
+
+        if model:
+            return AllowedPayloadRuleType(
+                event_type_id=model.event_type_id,  # type: ignore[call-arg]
+                payload_type_id=model.payload_type_id,  # type: ignore[call-arg]
+            )
+        return None
 
 
 # =============================================================================
