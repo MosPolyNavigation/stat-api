@@ -70,14 +70,34 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         ClientId, ReviewStatus, Payload,
         DashboardType
     )
+    from app.models.nav.location import Location
+    from app.models.nav.corpus import Corpus
+    from app.models.nav.floor import Floor
+    from app.models.nav.types import Type as NavTypeModel
+    from app.models.nav.plan import Plan
+    from app.models.nav.auditory import Auditory
+    from app.models.nav.aud_photo import AudPhoto
+    from app.models.nav.static import Static
 
     return {
+        # === event_system ===
         "value_type": SQLAlchemyLoader(session, ValueType),
         "payload_type": SQLAlchemyLoader(session, PayloadType),
         "event_type": SQLAlchemyLoader(session, EventType),
         "client_id": SQLAlchemyLoader(session, ClientId),
         "review_status": SQLAlchemyLoader(session, ReviewStatus),
         "dashboard_type": SQLAlchemyLoader(session, DashboardType),
-        # Добавляй новые по мере необходимости
         "payloads_by_event_id": ForeignKeyLoader(session, Payload, "event_id"),
+
+        # === navigation ===
+        "nav_location": SQLAlchemyLoader(session, Location),
+        "nav_campus": SQLAlchemyLoader(session, Corpus),
+        "nav_floor": SQLAlchemyLoader(session, Floor),
+        "nav_type": SQLAlchemyLoader(session, NavTypeModel),
+        "nav_plan": SQLAlchemyLoader(session, Plan),
+        "nav_auditory": SQLAlchemyLoader(session, Auditory),
+        "nav_auditory_photo": SQLAlchemyLoader(session, AudPhoto),
+        "nav_static": SQLAlchemyLoader(session, Static),
+
+        "nav_photos_by_aud_id": ForeignKeyLoader(session, AudPhoto, "aud_id"),
     }

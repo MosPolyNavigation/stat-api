@@ -108,10 +108,10 @@ class P:
     TASKS_DELETE = Permission(Right.DELETE, Goal.TASKS)
 
     # Nav Data (8)
-    NAV_DATA_VIEW = Permission(Right.VIEW, Goal.NAV_DATA)
-    NAV_DATA_CREATE = Permission(Right.CREATE, Goal.NAV_DATA)
-    NAV_DATA_EDIT = Permission(Right.EDIT, Goal.NAV_DATA)
-    NAV_DATA_DELETE = Permission(Right.DELETE, Goal.NAV_DATA)
+    NAV_VIEW = Permission(Right.VIEW, Goal.NAV_DATA)
+    NAV_CREATE = Permission(Right.CREATE, Goal.NAV_DATA)
+    NAV_EDIT = Permission(Right.EDIT, Goal.NAV_DATA)
+    NAV_DELETE = Permission(Right.DELETE, Goal.NAV_DATA)
 
     # User Pass (9)
     USER_PASS_EDIT = Permission(Right.EDIT, Goal.USER_PASS)

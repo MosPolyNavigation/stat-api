@@ -1,9 +1,12 @@
 import strawberry
-from strawberry import relay
 
 from app.graphql.domains.event_system.query import Query as EventQuery
+from app.graphql.domains.navigation.query import Query as NavQuery
 
 
 @strawberry.type
-class Query(EventQuery):
-    node: relay.Node = relay.node()
+class Query(
+    EventQuery,
+    NavQuery
+):
+    pass

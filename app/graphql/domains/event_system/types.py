@@ -253,15 +253,15 @@ class Event:
 
     @strawberry.field()
     async def payloads(
-            self,
-            info: strawberry.Info,  # noqa
-            pagination: Optional[PaginationInput] = None,
-            filter: Optional[PayloadFilterInput] = None,
-            order_by: Optional[PayloadOrderByInput] = None,
+        self,
+        info: strawberry.Info,  # noqa
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[PayloadFilterInput] = None,
+        order_by: Optional[PayloadOrderByInput] = None,
     ) -> Connection["Payload"]:
         """Построение запроса для пейлоадов текущего события."""
         ctx: GraphQLContext = info.context
-        stmt = select(PayloadModel)
+        stmt = select(PayloadModel).where(PayloadModel.event_id == self.id)
         if filter:
             stmt = apply_filters(stmt, PayloadModel, filter)
         if order_by:
