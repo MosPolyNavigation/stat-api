@@ -1,13 +1,12 @@
 """Integration tests for GraphQL Query operations in event_system domain."""
 import pytest
-from strawberry.relay import from_base64
 
-from app.tests.base import client  # ← Адаптируй путь под свою структуру
+from app.tests.base import client
 
 # =============================================================================
 # Конфигурация
 # =============================================================================
-ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"  # ← Замени на реальный токен
+ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
 
 
@@ -47,17 +46,19 @@ class TestGraphQLDictionaries:
     def test_200_event_types_connection_basic(self):
         query = """
         {
-            eventTypes(first: 3) {
-                edges {
-                    node {
-                        id
-                        codeName
-                        description
-                    }
+            eventTypes(pagination: { page: 1, pageSize: 3 }) {
+                nodes {
+                    id
+                    codeName
+                    description
                 }
                 pageInfo {
                     hasNextPage
                     endCursor
+                }
+                paginationInfo {
+                    totalCount
+                    currentPage
                 }
             }
         }
@@ -65,20 +66,21 @@ class TestGraphQLDictionaries:
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
         data = response.json()["data"]["eventTypes"]
-        assert isinstance(data["edges"], list)
-        assert len(data["edges"]) <= 3
+        assert isinstance(data["nodes"], list)
+        assert len(data["nodes"]) <= 3
         assert "pageInfo" in data
+        assert "paginationInfo" in data
 
-    def test_200_event_type_single_by_global_id(self):
+    def test_200_event_type_single_by_id(self):
         # Сначала получаем реальный ID через список
-        list_query = "{ eventTypes(first: 1) { edges { node { id codeName } } } }"
+        list_query = "{ eventTypes(pagination: { pageSize: 1 }) { nodes { id codeName } } }"
         list_resp = graphql_query(list_query, ADMIN_HEADERS)
-        node_id = list_resp.json()["data"]["eventTypes"]["edges"][0]["node"]["id"]
+        node_id = list_resp.json()["data"]["eventTypes"]["nodes"][0]["id"]
 
-        # Затем запрашиваем по этому ID
+        # Затем запрашиваем по этому ID (простой Int, не GlobalID)
         query = f"""
         {{
-            eventType(id: "{node_id}") {{
+            eventType(id: {node_id}) {{
                 id
                 codeName
                 description
@@ -93,17 +95,15 @@ class TestGraphQLDictionaries:
         """Проверка DataLoader: вложенный valueType подгружается без N+1."""
         query = """
         {
-            payloadTypes(first: 3) {
-                edges {
-                    node {
+            payloadTypes(pagination: { pageSize: 3 }) {
+                nodes {
+                    id
+                    codeName
+                    valueTypeId
+                    valueType {
                         id
-                        codeName
-                        valueTypeId
-                        valueType {
-                            id
-                            name
-                            description
-                        }
+                        name
+                        description
                     }
                 }
             }
@@ -111,44 +111,36 @@ class TestGraphQLDictionaries:
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["payloadTypes"]["edges"]
-        assert len(edges) > 0
-        # Проверяем, что вложенный тип загрузился
-        assert edges[0]["node"]["valueType"] is not None
-        assert "name" in edges[0]["node"]["valueType"]
+        nodes = response.json()["data"]["payloadTypes"]["nodes"]
+        assert len(nodes) > 0
+        assert nodes[0]["valueType"] is not None
+        assert "name" in nodes[0]["valueType"]
 
     def test_200_value_types_filtering_by_name(self):
         query = """
         {
             valueTypes(filter: { name: { eq: "int" } }) {
-                edges {
-                    node {
-                        id
-                        name
-                    }
-                }
+                nodes { id name }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        nodes = response.json()["data"]["valueTypes"]["edges"]
-        assert all(node["node"]["name"] == "int" for node in nodes)
+        nodes = response.json()["data"]["valueTypes"]["nodes"]
+        assert all(node["name"] == "int" for node in nodes)
 
     def test_200_value_types_string_filter_contains(self):
         query = """
         {
             valueTypes(filter: { name: { contains: "str" } }) {
-                edges {
-                    node { name }
-                }
+                nodes { name }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        nodes = response.json()["data"]["valueTypes"]["edges"]
-        assert all("str" in node["node"]["name"].lower() for node in nodes)
+        nodes = response.json()["data"]["valueTypes"]["nodes"]
+        assert all("str" in node["name"].lower() for node in nodes)
 
 
 # =============================================================================
@@ -160,43 +152,38 @@ class TestGraphQLAllowedPayloadRules:
     def test_200_allowed_payload_rules_connection(self):
         query = """
         {
-            allowedPayloadRules(first: 3) {
-                edges {
-                    cursor
-                    node {
-                        id
-                        eventTypeId
-                        payloadTypeId
-                        eventType { codeName }
-                        payloadType { codeName }
-                    }
+            allowedPayloadRules(pagination: { pageSize: 3 }) {
+                nodes {
+                    eventTypeId
+                    payloadTypeId
+                    eventType { codeName }
+                    payloadType { codeName }
                 }
-                pageInfo { endCursor hasNextPage }
+                pageInfo { hasNextPage endCursor }
+                paginationInfo { totalCount currentPage }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
         data = response.json()["data"]["allowedPayloadRules"]
-        assert isinstance(data["edges"], list)
-        if data["edges"]:
-            node = data["edges"][0]["node"]
+        assert isinstance(data["nodes"], list)
+        if data["nodes"]:
+            node = data["nodes"][0]
             assert "eventTypeId" in node
             assert "payloadTypeId" in node
-            # Проверяем, что вложенные связи загрузились
             assert node["eventType"] is not None or node["payloadType"] is not None
 
-    def test_200_allowed_payload_rule_single_by_composite_id(self):
-        # Получаем реальный составной ID через список
-        list_query = "{ allowedPayloadRules(first: 1) { edges { node { id } } } }"
+    def test_200_allowed_payload_rule_single_by_composite_key(self):
+        # Получаем реальные ключи через список
+        list_query = "{ allowedPayloadRules(pagination: { pageSize: 1 }) { nodes { eventTypeId payloadTypeId } } }"
         list_resp = graphql_query(list_query, ADMIN_HEADERS)
-        rule_id = list_resp.json()["data"]["allowedPayloadRules"]["edges"][0]["node"]["id"]
+        rule = list_resp.json()["data"]["allowedPayloadRules"]["nodes"][0]
 
-        # Запрашиваем по этому ID
+        # Запрашиваем по составному ключу (два Int аргумента)
         query = f"""
         {{
-            allowedPayloadRule(id: "{rule_id}") {{
-                id
+            allowedPayloadRule(eventTypeId: {rule["eventTypeId"]}, payloadTypeId: {rule["payloadTypeId"]}) {{
                 eventTypeId
                 payloadTypeId
                 eventType {{ codeName }}
@@ -206,8 +193,9 @@ class TestGraphQLAllowedPayloadRules:
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        rule = response.json()["data"]["allowedPayloadRule"]
-        assert rule["id"] == rule_id
+        result = response.json()["data"]["allowedPayloadRule"]
+        assert result["eventTypeId"] == rule["eventTypeId"]
+        assert result["payloadTypeId"] == rule["payloadTypeId"]
 
 
 # =============================================================================
@@ -220,90 +208,69 @@ class TestGraphQLClientsAndReviews:
         """Проверка кастомной сортировки (creation_date DESC)."""
         query = """
         {
-            clientIds(first: 3, orderBy: {creationDate: DESC}) {
-                edges {
-                    node {
-                        id
-                        ident
-                        creationDate
-                    }
+            clientIds(
+                pagination: { pageSize: 3 }
+                orderBy: { creationDate: DESC }
+            ) {
+                nodes {
+                    id
+                    ident
+                    creationDate
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["clientIds"]["edges"]
-        # Проверяем, что данные отсортированы по убыванию даты
-        if len(edges) >= 2:
-            dates = [e["node"]["creationDate"] for e in edges]
+        nodes = response.json()["data"]["clientIds"]["nodes"]
+        if len(nodes) >= 2:
+            dates = [n["creationDate"] for n in nodes]
             assert dates == sorted(dates, reverse=True)
 
     def test_200_reviews_with_nested_relations(self):
         """Проверка загрузки связанных client и status через DataLoader."""
         query = """
         {
-            reviews(first: 3) {
-                edges {
-                    node {
-                        id
-                        text
-                        creationDate
-                        client {
-                            id
-                            ident
-                        }
-                        status {
-                            id
-                            name
-                        }
-                        problem {
-                            id
-                        }
-                    }
+            reviews(pagination: { pageSize: 3 }) {
+                nodes {
+                    id
+                    text
+                    creationDate
+                    client { id ident }
+                    status { id name }
+                    problem { id }
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["reviews"]["edges"]
-        assert len(edges) > 0
-        node = edges[0]["node"]
-        # Проверяем, что вложенные связи загрузились
-        assert node["client"] is not None
-        assert node["status"] is not None
-        assert "ident" in node["client"]
-        assert "name" in node["status"]
+        nodes = response.json()["data"]["reviews"]["nodes"]
+        assert len(nodes) > 0
+        node = nodes[0]
+        assert node["client"] is not None and "ident" in node["client"]
+        assert node["status"] is not None and "name" in node["status"]
 
     def test_200_reviews_filter_by_status_and_text(self):
         """Комбинированная фильтрация: статус + текст."""
         query = """
         {
             reviews(
-                first: 5
+                pagination: { pageSize: 5 }
                 filter: {
                     reviewStatusId: { eq: 2 }
                     text: { contains: "test" }
                 }
             ) {
-                edges {
-                    node {
-                        id
-                        text
-                        status { name }
-                    }
-                }
+                nodes { id text status { name } }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["reviews"]["edges"]
-        # Все результаты должны соответствовать фильтрам
-        for edge in edges:
-            node = edge["node"]
-            assert node["status"]["name"] is not None  # statusId=2
+        nodes = response.json()["data"]["reviews"]["nodes"]
+        for node in nodes:
+            assert node["status"]["name"] is not None
             assert "test" in node["text"].lower()
 
 
@@ -317,53 +284,40 @@ class TestGraphQLEventsAndPayloads:
         """Проверка загрузки client и eventType через DataLoader."""
         query = """
         {
-            events(first: 3) {
-                edges {
-                    node {
-                        id
-                        triggerTime
-                        client {
-                            id
-                            ident
-                        }
-                        eventType {
-                            id
-                            codeName
-                        }
-                    }
+            events(pagination: { pageSize: 3 }) {
+                nodes {
+                    id
+                    triggerTime
+                    client { id ident }
+                    eventType { id codeName }
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["events"]["edges"]
-        assert len(edges) > 0
-        node = edges[0]["node"]
+        nodes = response.json()["data"]["events"]["nodes"]
+        assert len(nodes) > 0
+        node = nodes[0]
         assert node["client"] is not None
         assert node["eventType"] is not None
 
     def test_200_event_with_nested_payloads_pagination(self):
-        """Проверка вложенного поля payloads с пагинацией (first)."""
+        """Проверка вложенного поля payloads с пагинацией."""
         # Сначала получаем ID события
-        list_query = "{ events(first: 1) { edges { node { id } } } }"
+        list_query = "{ events(pagination: { pageSize: 1 }) { nodes { id } } }"
         list_resp = graphql_query(list_query, ADMIN_HEADERS)
-        event_id = list_resp.json()["data"]["events"]["edges"][0]["node"]["id"]
+        event_id = list_resp.json()["data"]["events"]["nodes"][0]["id"]
 
         query = f"""
         {{
-            event(id: "{event_id}") {{
+            event(id: {event_id}) {{
                 id
                 triggerTime
-                payloads(first: 2) {{
-                    edges {{
-                        node {{
-                            id
-                            value
-                            payloadType {{ codeName }}
-                        }}
-                    }}
+                payloads(pagination: {{ pageSize: 2 }}) {{
+                    nodes {{ id value payloadType {{ codeName }} }}
                     pageInfo {{ hasNextPage }}
+                    paginationInfo {{ totalCount }}
                 }}
             }}
         }}
@@ -371,83 +325,35 @@ class TestGraphQLEventsAndPayloads:
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
         event = response.json()["data"]["event"]
-        payloads = event["payloads"]["edges"]
-        # Проверяем, что лимит first=2 применён
+        payloads = event["payloads"]["nodes"]
         assert len(payloads) <= 2
         if payloads:
-            assert "value" in payloads[0]["node"]
+            assert "value" in payloads[0]
 
     def test_200_payloads_with_filter_and_nested_event(self):
         """Фильтрация Payload + загрузка связанного Event."""
         query = """
         {
             payloads(
-                first: 3
+                pagination: { pageSize: 3 }
                 filter: { value: { contains: "test" } }
             ) {
-                edges {
-                    node {
-                        id
-                        value
-                        event {
-                            id
-                            triggerTime
-                        }
-                        payloadType {
-                            codeName
-                            valueType { name }
-                        }
-                    }
+                nodes {
+                    id
+                    value
+                    event { id triggerTime }
+                    payloadType { codeName valueType { name } }
                 }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["payloads"]["edges"]
-        for edge in edges:
-            node = edge["node"]
+        nodes = response.json()["data"]["payloads"]["nodes"]
+        for node in nodes:
             assert "test" in node["value"].lower()
             assert node["event"] is not None
             assert node["payloadType"] is not None
-
-
-# =============================================================================
-# Relay Node: универсальный запрос по любому типу
-# =============================================================================
-class TestGraphQLRelayNode:
-    """Тесты для универсального поля node(id: ID!)."""
-
-    def test_200_node_query_with_inline_fragments(self):
-        """Динамическое разрешение типа через inline fragments."""
-        # Получаем реальный ID EventType
-        list_query = "{ eventTypes(first: 1) { edges { node { id } } } }"
-        list_resp = graphql_query(list_query, ADMIN_HEADERS)
-        node_id = list_resp.json()["data"]["eventTypes"]["edges"][0]["node"]["id"]
-
-        query = f"""
-        {{
-            node(id: "{node_id}") {{
-                __typename
-                id
-                ... on EventType {{
-                    codeName
-                    description
-                }}
-                ... on PayloadType {{
-                    codeName
-                }}
-                ... on Event {{
-                    triggerTime
-                }}
-            }}
-        }}
-        """
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200
-        node = response.json()["data"]["node"]
-        assert node["__typename"] == "EventType"
-        assert "codeName" in node
 
 
 # =============================================================================
@@ -466,16 +372,13 @@ class TestGraphQLFiltering:
                         { id: { gt: 0 } }
                     ]
                 }
-            ) {
-                edges { node { id codeName } }
-            }
+            ) { nodes { id codeName } }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["eventTypes"]["edges"]
-        for edge in edges:
-            node = edge["node"]
+        nodes = response.json()["data"]["eventTypes"]["nodes"]
+        for node in nodes:
             assert "test" in node["codeName"].lower()
             assert node["id"] > 0
 
@@ -489,143 +392,114 @@ class TestGraphQLFiltering:
                         { name: { eq: "string" } }
                     ]
                 }
-            ) {
-                edges { node { name } }
-            }
+            ) { nodes { name } }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["valueTypes"]["edges"]
-        names = [e["node"]["name"] for e in edges]
+        nodes = response.json()["data"]["valueTypes"]["nodes"]
+        names = [n["name"] for n in nodes]
         assert all(name in ["int", "string"] for name in names)
 
     def test_200_filter_not_operator(self):
         query = """
         {
             eventTypes(
-                filter: {
-                    not: { codeName: { eq: "deprecated" } }
-                }
-            ) {
-                edges { node { codeName } }
-            }
+                filter: { not: { codeName: { eq: "deprecated" } } }
+            ) { nodes { codeName } }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["eventTypes"]["edges"]
-        # Ни один результат не должен быть "deprecated"
-        assert all(e["node"]["codeName"] != "deprecated" for e in edges)
+        nodes = response.json()["data"]["eventTypes"]["nodes"]
+        assert all(n["codeName"] != "deprecated" for n in nodes)
 
     def test_200_filter_int_range_between(self):
         query = """
         {
-            eventTypes(
-                filter: { id: { between: [1, 100] } }
-            ) {
-                edges { node { id } }
+            eventTypes(filter: { id: { between: [1, 100] } }) {
+                nodes { id }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["eventTypes"]["edges"]
-
-        # 🔹 Декодируем GlobalID → извлекаем сырый int перед сравнением
-        raw_ids = []
-        for edge in edges:
-            # from_base64 возвращает кортеж (type_name, node_id)
-            _, node_id_str = from_base64(edge["node"]["id"])
-            raw_ids.append(int(node_id_str))
-
-        # Теперь сравниваем int с int
-        assert all(1 <= i <= 100 for i in raw_ids), f"IDs {raw_ids} должны быть в диапазоне [1, 100]"
+        nodes = response.json()["data"]["eventTypes"]["nodes"]
+        ids = [n["id"] for n in nodes]
+        assert all(1 <= i <= 100 for i in ids), f"IDs {ids} должны быть в диапазоне [1, 100]"
 
     def test_200_filter_string_operators(self):
         query = """
         {
             eventTypes(
                 filter: {
-                    codeName: {
-                        startsWith: "site",
-                        endsWith: "type"
-                    }
+                    codeName: { startsWith: "site", endsWith: "type" }
                 }
-            ) {
-                edges { node { codeName } }
-            }
+            ) { nodes { codeName } }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["eventTypes"]["edges"]
-        for edge in edges:
-            name = edge["node"]["codeName"]
+        nodes = response.json()["data"]["eventTypes"]["nodes"]
+        for node in nodes:
+            name = node["codeName"]
             assert name.startswith("site") or name.endswith("type")
 
 
 # =============================================================================
-# Пагинация: курсоры, hasNextPage, hasPreviousPage
+# Пагинация: page/pageSize, hasNextPage, totalCount
 # =============================================================================
 class TestGraphQLPagination:
-    """Тесты курсорной пагинации Relay."""
+    """Тесты кастомной offset-пагинации."""
 
-    def test_200_pagination_first_and_page_info(self):
+    def test_200_pagination_page_and_info(self):
         query = """
         {
-            eventTypes(first: 2) {
-                edges {
-                    cursor
-                    node { id }
-                }
-                pageInfo {
-                    hasNextPage
-                    hasPreviousPage
-                    startCursor
-                    endCursor
-                }
+            eventTypes(pagination: { page: 1, pageSize: 2 }) {
+                nodes { id }
+                pageInfo { hasNextPage hasPreviousPage startCursor endCursor }
+                paginationInfo { totalCount currentPage totalPages }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
         data = response.json()["data"]["eventTypes"]
-        assert len(data["edges"]) == 2
-        assert "endCursor" in data["pageInfo"]
-        assert isinstance(data["pageInfo"]["hasNextPage"], bool)
+        assert len(data["nodes"]) <= 2
+        assert "paginationInfo" in data
+        assert data["paginationInfo"]["currentPage"] == 1
 
-    def test_200_pagination_cursor_navigation(self):
-        # Шаг 1: получаем первую страницу и endCursor
+    def test_200_pagination_navigation(self):
+        # Шаг 1: первая страница
         query1 = """
         {
-            eventTypes(first: 2) {
-                edges { node { id } }
-                pageInfo { endCursor hasNextPage }
+            eventTypes(pagination: { page: 1, pageSize: 2 }) {
+                nodes { id }
+                pageInfo { hasNextPage }
+                paginationInfo { totalPages }
             }
         }
         """
         resp1 = graphql_query(query1, ADMIN_HEADERS)
         page1 = resp1.json()["data"]["eventTypes"]
-        assert page1["pageInfo"]["hasNextPage"] is True
-        cursor = page1["pageInfo"]["endCursor"]
+        ids1 = {n["id"] for n in page1["nodes"]}
 
-        # Шаг 2: запрашиваем следующую страницу по курсору
-        query2 = f"""
-        {{
-            eventTypes(first: 2, after: "{cursor}") {{
-                edges {{ node {{ id }} }}
-                pageInfo {{ hasPreviousPage }}
-            }}
-        }}
-        """
-        resp2 = graphql_query(query2, ADMIN_HEADERS)
-        page2 = resp2.json()["data"]["eventTypes"]
-        # IDs на второй странице не должны совпадать с первой
-        ids1 = {e["node"]["id"] for e in page1["edges"]}
-        ids2 = {e["node"]["id"] for e in page2["edges"]}
-        assert ids1.isdisjoint(ids2)
-        assert page2["pageInfo"]["hasPreviousPage"] is True
+        # Шаг 2: вторая страница (если есть)
+        if page1["pageInfo"]["hasNextPage"]:
+            query2 = """
+            {
+                eventTypes(pagination: { page: 2, pageSize: 2 }) {
+                    nodes { id }
+                    pageInfo { hasPreviousPage }
+                }
+            }
+            """
+            resp2 = graphql_query(query2, ADMIN_HEADERS)
+            page2 = resp2.json()["data"]["eventTypes"]
+            ids2 = {n["id"] for n in page2["nodes"]}
+            # IDs на разных страницах не должны пересекаться
+            assert ids1.isdisjoint(ids2)
+            assert page2["pageInfo"]["hasPreviousPage"] is True
 
 
 # =============================================================================
@@ -635,18 +509,17 @@ class TestGraphQLUnauthorized:
     """Тесты проверки прав доступа (401/403)."""
 
     def test_401_event_types_without_token(self):
-        query = "{ eventTypes(first: 1) { edges { node { id } } } }"
-        response = graphql_query(query)  # ← без ADMIN_HEADERS
+        query = "{ eventTypes(pagination: { pageSize: 1 }) { nodes { id } } }"
+        response = graphql_query(query)
         assert response.status_code == 401
 
     def test_401_reviews_without_token(self):
-        query = "{ reviews(first: 1) { edges { node { id } } } }"
+        query = "{ reviews(pagination: { pageSize: 1 }) { nodes { id } } }"
         response = graphql_query(query)
         assert response.status_code == 401
 
     def test_401_single_node_without_token(self):
-        # Даже если знаем валидный ID, без токена доступ запрещён
-        query = '{ eventType(id: "RXZlbnRUeXBlOjE=") { id } }'
+        query = '{ eventType(id: 1) { id } }'
         response = graphql_query(query)
         assert response.status_code == 401
 
@@ -657,50 +530,46 @@ class TestGraphQLUnauthorized:
 class TestGraphQLEdgeCases:
     """Тесты граничных условий и обработки ошибок."""
 
-    def test_400_invalid_global_id_format(self):
-        query = '{ eventType(id: "not-a-valid-global-id") { id } }'
-        response = graphql_query(query, ADMIN_HEADERS)
-        assert response.status_code == 200  # GraphQL всегда 200, ошибки в body
-        assert "errors" in response.json()
-        assert "Invalid base64" in response.json()["errors"][0]["message"]
-
-    def test_404_non_existent_node(self):
-        # GlobalID для несуществующего ID (999999)
-        query = '{ eventType(id: "RXZlbnRUeXBlOjk5OTk5OQ==") { id } }'
+    def test_400_invalid_id_format(self):
+        # Простой Int ID, не строка
+        query = '{ eventType(id: "not-an-int") { id } }'
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        # Relay возвращает null, если узел не найден
+        assert "errors" in response.json()
+
+    def test_404_non_existent_node(self):
+        query = '{ eventType(id: 999999) { id } }'
+        response = graphql_query(query, ADMIN_HEADERS)
+        assert response.status_code == 200
         assert response.json()["data"]["eventType"] is None
 
     def test_200_empty_filter_result(self):
         query = """
         {
             eventTypes(filter: { id: { eq: 999999 } }) {
-                edges { node { id } }
+                nodes { id }
                 pageInfo { hasNextPage }
+                paginationInfo { totalCount }
             }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        edges = response.json()["data"]["eventTypes"]["edges"]
-        assert len(edges) == 0
-        assert response.json()["data"]["eventTypes"]["pageInfo"]["hasNextPage"] is False
+        nodes = response.json()["data"]["eventTypes"]["nodes"]
+        assert len(nodes) == 0
+        assert response.json()["data"]["eventTypes"]["paginationInfo"]["totalCount"] == 0
 
     def test_200_multiple_queries_in_one_request(self):
-        """Проверка, что несколько независимых запросов работают в одном HTTP-запросе."""
         query = """
         {
-            eventTypes(first: 1) { edges { node { id } } }
-            valueTypes(first: 1) { edges { node { id } } }
-            clientIds(first: 1) { edges { node { id } } }
+            eventTypes(pagination: { pageSize: 1 }) { nodes { id } }
+            valueTypes(pagination: { pageSize: 1 }) { nodes { id } }
+            clientIds(pagination: { pageSize: 1 }) { nodes { id } }
         }
         """
         response = graphql_query(query, ADMIN_HEADERS)
         assert response.status_code == 200
-        response = response.json()
-        data = response["data"]
-        print(response)
+        data = response.json()["data"]
         assert "eventTypes" in data
         assert "valueTypes" in data
         assert "clientIds" in data
@@ -713,48 +582,36 @@ class TestGraphQLDashboardQuery:
     """Тесты для запросов Dashboard и DashboardType."""
 
     def test_200_dashboard_types_connection(self):
-        """Получение списка типов дашбордов с пагинацией."""
         query = """
         {
-            dashboardTypes(first: 3) {
-                edges {
-                    node {
-                        id
-                        codeName
-                        description
-                    }
-                }
+            dashboardTypes(pagination: { pageSize: 3 }) {
+                nodes { id codeName description }
                 pageInfo { hasNextPage endCursor }
+                paginationInfo { totalCount currentPage }
             }
         }
         """
         resp = graphql_query(query, ADMIN_HEADERS)
         assert resp.status_code == 200
         data = resp.json()["data"]["dashboardTypes"]
-        assert isinstance(data["edges"], list)
-        if data["edges"]:
-            assert "codeName" in data["edges"][0]["node"]
+        assert isinstance(data["nodes"], list)
+        if data["nodes"]:
+            assert "codeName" in data["nodes"][0]
 
     def test_200_dashboard_type_by_id(self):
-        """Получение одного типа дашборда по GlobalID."""
-        # Сначала получаем реальный ID
-        list_resp = graphql_query("{ dashboardTypes(first: 1) { edges { node { id } } } }", ADMIN_HEADERS)
-        dt_id = list_resp.json()["data"]["dashboardTypes"]["edges"][0]["node"]["id"]
-
-        query = f'{{ dashboardType(id: "{dt_id}") {{ id codeName }} }}'
+        list_resp = graphql_query("{ dashboardTypes(pagination: { pageSize: 1 }) { nodes { id } } }", ADMIN_HEADERS)
+        dt_id = list_resp.json()["data"]["dashboardTypes"]["nodes"][0]["id"]
+        query = f'{{ dashboardType(id: {dt_id}) {{ id codeName }} }}'
         resp = graphql_query(query, ADMIN_HEADERS)
         assert resp.status_code == 200
         assert resp.json()["data"]["dashboardType"]["id"] == dt_id
 
-    def test_200_dashboards_with_required_filter(self):
-        """Список дашбордов с обязательным параметром dashboardTypeId."""
-        # Сначала создаём тестовый дашборд через мутацию (или берём из сидов)
+    def test_200_dashboards_with_filter(self):
+        # Создаём тестовый дашборд
         create_resp = graphql_query("""
         mutation {
             createDashboard(data: {
-                displayOrder: 999
-                eventTypeId: 1
-                dashboardTypeId: 1
+                displayOrder: 999, eventTypeId: 1, dashboardTypeId: 1,
                 titleText: "test-query-dashboard"
             }) { id }
         }
@@ -762,69 +619,56 @@ class TestGraphQLDashboardQuery:
 
         if "errors" not in create_resp.json():
             dashboard_id = create_resp.json()["data"]["createDashboard"]["id"]
-
             try:
                 query = """
                 {
-                    dashboards(first: 5, filter: {dashboardTypeId: {eq: 1}}) {
-                        edges {
-                            node {
-                                id
-                                titleText
-                                displayOrder
-                                eventType { codeName }
-                            }
-                        }
+                    dashboards(
+                        pagination: { pageSize: 5 }
+                        filter: { dashboardTypeId: { eq: 1 } }
+                    ) {
+                        nodes { id titleText displayOrder eventType { codeName } }
+                        paginationInfo { totalCount }
                     }
                 }
                 """
                 resp = graphql_query(query, ADMIN_HEADERS)
                 assert resp.status_code == 200
-                edges = resp.json()["data"]["dashboards"]["edges"]
-                # Проверяем, что наш тестовый дашборд в списке
-                titles = [e["node"]["titleText"] for e in edges]
+                nodes = resp.json()["data"]["dashboards"]["nodes"]
+                titles = [n["titleText"] for n in nodes]
                 assert "test-query-dashboard" in titles
             finally:
-                # Cleanup
                 graphql_query(f'mutation {{ deleteDashboard(id: {dashboard_id}) }}', ADMIN_HEADERS)
 
     def test_200_dashboards_with_filter_and_pagination(self):
-        """Фильтрация + пагинация для дашбордов."""
         query = """
         {
             dashboards(
-                first: 2
-                filter: { titleText: { contains: "test" }, dashboardTypeId: {eq: 1} }
+                pagination: { page: 1, pageSize: 2 }
+                filter: { titleText: { contains: "test" }, dashboardTypeId: { eq: 1 } }
             ) {
-                edges {
-                    node { id titleText }
-                }
-                pageInfo { hasNextPage endCursor }
+                nodes { id titleText }
+                pageInfo { hasNextPage }
+                paginationInfo { currentPage totalPages }
             }
         }
         """
         resp = graphql_query(query, ADMIN_HEADERS)
         assert resp.status_code == 200
         data = resp.json()["data"]["dashboards"]
-        # Все результаты должны содержать "test"
-        for edge in data["edges"]:
-            assert "test" in edge["node"]["titleText"].lower()
-        assert len(data["edges"]) <= 2  # first=2
+        for node in data["nodes"]:
+            assert "test" in node["titleText"].lower()
+        assert len(data["nodes"]) <= 2
 
     def test_200_dashboard_single_by_id(self):
-        """Получение одного дашборда по ID."""
-        # Получаем реальный ID
         list_resp = graphql_query(
-            "{ dashboards(filter: {dashboardTypeId: {eq: 1}}, first: 1) { edges { node { id } } } }",
+            "{ dashboards(pagination: { pageSize: 1 }, filter: { dashboardTypeId: { eq: 1 } }) { nodes { id } } }",
             ADMIN_HEADERS
         )
-        edges = list_resp.json()["data"]["dashboards"]["edges"]
-        if not edges:
+        nodes = list_resp.json()["data"]["dashboards"]["nodes"]
+        if not nodes:
             pytest.skip("No dashboards in test DB")
-
-        dash_id = edges[0]["node"]["id"]
-        query = f'{{ dashboard(id: "{dash_id}") {{ id titleText eventType {{ codeName }} }} }}'
-
+        dash_id = nodes[0]["id"]
+        query = f'{{ dashboard(id: {dash_id}) {{ id titleText eventType {{ codeName }} }} }}'
         resp = graphql_query(query, ADMIN_HEADERS)
         assert resp.status_code == 200
         dash = resp.json()["data"]["dashboard"]

@@ -1,5 +1,5 @@
 import strawberry
-from strawberry import relay, Info
+from strawberry import Info
 from sqlalchemy import select
 from graphql import GraphQLError
 from typing import List
@@ -108,17 +108,14 @@ class AllowedPayloadRuleMutation:
     async def update_allowed_payload_rule(
             self,
             info: Info,
-            id: relay.GlobalID,
+            event_type_id: int,
+            payload_type_id: int,
             data: UpdateAllowedPayloadRuleInput,
     ) -> AllowedPayloadRuleType:
         await require_permissions(info, P.STATS_EDIT)
         ctx: GraphQLContext = info.context
 
-        type_name, composite = id.type_name, id.node_id
-        if type_name != "AllowedPayloadRule":
-            raise GraphQLError(f"Invalid type: expected AllowedPayloadRule, got {type_name}")
-
-        old_event_id, old_payload_id = map(int, composite.split(":"))
+        old_event_id, old_payload_id = event_type_id, payload_type_id
 
         rule = await ctx.db.execute(
             select(APModel).where(
@@ -164,21 +161,16 @@ class AllowedPayloadRuleMutation:
     async def delete_allowed_payload_rule(
             self,
             info: Info,
-            id: relay.GlobalID,
+            event_type_id: int,
+            payload_type_id: int
     ) -> bool:
         await require_permissions(info, P.STATS_DELETE)
         ctx: GraphQLContext = info.context
 
-        type_name, composite = id.type_name, id.node_id
-        if type_name != "AllowedPayloadRule":
-            raise GraphQLError(f"Invalid type: expected AllowedPayloadRule, got {type_name}")
-
-        event_id, payload_id = map(int, composite.split(":"))
-
         rule = await ctx.db.execute(
             select(APModel).where(
-                APModel.event_type_id == event_id,
-                APModel.payload_type_id == payload_id,
+                APModel.event_type_id == event_type_id,
+                APModel.payload_type_id == payload_type_id,
             )
         )
         rule_model = rule.scalar_one_or_none()

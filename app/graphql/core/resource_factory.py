@@ -1,7 +1,7 @@
 from typing import Type, Optional, Any, cast
 import re
 import strawberry
-from strawberry import relay, Info
+from strawberry import Info
 from sqlalchemy import select
 from graphql import GraphQLError
 
@@ -121,16 +121,16 @@ def create_query_resource(
 # Фабрика Mutation
 # =============================================================================
 def create_mutation_resource(
-    config: ResourceConfig,
-    *,
-    enable_create: bool = True,
-    enable_update: bool = True,
-    enable_delete: bool = True,
-    name_create: Optional[str] = None,
-    name_update: Optional[str] = None,
-    name_delete: Optional[str] = None,
-    create_input: Optional[Type] = None,
-    update_input: Optional[Type] = None,
+        config: ResourceConfig,
+        *,
+        enable_create: bool = True,
+        enable_update: bool = True,
+        enable_delete: bool = True,
+        name_create: Optional[str] = None,
+        name_update: Optional[str] = None,
+        name_delete: Optional[str] = None,
+        create_input: Optional[Type] = None,
+        update_input: Optional[Type] = None,
 ) -> Type[Any]:
     """Создаёт Strawberry-класс Mutation с настраиваемыми операциями."""
     base_name = _make_base_name(config.graphql_type.__name__)
@@ -139,18 +139,29 @@ def create_mutation_resource(
     delete_name = name_delete or f"delete_{base_name}"
     attrs: dict[str, Any] = {"config": config}
 
+    # 🔹 0. Определяем тип первичного ключа ОДИН РАЗ для всех операций
+    pk_column = next(iter(config.model.__table__.primary_key.columns), None)
+    _ID_TYPE_MAP = {
+        "INTEGER": int, "BIGINT": int, "SMALLINT": int,
+        "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
+    }
+    id_python_type = _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int) if pk_column is not None else int
+
     # --- CREATE ---
     if enable_create and create_input:
         async def _create_resolver(self, info, data):
             if config.permissions.create:
                 await require_permissions(info, config.permissions.create)
             ctx: GraphQLContext = info.context
+
+            # Валидация
             for field_name, validator in config.validators.items():
                 val = getattr(data, field_name, None)
                 if val is not None:
                     res = validator(val)
                     if res is not True and isinstance(res, str):
                         raise GraphQLError(f"{field_name}: {res}")
+
             instance = config.model(**{
                 k: v for k, v in data.__dict__.items()
                 if k in {c.name for c in config.model.__table__.columns} and v is not None
@@ -162,11 +173,10 @@ def create_mutation_resource(
 
         _create_resolver.__annotations__ = {
             "info": Info,
-            "data": create_input,  # type: ignore
-            "return": config.graphql_type,  # type: ignore
+            "data": create_input,
+            "return": config.graphql_type,
         }
 
-        # 🔹 Логирование для create
         extensions = []
         if config.should_log("create") and not should_skip_graphql_logging(create_name):
             extensions.append(GraphQLLoggingExtension())
@@ -175,39 +185,42 @@ def create_mutation_resource(
         _create_resolver.__name__ = create_name
         attrs[create_name] = _create_resolver
 
-    # --- UPDATE ---
+    # --- UPDATE (БЕЗ RELAY) ---
     if enable_update and update_input:
         async def _update_resolver(self, info, id, data):
             if config.permissions.edit:
                 await require_permissions(info, config.permissions.edit)
             ctx: GraphQLContext = info.context
-            node = await id.resolve_node(info, ensure_type=config.graphql_type)
-            if not node:
-                raise GraphQLError(f"{config.graphql_type.__name__} {id} not found")
-            model = await ctx.db.get(config.model, node.db_id)
+
+            # 🔹 Прямой поиск по PK без decode/resolve_node
+            model = await ctx.db.get(config.model, id)
             if not model:
-                raise GraphQLError(f"{config.model.__name__} {node.db_id} not found in DB")
+                raise GraphQLError(f"{config.model.__name__} {id} not found")
+
+            # Валидация
             for field_name, validator in config.validators.items():
                 val = getattr(data, field_name, None)
                 if val is not None:
                     res = validator(val)
                     if res is not True and isinstance(res, str):
                         raise GraphQLError(f"{field_name}: {res}")
+
+            # Обновление полей
             for k, v in data.__dict__.items():
                 if v is not None and hasattr(model, k):
                     setattr(model, k, v)
+
             await ctx.db.commit()
             await ctx.db.refresh(model)
             return config.convert(model)
 
         _update_resolver.__annotations__ = {
             "info": Info,
-            "id": relay.GlobalID,
+            "id": id_python_type,  # ← int, str или другой тип из БД
             "data": update_input,
             "return": config.graphql_type,
         }
 
-        # 🔹 Логирование для update
         extensions = []
         if config.should_log("update") and not should_skip_graphql_logging(update_name):
             extensions.append(GraphQLLoggingExtension())
@@ -216,16 +229,15 @@ def create_mutation_resource(
         _update_resolver.__name__ = update_name
         attrs[update_name] = _update_resolver
 
-    # --- DELETE ---
+    # --- DELETE (БЕЗ RELAY) ---
     if enable_delete:
         async def _delete_resolver(self, info, id):
             if config.permissions.delete:
                 await require_permissions(info, config.permissions.delete)
             ctx: GraphQLContext = info.context
-            node = await id.resolve_node(info, ensure_type=config.graphql_type)
-            if not node:
-                raise GraphQLError(f"{config.graphql_type.__name__} {id} not found")
-            model = await ctx.db.get(config.model, node.db_id)
+
+            # 🔹 Прямой поиск и удаление по PK
+            model = await ctx.db.get(config.model, id)
             if model:
                 await ctx.db.delete(model)
                 await ctx.db.commit()
@@ -233,11 +245,10 @@ def create_mutation_resource(
 
         _delete_resolver.__annotations__ = {
             "info": Info,
-            "id": relay.GlobalID,
+            "id": id_python_type,  # ← int, str или другой тип из БД
             "return": bool,
         }
 
-        # 🔹 Логирование для delete
         extensions = []
         if config.should_log("delete") and not should_skip_graphql_logging(delete_name):
             extensions.append(GraphQLLoggingExtension())
