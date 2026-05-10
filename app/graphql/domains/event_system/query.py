@@ -12,13 +12,17 @@ from app.graphql.domains.event_system.resources import (
     ReviewResource,
     EventResource,
     PayloadResource,
+    DashboardResource,
+    DashboardTypeResource,
 )
 from app.models import AllowedPayload
 from app.graphql.core.permissions import require_permissions, P
 from app.graphql.core.filters import apply_filters
 from app.graphql.core.pagination import fetch_relay_page
 from app.graphql.core.context import GraphQLContext
-from app.graphql.domains.event_system.types import AllowedPayloadRule as AllowedPayloadRuleType
+from app.graphql.domains.event_system.types import (
+    AllowedPayloadRule as AllowedPayloadRuleType,
+)
 from app.graphql.domains.event_system.inputs import AllowedPayloadRuleFilterInput
 
 # =============================================================================
@@ -65,6 +69,18 @@ PayloadQuery = create_query_resource(
     PayloadResource,
     name_list="payloads",
     name_get="payload",
+)
+
+DashboardQuery = create_query_resource(
+    DashboardResource,
+    name_list="dashboards",
+    name_get="dashboard",
+)
+
+DashboardTypeQuery = create_query_resource(
+    DashboardTypeResource,
+    name_list="dashboard_types",
+    name_get="dashboard_type",
 )
 
 
@@ -128,7 +144,9 @@ class Query(
     ReviewQuery,
     EventQuery,
     PayloadQuery,
-    AllowedPayloadRuleQuery,  # ← Ручная реализация
+    DashboardQuery,
+    DashboardTypeQuery,
+    AllowedPayloadRuleQuery,
 ):
     """
     Корневой Query для домена event_system.
@@ -141,6 +159,8 @@ class Query(
     - reviews (только список)
     - events / event
     - payloads / payload
+    - dashboards / dashboard
+    - dashboard_types / dashboard_type
 
     Ручная реализация:
     - allowed_payload_rules / allowed_payload_rule (составной ключ)

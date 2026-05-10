@@ -33,5 +33,6 @@ from app.models.event import (
     PayloadType,
     ValueType,
 )
+from app.models.dashboard import Dashboard, DashboardType
 from app.models.auth.refresh_token import RefreshToken
 from app.models.auth.user_log import UserLog

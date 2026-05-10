@@ -341,3 +341,179 @@ class TestGraphQLMutationsEdgeCases:
         # GraphQL валидация входных аргументов ловит это на уровне парсера
         assert any("codeName" in e["message"] or "required" in e["message"].lower()
                    for e in resp.json()["errors"])
+
+
+# =============================================================================
+# Dashboard Mutation Tests
+# =============================================================================
+class TestGraphQLDashboardMutation:
+    """Тесты для мутаций Dashboard."""
+
+    def test_200_crud_dashboard_full_cycle(self):
+        """Полный цикл: create → update → delete."""
+        # 1. CREATE
+        create_query = """
+        mutation {
+            createDashboard(data: {
+                displayOrder: 100
+                eventTypeId: 1
+                dashboardTypeId: 1
+                titleText: "test-mutation-dashboard"
+            }) {
+                id
+                displayOrder
+                titleText
+            }
+        }
+        """
+        resp = graphql_query(create_query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert "errors" not in resp.json()
+        created = resp.json()["data"]["createDashboard"]
+        assert created["titleText"] == 'test-mutation-dashboard'
+        _, dashboard_id = from_base64(created["id"])
+
+        # 2. UPDATE
+        update_query = f"""
+        mutation {{
+            updateDashboard(
+                id: {dashboard_id}
+                data: {{
+                    displayOrder: 200
+                    eventTypeId: 1
+                    dashboardTypeId: 1
+                    titleText: "updated-test-dashboard"
+                }}
+            ) {{
+                id
+                displayOrder
+                titleText
+            }}
+        }}
+        """
+        resp = graphql_query(update_query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        updated = resp.json()["data"]["updateDashboard"]
+        assert updated["displayOrder"] == 200
+        assert updated["titleText"] == "updated-test-dashboard"
+
+        # 3. DELETE
+        delete_query = f"mutation {{ deleteDashboard(id: {dashboard_id}) }}"
+        resp = graphql_query(delete_query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert resp.json()["data"]["deleteDashboard"] is True
+
+        # Verify deletion
+        verify_query = f'{{ dashboard(id: "{dashboard_id}") {{ id }} }}'
+        resp = graphql_query(verify_query, ADMIN_HEADERS)
+        assert resp.json()["data"]["dashboard"] is None
+
+    def test_200_create_dashboards_bulk(self):
+        """Пакетное создание дашбордов."""
+        query = """
+        mutation {
+            createDashboards(inputs: [
+                { displayOrder: 301, eventTypeId: 1, dashboardTypeId: 1, titleText: "bulk-1" }
+                { displayOrder: 302, eventTypeId: 1, dashboardTypeId: 1, titleText: "bulk-2" }
+            ]) {
+                id
+                titleText
+                displayOrder
+            }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert "errors" not in resp.json()
+
+        created = resp.json()["data"]["createDashboards"]
+        assert len(created) == 2
+        assert created[0]["titleText"] == "bulk-1"
+        assert created[1]["displayOrder"] == 302
+
+        # Cleanup
+        for item in created:
+            graphql_query(f"mutation {{ deleteDashboard(id: {item['id']}) }}", ADMIN_HEADERS)
+
+    def test_400_create_dashboard_validation_errors(self):
+        """Проверка валидации входных данных."""
+        # Пустой title_text
+        query = """
+        mutation {
+            createDashboard(data: {
+                displayOrder: 1
+                eventTypeId: 1
+                dashboardTypeId: 1
+                titleText: ""
+            }) { id }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert "errors" in resp.json()
+        assert any("title_text" in e["message"].lower() for e in resp.json()["errors"])
+
+        # Отрицательный display_order
+        query = """
+        mutation {
+            createDashboard(data: {
+                displayOrder: -1
+                eventTypeId: 1
+                dashboardTypeId: 1
+                titleText: "test"
+            }) { id }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert "errors" in resp.json()
+        assert any("display_order" in e["message"].lower() for e in resp.json()["errors"])
+
+    def test_400_create_dashboard_invalid_fk(self):
+        """Проверка валидации внешних ключей."""
+        query = """
+        mutation {
+            createDashboard(data: {
+                displayOrder: 1
+                eventTypeId: 99999
+                dashboardTypeId: 1
+                titleText: "test"
+            }) { id }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert "errors" in resp.json()
+        assert any("EventType" in e["message"] and "не найден" in e["message"]
+                   for e in resp.json()["errors"])
+
+    def test_404_update_non_existent_dashboard(self):
+        """Обновление несуществующего дашборда."""
+        query = """
+        mutation {
+            updateDashboard(
+                id: 99999
+                data: {
+                    displayOrder: 1
+                    eventTypeId: 1
+                    dashboardTypeId: 1
+                    titleText: "test"
+                }
+            ) { id }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert "errors" in resp.json()
+        assert any("not found" in e["message"].lower() or "не найден" in e["message"]
+                   for e in resp.json()["errors"])
+
+    def test_401_dashboard_mutations_without_token(self):
+        """Проверка прав доступа для мутаций."""
+        mutations = [
+            'mutation { createDashboard(data: { displayOrder: 1, eventTypeId: 1, dashboardTypeId: 1, titleText: "test" }) { id } }',
+            'mutation { updateDashboard(id: 1, data: { displayOrder: 1, eventTypeId: 1, dashboardTypeId: 1, titleText: "test" }) { id } }',
+            'mutation { deleteDashboard(id: 1) }',
+        ]
+        for mutation in mutations:
+            resp = graphql_query(mutation)  # ← без заголовков
+            assert resp.status_code == 401

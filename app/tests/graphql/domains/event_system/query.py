@@ -704,3 +704,129 @@ class TestGraphQLEdgeCases:
         assert "eventTypes" in data
         assert "valueTypes" in data
         assert "clientIds" in data
+
+
+# =============================================================================
+# Dashboard Query Tests
+# =============================================================================
+class TestGraphQLDashboardQuery:
+    """Тесты для запросов Dashboard и DashboardType."""
+
+    def test_200_dashboard_types_connection(self):
+        """Получение списка типов дашбордов с пагинацией."""
+        query = """
+        {
+            dashboardTypes(first: 3) {
+                edges {
+                    node {
+                        id
+                        codeName
+                        description
+                    }
+                }
+                pageInfo { hasNextPage endCursor }
+            }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        data = resp.json()["data"]["dashboardTypes"]
+        assert isinstance(data["edges"], list)
+        if data["edges"]:
+            assert "codeName" in data["edges"][0]["node"]
+
+    def test_200_dashboard_type_by_id(self):
+        """Получение одного типа дашборда по GlobalID."""
+        # Сначала получаем реальный ID
+        list_resp = graphql_query("{ dashboardTypes(first: 1) { edges { node { id } } } }", ADMIN_HEADERS)
+        dt_id = list_resp.json()["data"]["dashboardTypes"]["edges"][0]["node"]["id"]
+
+        query = f'{{ dashboardType(id: "{dt_id}") {{ id codeName }} }}'
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        assert resp.json()["data"]["dashboardType"]["id"] == dt_id
+
+    def test_200_dashboards_with_required_filter(self):
+        """Список дашбордов с обязательным параметром dashboardTypeId."""
+        # Сначала создаём тестовый дашборд через мутацию (или берём из сидов)
+        create_resp = graphql_query("""
+        mutation {
+            createDashboard(data: {
+                displayOrder: 999
+                eventTypeId: 1
+                dashboardTypeId: 1
+                titleText: "test-query-dashboard"
+            }) { id }
+        }
+        """, ADMIN_HEADERS)
+
+        if "errors" not in create_resp.json():
+            dashboard_id = create_resp.json()["data"]["createDashboard"]["id"]
+
+            try:
+                query = """
+                {
+                    dashboards(first: 5, filter: {dashboardTypeId: {eq: 1}}) {
+                        edges {
+                            node {
+                                id
+                                titleText
+                                displayOrder
+                                eventType { codeName }
+                            }
+                        }
+                    }
+                }
+                """
+                resp = graphql_query(query, ADMIN_HEADERS)
+                assert resp.status_code == 200
+                edges = resp.json()["data"]["dashboards"]["edges"]
+                # Проверяем, что наш тестовый дашборд в списке
+                titles = [e["node"]["titleText"] for e in edges]
+                assert "test-query-dashboard" in titles
+            finally:
+                # Cleanup
+                graphql_query(f'mutation {{ deleteDashboard(id: {dashboard_id}) }}', ADMIN_HEADERS)
+
+    def test_200_dashboards_with_filter_and_pagination(self):
+        """Фильтрация + пагинация для дашбордов."""
+        query = """
+        {
+            dashboards(
+                first: 2
+                filter: { titleText: { contains: "test" }, dashboardTypeId: {eq: 1} }
+            ) {
+                edges {
+                    node { id titleText }
+                }
+                pageInfo { hasNextPage endCursor }
+            }
+        }
+        """
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        data = resp.json()["data"]["dashboards"]
+        # Все результаты должны содержать "test"
+        for edge in data["edges"]:
+            assert "test" in edge["node"]["titleText"].lower()
+        assert len(data["edges"]) <= 2  # first=2
+
+    def test_200_dashboard_single_by_id(self):
+        """Получение одного дашборда по ID."""
+        # Получаем реальный ID
+        list_resp = graphql_query(
+            "{ dashboards(filter: {dashboardTypeId: {eq: 1}}, first: 1) { edges { node { id } } } }",
+            ADMIN_HEADERS
+        )
+        edges = list_resp.json()["data"]["dashboards"]["edges"]
+        if not edges:
+            pytest.skip("No dashboards in test DB")
+
+        dash_id = edges[0]["node"]["id"]
+        query = f'{{ dashboard(id: "{dash_id}") {{ id titleText eventType {{ codeName }} }} }}'
+
+        resp = graphql_query(query, ADMIN_HEADERS)
+        assert resp.status_code == 200
+        dash = resp.json()["data"]["dashboard"]
+        assert dash["id"] == dash_id
+        assert "titleText" in dash

@@ -15,6 +15,8 @@ from app.models import (
     ClientId as CIModel,
     Event as EventModel,
     Payload as PayloadModel,
+    DashboardType as DTModel,
+    Dashboard as DashboardModel,
 )
 from app.graphql.core.context import GraphQLContext
 
@@ -56,32 +58,32 @@ def _event_type_from_model(model: Optional[ETModel]) -> Optional["EventType"]:
     )
 
 
-def _client_id_from_model(model: Optional[CIModel]) -> Optional["ClientIdType"]:
+def _client_id_from_model(model: Optional[CIModel]) -> Optional["ClientId"]:
     """Конвертирует модель ClientId в GraphQL-тип ClientIdType."""
     if model is None:
         return None
-    return ClientIdType(
+    return ClientId(
         db_id=model.id,  # type: ignore[call-arg]
         ident=model.ident,  # type: ignore[call-arg]
         creation_date=model.creation_date,  # type: ignore[call-arg]
     )
 
 
-def _review_status_from_model(model: Optional[RSModel]) -> Optional["ReviewStatusType"]:
+def _review_status_from_model(model: Optional[RSModel]) -> Optional["ReviewStatus"]:
     """Конвертирует модель ReviewStatus в GraphQL-тип."""
     if model is None:
         return None
-    return ReviewStatusType(
+    return ReviewStatus(
         db_id=model.id,  # type: ignore[call-arg]
         name=model.name,  # type: ignore[call-arg]
     )
 
 
-def _review_from_model(model) -> Optional["ReviewType"]:
+def _review_from_model(model) -> Optional["Review"]:
     """Конвертирует модель Review в GraphQL-тип."""
     if model is None:
         return None
-    return ReviewType(
+    return Review(
         db_id=model.id,  # type: ignore[call-arg]
         client_id=model.client_id,  # type: ignore[call-arg]
         problem_id=model.problem_id,  # type: ignore[call-arg]
@@ -110,6 +112,24 @@ def _payload_from_model(model: PayloadModel) -> "Payload":
     )
 
 
+def _dashboard_type_from_model(model: DTModel) -> "DashboardType":
+    return DashboardType(
+        db_id=model.id,  # type: ignore[call-arg]
+        code_name=model.code_name,  # type: ignore[call-arg]
+        description=model.description,  # type: ignore[call-arg]
+    )
+
+
+def _dashboard_from_model(model: DashboardModel) -> "Dashboard":
+    return Dashboard(  # type: ignore
+        db_id=model.id,
+        display_order=model.display_order,
+        event_type_id=model.event_type_id,
+        dashboard_type_id=model.dashboard_type_id,
+        title_text=model.title_text,
+    )
+
+
 # =============================================================================
 # Relay Node Types
 # =============================================================================
@@ -117,7 +137,7 @@ def _payload_from_model(model: PayloadModel) -> "Payload":
 @strawberry.type
 class ValueType(relay.Node):
     """Тип значения (int/string/bool)."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     name: str
     description: Optional[str] = None
 
@@ -145,7 +165,7 @@ class ValueType(relay.Node):
 @strawberry.type
 class PayloadType(relay.Node):
     """Тип полезной нагрузки события."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     code_name: str
     description: Optional[str] = None
     value_type_id: int
@@ -185,7 +205,7 @@ class PayloadType(relay.Node):
 @strawberry.type
 class EventType(relay.Node):
     """Тип события (site/auds/ways/plans)."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     code_name: str
     description: Optional[str] = None
 
@@ -219,7 +239,7 @@ class AllowedPayloadRule(relay.Node):
     event_type_id: int
     payload_type_id: int
 
-    _composite_key: relay.NodeID[str]
+    _composite_key: relay.NodeID[str]  # noqa
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
@@ -284,9 +304,9 @@ class AllowedPayloadRule(relay.Node):
 # =============================================================================
 
 @strawberry.type
-class ClientIdType(relay.Node):
+class ClientId(relay.Node):
     """Идентификатор клиента."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     ident: str
     creation_date: datetime
 
@@ -312,15 +332,15 @@ class ClientIdType(relay.Node):
 
 
 @strawberry.type
-class ProblemType:
+class Problem:
     """Тип проблемы (string ID)."""
     id: str
 
 
 @strawberry.type
-class ReviewStatusType(relay.Node):
+class ReviewStatus(relay.Node):
     """Статус отзыва."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     name: str
 
     @classmethod
@@ -345,9 +365,9 @@ class ReviewStatusType(relay.Node):
 
 
 @strawberry.type
-class ReviewType(relay.Node):
+class Review(relay.Node):
     """Отзыв пользователя."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     client_id: int
     problem_id: str
     status_id: int
@@ -356,31 +376,24 @@ class ReviewType(relay.Node):
     creation_date: datetime
 
     @strawberry.field  # type: ignore[unresolved-reference]
-    async def client(self, info: strawberry.Info) -> Optional[ClientIdType]:
+    async def client(self, info: strawberry.Info) -> Optional[ClientId]:
         ctx: GraphQLContext = info.context
         ci_model = await ctx.loaders["client_id"].load(self.client_id)
         if ci_model:
             # ← Используем db_id, а не id, при создании Relay-типа
-            return ClientIdType(
-                db_id=ci_model.id,  # type: ignore[call-arg]
-                ident=ci_model.ident,  # type: ignore[call-arg]
-                creation_date=ci_model.creation_date,  # type: ignore[call-arg]
-            )
+            return _client_id_from_model(ci_model)
         return None
 
     @strawberry.field  # type: ignore[unresolved-reference]
-    async def problem(self, _info: strawberry.Info) -> Optional[ProblemType]:
-        return ProblemType(id=self.problem_id) if self.problem_id else None
+    async def problem(self, _info: strawberry.Info) -> Optional[Problem]:
+        return Problem(id=self.problem_id) if self.problem_id else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
-    async def status(self, info: strawberry.Info) -> Optional[ReviewStatusType]:
+    async def status(self, info: strawberry.Info) -> Optional[ReviewStatus]:
         ctx: GraphQLContext = info.context
         rs_model = await ctx.loaders["review_status"].load(self.status_id)
         if rs_model:
-            return ReviewStatusType(
-                db_id=rs_model.id,  # type: ignore[call-arg]
-                name=rs_model.name,  # type: ignore[call-arg]
-            )
+            return _review_status_from_model(rs_model)
         return None
 
     @classmethod
@@ -412,20 +425,16 @@ class ReviewType(relay.Node):
 @strawberry.type
 class Event(relay.Node):
     """Событие, сгенерированное клиентом."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     client_id: int
     event_type_id: int
     trigger_time: datetime
 
     @strawberry.field  # type: ignore[unresolved-reference]
-    async def client(self, info: strawberry.Info) -> Optional[ClientIdType]:
+    async def client(self, info: strawberry.Info) -> Optional[ClientId]:
         ctx: GraphQLContext = info.context
         ci_model = await ctx.loaders["client_id"].load(self.client_id)
-        return ClientIdType(
-            db_id=ci_model.id,
-            ident=ci_model.ident,
-            creation_date=ci_model.creation_date
-        ) if ci_model else None  # type: ignore[call-arg]
+        return _client_id_from_model(ci_model) if ci_model else None  # type: ignore[call-arg]
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
@@ -478,7 +487,7 @@ class Event(relay.Node):
 @strawberry.type
 class Payload(relay.Node):
     """Полезная нагрузка события."""
-    db_id: relay.NodeID[int]
+    db_id: relay.NodeID[int]  # noqa
     event_id: int
     type_id: int
     value: str
@@ -520,4 +529,74 @@ class Payload(relay.Node):
                 nodes.append(_payload_from_model(model))  # type: ignore[arg-type]
             elif required:
                 raise ValueError(f"Payload {rid} not found")
+        return [n for n in nodes if n is not None]
+
+
+@strawberry.type
+class DashboardType(relay.Node):
+    """Справочник типов дашбордов."""
+    db_id: relay.NodeID[int]
+    code_name: str
+    description: Optional[str] = None
+
+    @classmethod
+    async def resolve_nodes(cls, *, info, node_ids, required=False):
+        """Загрузка пачки DashboardType по глобальным ID."""
+        ctx: GraphQLContext = info.context
+        raw_ids = node_ids
+        stmt = select(DTModel).where(DTModel.id.in_(raw_ids))
+        result = {item.id: item for item in (await ctx.db.execute(stmt)).scalars().all()}
+
+        nodes = []
+        for rid in raw_ids:
+            model = result.get(int(rid))
+            if model:
+                nodes.append(_dashboard_type_from_model(model))  # type: ignore[arg-type]
+            elif required:
+                raise ValueError(f"DashboardType {rid} not found")
+        return [n for n in nodes if n is not None]
+
+
+@strawberry.type
+class Dashboard(relay.Node):
+    """Дашборд для отображения статистики."""
+    db_id: relay.NodeID[int]
+    display_order: int
+    event_type_id: int
+    dashboard_type_id: int
+    title_text: str
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
+        """Ленивая загрузка связанного EventType."""
+        ctx: GraphQLContext = info.context
+        et_model = await ctx.loaders["event_type"].load(self.event_type_id)
+        if et_model:
+            return _event_type_from_model(et_model)
+        return None
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def dashboard_type(self, info: strawberry.Info) -> Optional[DashboardType]:
+        """Ленивая загрузка связанного EventType."""
+        ctx: GraphQLContext = info.context
+        dt_model = await ctx.loaders["dashboard_type"].load(self.dashboard_type_id)
+        if dt_model:
+            return _dashboard_type_from_model(dt_model)
+        return None
+
+    @classmethod
+    async def resolve_nodes(cls, *, info, node_ids, required=False):
+        """Загрузка пачки DashboardType по глобальным ID."""
+        ctx: GraphQLContext = info.context
+        raw_ids = node_ids
+        stmt = select(DashboardModel).where(DashboardModel.id.in_(raw_ids))
+        result = {item.id: item for item in (await ctx.db.execute(stmt)).scalars().all()}
+
+        nodes = []
+        for rid in raw_ids:
+            model = result.get(int(rid))
+            if model:
+                nodes.append(_dashboard_from_model(model))  # type: ignore[arg-type]
+            elif required:
+                raise ValueError(f"DashboardType {rid} not found")
         return [n for n in nodes if n is not None]

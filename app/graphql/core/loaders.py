@@ -65,7 +65,11 @@ class ForeignKeyLoader(DataLoader[int, List[M]]):
 
 def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
     """Фабрика лоадеров для контекста запроса."""
-    from app.models import ValueType, PayloadType, EventType, ClientId, ReviewStatus, Payload
+    from app.models import (
+        ValueType, PayloadType, EventType,
+        ClientId, ReviewStatus, Payload,
+        DashboardType
+    )
 
     return {
         "value_type": SQLAlchemyLoader(session, ValueType),
@@ -73,6 +77,7 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         "event_type": SQLAlchemyLoader(session, EventType),
         "client_id": SQLAlchemyLoader(session, ClientId),
         "review_status": SQLAlchemyLoader(session, ReviewStatus),
+        "dashboard_type": SQLAlchemyLoader(session, DashboardType),
         # Добавляй новые по мере необходимости
         "payloads_by_event_id": ForeignKeyLoader(session, Payload, "event_id"),
     }

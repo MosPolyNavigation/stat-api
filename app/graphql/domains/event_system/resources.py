@@ -1,15 +1,20 @@
 from app.graphql.core.resource import ResourceConfig, ResourcePermissions
 from app.graphql.core.permissions import P
 from app.models import (
-    EventType, PayloadType, ValueType,
-    Review as ReviewModel, ClientId as CIModel,
-    Event as EventModel, Payload as PayloadModel,
+    EventType as ETModel, PayloadType as PTModel,
+    ValueType as VTModel, Review as ReviewModel,
+    ClientId as CIModel, Event as EventModel,
+    Payload as PayloadModel, DashboardType as DTModel,
+    Dashboard as DashboardModel,
 )
 from app.graphql.domains.event_system.types import (
     EventType as EventTypeType,
     PayloadType as PayloadTypeType,
     ValueType as ValueTypeType,
-    ReviewType, ClientIdType,
+    DashboardType as DashboardTypeType,
+    Dashboard as DashboardType,
+    Review as ReviewType,
+    ClientId as ClientIdType,
     Event, Payload,
     _event_type_from_model,
     _payload_type_from_model,
@@ -18,6 +23,8 @@ from app.graphql.domains.event_system.types import (
     _client_id_from_model,
     _event_from_model,
     _payload_from_model,
+    _dashboard_from_model,
+    _dashboard_type_from_model,
 )
 from app.graphql.domains.event_system.inputs import (
     EventTypeFilterInput,
@@ -27,6 +34,8 @@ from app.graphql.domains.event_system.inputs import (
     ClientIdFilterInput,
     EventFilterInput,
     PayloadFilterInput,
+    DashboardFilterInput,
+    DashboardTypeFilterInput,
 )
 
 
@@ -35,7 +44,7 @@ from app.graphql.domains.event_system.inputs import (
 # =============================================================================
 
 EventTypeResource = ResourceConfig(
-    model=EventType,
+    model=ETModel,
     graphql_type=EventTypeType,
     filter_input=EventTypeFilterInput,
     convert=_event_type_from_model,  # type: ignore
@@ -59,7 +68,7 @@ EventTypeResource = ResourceConfig(
 )
 
 PayloadTypeResource = ResourceConfig(
-    model=PayloadType,
+    model=PTModel,
     graphql_type=PayloadTypeType,
     filter_input=PayloadTypeFilterInput,
     convert=_payload_type_from_model,  # type: ignore
@@ -82,7 +91,7 @@ PayloadTypeResource = ResourceConfig(
 )
 
 ValueTypeResource = ResourceConfig(
-    model=ValueType,
+    model=VTModel,
     graphql_type=ValueTypeType,
     filter_input=ValueTypeFilterInput,
     convert=_value_type_from_model,  # type: ignore
@@ -148,5 +157,28 @@ PayloadResource = ResourceConfig(
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
+    )
+)
+
+DashboardTypeResource = ResourceConfig(
+    model=DTModel,
+    graphql_type=DashboardTypeType,
+    filter_input=DashboardTypeFilterInput,
+    convert=_dashboard_type_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(
+        view=P.DASHBOARDS_VIEW,
+    ),
+)
+
+DashboardResource = ResourceConfig(
+    model=DashboardModel,
+    graphql_type=DashboardType,
+    filter_input=DashboardFilterInput,
+    convert=_dashboard_from_model,
+    cursor_field="id",
+    order_by=DashboardModel.dashboard_type_id.desc(),
+    permissions=ResourcePermissions(
+        view=P.DASHBOARDS_VIEW,
     )
 )

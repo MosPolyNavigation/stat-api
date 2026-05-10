@@ -2,6 +2,7 @@ import strawberry
 from strawberry import relay, Info
 from sqlalchemy import select
 from graphql import GraphQLError
+from typing import List
 
 from app.graphql.core.resource_factory import create_mutation_resource
 from app.graphql.core.context import GraphQLContext
@@ -17,15 +18,19 @@ from app.graphql.domains.event_system.inputs import (
     CreateEventTypeInput, UpdateEventTypeInput,
     CreatePayloadTypeInput, UpdatePayloadTypeInput,
     UpdateReviewInput,
-    CreateAllowedPayloadRuleInput, UpdateAllowedPayloadRuleInput,
+    CreateAllowedPayloadRuleInput, UpdateAllowedPayloadRuleInput, DashboardTypeInput,
 )
 from app.graphql.domains.event_system.types import (
     AllowedPayloadRule as AllowedPayloadRuleType,
+    Dashboard as DashboardType,
+    _dashboard_from_model
 )
 from app.models import (
     EventType as ETModel,
     PayloadType as PTModel,
     AllowedPayload as APModel,
+    DashboardType as DTModel,
+    Dashboard as DashboardModel,
 )
 
 # =============================================================================
@@ -186,6 +191,116 @@ class AllowedPayloadRuleMutation:
 
 
 # =============================================================================
+# Dashboard Mutations (Кастомные, без ResourceConfig)
+# =============================================================================
+@strawberry.type
+class DashboardMutation:
+    @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
+    async def create_dashboard(
+            self,
+            info: Info,
+            data: DashboardTypeInput,
+    ) -> DashboardType:
+        await require_permissions(info, P.DASHBOARDS_CREATE)
+        ctx: GraphQLContext = info.context
+
+        # Валидация
+        if data.display_order < 0:
+            raise GraphQLError("display_order >= 0")
+        if not data.title_text.strip():
+            raise GraphQLError("title_text не может быть пустым")
+
+        # Проверка FK
+        if not await ctx.db.get(ETModel, data.event_type_id):
+            raise GraphQLError(f"EventType {data.event_type_id} не найден")
+        if not await ctx.db.get(DTModel, data.dashboard_type_id):
+            raise GraphQLError(f"DashboardType {data.dashboard_type_id} не найден")
+
+        model = DashboardModel(
+            display_order=data.display_order, event_type_id=data.event_type_id,
+            dashboard_type_id=data.dashboard_type_id, title_text=data.title_text.strip()
+        )
+        ctx.db.add(model)
+        await ctx.db.commit()
+        await ctx.db.refresh(model)
+        return _dashboard_from_model(model)
+
+    @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
+    async def create_dashboards(
+            self,
+            info: Info,
+            inputs: List[DashboardTypeInput],
+    ) -> List[DashboardType]:
+        await require_permissions(info, P.DASHBOARDS_CREATE)
+        ctx: GraphQLContext = info.context
+        if not inputs:
+            raise GraphQLError("inputs не может быть пустым")
+
+        for i, inp in enumerate(inputs):
+            if inp.display_order < 0:
+                raise GraphQLError(f"[{i}] display_order >= 0")
+            if not inp.title_text.strip():
+                raise GraphQLError(f"[{i}] title_text не пустой")
+
+        # Bulk FK check
+        for et_id in {i.event_type_id for i in inputs}:
+            if not await ctx.db.get(ETModel, et_id):
+                raise GraphQLError(f"EventType {et_id} не найден")
+        for dt_id in {i.dashboard_type_id for i in inputs}:
+            if not await ctx.db.get(DTModel, dt_id):
+                raise GraphQLError(f"DashboardType {dt_id} не найден")
+
+        models = [DashboardModel(
+            display_order=i.display_order,
+            event_type_id=i.event_type_id,
+            dashboard_type_id=i.dashboard_type_id,
+            title_text=i.title_text.strip()
+        ) for i in inputs]
+        ctx.db.add_all(models)
+        await ctx.db.commit()
+        return [_dashboard_from_model(m) for m in models]
+
+    @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
+    async def update_dashboard(
+            self, info: Info, id: int, data: DashboardTypeInput
+    ) -> DashboardType:
+        await require_permissions(info, P.DASHBOARDS_EDIT)
+        ctx: GraphQLContext = info.context
+
+        if data.display_order < 0:
+            raise GraphQLError("display_order >= 0")
+        if not data.title_text.strip():
+            raise GraphQLError("title_text не пустой")
+        if not await ctx.db.get(ETModel, data.event_type_id):
+            raise GraphQLError(f"EventType {data.event_type_id} не найден")
+        if not await ctx.db.get(DTModel, data.dashboard_type_id):
+            raise GraphQLError(f"DashboardType {data.dashboard_type_id} не найден")
+
+        model = await ctx.db.get(DashboardModel, id)
+        if not model:
+            raise GraphQLError(f"Dashboard {id} не найден")
+
+        model.display_order = data.display_order
+        model.event_type_id = data.event_type_id
+        model.dashboard_type_id = data.dashboard_type_id
+        model.title_text = data.title_text.strip()
+        await ctx.db.commit()
+        await ctx.db.refresh(model)
+        return _dashboard_from_model(model)  # type: ignore[arg-type]
+
+    @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
+    async def delete_dashboard(self, info: Info, id: int) -> bool:
+        await require_permissions(info, P.DASHBOARDS_DELETE)
+        ctx: GraphQLContext = info.context
+        model = await ctx.db.get(DashboardModel, id)
+        if not model:
+            raise GraphQLError(f"Dashboard {id} не найден")
+        await ctx.db.delete(model)
+        await ctx.db.commit()
+        return True
+
+
+# =============================================================================
 # 3. Корневой Mutation
 # =============================================================================
 @strawberry.type
@@ -194,6 +309,7 @@ class Mutation(
     PayloadTypeMutation,
     ReviewMutation,
     AllowedPayloadRuleMutation,
+    DashboardMutation,
 ):
     """
     Корневой Mutation для домена event_system.
@@ -206,5 +322,6 @@ class Mutation(
 
     🔹 Ручные (составной ключ + валидация + логирование):
        - create/update/delete_allowed_payload_rule
+       - create/update/delete_dashboard
     """
     pass
