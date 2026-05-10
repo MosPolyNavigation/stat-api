@@ -2,11 +2,6 @@ import asyncio
 import os
 from unittest.mock import AsyncMock, MagicMock
 
-os.environ["STATAPI_CONFIG"] = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    "config.test.yaml",
-)
-
 from app.models import User, UserLog
 from app.services.user_logger_service import UserLoggerService, background_log
 

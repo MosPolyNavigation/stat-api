@@ -1,14 +1,14 @@
 from graphql import GraphQLError
 import strawberry
+from sqlalchemy.sql.functions import current_user
 from strawberry.extensions import FieldExtension
 
 
 GRAPHQL_EXCLUDED_FIELDS = {
-    "change_plans",
-    "start_ways",
-    "site_stats",
-    "user_ids",
-    "select_auditories",
+    "event",
+    "events",
+    "payload",
+    "payloads",
     "endpoint_statistics",
     "endpoint_statistics_avg",
 }
@@ -132,8 +132,8 @@ class GraphQLLoggingExtension(FieldExtension):
         if should_skip_graphql_logging(field_name):
             return result
 
-        logger = info.context.get("user_logger")
-        current_user = info.context.get("current_user")
+        logger = getattr(info.context, "user_logger", None)
+        current_user = getattr(info.context, "current_user", None)
         if logger is None or current_user is None:
             return result
 

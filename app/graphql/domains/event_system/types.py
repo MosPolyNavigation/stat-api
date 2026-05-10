@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Iterable
 
 from datetime import datetime
 
@@ -436,6 +436,28 @@ class Event(relay.Node):
             code_name=et_model.code_name,
             description=et_model.description
         ) if et_model else None  # type: ignore[call-arg]
+
+    @relay.connection(relay.ListConnection["Payload"])  # type: ignore
+    async def payloads(
+            self,
+            info: strawberry.Info,
+            first: Optional[int] = None,
+            after: Optional[str] = None,
+    ) -> Iterable["Payload"]:
+        from app.graphql.core.pagination import fetch_relay_page  # ← Импорт хелпера
+
+        ctx: GraphQLContext = info.context
+        stmt = select(PayloadModel).where(PayloadModel.event_id == self.db_id).order_by(PayloadModel.id.asc())
+
+        return await fetch_relay_page(
+            session=ctx.db,
+            stmt=stmt,
+            first=first,
+            after=after,
+            model=PayloadModel,
+            cursor_fields="id",
+            convert=_payload_from_model,
+        )
 
     @classmethod
     async def resolve_nodes(cls, *, info, node_ids, required=False):

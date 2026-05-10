@@ -21,4 +21,5 @@ class PayloadSeeder(BaseSeeder):
             {"id": 7, "event_id": 3, "type_id": PAYLOAD_TYPE_END_ID, "value": "a-102"},
             {"id": 8, "event_id": 3, "type_id": PAYLOAD_TYPE_SUCCESS_ID, "value": "false"},
             {"id": 9, "event_id": 4, "type_id": PAYLOAD_TYPE_ENDPOINT_ID, "value": "/api/get/route"},
+            {"id": 10, "event_id": 5, "type_id": PAYLOAD_TYPE_PLAN_ID, "value": "A-3"},
         ]

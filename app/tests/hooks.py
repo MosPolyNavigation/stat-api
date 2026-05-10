@@ -7,7 +7,8 @@ from app.config import Settings
 from app.database import override_database
 from app.default_hooks import DefaultHooks
 from app.jobs import AppLifespanState
-from app.routes import auth, check, free_aud, get, graphql, nav, review, stat
+from app.routes import auth, check, free_aud, get, nav, review, stat
+from app.graphql.schema import graphql_router
 from app.state import AppState
 from app.seed.base_seeder import BaseSeeder
 
@@ -30,7 +31,7 @@ class TestHooks(DefaultHooks):
         # 2. Добавляем тест-специфичные сидеры
         return []
     
-    def setup_app_arguments(self, settings: Settings) -> dict[Any]:
+    def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
         return dict()
 
     def __init__(self, session_maker: async_sessionmaker[AsyncSession]):
@@ -45,7 +46,7 @@ class TestHooks(DefaultHooks):
         app.include_router(review.router)
         app.include_router(check.router)
         app.include_router(auth.router)
-        app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
+        app.include_router(graphql_router, prefix="/api/graphql", tags=["graphql"])
         app.include_router(free_aud.router)
         app.include_router(nav.router)
 
