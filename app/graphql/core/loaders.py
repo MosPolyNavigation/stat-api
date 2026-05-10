@@ -99,5 +99,8 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         "nav_auditory_photo": SQLAlchemyLoader(session, AudPhoto),
         "nav_static": SQLAlchemyLoader(session, Static),
 
+        "nav_campus_by_loc_id": ForeignKeyLoader(session, Corpus, "loc_id"),
+        "nav_plan_by_cor_id": ForeignKeyLoader(session, Plan, "cor_id"),
+        "nav_auditory_by_plan_id": ForeignKeyLoader(session, Auditory, "plan_id"),
         "nav_photos_by_aud_id": ForeignKeyLoader(session, AudPhoto, "aud_id"),
     }

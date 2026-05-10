@@ -1,12 +1,7 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 import strawberry
-from sqlalchemy import select
 
-from app.graphql.core.filters import apply_filters
-from app.graphql.core.ordering import apply_order_by
-from app.graphql.core.pagination import PaginationInput, paginate_query, Connection
-from app.graphql.domains.event_system.inputs import PayloadFilterInput, PayloadOrderByInput
 from app.models import (
     EventType as ETModel,
     PayloadType as PTModel,
@@ -251,29 +246,16 @@ class Event:
         et_model = await ctx.loaders["event_type"].load(self.event_type_id)
         return _event_type_from_model(et_model) if et_model else None
 
-    @strawberry.field()
+    @strawberry.field  # type: ignore[unresolved-reference]
     async def payloads(
         self,
-        info: strawberry.Info,  # noqa
-        pagination: Optional[PaginationInput] = None,
-        filter: Optional[PayloadFilterInput] = None,
-        order_by: Optional[PayloadOrderByInput] = None,
-    ) -> Connection["Payload"]:
-        """Построение запроса для пейлоадов текущего события."""
+        info: strawberry.Info,
+        first: int = 10
+    ) -> List["Payload"]:
+        limit = min(100, first)
         ctx: GraphQLContext = info.context
-        stmt = select(PayloadModel).where(PayloadModel.event_id == self.id)
-        if filter:
-            stmt = apply_filters(stmt, PayloadModel, filter)
-        if order_by:
-            stmt = apply_order_by(stmt, PayloadModel, order_by)
-        if pagination is None:
-            pagination = PaginationInput(page=1, page_size=10)  # noqa
-        return await paginate_query(
-            session=ctx.db,
-            stmt=stmt,
-            pagination=pagination,
-            convert=_payload_from_model,
-        )
+        p_models = await ctx.loaders["nav_plan_by_cor_id"].load(self.id)
+        return [_payload_from_model(p_model) for p_model in p_models[:limit]]
 
 
 @strawberry.type
