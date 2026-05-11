@@ -155,7 +155,6 @@ class RoleRightGoal:
 class Role:
     id: int
     name: str
-    user_roles: Optional[List["UserRole"]] = None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def role_right_goals(
@@ -229,8 +228,6 @@ class UserRole:
     """Тип связи пользователя с ролью."""
     user_id: int
     role_id: int
-    user: Optional[User] = None
-    role: Optional[Role] = None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user(self, info: strawberry.Info) -> Optional["User"]:

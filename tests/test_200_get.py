@@ -25,7 +25,7 @@ def test_get_popular():
 
 
 def test_get_route():
-    app.state.app_state.global_graph["BS"] = pickle.loads(graph_b)
+    app.state.app_state.global_graph["BS"] = pickle.loads(graph_b)  # type: ignore[arg-type]
     response = client.get("/api/get/route?from_p=a-100&to_p=a-101&loc=campus_BS")
     assert response.status_code == 200
     json_data = response.json()

@@ -11,7 +11,7 @@ setup_logging(level="INFO", use_colors=True)
 
 app_cli = typer.Typer(
     name="stat-api",
-    help=f"🚀 Backend для проекта mospolynavigation",
+    help="🚀 Backend для проекта mospolynavigation",
     add_completion=False,
     no_args_is_help=True,
 )

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from app import schemas, models
@@ -6,7 +8,7 @@ from app.helpers.errors import LookupException
 
 async def insert_review(
         db: AsyncSession,
-        image_name: str,
+        image_name: Optional[str],
         client_id: str,
         problem: schemas.Problem,
         text: str

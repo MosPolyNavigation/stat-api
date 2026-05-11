@@ -223,10 +223,10 @@ class TestGraphQLMutationsNavUnauthorized:
 # =============================================================================
 class TestGraphQLMutationsNavEdgeCases:
     def test_404_update_non_existent_id(self):
-        q = f"""
-        mutation {{
-            updateNavLocation(id: 999999, data: {{ name: "ghost" }}) {{ id }}
-        }}
+        q = """
+        mutation {
+            updateNavLocation(id: 999999, data: { name: "ghost" }) { id }
+        }
         """
         r = graphql_query(q, headers=ADMIN_HEADERS)["data"]
         assert "errors" in r

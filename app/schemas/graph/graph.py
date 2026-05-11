@@ -132,8 +132,8 @@ class Graph:
     def __add_neighbor_both(
         vertex1: Vertex,
         vertex2: Vertex,
-        distance1to2: int,
-        distance2to1: int
+        distance1to2: float,
+        distance2to1: float
     ):
         vertex1.neighborData.append((vertex2.id, distance1to2))
         vertex2.neighborData.append((vertex1.id, distance2to1))

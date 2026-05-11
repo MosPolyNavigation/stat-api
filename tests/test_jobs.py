@@ -269,6 +269,7 @@ class TestJobConfigModels:
             cron=CronConfig(hour=0, minute=0, timezone="Europe/Moscow"),
         )
         assert cfg.enabled is True
+        assert cfg.cron is not None
         assert cfg.cron.hour == 0
 
     def test_job_config_interval(self):
@@ -277,6 +278,7 @@ class TestJobConfigModels:
             trigger="interval",
             interval=IntervalConfig(hours=1),
         )
+        assert cfg.interval is not None
         assert cfg.interval.hours == 1
 
     def test_scheduler_config_defaults(self):

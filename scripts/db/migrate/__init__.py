@@ -28,5 +28,5 @@ migrate_cli.command(  # ← новые команды
 
 migrate_cli.command(
     name="downgrade",
-    help=f"⬇️ Откатить миграции Alembic"
+    help="⬇️ Откатить миграции Alembic"
 )(downgrade_command)

@@ -29,6 +29,7 @@ dependencies = [
     "graphql-core",
     "starlette",
     "typer",
+    "ruff>=0.15.12",
 ]
 
 [dependency-groups]
@@ -60,7 +61,6 @@ python_functions = ["test_*"]
 
 [project.scripts]
 stat-api = "main:app_cli"
-
 
 [tool.ruff.lint]
 ignore = ["E402", "SLF001"]

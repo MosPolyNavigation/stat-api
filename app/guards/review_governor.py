@@ -7,6 +7,7 @@ from typing import Optional, Dict, cast
 from fastapi import HTTPException, Request, status
 
 from app.state import AppState
+from app.config import Settings
 
 
 class ReviewRateLimiter:
