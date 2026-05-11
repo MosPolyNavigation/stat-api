@@ -363,7 +363,6 @@ def old_events_to_new_command(
     Одноразовая миграция в новую систему хранения событий.
     Новая БД берётся из конфига (переменная STATAPI_CONFIG).
     """
-    from scripts import CONFIG_ENV_NOTE  # noqa: F401
 
     # Загружаем конфиг и получаем DSN новой БД
     settings = load_settings()

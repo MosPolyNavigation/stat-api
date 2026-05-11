@@ -11,7 +11,7 @@ from app.graphql.core.ordering import BaseOrderByInput
 M = TypeVar("M", bound=DeclarativeBase)  # SQLAlchemy модель
 T = TypeVar("T")  # GraphQL Strawberry тип
 F = TypeVar("F", bound=BaseFilterInput)  # Filter Input
-C = TypeVar("C", bound=Callable[[M], T])  # noqa # Конвертер модель → тип
+C = TypeVar("C", bound=Callable[[M], T]) # Конвертер модель → тип
 
 
 @dataclass

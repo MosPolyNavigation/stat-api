@@ -11,8 +11,6 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 
-from app.models.dashboard import Dashboard, DashboardType  # noqa: F401
-
 
 # revision identifiers, used by Alembic.
 revision: str = "a1b2c3d4e5f6"
