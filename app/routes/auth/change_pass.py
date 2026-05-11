@@ -14,8 +14,6 @@ password_hash = PasswordHash.recommended()
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для смены собственного пароля"
-
     @router.post(
         "/change-pass",
         description="Смена пароля текущего пользователя",
@@ -29,6 +27,7 @@ def register_endpoint(router: APIRouter):
         current_user: User = Depends(get_current_user),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
+        """Эндпоинт для смены собственного пароля"""
         try:
             if not password_hash.verify(old_password, current_user.hash):
                 logger.log(current_user, "Неудачная попытка смены пароля")
