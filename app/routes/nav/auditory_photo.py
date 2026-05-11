@@ -3,7 +3,7 @@ import uuid
 import base64
 import aiofiles
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession

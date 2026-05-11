@@ -1,6 +1,5 @@
 """Тесты для эндпоинтов аутентификации /api/auth"""
 
-import pytest
 import uuid
 from .base import client
 

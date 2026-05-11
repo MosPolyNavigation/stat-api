@@ -4,7 +4,6 @@ from datetime import datetime, UTC
 from typing import Annotated, Any
 
 import typer
-from pydantic import PostgresDsn
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 

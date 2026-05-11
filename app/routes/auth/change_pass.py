@@ -1,7 +1,4 @@
-from typing import Union
-
-from fastapi import APIRouter, Depends, HTTPException, Form, Header, status
-from sqlalchemy import Select
+from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 

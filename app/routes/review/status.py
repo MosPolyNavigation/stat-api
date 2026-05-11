@@ -9,7 +9,6 @@ from app.models.review import Review
 from app.models.review_status import ReviewStatus
 from app.helpers.permissions import require_rights_with_logging
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
-from app.helpers.auth_utils import get_current_active_user
 from app.models import User
 
 

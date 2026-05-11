@@ -1,6 +1,5 @@
 """Тесты для эндпоинтов отзывов /api/review"""
 
-import pytest
 from .base import client
 
 # Токен администратора из base.py (пользователь с полными правами)

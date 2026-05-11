@@ -3,7 +3,7 @@ from .user_id import register_endpoint as register_uuid
 from .popular_endp import register_endpoint as register_popular
 from .route_endp import register_endpoint as register_route
 from .schedule import register_endpoint as register_schedule
-from .location_data_endp import register_endpoint as register_locationData
+from .location_data_endp import register_endpoint as register_location_data
 from .event_type import register_endpoint as register_event_type
 from .payload_type import register_endpoint as register_payload_type
 
@@ -15,6 +15,6 @@ register_uuid(router)
 register_popular(router)
 register_route(router)
 register_schedule(router)
-register_locationData(router)
+register_location_data(router)
 register_event_type(router)
 register_payload_type(router)

@@ -1,8 +1,5 @@
-from collections import defaultdict
-from sqlalchemy import Boolean, Column, Integer, String, Select, DateTime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Mapped, relationship, joinedload
-from app.models.auth.role_right_goal import RoleRightGoal
+from sqlalchemy import Boolean, Column, Integer, String, DateTime
+from sqlalchemy.orm import Mapped, relationship
 from app.models.auth.user_role import UserRole
 from app.models.base import Base
 from datetime import datetime

@@ -1,7 +1,7 @@
 import json
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import Select, update
 from sqlalchemy.ext.asyncio import AsyncSession

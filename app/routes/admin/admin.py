@@ -1,12 +1,8 @@
-# app/routers/admin.py
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
 from app.schemas import Status
 from app.schemas.ban import BanListOut, BanInfoOut, UnbanRequest
 from app.guards.review_governor import review_rate_limiter
-from app.state import AppState
 from app.helpers.permissions import require_rights_with_logging
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 from app.models import User

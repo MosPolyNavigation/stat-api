@@ -11,7 +11,17 @@ from app.helpers.auth_utils import get_current_active_user
 from app.helpers.permissions import group_rights_by_goals
 from app.schemas import UserOut
 from app.services.permission_service import PermissionService
-from app.helpers.token_utils import REFRESH_COOKIE_NAME, clear_refresh_cookie, create_access_token, create_refresh_token_session, decode_refresh_token, hash_token_value, normalize_token_error, set_refresh_cookie, validate_refresh_payload, get_refresh_session
+from app.helpers.token_utils import (
+    REFRESH_COOKIE_NAME,
+    clear_refresh_cookie,
+    create_access_token,
+    create_refresh_token_session,
+    decode_refresh_token,
+    normalize_token_error,
+    set_refresh_cookie,
+    validate_refresh_payload,
+    get_refresh_session
+)
 from app.schemas.auth import AuthScheme
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
