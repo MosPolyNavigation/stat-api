@@ -1,7 +1,7 @@
 """
 Интеграционные тесты для эндпоинта /api/get/locationData
 """
-from app.tests.base import client
+from tests.base import client
 
 
 class TestLocationData:

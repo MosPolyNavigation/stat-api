@@ -1,6 +1,6 @@
 import uuid
 
-from app.tests.base import client
+from tests.base import client
 
 GRAPHQL_ENDPOINT = "/api/graphql"
 

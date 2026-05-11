@@ -1,7 +1,7 @@
 """Integration tests for GraphQL Query operations in navigation domain."""
 import pytest  # noqa
 
-from app.tests.graphql.base import graphql_query
+from tests.graphql.base import graphql_query
 
 # =============================================================================
 # Конфигурация

@@ -2,8 +2,8 @@
 import pytest
 import uuid
 
-from app.tests.base import client
-from app.tests.graphql.base import (
+from tests.base import client
+from tests.graphql.base import (
     graphql_query, assert_graphql_success, assert_graphql_error, unique_login
 )
 

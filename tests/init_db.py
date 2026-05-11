@@ -9,7 +9,7 @@ from app.models import Base
 from app.schemas.rasp.schedule import Auditory
 from app.jobs.location_data.worker import fetch_location_data
 from app.seed.base_seeder import BaseSeeder
-from app.tests.seed import TEST_ONLY_SEEDERS
+from tests.seed import TEST_ONLY_SEEDERS
 from app.seed import (
     AllowedPayloadSeeder, DashboardTypeSeeder, EventTypeSeeder,
     GoalSeeder, PayloadTypeSeeder, ProblemSeeder,

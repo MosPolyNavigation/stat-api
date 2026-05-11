@@ -14,8 +14,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import load_settings
 from app.database import create_async_engine, async_sessionmaker
 from app.factory import AppFactory
-from app.tests.hooks import TestHooks
-from app.tests.init_db import init_test_database
+from tests.hooks import TestHooks
+from tests.init_db import init_test_database
 
 settings = load_settings()
 

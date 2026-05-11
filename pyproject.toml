@@ -53,7 +53,7 @@ py-modules = ["main"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"  # или "strict"
-testpaths = ["app/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py", "*_test.py", "mutation.py", "query.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]

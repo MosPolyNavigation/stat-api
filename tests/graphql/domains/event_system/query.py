@@ -1,7 +1,7 @@
 """Integration tests for GraphQL Query operations in event_system domain."""
 import pytest
 
-from app.tests.graphql.base import (
+from tests.graphql.base import (
     graphql_query
 )
 

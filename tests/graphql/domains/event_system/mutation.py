@@ -1,7 +1,7 @@
 """Integration tests for GraphQL Mutation operations in event_system domain."""
 
 import pytest
-from app.tests.graphql.base import graphql_query
+from tests.graphql.base import graphql_query
 
 # =============================================================================
 # Конфигурация

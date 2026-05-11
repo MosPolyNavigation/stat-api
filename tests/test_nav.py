@@ -1,7 +1,7 @@
 """
 Тесты для навигационных эндпоинтов /api/nav/*
 """
-from app.tests.base import client
+from tests.base import client
 
 
 class TestNavCampus:
