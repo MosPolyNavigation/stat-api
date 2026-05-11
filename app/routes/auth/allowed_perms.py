@@ -15,6 +15,7 @@ def register_endpoint(router: APIRouter):
                     "сформированный динамически из константы GOAL_RIGHTS. "
                     "Доступно только пользователям с правом `roles:view`.",
         dependencies=[Depends(require_rights(ROLES_GOAL_NAME, VIEW_RIGHT_NAME))],
+        tags=["auth"],
     )
     async def get_allowed_permissions() -> AllowedPermissionsResponse:
         """
