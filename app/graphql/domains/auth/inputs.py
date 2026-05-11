@@ -71,7 +71,7 @@ class GoalFilterInput(BaseFilterInput):
 
 
 @strawberry.input
-class RefreshTokenFilterInput:
+class RefreshTokenFilterInput(BaseFilterInput):
     id: Optional[IntFilterInput] = None
     user_id: Optional[IntFilterInput] = None
     jti: Optional[StringFilterInput] = None
@@ -84,7 +84,7 @@ class RefreshTokenFilterInput:
 
 
 @strawberry.input
-class UserLogFilterInput:
+class UserLogFilterInput(BaseFilterInput):
     id: Optional[IntFilterInput] = None
     user_id: Optional[IntFilterInput] = None
     text: Optional[StringFilterInput] = None
@@ -145,7 +145,7 @@ class GoalOrderByInput(BaseOrderByInput):
 
 
 @strawberry.input
-class RefreshTokenOrderByInput:
+class RefreshTokenOrderByInput(BaseOrderByInput):
     id: Optional[OrderDir] = None
     user_id: Optional[OrderDir] = None
     jti: Optional[OrderDir] = None
@@ -158,7 +158,7 @@ class RefreshTokenOrderByInput:
 
 
 @strawberry.input
-class UserLogOrderByInput:
+class UserLogOrderByInput(BaseOrderByInput):
     id: Optional[OrderDir] = None
     user_id: Optional[OrderDir] = None
     text: Optional[OrderDir] = None
