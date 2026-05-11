@@ -41,8 +41,8 @@ class UserMutation:
     async def create_user(self, info: Info, data: CreateUserInput) -> UserType:
         await require_permissions(info, P.USERS_CREATE)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        logger = info.context.user_logger
 
         existing = await ctx.db.execute(select(User).where(User.login == data.login))
         if existing.scalar_one_or_none():
@@ -65,8 +65,8 @@ class UserMutation:
     async def update_user(self, info: Info, id: int, data: UpdateUserInput) -> UserType:
         await require_permissions(info, P.USERS_EDIT)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        logger = info.context.user_logger
 
         user = await ctx.db.get(User, id)
         if not user:
@@ -90,8 +90,8 @@ class UserMutation:
     async def delete_user(self, info: Info, id: int) -> bool:
         await require_permissions(info, P.USERS_DELETE)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        logger = info.context.user_logger
 
         user = await ctx.db.get(User, id)
         if not user:
@@ -108,8 +108,8 @@ class UserMutation:
     async def change_user_password(self, info: Info, data: ChangeUserPasswordInput) -> bool:
         await require_permissions(info, P.USER_PASS_EDIT)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        logger = info.context.user_logger
 
         user = await ctx.db.get(User, data.user_id)
         if not user:
@@ -135,9 +135,9 @@ class RoleMutation:
     async def create_role(self, info: Info, data: CreateRoleInput) -> RoleType:
         await require_permissions(info, P.ROLES_CREATE)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        service: PermissionService = info.context["permission_service"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        service: PermissionService = info.context.permission_service
+        logger = info.context.user_logger
 
         existing = await ctx.db.execute(select(Role).where(Role.name == data.name))
         if existing.scalar_one_or_none():
@@ -167,9 +167,9 @@ class RoleMutation:
     async def update_role(self, info: Info, id: int, data: UpdateRoleInput) -> RoleType:
         await require_permissions(info, P.ROLES_EDIT)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        service: PermissionService = info.context["permission_service"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        service: PermissionService = info.context.permission_service
+        logger = info.context.user_logger
 
         if id == 1:
             raise GraphQLError("Нельзя изменить роль с ID 1")
@@ -208,9 +208,9 @@ class RoleMutation:
     async def delete_role(self, info: Info, id: int) -> bool:
         await require_permissions(info, P.ROLES_DELETE)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        service: PermissionService = info.context["permission_service"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        service: PermissionService = info.context.permission_service
+        logger = info.context.user_logger
 
         if id == 1:
             raise GraphQLError("Нельзя удалить роль с ID 1")
@@ -246,9 +246,9 @@ class UserRoleMutation:
     async def grant_role(self, info: Info, data: GrantRoleInput) -> bool:
         await require_permissions(info, P.ROLES_EDIT)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        service: PermissionService = info.context["permission_service"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        service: PermissionService = info.context.permission_service
+        logger = info.context.user_logger
 
         target = await ctx.db.get(User, data.user_id)
         if not target:
@@ -286,9 +286,9 @@ class UserRoleMutation:
     async def revoke_role(self, info: Info, user_id: int, role_id: int) -> bool:
         await require_permissions(info, P.ROLES_EDIT)
         ctx: GraphQLContext = info.context
-        current_user = info.context["current_user"]
-        service: PermissionService = info.context["permission_service"]
-        logger = info.context["user_logger"]
+        current_user = info.context.current_user
+        service: PermissionService = info.context.permission_service
+        logger = info.context.user_logger
 
         rrgs = await ctx.db.execute(select(RoleRightGoal).where(RoleRightGoal.role_id == role_id))
         perms = list({(r.right_id, r.goal_id) for r in rrgs.scalars()})
