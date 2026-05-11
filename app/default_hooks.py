@@ -159,8 +159,8 @@ class DefaultHooks(BaseHooks):
 
     def setup_exception_handlers(self, app: FastAPI) -> None:
         @app.exception_handler(SQLAlchemyError)
-        async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
-            return JSONResponse(status_code=500, content={"status": str(exc)})
+        async def sqlalchemy_exception_handler(_, _exc: SQLAlchemyError):
+            return JSONResponse(status_code=500, content={"status": "Internal server error"})
 
         @app.exception_handler(LookupException)
         async def lookup_exception_handler(_, exc: LookupException):
