@@ -26,64 +26,6 @@ class Filter(BaseModel):
     )
 
 
-class TargetEnum(str, Enum):
-    """
-    Enum-класс для целей фильтрации.
-
-    Attributes:
-        site: Цель фильтрации для сайта;
-        auds: Цель фильтрации для аудиторий;
-        ways: Цель фильтрации для маршрутов;
-        plans: Цель фильтрации для планов.
-    """
-
-    site = "site"
-    auds = "auds"
-    ways = "ways"
-    plans = "plans"
-
-
-class FilterQuery(BaseModel):
-    """
-    Класс для фильтра запроса.
-
-    Attributes:
-        target: Цель фильтрации;
-        start_date: Дата начала фильтрации;
-        end_date: Дата окончания фильтрации;
-        start_month: Месяц начала фильтрации в формате YYYY-MM;
-        end_month: Месяц окончания фильтрации в формате YYYY-MM;
-        start_year: Год начала фильтрации в формате YYYY;
-        end_year: Год окончания фильтрации в формате YYYY.
-    """
-
-    target: TargetEnum = Field(description="Target info")
-    start_date: Optional[date] = Field(
-        default=None,
-        description="Date from which filtering begins",
-    )
-    end_date: Optional[date] = Field(
-        default=None,
-        description="Date on which filtering ends",
-    )
-    start_month: Optional[str] = Field(
-        default=None,
-        description="Month from which filtering begins in YYYY-MM format",
-    )
-    end_month: Optional[str] = Field(
-        default=None,
-        description="Month on which filtering ends in YYYY-MM format",
-    )
-    start_year: Optional[str] = Field(
-        default=None,
-        description="Year from which filtering begins in YYYY format",
-    )
-    end_year: Optional[str] = Field(
-        default=None,
-        description="Year on which filtering ends in YYYY format",
-    )
-
-
 class LocationEnum(str, Enum):
     """
     Enum-класс для выбора локации.
@@ -140,55 +82,6 @@ class FilterSvobodn(BaseModel):
     )
     day: Optional[DayOfWeek] = Field(default=None)
     para: Optional[int] = Field(default=None)
-
-
-class TgFilterQuery(BaseModel):
-    """
-    Класс для фильтрации статистики телеграм-бота.
-
-    Attributes:
-        event_type_id: Идентификатор типа события телеграм-бота;
-        is_dod: Признак, что событие относится к DOD-боту;
-        start_date: Дата начала фильтрации;
-        end_date: Дата окончания фильтрации;
-        start_month: Месяц начала фильтрации в формате YYYY-MM;
-        end_month: Месяц окончания фильтрации в формате YYYY-MM;
-        start_year: Год начала фильтрации в формате YYYY;
-        end_year: Год окончания фильтрации в формате YYYY.
-    """
-
-    event_type_id: Optional[int] = Field(
-        default=None,
-        description="Telegram bot event type identifier",
-    )
-    is_dod: Optional[bool] = Field(
-        default=None,
-        description="Whether event belongs to DOD bot",
-    )
-    start_date: Optional[date] = Field(
-        default=None,
-        description="Date from which filtering begins",
-    )
-    end_date: Optional[date] = Field(
-        default=None,
-        description="Date on which filtering ends",
-    )
-    start_month: Optional[str] = Field(
-        default=None,
-        description="Month from which filtering begins in YYYY-MM format",
-    )
-    end_month: Optional[str] = Field(
-        default=None,
-        description="Month on which filtering ends in YYYY-MM format",
-    )
-    start_year: Optional[str] = Field(
-        default=None,
-        description="Year from which filtering begins in YYYY format",
-    )
-    end_year: Optional[str] = Field(
-        default=None,
-        description="Year on which filtering ends in YYYY format",
-    )
 
 
 class FilterSvobodnForAud(FilterSvobodn):

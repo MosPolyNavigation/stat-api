@@ -181,6 +181,7 @@ def parse_browser(user_agent: str | None) -> str | None:
 
 def set_refresh_cookie(response: Response, _request: Request, refresh_token: str) -> None:
     settings = get_settings()
+    expires_at = datetime.now(timezone.utc) + timedelta(seconds=settings.refresh_duration)
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,
@@ -188,7 +189,7 @@ def set_refresh_cookie(response: Response, _request: Request, refresh_token: str
         secure=True,
         samesite="lax",
         max_age=settings.refresh_duration,
-        expires=settings.refresh_duration,
+        expires=expires_at,
         path="/",
     )
 

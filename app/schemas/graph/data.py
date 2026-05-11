@@ -20,10 +20,10 @@ class CorpusData(BaseModel):
     stairs: List[List[str]]
 
 
-Id = str
-RoomId = Id
-CircleId = Id
-PlanEntrances = Tuple[RoomId, CircleId]
+type Id = str
+type RoomId = Id
+type CircleId = Id
+type PlanEntrances = Tuple[RoomId, CircleId]
 
 
 class PlanData(BaseModel):

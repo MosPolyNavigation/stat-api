@@ -210,11 +210,3 @@ class Graph:
             way=[self.vertexes[vid] for vid in reversed(path) if vid],
             distance=math.floor(distances.get(end, math.inf))
         )
-
-    @staticmethod
-    def get_distance_between2_vertexes(
-        vertex1: Vertex, vertex2_id: str
-    ) -> float:
-        return next(
-            note for note in vertex1.neighborData if note[0] == vertex2_id
-        )[1]

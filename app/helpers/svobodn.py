@@ -74,9 +74,9 @@ def svobodn(schedule: Optional[Auditory], filter_: FilterSvobodn) -> RaspOut:
 
 
 def auditory_is_empty(
-        schedule: Schedule,
-        auds: list[str],
-        filter_: FilterSvobodn
+    schedule: Schedule,
+    auds: list[str],
+    filter_: FilterSvobodn
 ) -> ScheduleOut:
     """
     Проверяет свободность указанных аудиторий.

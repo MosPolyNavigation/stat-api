@@ -1,4 +1,4 @@
-from .filter import Filter, FilterQuery, FilterRoute
+from .filter import Filter, FilterRoute
 from .statistics import Statistics, AggregatedStatistics, PopularAudience
 from .status import Status
 from .review import Problem
@@ -8,7 +8,7 @@ from app.schemas.event import (
     EventTypeResponse,
     PayloadTypeResponse,
 )
-from app.schemas.stat.user_id import UserId, UserIdCheck, ClientIdCheck
+from app.schemas.stat.user_id import ClientIdCheck
 from app.schemas.graph.dto import DataDto, GraphDto, LocationDto, \
     CorpusDto, PlanDto, RoomDto, NearestDto
 from app.schemas.graph.data import LocationData, CorpusData, PlanData
@@ -29,7 +29,6 @@ __all__ = [
     "EventCreateRequest",
     "EventTypeResponse",
     "Filter",
-    "FilterQuery",
     "FilterRoute",
     "Graph",
     "GraphDto",
@@ -45,7 +44,5 @@ __all__ = [
     "Statistics",
     "Status",
     "UserOut",
-    "UserId",
-    "UserIdCheck",
     "Vertex",
 ]
