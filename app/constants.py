@@ -35,7 +35,6 @@ CLIENT_GOAL_ID = 13
 # =============================================================================
 # КОНСТАНТЫ НОВОЙ СХЕМЫ СОБЫТИЙ
 # =============================================================================
-
 EVENT_TYPE_SITE_ID = 1
 EVENT_TYPE_AUDS_ID = 2
 EVENT_TYPE_WAYS_ID = 3
@@ -54,6 +53,49 @@ PAYLOAD_TYPE_START_ID = 3
 PAYLOAD_TYPE_END_ID = 4
 PAYLOAD_TYPE_SUCCESS_ID = 5
 PAYLOAD_TYPE_PLAN_ID = 6
+
+PAYLOAD_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "endpoint": PAYLOAD_TYPE_ENDPOINT_ID,
+    "auditory_id": PAYLOAD_TYPE_AUDITORY_ID,
+    "start_id": PAYLOAD_TYPE_START_ID,
+    "end_id": PAYLOAD_TYPE_END_ID,
+    "success": PAYLOAD_TYPE_SUCCESS_ID,
+    "plan_id": PAYLOAD_TYPE_PLAN_ID,
+}
+
+ALLOWED_PAYLOADS: list[tuple[int, int]] = [
+    (EVENT_TYPE_SITE_ID, PAYLOAD_TYPE_ENDPOINT_ID),
+    (EVENT_TYPE_AUDS_ID, PAYLOAD_TYPE_AUDITORY_ID),
+    (EVENT_TYPE_AUDS_ID, PAYLOAD_TYPE_SUCCESS_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_START_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_END_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_SUCCESS_ID),
+    (EVENT_TYPE_PLANS_ID, PAYLOAD_TYPE_PLAN_ID),
+]
+
+# =============================================================================
+# КОНСТАНТЫ ТИПОВ ДАШБОРДОВ (DASHBOARD TYPES)
+# =============================================================================
+DASHBOARD_TYPE_CHART_ID = 1
+DASHBOARD_TYPE_AVG_ID = 2
+
+DASHBOARD_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "chart": DASHBOARD_TYPE_CHART_ID,
+    "avg": DASHBOARD_TYPE_AVG_ID,
+}
+
+# =============================================================================
+# КОНСТАНТЫ ТИПОВ ЗНАЧЕНИЙ (VALUE TYPES)
+# =============================================================================
+VALUE_TYPE_INT_ID = 1
+VALUE_TYPE_STRING_ID = 2
+VALUE_TYPE_BOOL_ID = 3
+
+VALUE_TYPE_IDS_BY_NAME: dict[str, int] = {
+    "int": VALUE_TYPE_INT_ID,
+    "string": VALUE_TYPE_STRING_ID,
+    "bool": VALUE_TYPE_BOOL_ID,
+}
 
 # =============================================================================
 # КОНСТАНТЫ ПРАВ (RIGHTS)
@@ -120,6 +162,48 @@ RIGHTS_BY_NAME: dict[str, int] = {
     "edit": 3,
     "delete": 4,
 }
+
+GOAL_RIGHTS: list[tuple[int, int]] = [
+    (STATS_GOAL_ID, VIEW_RIGHT_ID),
+    (STATS_GOAL_ID, CREATE_RIGHT_ID),
+    (STATS_GOAL_ID, EDIT_RIGHT_ID),
+    (STATS_GOAL_ID, DELETE_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, VIEW_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, CREATE_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, EDIT_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, DELETE_RIGHT_ID),
+    (USERS_GOAL_ID, VIEW_RIGHT_ID),
+    (USERS_GOAL_ID, CREATE_RIGHT_ID),
+    (USERS_GOAL_ID, EDIT_RIGHT_ID),
+    (USERS_GOAL_ID, DELETE_RIGHT_ID),
+    (ROLES_GOAL_ID, VIEW_RIGHT_ID),
+    (ROLES_GOAL_ID, CREATE_RIGHT_ID),
+    (ROLES_GOAL_ID, EDIT_RIGHT_ID),
+    (ROLES_GOAL_ID, DELETE_RIGHT_ID),
+    (TABLES_GOAL_ID, VIEW_RIGHT_ID),
+    (TABLES_GOAL_ID, EDIT_RIGHT_ID),
+    (RESOURCES_GOAL_ID, VIEW_RIGHT_ID),
+    (RESOURCES_GOAL_ID, CREATE_RIGHT_ID),
+    (RESOURCES_GOAL_ID, EDIT_RIGHT_ID),
+    (RESOURCES_GOAL_ID, DELETE_RIGHT_ID),
+    (TASKS_GOAL_ID, VIEW_RIGHT_ID),
+    (TASKS_GOAL_ID, CREATE_RIGHT_ID),
+    (TASKS_GOAL_ID, EDIT_RIGHT_ID),
+    (TASKS_GOAL_ID, DELETE_RIGHT_ID),
+    (NAV_GOAL_ID, VIEW_RIGHT_ID),
+    (NAV_GOAL_ID, CREATE_RIGHT_ID),
+    (NAV_GOAL_ID, EDIT_RIGHT_ID),
+    (NAV_GOAL_ID, DELETE_RIGHT_ID),
+    (USER_PASS_GOAL_ID, EDIT_RIGHT_ID),
+    (ADMIN_GOAL_ID, VIEW_RIGHT_ID),
+    (ADMIN_GOAL_ID, EDIT_RIGHT_ID),
+    (REVIEWS_GOAL_ID, VIEW_RIGHT_ID),
+    (REVIEWS_GOAL_ID, EDIT_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, VIEW_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, EDIT_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, DELETE_RIGHT_ID),
+    (CLIENT_GOAL_ID, CREATE_RIGHT_ID)
+]
 
 # =============================================================================
 # КОНСТАНТЫ проблем (Problems)

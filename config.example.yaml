@@ -2,6 +2,17 @@ server:
   host: {{ env("STATAPI_HOST", "0.0.0.0") }}
   port: {{ env("STATAPI_PORT", "8080") }}
 
+  # Управляет openapi документацией и
+  # фронтендами для ее отображения
+  # Может отсутствовать, поведение по умолчанию отключает всю документацию 
+  docs:
+    # управляет видимостью openapi.json
+    openapi: false
+    # управляет видимостью swagger
+    docs: false
+    # управляет видимостью redoc
+    redoc: false
+
   # CORS-настройки (опционально — удалите секцию, если CORS не нужен)
   cors:
     allowed_hosts:
@@ -29,11 +40,15 @@ server:
   # Сжатие ответов (опционально)
   compression:
     enable: true
+    minimum_size: 1024
 
 database:
   # В продакшене задавайте URI явно через переменную окружения,
   # не используйте SQLite со значением по умолчанию.
   uri: {{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///app.db") }}
+  # Значение true только для разработки. Даже не думайте использовать в production
+  # Можно не указывать, т.к. значение по умолчанию - False
+  auto_seed: false
 
 jwt:
   access:

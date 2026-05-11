@@ -58,3 +58,11 @@ class AppState:
         self.location_data_json = None
         self._rasp_lock = asyncio.Lock()
         self._location_lock = asyncio.Lock()
+
+    @property
+    def rasp_lock(self):
+        return self._rasp_lock
+
+    @property
+    def location_lock(self):
+        return self._location_lock

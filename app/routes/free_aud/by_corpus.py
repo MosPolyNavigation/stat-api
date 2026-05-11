@@ -28,7 +28,7 @@ def register_endpoint(router: APIRouter):
         filter_: FilterSvobodnByCorpus = Depends()
     ):
         state: AppState = request.app.state.app_state
-        if state._rasp_lock.locked():
+        if state.rasp_lock.locked() or state.global_rasp is None:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
         schedule = filter_svobodn(state.global_rasp, filter_)

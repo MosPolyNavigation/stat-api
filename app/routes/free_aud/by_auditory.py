@@ -22,7 +22,7 @@ def register_endpoint(router: APIRouter):
         filter_: FilterSvobodnForAud = Depends()
     ):
         state: AppState = request.app.state.app_state
-        if state._rasp_lock.locked():
+        if state.rasp_lock.locked():
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
         schedule = {filter_.aud_id: state.global_rasp[filter_.aud_id]}

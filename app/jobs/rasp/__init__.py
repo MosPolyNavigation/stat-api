@@ -1,3 +1,5 @@
+from typing import Optional
+
 import logging
 
 from app.database import get_session_maker
@@ -9,12 +11,16 @@ logger = logging.getLogger(f"uvicorn.{__name__}")
 
 
 @scheduled_task(name="fetch_cur_rasp")
-async def fetch_cur_rasp(state: AppState):
-    # Скип, если воркер уже выполняется (другой триггер планировщика или ручной вызов).
-    if state._rasp_lock.locked():
+async def fetch_cur_rasp(state: Optional[AppState] = None):
+    if state is None:
+        logger.error("Вызов воркера без инициализированного состояния")
         return
 
-    async with state._rasp_lock:
+    # Скип, если воркер уже выполняется (другой триггер планировщика или ручной вызов).
+    if state.rasp_lock.locked():
+        return
+
+    async with state.rasp_lock:
         try:
             logger.info("Starting schedule fetching")
             session_maker = get_session_maker()

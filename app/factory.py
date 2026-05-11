@@ -1,3 +1,5 @@
+import logging
+
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator, Optional
 
@@ -5,7 +7,10 @@ from fastapi import FastAPI
 
 from app.config import Settings, load_settings
 from app.hooks import BaseHooks
+from app.helpers.seeder import apply_seeding
 from app.jobs import AppLifespanState
+
+logger = logging.getLogger(__name__)
 
 
 class AppFactory:
@@ -24,10 +29,19 @@ class AppFactory:
     def __call__(self, settings: Optional[Settings] = None) -> FastAPI:
         cfg = settings or load_settings()
         cfg = self.hooks.on_config_loaded(cfg)
+        self._cfg = cfg
+        
+        app_kwargs = self.hooks.setup_app_arguments(cfg)
 
         @asynccontextmanager
         async def lifespan(app: FastAPI) -> AsyncGenerator[AppLifespanState, None]:
             lifespan_state = await self.hooks.on_startup(app, cfg)
+
+            if getattr(cfg.database, "auto_seed", False):
+                seeders = self.hooks.setup_seeders()
+                if seeders:
+                    await apply_seeding(seeders)
+
             try:
                 yield lifespan_state
             finally:
@@ -35,9 +49,7 @@ class AppFactory:
 
         app = FastAPI(
             lifespan=lifespan,
-            docs_url=None,
-            redoc_url=None,
-            openapi_url=None,
+            **app_kwargs
         )
         app.state.config = cfg
         app.state.hooks = self.hooks
@@ -48,3 +60,7 @@ class AppFactory:
         self.hooks.setup_exception_handlers(app)
 
         return app
+
+    @property
+    def cfg(self) -> Settings:
+        return self._cfg

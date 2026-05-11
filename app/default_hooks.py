@@ -1,13 +1,11 @@
 import logging
-from functools import partial
 from os import makedirs, path
-from typing import List
+from typing import List, Any, LiteralString
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
-from fastapi_pagination import add_pagination
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import JobsConfig, Settings
@@ -25,19 +23,20 @@ from app.jobs.refresh_token import (
     delete_old_refresh_tokens,
     revoke_expired_refresh_tokens,
 )
+from app.graphql.schema import graphql_router
 from app.routes import (
     admin,
     auth,
     check,
     free_aud,
     get,
-    graphql,
     jobs,
     nav,
     review,
     stat,
 )
 from app.state import AppState
+from app.seed.base_seeder import BaseSeeder
 
 logger = logging.getLogger(__name__)
 
@@ -67,23 +66,55 @@ class DefaultHooks(BaseHooks):
     из app/jobs/__init__.py через сегментированный API.
     """
 
+    def setup_seeders(self) -> list[BaseSeeder]:
+        from app.seed import (
+            AllowedPayloadSeeder,
+            DashboardTypeSeeder,
+            EventTypeSeeder,
+            FloorSeeder,
+            GoalSeeder,
+            PayloadTypeSeeder,
+            ProblemSeeder,
+            ReviewStatusSeeder,
+            RightSeeder,
+            RoleRightGoalSeeder,
+            RoleSeeder,
+            ValueTypeSeeder,
+        )
+        return [
+            ProblemSeeder(),
+            ReviewStatusSeeder(),
+            GoalSeeder(),
+            RightSeeder(),
+            RoleSeeder(),
+            RoleRightGoalSeeder(),
+            FloorSeeder(),
+            ValueTypeSeeder(),
+            EventTypeSeeder(),
+            PayloadTypeSeeder(),
+            AllowedPayloadSeeder(),
+            DashboardTypeSeeder()
+        ]
+
+    def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
+        kwargs = super().setup_app_arguments(settings)
+        kwargs["version"] = APP_VERSION
+        kwargs["openapi_tags"] = TAGS_METADATA
+        return kwargs
+
     # ── Сегменты конфигурации ────────────────────────────────────────────────
 
     def setup_middlewares(self, app: FastAPI, settings: Settings) -> None:
-        # Поля, которые нельзя задать во фабрике без расширения её сигнатуры,
-        # ставим прямо здесь — это ближе всего к моменту создания FastAPI.
-        app.version = APP_VERSION
-        app.openapi_tags = TAGS_METADATA
-
-        app.add_middleware(
-            CORSMiddleware,
-            allow_origins=settings.allowed_hosts,
-            allow_methods=settings.allowed_methods,
-            allow_headers=settings.allowed_headers,
-            allow_credentials=settings.allow_credentials,
-        )
-        app.add_middleware(GZipMiddleware, minimum_size=1024)
-        add_pagination(app)
+        if settings.server.cors:
+            app.add_middleware(
+                CORSMiddleware,
+                allow_origins=settings.allowed_hosts,
+                allow_methods=settings.allowed_methods,
+                allow_headers=settings.allowed_headers,
+                allow_credentials=settings.allow_credentials,
+            )
+        if settings.server.compression and settings.server.compression.enable:
+            app.add_middleware(GZipMiddleware, minimum_size=settings.server.compression.minimum_size)
 
     def setup_routers(self, app: FastAPI) -> None:
         # Состояние привязано к приложению ДО роутеров: guard-зависимости
@@ -95,7 +126,7 @@ class DefaultHooks(BaseHooks):
         app.include_router(review.router)
         app.include_router(check.router)
         app.include_router(auth.router)
-        app.include_router(graphql.graphql_router, prefix="/api/graphql", tags=["graphql"])
+        app.include_router(graphql_router, prefix="/api/graphql", tags=["graphql"])
         app.include_router(jobs.router)
         app.include_router(free_aud.router)
         app.include_router(nav.router)
@@ -106,7 +137,7 @@ class DefaultHooks(BaseHooks):
         project_dir = path.dirname(current_file_dir)
         admin_dir = path.join(project_dir, "dist-panel")
 
-        directories: List[str] = [
+        directories: List[str | LiteralString | bytes] = [
             path.join(settings.static_files, "images"),
             path.join(settings.static_files, "auditories"),
             path.join(settings.static_files, "plans"),
@@ -156,14 +187,9 @@ class DefaultHooks(BaseHooks):
             static_path=settings.static_files,
             queue_type=jobs_config.queue,
             queue_db=jobs_config.url,
+            state=state
         )
         job_manager.setup_from_config(jobs_config)
-
-        # setup_from_config зарегистрировал воркеры из реестра @scheduled_task,
-        # но без аргументов. Пере-регистрируем их через partial(state=state) —
-        # replace_existing=True заменит запись в APScheduler. Расписание берём
-        # из YAML, чтобы не дублировать его в коде.
-        self._reschedule_with_state(job_manager, jobs_config, state)
 
         # Системные задачи (не входят в публичный реестр @scheduled_task)
         job_manager.add_job(
@@ -238,39 +264,3 @@ class DefaultHooks(BaseHooks):
         if isinstance(jobs_config_data, JobsConfig):
             return jobs_config_data
         return JobsConfig.model_validate(jobs_config_data)
-
-    @staticmethod
-    def _reschedule_with_state(
-        job_manager: JobManager,
-        jobs_config: JobsConfig,
-        state: AppState,
-    ) -> None:
-        """
-        Переопределяет регистрации воркеров, требующих AppState.
-
-        setup_from_config регистрирует чистый wrapper из @scheduled_task (без
-        аргументов), но воркеры fetch_location_data / fetch_cur_rasp требуют
-        state. Делаем повторный add_job с partial(state=...) и replace_existing=True
-        — APScheduler заменит запись по тому же id. Триггеры берутся из YAML-конфига.
-        """
-        from app.jobs.manager import get_task_registry  # локальный импорт во избежание циклов
-
-        registry_by_name = {entry["name"]: entry for entry in get_task_registry()}
-        stateful_names = {"fetch_location_data", "fetch_cur_rasp"}
-
-        for job_cfg in jobs_config.tasks:
-            if not job_cfg.enabled or job_cfg.name not in stateful_names:
-                continue
-
-            entry = registry_by_name.get(job_cfg.name)
-            if entry is None:
-                logger.warning(
-                    "Stateful worker '%s' is in config but not in @scheduled_task registry",
-                    job_cfg.name,
-                )
-                continue
-
-            wrapped = partial(entry["func"], state=state)
-            kwargs = JobManager._build_apscheduler_kwargs(job_cfg)
-            kwargs["replace_existing"] = True
-            job_manager.add_job(wrapped, **kwargs)

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -120,7 +120,7 @@ def register_endpoint(router: APIRouter):
         event = Event(
             client_id=client.id,
             event_type_id=data.event_type_id,
-            trigger_time=datetime.utcnow(),
+            trigger_time=datetime.now(UTC),
         )
         db.add(event)
         await db.flush()

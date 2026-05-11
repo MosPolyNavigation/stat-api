@@ -158,7 +158,8 @@ class ReviewRateLimiter:
         # LRU-вытеснение при превышении лимита пользователей
         self._enforce_max_users(access_store)
     
-    async def _extract_user_id(self, request: Request) -> Optional[str]:
+    @staticmethod
+    async def _extract_user_id(request: Request) -> Optional[str]:
         """Извлекает client_id из multipart/form-data или JSON."""
         try:
             content_type = request.headers.get("content-type", "")
@@ -172,8 +173,8 @@ class ReviewRateLimiter:
         except Exception:
             return None
     
+    @staticmethod
     def _cleanup_old_requests(
-        self,
         user_data: Dict,
         now: datetime,
     ) -> None:
