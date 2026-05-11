@@ -3,7 +3,7 @@ from collections import defaultdict
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models import User, Goal
+from app.models import User
 from app.helpers.auth_utils import get_current_active_user
 from app.services.permission_service import PermissionService
 from app.constants import RIGHTS_BY_ID, GOALS_BY_ID

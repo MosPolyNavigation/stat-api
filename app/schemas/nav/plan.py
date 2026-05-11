@@ -25,6 +25,7 @@ class Node(BaseModel):
 type Graph = list[Node]
 type Spaces = list[Any]
 
+
 class PlanNav(BaseModel):
     """
     Формат одного плана

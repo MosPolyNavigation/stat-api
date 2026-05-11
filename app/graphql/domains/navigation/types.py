@@ -3,14 +3,16 @@ from datetime import datetime
 import strawberry
 
 from app.graphql.core.context import GraphQLContext
-from app.models.nav.location import Location as LModel
-from app.models.nav.corpus import Corpus as CModel
-from app.models.nav.floor import Floor as FModel
-from app.models.nav.types import Type as NTModel
-from app.models.nav.plan import Plan as PModel
-from app.models.nav.auditory import Auditory as AModel
-from app.models.nav.aud_photo import AudPhoto as APModel
-from app.models.nav.static import Static as SModel
+from app.models import (
+    Location as LModel,
+    Corpus as CModel,
+    Floor as FModel,
+    Type as NTModel,
+    Plan as PModel,
+    Auditory as AModel,
+    AudPhoto as APModel,
+    Static as SModel,
+)
 
 
 # =============================================================================

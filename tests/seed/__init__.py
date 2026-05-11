@@ -8,10 +8,10 @@ from .navigation_seeders import (
     LocationSeeder, CorpusSeeder, PlanSeeder, FloorSeeder,
     TypeSeeder, AuditorySeeder, AudPhotoSeeder
 )
-from .dod_seeders import (
-    DodLocationSeeder, DodCorpusSeeder, DodFloorSeeder, DodStaticSeeder,
-    DodPlanSeeder, DodTypeSeeder, DodAuditorySeeder, DodAudPhotoSeeder
-)
+# from .dod_seeders import (
+#     DodLocationSeeder, DodCorpusSeeder, DodFloorSeeder, DodStaticSeeder,
+#     DodPlanSeeder, DodTypeSeeder, DodAuditorySeeder, DodAudPhotoSeeder
+# )
 from .dashboard_seeder import DashboardSeeder
 from .refresh_token_seeder import RefreshTokenSeeder
 
@@ -31,8 +31,8 @@ TEST_ONLY_SEEDERS = [
     LocationSeeder(), CorpusSeeder(), FloorSeeder(), PlanSeeder(),
     TypeSeeder(), AuditorySeeder(), AudPhotoSeeder(),
     # DOD
-    DodLocationSeeder(), DodCorpusSeeder(), DodFloorSeeder(), DodStaticSeeder(),
-    DodPlanSeeder(), DodTypeSeeder(), DodAuditorySeeder(), DodAudPhotoSeeder(),
+    # DodLocationSeeder(), DodCorpusSeeder(), DodFloorSeeder(), DodStaticSeeder(),
+    # DodPlanSeeder(), DodTypeSeeder(), DodAuditorySeeder(), DodAudPhotoSeeder(),
 
     DashboardSeeder(), RefreshTokenSeeder()
 ]

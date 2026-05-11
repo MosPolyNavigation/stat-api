@@ -107,14 +107,17 @@ class DefaultHooks(BaseHooks):
     def setup_middlewares(self, app: FastAPI, settings: Settings) -> None:
         if settings.server.cors:
             app.add_middleware(
-                CORSMiddleware,
+                CORSMiddleware,  # type: ignore[arg-type]
                 allow_origins=settings.allowed_hosts,
                 allow_methods=settings.allowed_methods,
                 allow_headers=settings.allowed_headers,
                 allow_credentials=settings.allow_credentials,
             )
         if settings.server.compression and settings.server.compression.enable:
-            app.add_middleware(GZipMiddleware, minimum_size=settings.server.compression.minimum_size)
+            app.add_middleware(
+                GZipMiddleware,  # type: ignore[arg-type]
+                minimum_size=settings.server.compression.minimum_size
+            )
 
     def setup_routers(self, app: FastAPI) -> None:
         # Состояние привязано к приложению ДО роутеров: guard-зависимости
@@ -134,7 +137,7 @@ class DefaultHooks(BaseHooks):
 
     def setup_static_files(self, app: FastAPI, settings: Settings) -> None:
         current_file_dir = path.dirname(path.abspath(__file__))
-        project_dir = path.dirname(current_file_dir)
+        project_dir: str = path.dirname(current_file_dir)
         admin_dir = path.join(project_dir, "dist-panel")
 
         directories: List[str | LiteralString | bytes] = [
@@ -156,8 +159,8 @@ class DefaultHooks(BaseHooks):
 
     def setup_exception_handlers(self, app: FastAPI) -> None:
         @app.exception_handler(SQLAlchemyError)
-        async def sqlalchemy_exception_handler(_, exc: SQLAlchemyError):
-            return JSONResponse(status_code=500, content={"status": str(exc)})
+        async def sqlalchemy_exception_handler(_, _exc: SQLAlchemyError):
+            return JSONResponse(status_code=500, content={"status": "Internal server error"})
 
         @app.exception_handler(LookupException)
         async def lookup_exception_handler(_, exc: LookupException):

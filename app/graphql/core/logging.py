@@ -1,7 +1,10 @@
+from typing import Optional
+
 from graphql import GraphQLError
 import strawberry
 from strawberry.extensions import FieldExtension
 
+from app.models import Right, Goal, RoleRightGoal
 
 GRAPHQL_EXCLUDED_FIELDS = {
     "event",
@@ -41,12 +44,12 @@ def _extract_updated_fields(data) -> list[str]:
 
 def _extract_role_rights(role) -> list[str]:
     rights = []
-    role_right_goals = getattr(role, "role_right_goals", None) or []
+    role_right_goals: list[RoleRightGoal] = getattr(role, "role_right_goals", None) or []
     for role_right_goal in role_right_goals:
-        right = getattr(role_right_goal, "right", None)
-        goal = getattr(role_right_goal, "goal", None)
+        right: Optional[Right] = getattr(role_right_goal, "right", None)
+        goal: Optional[Goal] = getattr(role_right_goal, "goal", None)
         if right is not None and goal is not None:
-            rights.append(f"{right.name} -> {goal.name}")  # noqa
+            rights.append(f"{right.name} -> {goal.name}")
             continue
 
         right_id = getattr(role_right_goal, "right_id", None)

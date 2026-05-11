@@ -10,7 +10,7 @@ from app import models
 from app.constants import EVENT_TYPE_WAYS_ID
 from app.handlers import get_aggregated_stats, get_period_stats, get_popular_audiences
 
-from .base import session_maker  # noqa: F401
+from .base import session_maker
 
 
 # =============================================================================

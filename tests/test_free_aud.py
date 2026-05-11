@@ -11,6 +11,7 @@ class _ForceLocked:
     """
 
     def locked(self) -> bool:
+        _ = self
         return True
 
 

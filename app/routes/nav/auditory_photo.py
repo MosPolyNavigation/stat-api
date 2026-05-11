@@ -3,7 +3,7 @@ import uuid
 import base64
 import aiofiles
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -14,8 +14,7 @@ from app.helpers.errors import LookupException
 from app.helpers.path import ALLOWED_EXTENSIONS, secure_image_path
 from app.helpers.permissions import require_rights_with_logging
 from app.helpers.thumbnail import create_thumbnail_async
-from app.models.nav.aud_photo import AudPhoto
-from app.models.nav.auditory import Auditory
+from app.models import AudPhoto, Auditory
 from app.schemas import Status
 from app.guards.file_checker import photo_validator
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
@@ -89,8 +88,7 @@ def register_endpoint(router: APIRouter):
 
         db.add_all(photos_to_create)
         await db.commit()
-        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",
-        )
+        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",)
         return Status(status=f"Uploaded {len(photos_to_create)} image(s)")
 
     @router.get(

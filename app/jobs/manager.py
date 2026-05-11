@@ -136,6 +136,7 @@ class JobManager:
         queue_db: str = "queue.db",
         state: Optional[AppState] = None,
     ):
+        _ = queue_type
         self._db_path = path.join(static_path, queue_db)
         self._scheduler: AsyncIOScheduler | None = None
         self._job_configs: dict[str, JobConfig] = {}
@@ -179,7 +180,7 @@ class JobManager:
             # ← NEW: если есть state — инжектим его в задачу (по соглашению)
             func = self._inject_state(func)
 
-            self._scheduler.add_job(func, **self._build_apscheduler_kwargs(job_cfg))
+            self._scheduler.add_job(func, **self._build_apscheduler_kwargs(job_cfg))  # type: ignore[union-attr]
             logger.info("Scheduled job '%s' with trigger '%s'", job_cfg.name, job_cfg.trigger)
 
     def add_job(self, func: Callable, **kwargs) -> None:
@@ -223,19 +224,20 @@ class JobManager:
         return run_id
 
     def is_running(self, name: str) -> bool:
+        _ = self
         return _RUNNING_TASKS.get(name, 0) > 0
 
     def pause_job(self, name: str) -> None:
         job_id = self._get_scheduler_id(name)
-        self._scheduler.pause_job(job_id)
+        self._scheduler.pause_job(job_id)  # type: ignore[union-attr]
 
     def resume_job(self, name: str) -> None:
         job_id = self._get_scheduler_id(name)
-        self._scheduler.resume_job(job_id)
+        self._scheduler.resume_job(job_id)  # type: ignore[union-attr]
 
     def stop_job(self, name: str) -> None:
         job_id = self._get_scheduler_id(name)
-        self._scheduler.remove_job(job_id)
+        self._scheduler.remove_job(job_id)  # type: ignore[union-attr]
 
     # ── Информация о задачах ──────────────────────────────────────────────────
 

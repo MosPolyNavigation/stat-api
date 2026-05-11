@@ -3,7 +3,7 @@ from typing import Annotated
 from pydantic import BaseModel, Field
 
 
-PayloadValue = Annotated[str, Field(max_length=50)]
+type PayloadValue = Annotated[str, Field(max_length=50)]
 
 
 class EventCreateRequest(BaseModel):

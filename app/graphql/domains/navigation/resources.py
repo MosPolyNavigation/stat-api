@@ -24,14 +24,16 @@ from app.graphql.domains.navigation.types import (
     _location_from_model, _campus_from_model, _floor_from_model, _type_from_model,
     _plan_from_model, _auditory_from_model, _aud_photo_from_model, _static_from_model,
 )
-from app.models.nav.location import Location as LModel
-from app.models.nav.corpus import Corpus as CModel
-from app.models.nav.floor import Floor as FModel
-from app.models.nav.types import Type as NTModel
-from app.models.nav.plan import Plan as PModel
-from app.models.nav.auditory import Auditory as AModel
-from app.models.nav.aud_photo import AudPhoto as APModel
-from app.models.nav.static import Static as SModel
+from app.models import (
+    Location as LModel,
+    Corpus as CModel,
+    Floor as FModel,
+    Type as NTModel,
+    Plan as PModel,
+    Auditory as AModel,
+    AudPhoto as APModel,
+    Static as SModel,
+)
 
 
 def _json_array_validator(field_name: str) -> Callable[[Any], bool | str]:

@@ -11,11 +11,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import load_settings, Settings
 from app.database import init_database, close_database, get_session_maker
-from app.models.nav.location import Location as LocationModel
-from app.models.nav.corpus import Corpus as CorpusModel
-from app.models.nav.plan import Plan as PlanModel
-from app.models.nav.types import Type as TypeModel
-from app.models.nav.auditory import Auditory as AuditoryModel
+from app.models import (
+    Location as LocationModel,
+    Corpus as CorpusModel,
+    Plan as PlanModel,
+    Type as TypeModel,
+    Auditory as AuditoryModel
+)
 
 StrIntId = dict[str, int]
 

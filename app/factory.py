@@ -34,8 +34,8 @@ class AppFactory:
         app_kwargs = self.hooks.setup_app_arguments(cfg)
 
         @asynccontextmanager
-        async def lifespan(app: FastAPI) -> AsyncGenerator[AppLifespanState, None]:
-            lifespan_state = await self.hooks.on_startup(app, cfg)
+        async def lifespan(application: FastAPI) -> AsyncGenerator[AppLifespanState, None]:
+            lifespan_state = await self.hooks.on_startup(application, cfg)
 
             if getattr(cfg.database, "auto_seed", False):
                 seeders = self.hooks.setup_seeders()
@@ -45,7 +45,7 @@ class AppFactory:
             try:
                 yield lifespan_state
             finally:
-                await self.hooks.on_shutdown(app, cfg, lifespan_state)
+                await self.hooks.on_shutdown(application, cfg, lifespan_state)
 
         app = FastAPI(
             lifespan=lifespan,

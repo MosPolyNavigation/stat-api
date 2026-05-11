@@ -15,8 +15,6 @@ from app.models import (
     EventType, Event, PayloadType, Payload, AllowedPayload,
     Corpus, Plan, Auditory, AudPhoto,
     RoleRightGoal, UserRole, Review,
-    DodFloor, DodLocation, DodStatic, DodType,
-    DodCorpus, DodPlan, DodAuditory, DodAudPhoto,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -26,10 +24,8 @@ logger = logging.getLogger(__name__)
 MIGRATION_ORDER = [
     ValueType, Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus, User,
     ClientId, RefreshToken, UserLog, EventType, PayloadType,
-    DodFloor, DodLocation, DodStatic, DodType,
     Corpus, Plan, Auditory, AudPhoto,
     RoleRightGoal, UserRole, Review,
-    DodCorpus, DodPlan, DodAuditory, DodAudPhoto,
     Event, AllowedPayload, Payload,
 ]
 CLEANUP_ORDER = list(reversed(MIGRATION_ORDER))
@@ -101,7 +97,7 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
     result = await session_sqlite.execute(select(model))
     sqlite_objs = result.scalars().all()
     if not sqlite_objs:
-        logger.info(f"  ℹ Нет данных в SQLite")
+        logger.info("  ℹ Нет данных в SQLite")
         return
 
     existing_pks = await get_existing_ids(session_pg, model)
@@ -118,7 +114,7 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
         new_objects.append(new_obj)
 
     if not new_objects:
-        logger.info(f"  ℹ Все записи уже существуют")
+        logger.info("  ℹ Все записи уже существуют")
         return
 
     batch_size = 500
@@ -128,7 +124,7 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
         batch = new_objects[i:i + batch_size]
         session_pg.add_all(batch)
         await session_pg.commit()
-        logger.info(f"  ✓ Вставлено {len(batch)}/{total} записей")
+        logger.info("  ✓ Вставлено {len(batch)}/{total} записей")
 
     await update_sequence(session_pg, model)
     logger.info(f"✅ {model.__tablename__} мигрирована")

@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import Depends, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from strawberry.fastapi import GraphQLRouter
@@ -45,7 +46,7 @@ class StatAPIGraphQLRouter(GraphQLRouter):
     async def process_result(
         self, request: Request, result: ExecutionResult
     ) -> GraphQLHTTPResponse:
-        logger = getattr(request.state, "user_logger", None)
+        logger: Optional[UserLoggerService] = getattr(request.state, "user_logger", None)
         current_user = getattr(request.state, "current_user", None)
         error_logs = getattr(request.state, "graphql_error_logs", [])
 

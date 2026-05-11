@@ -7,6 +7,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 T = TypeVar("T")
 
 
+def pagination_input_from_attrs(page: int = 1, page_size: int = 10):
+    return PaginationInput(page=page, page_size=page_size)
+
+
 # =============================================================================
 # 1. GraphQL-типы (без изменений)
 # =============================================================================

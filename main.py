@@ -11,7 +11,7 @@ setup_logging(level="INFO", use_colors=True)
 
 app_cli = typer.Typer(
     name="stat-api",
-    help=f"🚀 Backend для проекта mospolynavigation",
+    help="🚀 Backend для проекта mospolynavigation",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -36,7 +36,17 @@ def serve(
     app_factory = AppFactory(DefaultHooks())
     app = app_factory()
     cfg = app_factory.cfg
-    uvicorn.run(app, host=host or cfg.server.host, port=port or cfg.server.port, reload=reload, workers=workers)
+    if host is None:
+        host = cfg.server.host
+    if port is None:
+        port = cfg.server.port
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        reload=reload,
+        workers=workers
+    )
 
 
 if __name__ == "__main__":

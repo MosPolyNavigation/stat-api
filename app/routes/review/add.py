@@ -4,7 +4,7 @@ import aiofiles
 
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Response, UploadFile, Form, Depends
+from fastapi import APIRouter, UploadFile, Form, Depends
 
 from app.database import get_db
 from app.config import get_settings
@@ -76,7 +76,6 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def add_review(
-            response: Response,
             image: Optional[UploadFile] = Depends(image_validator),
             client_id: str = Form(
                 title="client_id",
@@ -101,15 +100,21 @@ def register_endpoint(router: APIRouter):
             ),
             db: AsyncSession = Depends(get_db),
     ):
-        base_path = os.path.join(get_settings().static_files, "images")
-        if image is not None and image.content_type.split("/")[0] == "image":
+        base_path: str = os.path.join(get_settings().static_files, "images")
+        image_name: str | None = None
+
+        if (
+            image is not None
+            and image.content_type is not None
+            and image.filename is not None
+            and image.content_type.startswith("image/")
+        ):
             image_ext = os.path.splitext(image.filename)[-1]
             image_id = uuid.uuid4().hex
-            image_name = image_id + image_ext
+            image_name: str = f"{image_id}{image_ext}"
             image_path = os.path.join(base_path, image_name)
+
             async with aiofiles.open(image_path, "wb") as file:
                 contents = await image.read()
                 await file.write(contents)
-        else:
-            image_name = None
         return await insert_review(db, image_name, client_id, problem, text)

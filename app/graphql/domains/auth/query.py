@@ -3,7 +3,7 @@ import strawberry
 from strawberry import Info
 from sqlalchemy import select
 
-from app.graphql.core.pagination import paginate_query, PaginationInput, Connection
+from app.graphql.core.pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
 from app.graphql.core.filters import apply_filters
 from app.graphql.core.ordering import apply_order_by
 from app.graphql.core.resource_factory import create_query_resource
@@ -26,8 +26,7 @@ from app.graphql.domains.auth.inputs import (
     RoleRightGoalFilterInput,
     RoleRightGoalOrderByInput
 )
-from app.models.auth.user_role import UserRole
-from app.models.auth.role_right_goal import RoleRightGoal
+from app.models import UserRole, RoleRightGoal
 
 # =============================================================================
 # Фабричные запросы
@@ -92,7 +91,7 @@ class UserRoleQuery:
             stmt = apply_order_by(stmt, UserRole, order_by)
 
         if pagination is None:
-            pagination = PaginationInput(page=1, page_size=10)  # noqa
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
 
         return await paginate_query(
             session=ctx.db,
@@ -132,7 +131,7 @@ class RoleRightGoalQuery:
             stmt = apply_order_by(stmt, RoleRightGoal, order_by)
 
         if pagination is None:
-            pagination = PaginationInput(page=1, page_size=10)  # noqa
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
 
         return await paginate_query(
             session=ctx.db,

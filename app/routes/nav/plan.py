@@ -1,16 +1,14 @@
 import json
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Form, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy import Select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models.nav.plan import Plan
-from app.models.nav.location import Location
-from app.models.nav.static import Static
+from app.models import Plan, Location, Static
 from app.schemas.nav.plan import PlanNav
 from app.schemas import Status
 from app.config import get_settings
@@ -18,6 +16,7 @@ from app.helpers.permissions import require_rights
 from app.helpers.svg import save_svg_bytes_to_disk
 from app.handlers.insert import insert_floor_map
 from app.guards.file_checker import plan_validator
+
 
 def register_endpoint(router: APIRouter):
     @router.get(
@@ -52,7 +51,7 @@ def register_endpoint(router: APIRouter):
         ).scalar_one_or_none()
 
         if plan_obj is None:
-            raise HTTPException(status_code=404, detail="Plan not found" )
+            raise HTTPException(status_code=404, detail="Plan not found")
 
         # Находим кампус по loc_id корпуса
         location: Location | None = (

@@ -6,7 +6,6 @@
 """
 import asyncio
 import os
-import tempfile
 
 import pytest
 
@@ -125,7 +124,7 @@ class TestScheduledTaskDecorator:
         run(init_queue_db(tmp_db))
 
         @scheduled_task(name="logged_job")
-        async def my_job():
+        async def my_job(**_kwargs):
             pass
 
         run(my_job(_triggered_by="manual"))
@@ -180,7 +179,7 @@ class TestScheduledTaskDecorator:
         run(init_queue_db(tmp_db))
 
         @scheduled_task(name="id_job")
-        async def id_job():
+        async def id_job(**_kwargs):
             pass
 
         custom_id = "my-custom-run-id"
@@ -270,6 +269,7 @@ class TestJobConfigModels:
             cron=CronConfig(hour=0, minute=0, timezone="Europe/Moscow"),
         )
         assert cfg.enabled is True
+        assert cfg.cron is not None
         assert cfg.cron.hour == 0
 
     def test_job_config_interval(self):
@@ -278,6 +278,7 @@ class TestJobConfigModels:
             trigger="interval",
             interval=IntervalConfig(hours=1),
         )
+        assert cfg.interval is not None
         assert cfg.interval.hours == 1
 
     def test_scheduler_config_defaults(self):
@@ -418,7 +419,7 @@ class TestJobManager:
 
     def test_history_returns_records(self, tmp_path):
         @scheduled_task(name="hist_job")
-        async def hist_job():
+        async def hist_job(**_kwargs):
             pass
 
         manager = JobManager(static_path=str(tmp_path))

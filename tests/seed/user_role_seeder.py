@@ -1,5 +1,4 @@
-from pwdlib import PasswordHash
-from app.models.auth.user_role import UserRole
+from app.models import UserRole
 from app.seed.base_seeder import BaseSeeder
 
 

@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from app.seed.base_seeder import BaseSeeder
-from app.models.auth.user import User
-from app.models.auth.refresh_token import RefreshToken
+from app.models import RefreshToken
 
 
 class RefreshTokenSeeder(BaseSeeder):

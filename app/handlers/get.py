@@ -1,4 +1,4 @@
-from datetime import date, datetime, time, timedelta
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import String, bindparam, case, cast, distinct, func, select, true
@@ -6,7 +6,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app import models, schemas
 from app.constants import (
-    EVENT_TYPE_IDS_BY_CODE,
     PAYLOAD_TYPE_AUDITORY_ID,
     PAYLOAD_TYPE_END_ID,
     PAYLOAD_TYPE_START_ID,
@@ -220,68 +219,4 @@ async def get_aggregated_stats(
         avg_visitor_count_per_day=float(row.avg_visitor_count_per_period or 0),
         avg_unique_visitors_per_day=float(row.avg_unique_visitors_per_period or 0),
         entries_analized=int(row.entries_analyzed or 0),
-    )
-
-
-def _stats_window_from_filter(
-    params: schemas.FilterQuery,
-) -> tuple[str, datetime, datetime]:
-    active_filters = [
-        params.start_date is not None or params.end_date is not None,
-        params.start_month is not None or params.end_month is not None,
-        params.start_year is not None or params.end_year is not None,
-    ]
-    if sum(active_filters) > 1:
-        raise ValueError("Можно передать только один фильтр периода")
-
-    if params.start_date is not None and params.end_date is not None:
-        return (
-            "day",
-            datetime.combine(params.start_date, time.min),
-            datetime.combine(params.end_date + timedelta(days=1), time.min),
-        )
-    if params.start_month is not None and params.end_month is not None:
-        start = datetime.strptime(params.start_month, "%Y-%m")
-        end_month = datetime.strptime(params.end_month, "%Y-%m")
-        end = datetime(end_month.year + (end_month.month == 12), end_month.month % 12 + 1, 1)
-        return "month", start, end
-    if params.start_year is not None and params.end_year is not None:
-        start = datetime.strptime(params.start_year, "%Y")
-        end = datetime(int(params.end_year) + 1, 1, 1)
-        return "year", start, end
-    if any(active_filters):
-        raise ValueError("Фильтр периода должен содержать начало и конец")
-    today = date.today()
-    return (
-        "day",
-        datetime.combine(today, time.min),
-        datetime.combine(today + timedelta(days=1), time.min),
-    )
-
-
-async def get_endpoint_stats(
-    db: AsyncSession,
-    params: schemas.FilterQuery,
-) -> list[schemas.Statistics]:
-    period_type, start, end = _stats_window_from_filter(params)
-    return await get_period_stats(
-        db,
-        period_type=period_type,
-        start=start,
-        end=end,
-        event_type_id=EVENT_TYPE_IDS_BY_CODE[params.target.value],
-    )
-
-
-async def get_agr_endp_stats(
-    db: AsyncSession,
-    params: schemas.FilterQuery,
-) -> schemas.AggregatedStatistics:
-    period_type, start, end = _stats_window_from_filter(params)
-    return await get_aggregated_stats(
-        db,
-        period_type=period_type,
-        start=start,
-        end=end,
-        event_type_id=EVENT_TYPE_IDS_BY_CODE[params.target.value],
     )

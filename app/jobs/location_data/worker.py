@@ -9,10 +9,12 @@ from sqlalchemy.orm import selectinload
 from app.database import get_session_maker
 from app.jobs.manager import scheduled_task
 from app.jobs.location_data.get_graph import parse_corpus, parse_location, parse_plan
-from app.models.nav.auditory import Auditory
-from app.models.nav.corpus import Corpus
-from app.models.nav.location import Location
-from app.models.nav.plan import Plan
+from app.models import (
+    Auditory,
+    Corpus,
+    Location,
+    Plan,
+)
 from app.schemas import DataDto, Graph
 from app.schemas.graph.graph import DataEntry
 from app.state import AppState

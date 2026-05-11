@@ -1,4 +1,4 @@
-from app.models.dashboard import DashboardType
+from app.models import DashboardType
 from app.seed.base_seeder import BaseSeeder
 from app.constants import DASHBOARD_TYPE_CHART_ID, DASHBOARD_TYPE_AVG_ID
 

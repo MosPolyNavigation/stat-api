@@ -1,4 +1,4 @@
-from app.models.problem import Problem
+from app.models import Problem
 from app.seed.base_seeder import BaseSeeder
 from app.constants import PROBLEMS
 

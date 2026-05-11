@@ -4,7 +4,7 @@ from strawberry import Info
 from sqlalchemy import select
 
 from app.graphql.core.ordering import apply_order_by
-from app.graphql.core.pagination import paginate_query, PaginationInput, Connection
+from app.graphql.core.pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
 from app.graphql.core.resource_factory import create_query_resource
 from app.graphql.domains.event_system.resources import (
     EventTypeResource,
@@ -120,7 +120,7 @@ class AllowedPayloadRuleQuery:
             stmt = apply_order_by(stmt, AllowedPayload, order_by)
 
         if pagination is None:
-            pagination = PaginationInput(page=1, page_size=10)  # noqa
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
 
         return await paginate_query(
             session=ctx.db,

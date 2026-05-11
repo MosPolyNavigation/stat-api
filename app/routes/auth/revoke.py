@@ -24,8 +24,8 @@ def register_endpoint(router: APIRouter):
         },
     )
     async def revoke_refresh_token(
+        current_user: Annotated[User, Depends(get_current_active_user)],
         jti: str = Body(..., embed=True),
-        current_user: Annotated[User, Depends(get_current_active_user)] = None,
         db: AsyncSession = Depends(get_db),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
@@ -67,6 +67,3 @@ def register_endpoint(router: APIRouter):
         await db.commit()
         logger.log(current_user, f"Отзыв refresh-токена (себя/пользователя {refresh_token.user_id})")
         return Status()
-
-
-

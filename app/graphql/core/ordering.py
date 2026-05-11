@@ -66,10 +66,10 @@ def _build_order_by_clauses(model: Type[DeclarativeBase], order_input: BaseOrder
         if field.name == "then_by":
             clauses.extend(_build_order_by_clauses(model, val))
         else:
-            col = getattr(model, field.name, None)
+            col: Optional[ColumnElement] = getattr(model, field.name, None)
             if col is None:
                 raise ValueError(f"Model {model.__name__} не имеет колонки '{field.name}' для сортировки")
-            clauses.append(col.asc() if val == OrderDir.ASC else col.desc())  # noqa
+            clauses.append(col.asc() if val == OrderDir.ASC else col.desc())
     return clauses
 
 

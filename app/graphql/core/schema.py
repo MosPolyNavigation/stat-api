@@ -1,3 +1,5 @@
+from typing import Optional, List, Union
+
 import strawberry
 from strawberry.types import ExecutionContext
 from app.graphql.core.logging import build_graphql_error_log
@@ -13,8 +15,8 @@ class StatAPISchema(strawberry.Schema):
 
         for error in errors:
             # Безопасное получение пути
-            path = getattr(error, "path", None)
-            field_name = str(path[0]) if path else None  # noqa
+            path: Optional[List[Union[str, int]]] = getattr(error, "path", None)
+            field_name = str(path[0]) if path else None
 
             text = build_graphql_error_log(field_name, error)
             if text:
