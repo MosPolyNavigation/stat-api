@@ -1,10 +1,4 @@
-from app.models.nav.location import Location
-from app.models.nav.corpus import Corpus
-from app.models.nav.floor import Floor
-from app.models.nav.plan import Plan
-from app.models.nav.types import Type
-from app.models.nav.auditory import Auditory
-from app.models.nav.aud_photo import AudPhoto
+from app.models import Location, Corpus, Floor, Plan, Type, Auditory, AudPhoto
 from app.seed.base_seeder import BaseSeeder
 
 

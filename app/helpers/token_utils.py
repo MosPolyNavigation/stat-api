@@ -12,8 +12,7 @@ from user_agents import parse
 
 from app.config import get_settings
 from app.constants import GOALS_BY_ID, RIGHTS_BY_ID
-from app.models.auth.refresh_token import RefreshToken
-from app.models.auth.user import User
+from app.models import RefreshToken, User
 from app.services.permission_service import PermissionService
 
 ALGORITHM = "HS256"

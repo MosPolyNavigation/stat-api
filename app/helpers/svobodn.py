@@ -1,9 +1,9 @@
-from typing import Union
+from typing import Optional
 from app.schemas.filter import FilterSvobodn
 from app.schemas.rasp.schedule import ScheduleOut, Schedule, RaspOut, Auditory, DayOut, Day
 
 
-def svobodn_day(day: Day | None, filter_: FilterSvobodn) -> DayOut:
+def svobodn_day(day: Optional[Day], filter_: FilterSvobodn) -> DayOut:
     if filter_.para:
         para = str(filter_.para)
         if not day[para]:
@@ -12,7 +12,7 @@ def svobodn_day(day: Day | None, filter_: FilterSvobodn) -> DayOut:
     return dict({para: len(lesson) == 0 for para, lesson in day.items()})
 
 
-def svobodn(schedule: Union[Auditory, None], filter_: FilterSvobodn) -> RaspOut:
+def svobodn(schedule: Optional[Auditory], filter_: FilterSvobodn) -> RaspOut:
     days_names = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
     if not schedule:
         if filter_.para:

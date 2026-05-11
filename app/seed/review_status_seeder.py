@@ -1,4 +1,4 @@
-from app.models.review_status import ReviewStatus
+from app.models import ReviewStatus
 from app.seed.base_seeder import BaseSeeder
 from app.constants import REVIEW_STATUSES
 

@@ -1,4 +1,4 @@
-from app.models.auth.role_right_goal import RoleRightGoal
+from app.models import RoleRightGoal
 from app.seed.base_seeder import BaseSeeder
 from app.constants import GOAL_RIGHTS
 

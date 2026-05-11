@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
-from app.models.auth.user import User
+from app.models import User, RefreshToken
 from app.helpers.auth_utils import get_current_active_user
 from app.helpers.permissions import group_rights_by_goals
 from app.schemas import UserOut
@@ -179,7 +179,7 @@ def register_endpoint(router: APIRouter):
         user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
 
         # Ищем активную refresh сессию в БД
-        session = await get_refresh_session(db, user_id, raw_jti)
+        session: Optional[RefreshToken] = await get_refresh_session(db, user_id, raw_jti)
         if not session or session.revoked:
             clear_refresh_cookie(response, request)
             if user is not None:

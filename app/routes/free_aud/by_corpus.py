@@ -7,8 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.handlers.filter import filter_svobodn
 from app.helpers.svobodn import auditory_is_empty
-from app.models import Corpus, Plan, Type
-from app.models.nav.auditory import Auditory
+from app.models import Corpus, Plan, Type, Auditory
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnByCorpus
 from app.schemas.rasp.schedule import ScheduleOut

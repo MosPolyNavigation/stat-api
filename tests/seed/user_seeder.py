@@ -1,5 +1,5 @@
 from pwdlib import PasswordHash
-from app.models.auth.user import User
+from app.models import User
 from app.seed.base_seeder import BaseSeeder
 
 

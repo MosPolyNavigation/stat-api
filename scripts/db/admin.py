@@ -7,8 +7,7 @@ from sqlalchemy import select
 
 from app.config import load_settings
 from app.database import init_database, get_session_maker, close_database
-from app.models.auth.user import User
-from app.models.auth.user_role import UserRole
+from app.models import User, UserRole
 
 
 async def _create_or_update_admin(session_maker, login: str, hashed_pw: str) -> None:

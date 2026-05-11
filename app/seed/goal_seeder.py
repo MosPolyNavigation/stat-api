@@ -1,4 +1,4 @@
-from app.models.auth.goal import Goal
+from app.models import Goal
 from app.seed.base_seeder import BaseSeeder
 from app.constants import GOALS_BY_ID
 

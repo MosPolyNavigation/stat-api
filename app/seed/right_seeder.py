@@ -1,4 +1,4 @@
-from app.models.auth.right import Right
+from app.models import Right
 from app.seed.base_seeder import BaseSeeder
 from app.constants import RIGHTS_BY_ID
 

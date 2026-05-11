@@ -23,10 +23,7 @@ from app.graphql.domains.auth.types import (
     _user_from_model,
     _role_from_model,
 )
-from app.models.auth.user import User
-from app.models.auth.role import Role
-from app.models.auth.user_role import UserRole
-from app.models.auth.role_right_goal import RoleRightGoal
+from app.models import User, Role, UserRole, RoleRightGoal
 from app.services.permission_service import PermissionService
 
 # Хэшер паролей (вынесен на уровень модуля для переиспользования)

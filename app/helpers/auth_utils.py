@@ -7,7 +7,7 @@ from typing import Annotated
 
 from app.constants import GOAL_RIGHTS
 from app.database import get_db
-from app.models.auth.user import User
+from app.models import User
 from app.helpers.token_utils import decode_access_token, normalize_token_error, validate_access_payload
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")

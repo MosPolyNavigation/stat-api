@@ -1,6 +1,8 @@
 """
 Интеграционные тесты для эндпоинта /api/get/locationData
 """
+from typing import Dict, Optional
+
 from tests.base import client
 
 
@@ -60,7 +62,7 @@ class TestLocationData:
 
         # Проверяем что тестовая локация "AV" присутствует
         locations = data["locations"]
-        av_location = next((loc for loc in locations if loc["id"] == "AV"), None)
+        av_location: Optional[Dict] = next((loc for loc in locations if loc["id"] == "AV"), None)
         assert av_location is not None
 
         # Проверяем данные тестовой локации
@@ -104,7 +106,7 @@ class TestLocationData:
 
         # Проверяем тестовый корпус "av-test"
         corpuses = data["corpuses"]
-        test_corpus = next((corp for corp in corpuses if corp["id"] == "av-test"), None)
+        test_corpus: Optional[Dict] = next((corp for corp in corpuses if corp["id"] == "av-test"), None)
         assert test_corpus is not None
 
         # Проверяем данные
@@ -173,7 +175,7 @@ class TestLocationData:
 
         # Проверяем тестовый план "test-plan-1"
         plans = data["plans"]
-        test_plan = next((p for p in plans if p["id"] == "test-plan-1"), None)
+        test_plan: Optional[Dict] = next((p for p in plans if p["id"] == "test-plan-1"), None)
         assert test_plan is not None
 
         # Проверяем данные
@@ -226,7 +228,7 @@ class TestLocationData:
 
         # Проверяем тестовую аудиторию "test-101"
         rooms = data["rooms"]
-        test_room = next((r for r in rooms if r["id"] == "test-101"), None)
+        test_room: Optional[Dict] = next((r for r in rooms if r["id"] == "test-101"), None)
         assert test_room is not None
 
         # Проверяем данные
@@ -244,19 +246,19 @@ class TestLocationData:
         data = response.json()
 
         # Проверяем что корпус ссылается на существующую локацию
-        corpus = next((c for c in data["corpuses"] if c["id"] == "av-test"), None)
+        corpus: Optional[Dict] = next((c for c in data["corpuses"] if c["id"] == "av-test"), None)
         assert corpus is not None
         location_ids = [loc["id"] for loc in data["locations"]]
         assert corpus["locationId"] in location_ids
 
         # Проверяем что план ссылается на существующий корпус
-        plan = next((p for p in data["plans"] if p["id"] == "test-plan-1"), None)
+        plan: Optional[Dict] = next((p for p in data["plans"] if p["id"] == "test-plan-1"), None)
         assert plan is not None
         corpus_ids = [corp["id"] for corp in data["corpuses"]]
         assert plan["corpusId"] in corpus_ids
 
         # Проверяем что комната ссылается на существующий план
-        room = next((r for r in data["rooms"] if r["id"] == "test-101"), None)
+        room: Optional[Dict] = next((r for r in data["rooms"] if r["id"] == "test-101"), None)
         assert room is not None
         plan_ids = [p["id"] for p in data["plans"]]
         assert room["planId"] in plan_ids

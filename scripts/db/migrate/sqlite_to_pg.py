@@ -15,8 +15,6 @@ from app.models import (
     EventType, Event, PayloadType, Payload, AllowedPayload,
     Corpus, Plan, Auditory, AudPhoto,
     RoleRightGoal, UserRole, Review,
-    DodFloor, DodLocation, DodStatic, DodType,
-    DodCorpus, DodPlan, DodAuditory, DodAudPhoto,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -26,10 +24,8 @@ logger = logging.getLogger(__name__)
 MIGRATION_ORDER = [
     ValueType, Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus, User,
     ClientId, RefreshToken, UserLog, EventType, PayloadType,
-    DodFloor, DodLocation, DodStatic, DodType,
     Corpus, Plan, Auditory, AudPhoto,
     RoleRightGoal, UserRole, Review,
-    DodCorpus, DodPlan, DodAuditory, DodAudPhoto,
     Event, AllowedPayload, Payload,
 ]
 CLEANUP_ORDER = list(reversed(MIGRATION_ORDER))

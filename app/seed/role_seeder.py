@@ -1,4 +1,4 @@
-from app.models.auth.role import Role
+from app.models import Role
 from app.seed.base_seeder import BaseSeeder
 
 

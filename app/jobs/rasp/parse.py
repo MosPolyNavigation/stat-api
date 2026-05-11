@@ -8,7 +8,7 @@ from app.jobs.rasp.canonize import is_valid, canonize
 from app.jobs.rasp.get_schedule import get_schedule
 from app.schemas.rasp.dto import Dto, DayDto, LessonDto, VarietyDto
 from app.schemas.rasp.schedule import Schedule, Variety, Auditory, Rasp
-from app.models.nav.auditory import Auditory as AuditoryModel
+from app.models import Auditory as AuditoryModel
 
 filter_reg = re.compile(
     r'(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h'

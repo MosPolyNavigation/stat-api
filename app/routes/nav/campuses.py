@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models.nav.location import Location
+from app.models import Location
 from app.schemas.nav.campuses import CampusesLinks
 
 

@@ -8,9 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.database import get_db
-from app.models.nav.plan import Plan
-from app.models.nav.location import Location
-from app.models.nav.static import Static
+from app.models import Plan, Location, Static
 from app.schemas.nav.plan import PlanNav
 from app.schemas import Status
 from app.config import get_settings

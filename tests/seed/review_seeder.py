@@ -1,5 +1,5 @@
 from datetime import datetime
-from app.models.review import Review
+from app.models import Review
 from app.seed.base_seeder import BaseSeeder
 
 

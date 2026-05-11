@@ -1,11 +1,13 @@
 from app.graphql.core.resource import ResourceConfig, ResourcePermissions
 from app.graphql.core.permissions import P
-from app.models.auth.user import User as UserModel
-from app.models.auth.role import Role as RoleModel
-from app.models.auth.right import Right as RightModel
-from app.models.auth.goal import Goal as GoalModel
-from app.models.auth.refresh_token import RefreshToken as RTModel
-from app.models.auth.user_log import UserLog as ULModel
+from app.models import (
+    User as UserModel,
+    Role as RoleModel,
+    Right as RightModel,
+    Goal as GoalModel,
+    RefreshToken as RTModel,
+    UserLog as ULModel
+)
 from app.graphql.domains.auth.types import (
     User as UserType,
     Role as RoleType,

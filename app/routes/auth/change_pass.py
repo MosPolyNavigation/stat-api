@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 
 from app.database import get_db
-from app.models.auth.user import User
+from app.models import User
 from app.helpers.auth_utils import get_current_user
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 

@@ -68,25 +68,12 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
     from app.models import (
         ValueType, PayloadType, EventType,
         ClientId, ReviewStatus, Payload,
-        DashboardType, Review
+        DashboardType, Review, Location,
+        Corpus, Floor, Type as NavTypeModel,
+        Plan, Auditory, AudPhoto, Static,
+        Goal, Role, Right, RoleRightGoal,
+        User, UserRole, RefreshToken, UserLog
     )
-    from app.models.nav.location import Location
-    from app.models.nav.corpus import Corpus
-    from app.models.nav.floor import Floor
-    from app.models.nav.types import Type as NavTypeModel
-    from app.models.nav.plan import Plan
-    from app.models.nav.auditory import Auditory
-    from app.models.nav.aud_photo import AudPhoto
-    from app.models.nav.static import Static
-
-    from app.models.auth.goal import Goal
-    from app.models.auth.right import Right
-    from app.models.auth.role import Role
-    from app.models.auth.user import User
-    from app.models.auth.user_role import UserRole
-    from app.models.auth.role_right_goal import RoleRightGoal
-    from app.models.auth.refresh_token import RefreshToken
-    from app.models.auth.user_log import UserLog
 
     return {
         # === event_system ===

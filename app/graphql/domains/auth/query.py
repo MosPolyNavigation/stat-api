@@ -26,8 +26,7 @@ from app.graphql.domains.auth.inputs import (
     RoleRightGoalFilterInput,
     RoleRightGoalOrderByInput
 )
-from app.models.auth.user_role import UserRole
-from app.models.auth.role_right_goal import RoleRightGoal
+from app.models import UserRole, RoleRightGoal
 
 # =============================================================================
 # Фабричные запросы

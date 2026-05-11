@@ -1,4 +1,4 @@
-from app.models.nav.floor import Floor
+from app.models import Floor
 from app.seed.base_seeder import BaseSeeder
 
 

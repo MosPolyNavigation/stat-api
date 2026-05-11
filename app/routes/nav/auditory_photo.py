@@ -14,8 +14,7 @@ from app.helpers.errors import LookupException
 from app.helpers.path import ALLOWED_EXTENSIONS, secure_image_path
 from app.helpers.permissions import require_rights_with_logging
 from app.helpers.thumbnail import create_thumbnail_async
-from app.models.nav.aud_photo import AudPhoto
-from app.models.nav.auditory import Auditory
+from app.models import AudPhoto, Auditory
 from app.schemas import Status
 from app.guards.file_checker import photo_validator
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service

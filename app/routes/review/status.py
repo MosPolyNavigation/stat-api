@@ -1,12 +1,11 @@
-from typing import Union
+from typing import Union, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Form, status
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.models.review import Review
-from app.models.review_status import ReviewStatus
+from app.models import Review, ReviewStatus
 from app.helpers.permissions import require_rights_with_logging
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 from app.models import User
@@ -41,7 +40,7 @@ def register_endpoint(router: APIRouter):
                 detail="Отзыв не найден",
             )
 
-        status_obj: Union[ReviewStatus, None] = (
+        status_obj: Optional[ReviewStatus] = (
             await db.execute(
                 Select(ReviewStatus).filter(ReviewStatus.id == status_id)
             )

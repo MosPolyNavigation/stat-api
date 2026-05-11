@@ -4,14 +4,16 @@ import strawberry
 
 from app.graphql.core.context import GraphQLContext
 from app.graphql.core.permissions import require_permissions, P
-from app.models.auth.goal import Goal as GoalModel
-from app.models.auth.right import Right as RightModel
-from app.models.auth.role import Role as RoleModel
-from app.models.auth.role_right_goal import RoleRightGoal as RRGModel
-from app.models.auth.user_role import UserRole as URModel
-from app.models.auth.user_log import UserLog as ULModel
-from app.models.auth.user import User as UserModel
-from app.models.auth.refresh_token import RefreshToken as RTModel
+from app.models import (
+    Goal as GoalModel,
+    Right as RightModel,
+    Role as RoleModel,
+    RoleRightGoal as RRGModel,
+    UserRole as URModel,
+    UserLog as ULModel,
+    User as UserModel,
+    RefreshToken as RTModel,
+)
 
 
 # =============================================================================
