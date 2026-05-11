@@ -120,51 +120,51 @@ GRANT_RIGHT_ID = 5
 # =============================================================================
 
 GOALS_BY_ID: dict[int, str] = {
-    1: "stats",
-    2: "dashboards",
-    3: "users",
-    4: "roles",
-    5: "tables",
-    6: "resources",
-    7: "tasks",
-    8: "nav_data",
-    9: "user_pass",
-    10: "admin",
-    11: "reviews",
-    12: "refresh_token",
-    13: "client"
+    STATS_GOAL_ID: STATS_GOAL_NAME,
+    DASHBOARDS_GOAL_ID: DASHBOARDS_GOAL_NAME,
+    USERS_GOAL_ID: USERS_GOAL_NAME,
+    ROLES_GOAL_ID: ROLES_GOAL_NAME,
+    TABLES_GOAL_ID: TABLES_GOAL_NAME,
+    RESOURCES_GOAL_ID: RESOURCES_GOAL_NAME,
+    TASKS_GOAL_ID: TASKS_GOAL_NAME,
+    NAV_GOAL_ID: NAV_GOAL_NAME,
+    USER_PASS_GOAL_ID: USER_PASS_GOAL_NAME,
+    ADMIN_GOAL_ID: ADMIN_GOAL_NAME,
+    REVIEWS_GOAL_ID: REVIEWS_GOAL_NAME,
+    REFRESH_TOKEN_GOAL_ID: REFRESH_TOKEN_GOAL_NAME,
+    CLIENT_GOAL_ID: CLIENT_GOAL_NAME
 }
 
 GOALS_BY_NAME: dict[str, int] = {
-    "stats": 1,
-    "dashboards": 2,
-    "users": 3,
-    "roles": 4,
-    "tables": 5,
-    "resources": 6,
-    "tasks": 7,
-    "nav_data": 8,
-    "user_pass": 9,
-    "admin": 10,
-    "reviews": 11,
-    "refresh_token": 12,
-    "client": 13
+    STATS_GOAL_NAME: STATS_GOAL_ID,
+    DASHBOARDS_GOAL_NAME: DASHBOARDS_GOAL_ID,
+    USERS_GOAL_NAME: USERS_GOAL_ID,
+    ROLES_GOAL_NAME: ROLES_GOAL_ID,
+    TABLES_GOAL_NAME: TABLES_GOAL_ID,
+    RESOURCES_GOAL_NAME: RESOURCES_GOAL_ID,
+    TASKS_GOAL_NAME: TASKS_GOAL_ID,
+    NAV_GOAL_NAME: NAV_GOAL_ID,
+    USER_PASS_GOAL_NAME: USER_PASS_GOAL_ID,
+    ADMIN_GOAL_NAME: ADMIN_GOAL_ID,
+    REVIEWS_GOAL_NAME: REVIEWS_GOAL_ID,
+    REFRESH_TOKEN_GOAL_NAME: REFRESH_TOKEN_GOAL_ID,
+    CLIENT_GOAL_NAME: CLIENT_GOAL_ID
 }
 
 RIGHTS_BY_ID: dict[int, str] = {
-    1: "view",
-    2: "create",
-    3: "edit",
-    4: "delete",
-    5: "grant",
+    VIEW_RIGHT_ID: VIEW_RIGHT_NAME,
+    CREATE_RIGHT_ID: CREATE_RIGHT_NAME,
+    EDIT_RIGHT_ID: EDIT_RIGHT_NAME,
+    DELETE_RIGHT_ID: DELETE_RIGHT_NAME,
+    GRANT_RIGHT_ID: GRANT_RIGHT_NAME,
 }
 
 RIGHTS_BY_NAME: dict[str, int] = {
-    "view": 1,
-    "create": 2,
-    "edit": 3,
-    "delete": 4,
-    "grant": 5,
+    VIEW_RIGHT_NAME: VIEW_RIGHT_ID,
+    CREATE_RIGHT_NAME: CREATE_RIGHT_ID,
+    EDIT_RIGHT_NAME: EDIT_RIGHT_ID,
+    DELETE_RIGHT_NAME: DELETE_RIGHT_ID,
+    GRANT_RIGHT_NAME: GRANT_RIGHT_ID,
 }
 
 GOAL_RIGHTS: list[tuple[int, int]] = [
