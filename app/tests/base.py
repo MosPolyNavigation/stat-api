@@ -27,17 +27,17 @@ try:
 except FileNotFoundError:
     pass
 
-test_engine = create_async_engine(str(settings.sqlalchemy_database_url), future=True)
-test_session_maker = async_sessionmaker(
+async_engine = create_async_engine(str(settings.sqlalchemy_database_url), future=True)
+session_maker = async_sessionmaker(
     autoflush=True,
     autocommit=False,
-    bind=test_engine,
+    bind=async_engine,
     class_=AsyncSession,
     expire_on_commit=False,
 )
 
-app = AppFactory(TestHooks(test_session_maker))(settings)
+app = AppFactory(TestHooks(session_maker))(settings)
 
-asyncio.run(init_test_database(test_engine, test_session_maker, app))
+asyncio.run(init_test_database(async_engine, session_maker, app))
 
 client = TestClient(app)

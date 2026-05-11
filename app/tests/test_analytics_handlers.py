@@ -10,7 +10,7 @@ from app import models
 from app.constants import EVENT_TYPE_WAYS_ID
 from app.handlers import get_aggregated_stats, get_period_stats, get_popular_audiences
 
-from .base import test_session_maker  # noqa: F401
+from .base import session_maker  # noqa: F401
 
 
 # =============================================================================
@@ -37,7 +37,7 @@ class TestPopularAuditories:
     @pytest.mark.asyncio
     async def test_uses_weighted_successful_events(self):
         """Проверяет, что аудитория ранжируется по весу успешных событий."""
-        async with test_session_maker.begin() as db:
+        async with session_maker.begin() as db:
             result = await get_popular_audiences(db)
 
         # Проверяем топ-2 результата (данные из сидов)
@@ -57,7 +57,7 @@ class TestPeriodStats:
     @pytest.mark.asyncio
     async def test_filters_by_period_and_event_type(self):
         """Проверяет фильтрацию по дате и типу события."""
-        async with test_session_maker.begin() as db:
+        async with session_maker.begin() as db:
             result = await get_period_stats(
                 db,
                 period_type="day",
@@ -87,7 +87,7 @@ class TestPeriodStats:
         event_id = unique_test_ids["event_id"]
 
         # 1. Setup: создаем тестовые данные
-        async with test_session_maker.begin() as db:
+        async with session_maker.begin() as db:
             db.add(
                 models.ClientId(
                     id=client_id,
@@ -106,7 +106,7 @@ class TestPeriodStats:
 
         try:
             # 2. Test: вызываем хендлер
-            async with test_session_maker.begin() as db:
+            async with session_maker.begin() as db:
                 result = await get_period_stats(
                     db,
                     period_type="year",
@@ -126,7 +126,7 @@ class TestPeriodStats:
 
         finally:
             # 4. Teardown: гарантированная очистка
-            async with test_session_maker.begin() as db:
+            async with session_maker.begin() as db:
                 await db.execute(delete(models.Event).where(models.Event.id == event_id))
                 await db.execute(delete(models.ClientId).where(models.ClientId.id == client_id))
 
@@ -140,7 +140,7 @@ class TestAggregatedStats:
     @pytest.mark.asyncio
     async def test_wraps_period_stats(self):
         """Проверяет, что агрегация корректно суммирует периодические данные."""
-        async with test_session_maker.begin() as db:
+        async with session_maker.begin() as db:
             result = await get_aggregated_stats(
                 db,
                 period_type="day",

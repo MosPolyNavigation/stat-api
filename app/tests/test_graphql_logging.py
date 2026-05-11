@@ -6,7 +6,7 @@ import uuid
 from pwdlib import PasswordHash
 from sqlalchemy import select
 
-from .base import client, test_session_maker as session_maker
+from .base import client, session_maker as session_maker
 from app.models import User, UserLog
 
 password_hash = PasswordHash.recommended()

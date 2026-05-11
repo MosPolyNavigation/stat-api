@@ -286,8 +286,8 @@ class TestAuthMe:
 
         # Проверяем начальный статус через GraphQL (используем ADMIN_HEADERS, т.к. у пользователя нет прав)
         me_query = """
-        query GetUser($userId: Int!) {
-            user(userId: $userId) {
+        query GetUser($id: Int!) {
+            user(id: $id) {
                 id
                 login
                 isActive
@@ -295,14 +295,14 @@ class TestAuthMe:
         }
         """
         
-        me_response = graphql_query(me_query, variables={"userId": user_id}, headers=ADMIN_HEADERS)
+        me_response = graphql_query(me_query, variables={"id": user_id}, headers=ADMIN_HEADERS)
         assert me_response is not None
         assert me_response["user"]["isActive"] is True
 
         # Деактивируем пользователя через GraphQL мутацию (ADMIN_HEADERS)
         update_query = """
-        mutation UpdateUser($userId: Int!, $data: UpdateUserInput!) {
-            updateUser(userId: $userId, data: $data) {
+        mutation UpdateUser($id: Int!, $data: UpdateUserInput!) {
+            updateUser(id: $id, data: $data) {
                 id
                 isActive
             }
@@ -312,7 +312,7 @@ class TestAuthMe:
         graphql_query(
             update_query,
             variables={
-                "userId": user_id,
+                "id": user_id,
                 "data": {"isActive": False}
             },
             headers=ADMIN_HEADERS
