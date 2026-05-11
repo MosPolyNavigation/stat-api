@@ -19,14 +19,6 @@ from tests.init_db import init_test_database
 
 settings = load_settings()
 
-# ── Тестовая БД: новый engine + session_maker, не общий с прод-кодом ─────────
-
-db_path = settings.sqlalchemy_database_url.path.removeprefix("/")
-try:
-    os.remove(db_path)
-except FileNotFoundError:
-    pass
-
 async_engine = create_async_engine(str(settings.sqlalchemy_database_url), future=True)
 session_maker = async_sessionmaker(
     autoflush=True,

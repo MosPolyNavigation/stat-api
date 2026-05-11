@@ -26,6 +26,7 @@ async def init_test_database(test_engine: AsyncEngine, test_session_maker: async
     """Инициализирует тестовую БД: создаёт таблицы + применяет сидеры + загружает state."""
     # 1️⃣ Создаём таблицы
     async with test_engine.begin() as conn:
+        await conn.run_sync(lambda sync_conn: Base.metadata.drop_all(sync_conn))
         await conn.run_sync(lambda sync_conn: Base.metadata.create_all(sync_conn))
 
     # 2️⃣ Применяем сидеры (и апп, и тест-специфичные)
