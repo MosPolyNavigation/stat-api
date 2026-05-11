@@ -68,7 +68,7 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
     from app.models import (
         ValueType, PayloadType, EventType,
         ClientId, ReviewStatus, Payload,
-        DashboardType
+        DashboardType, Review
     )
     from app.models.nav.location import Location
     from app.models.nav.corpus import Corpus
@@ -97,6 +97,7 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         "review_status": SQLAlchemyLoader(session, ReviewStatus),
         "dashboard_type": SQLAlchemyLoader(session, DashboardType),
         "payloads_by_event_id": ForeignKeyLoader(session, Payload, "event_id"),
+        "reviews_by_status_id": ForeignKeyLoader(session, Review, "status_id"),
 
         # === navigation ===
         "nav_location": SQLAlchemyLoader(session, Location),

@@ -16,6 +16,7 @@ from app.graphql.domains.event_system.resources import (
     PayloadResource,
     DashboardResource,
     DashboardTypeResource,
+    ReviewStatusResource
 )
 from app.models import AllowedPayload
 from app.graphql.core.permissions import require_permissions, P
@@ -85,6 +86,12 @@ DashboardTypeQuery = create_query_resource(
     DashboardTypeResource,
     name_list="dashboard_types",
     name_get="dashboard_type",
+)
+
+ReviewStatusQuery = create_query_resource(
+    ReviewStatusResource,
+    name_list="review_statuses",
+    name_get="review_status",
 )
 
 
@@ -165,6 +172,7 @@ class Query(
     PayloadQuery,
     DashboardQuery,
     DashboardTypeQuery,
+    ReviewStatusQuery,
     AllowedPayloadRuleQuery,
 ):
     """
@@ -180,6 +188,7 @@ class Query(
     - payloads / payload
     - dashboards / dashboard
     - dashboard_types / dashboard_type
+    - review_statuses / review_status
 
     Ручная реализация:
     - allowed_payload_rules / allowed_payload_rule (составной ключ)

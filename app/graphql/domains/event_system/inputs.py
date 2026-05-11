@@ -57,6 +57,15 @@ class ReviewFilterInput(BaseFilterInput):
     not_: Optional["ReviewFilterInput"] = strawberry.field(name="not", default=None)
 
 
+@strawberry.input
+class ReviewStatusFilterInput(BaseFilterInput):
+    id: Optional[IntFilterInput] = None
+    name: Optional[StringFilterInput] = None
+    and_: Optional[List["ReviewStatusFilterInput"]] = strawberry.field(name="and", default=None)
+    or_: Optional[List["ReviewStatusFilterInput"]] = strawberry.field(name="or", default=None)
+    not_: Optional["ReviewStatusFilterInput"] = strawberry.field(name="not", default=None)
+
+
 # =============================================================================
 # Mutation Inputs (простые dataclass, не фильтры)
 # =============================================================================
@@ -196,6 +205,13 @@ class AllowedPayloadRuleOrderByInput(BaseOrderByInput):
     event_type_id: Optional[OrderDir] = None
     payload_type_id: Optional[OrderDir] = None
     then_by: Optional["AllowedPayloadRuleOrderByInput"] = None
+
+
+@strawberry.input
+class ReviewStatusOrderByInput(BaseFilterInput):
+    id: Optional[OrderDir] = None
+    name: Optional[OrderDir] = None
+    then_by: Optional["ReviewStatusOrderByInput"] = None
 
 
 @strawberry.input

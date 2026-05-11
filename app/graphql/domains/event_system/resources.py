@@ -5,7 +5,7 @@ from app.models import (
     ValueType as VTModel, Review as ReviewModel,
     ClientId as CIModel, Event as EventModel,
     Payload as PayloadModel, DashboardType as DTModel,
-    Dashboard as DashboardModel,
+    Dashboard as DashboardModel, ReviewStatus as RSModel,
 )
 from app.graphql.domains.event_system.types import (
     EventType as EventTypeType,
@@ -15,7 +15,9 @@ from app.graphql.domains.event_system.types import (
     Dashboard as DashboardType,
     Review as ReviewType,
     ClientId as ClientIdType,
-    Event, Payload,
+    Event as EventType,
+    Payload as PayloadType,
+    ReviewStatus as ReviewStatusType,
     _event_type_from_model,
     _payload_type_from_model,
     _value_type_from_model,
@@ -25,6 +27,7 @@ from app.graphql.domains.event_system.types import (
     _payload_from_model,
     _dashboard_from_model,
     _dashboard_type_from_model,
+    _review_status_from_model,
 )
 from app.graphql.domains.event_system.inputs import (
     EventTypeFilterInput,
@@ -44,7 +47,9 @@ from app.graphql.domains.event_system.inputs import (
     ReviewOrderByInput,
     ClientIdOrderByInput,
     DashboardOrderByInput,
-    DashboardTypeOrderByInput
+    DashboardTypeOrderByInput,
+    ReviewStatusFilterInput,
+    ReviewStatusOrderByInput,
 )
 
 
@@ -150,9 +155,22 @@ ReviewResource = ResourceConfig(
     )
 )
 
+ReviewStatusResource = ResourceConfig(
+    model=RSModel,
+    graphql_type=ReviewStatusType,
+    filter_input=ReviewFilterInput,
+    convert=_review_status_from_model,
+    cursor_field="id",
+    order_by_input=ReviewOrderByInput,
+    enable_logging=False,
+    permissions=ResourcePermissions(
+        view=P.REVIEWS_VIEW,
+    )
+)
+
 EventResource = ResourceConfig(
     model=EventModel,
-    graphql_type=Event,
+    graphql_type=EventType,
     filter_input=EventFilterInput,
     convert=_event_from_model,
     order_by_input=EventOrderByInput,
@@ -164,7 +182,7 @@ EventResource = ResourceConfig(
 
 PayloadResource = ResourceConfig(
     model=PayloadModel,
-    graphql_type=Payload,
+    graphql_type=PayloadType,
     filter_input=PayloadFilterInput,
     convert=_payload_from_model,
     order_by_input=PayloadOrderByInput,

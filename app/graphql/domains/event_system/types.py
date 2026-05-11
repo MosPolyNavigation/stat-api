@@ -7,6 +7,7 @@ from app.models import (
     PayloadType as PTModel,
     ValueType as VTModel,
     ReviewStatus as RSModel,
+    Review as ReviewModel,
     ClientId as CIModel,
     Event as EventModel,
     Payload as PayloadModel,
@@ -19,9 +20,7 @@ from app.graphql.core.context import GraphQLContext
 # =============================================================================
 # Helper: конвертеры моделей в типы
 # =============================================================================
-def _value_type_from_model(model: Optional[VTModel]) -> Optional["ValueType"]:
-    if model is None:
-        return None
+def _value_type_from_model(model: VTModel) -> "ValueType":
     return ValueType(
         id=model.id,  # type: ignore[call-arg]
         name=model.name,  # type: ignore[call-arg]
@@ -29,9 +28,7 @@ def _value_type_from_model(model: Optional[VTModel]) -> Optional["ValueType"]:
     )
 
 
-def _payload_type_from_model(model: Optional[PTModel]) -> Optional["PayloadType"]:
-    if model is None:
-        return None
+def _payload_type_from_model(model: PTModel) -> "PayloadType":
     return PayloadType(
         id=model.id,  # type: ignore[call-arg]
         code_name=model.code_name,  # type: ignore[call-arg]
@@ -40,9 +37,7 @@ def _payload_type_from_model(model: Optional[PTModel]) -> Optional["PayloadType"
     )
 
 
-def _event_type_from_model(model: Optional[ETModel]) -> Optional["EventType"]:
-    if model is None:
-        return None
+def _event_type_from_model(model: ETModel) -> "EventType":
     return EventType(
         id=model.id,  # type: ignore[call-arg]
         code_name=model.code_name,  # type: ignore[call-arg]
@@ -50,9 +45,7 @@ def _event_type_from_model(model: Optional[ETModel]) -> Optional["EventType"]:
     )
 
 
-def _client_id_from_model(model: Optional[CIModel]) -> Optional["ClientId"]:
-    if model is None:
-        return None
+def _client_id_from_model(model: CIModel) -> "ClientId":
     return ClientId(
         id=model.id,  # type: ignore[call-arg]
         ident=model.ident,  # type: ignore[call-arg]
@@ -60,18 +53,14 @@ def _client_id_from_model(model: Optional[CIModel]) -> Optional["ClientId"]:
     )
 
 
-def _review_status_from_model(model: Optional[RSModel]) -> Optional["ReviewStatus"]:
-    if model is None:
-        return None
+def _review_status_from_model(model: RSModel) -> "ReviewStatus":
     return ReviewStatus(
         id=model.id,  # type: ignore[call-arg]
         name=model.name,  # type: ignore[call-arg]
     )
 
 
-def _review_from_model(model) -> Optional["Review"]:
-    if model is None:
-        return None
+def _review_from_model(model: ReviewModel) -> "Review":
     return Review(
         id=model.id,  # type: ignore[call-arg]
         client_id=model.client_id,  # type: ignore[call-arg]
@@ -196,6 +185,17 @@ class ReviewStatus:
     """Статус отзыва."""
     id: int
     name: str
+
+    @strawberry.field  # type: ignore[unresolved-reference]
+    async def reviews(
+        self,
+        info: strawberry.Info,
+        first: int = 10
+    ) -> List["Review"]:
+        limit = min(100, first)
+        ctx: GraphQLContext = info.context
+        r_models = await ctx.loaders["reviews_by_status_id"].load(self.id)
+        return [_review_from_model(r_model) for r_model in r_models[:limit]]
 
 
 @strawberry.type
