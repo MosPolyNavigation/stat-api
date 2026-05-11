@@ -242,7 +242,7 @@ class RoleMutation:
 class UserRoleMutation:
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def grant_role(self, info: Info, data: GrantRoleInput) -> bool:
-        await require_permissions(info, P.ROLES_EDIT)
+        await require_permissions(info, P.ROLES_GRANT)
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
         service: PermissionService = info.context.permission_service
@@ -282,7 +282,7 @@ class UserRoleMutation:
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def revoke_role(self, info: Info, user_id: int, role_id: int) -> bool:
-        await require_permissions(info, P.ROLES_EDIT)
+        await require_permissions(info, P.ROLES_GRANT)
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
         service: PermissionService = info.context.permission_service

@@ -10,7 +10,7 @@ from app.constants import (
     STATS_GOAL_ID, DASHBOARDS_GOAL_ID, USERS_GOAL_ID, ROLES_GOAL_ID,
     TABLES_GOAL_ID, RESOURCES_GOAL_ID, TASKS_GOAL_ID, NAV_GOAL_ID,
     USER_PASS_GOAL_ID, ADMIN_GOAL_ID, REVIEWS_GOAL_ID,
-    REFRESH_TOKEN_GOAL_ID, CLIENT_GOAL_ID, GOAL_RIGHTS
+    REFRESH_TOKEN_GOAL_ID, CLIENT_GOAL_ID, GOAL_RIGHTS, GRANT_RIGHT_ID
 )
 from app.graphql.core.context import GraphQLContext
 
@@ -23,6 +23,7 @@ class Right(IntEnum):
     CREATE = CREATE_RIGHT_ID
     EDIT = EDIT_RIGHT_ID
     DELETE = DELETE_RIGHT_ID
+    GRANT = GRANT_RIGHT_ID
 
 
 class Goal(IntEnum):
@@ -90,6 +91,7 @@ class P:
     ROLES_CREATE = Permission(Right.CREATE, Goal.ROLES)
     ROLES_EDIT = Permission(Right.EDIT, Goal.ROLES)
     ROLES_DELETE = Permission(Right.DELETE, Goal.ROLES)
+    ROLES_GRANT = Permission(Right.GRANT, Goal.ROLES)
 
     # Tables (5)
     TABLES_VIEW = Permission(Right.VIEW, Goal.TABLES)
@@ -155,29 +157,3 @@ async def require_permissions(info: Info, *permissions: Permission) -> None:
     if missing:
         names = ", ".join(repr(p) for p in missing)
         raise GraphQLError(f"Недостаточно прав для выполнения операции. Отсутствуют: {names}")
-
-
-def check_permissions(*permissions: Permission):
-    """
-    Декоратор для автоматической проверки прав перед выполнением резолвера.
-    Работает с @strawberry.field и @relay.connection.
-    """
-
-    def decorator(func):
-        @wraps(func)
-        async def wrapper(*args, **kwargs):
-            # Извлекаем info из kwargs (Strawberry передаёт его именованным)
-            info = kwargs.get("info")
-            if info is None or not isinstance(info, Info):
-                # Фоллбэк на позиционный аргумент (если резолвер написан нестандартно)
-                info = next((a for a in args if isinstance(a, Info)), None)
-
-            if info is None:
-                raise GraphQLError("Internal error: контекст Info не найден для проверки прав")
-
-            await require_permissions(info, *permissions)
-            return await func(*args, **kwargs)
-
-        return wrapper
-
-    return decorator
