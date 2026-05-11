@@ -29,7 +29,6 @@ dependencies = [
     "graphql-core",
     "starlette",
     "typer",
-    "ruff>=0.15.12",
 ]
 
 [dependency-groups]
