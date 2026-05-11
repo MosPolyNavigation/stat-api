@@ -38,7 +38,7 @@ dev = [
     "pytest-cov",
 ]
 lint = [
-    "flake8",
+    "ruff",
 ]
 
 [build-system]
@@ -60,3 +60,7 @@ python_functions = ["test_*"]
 
 [project.scripts]
 stat-api = "main:app_cli"
+
+
+[tool.ruff.lint]
+ignore = ["E402", "SLF001"]
