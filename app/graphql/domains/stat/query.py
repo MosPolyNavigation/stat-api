@@ -104,7 +104,7 @@ def _resolve_window(
 # Query Type
 # =============================================================================
 @strawberry.type
-class StatisticsQuery:
+class Query:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def endpoint_statistics(
             self,
