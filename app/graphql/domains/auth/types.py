@@ -241,7 +241,7 @@ class UserRole:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def role(self, info: strawberry.Info) -> Optional["Role"]:
         ctx: GraphQLContext = info.context
-        role_model = await ctx.loaders["role"].load(self.user_id)
+        role_model = await ctx.loaders["role"].load(self.role_id)
         return _role_from_model(role_model) if role_model else None
 
 
