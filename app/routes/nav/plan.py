@@ -19,6 +19,7 @@ from app.helpers.svg import save_svg_bytes_to_disk
 from app.handlers.insert import insert_floor_map
 from app.guards.file_checker import plan_validator
 
+
 def register_endpoint(router: APIRouter):
     @router.get(
         "/plan",
@@ -52,7 +53,7 @@ def register_endpoint(router: APIRouter):
         ).scalar_one_or_none()
 
         if plan_obj is None:
-            raise HTTPException(status_code=404, detail="Plan not found" )
+            raise HTTPException(status_code=404, detail="Plan not found")
 
         # Находим кампус по loc_id корпуса
         location: Location | None = (

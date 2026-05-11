@@ -34,6 +34,7 @@ class BaseHooks:
 
     def on_config_loaded(self, settings: Settings) -> Settings:
         """Хук обработки настроек после загрузки. Возвращает (возможно изменённые) настройки."""
+        _ = self
         return settings
 
     def setup_middlewares(self, app: FastAPI, settings: Settings) -> None:

@@ -34,6 +34,7 @@ class RoleRightGoal(Base):
     def __repr__(self) -> str:
         return (
             "RoleRightGoal("
-            f"role_id={self.role_id!r}, right_id={self.right_id!r}, goal_id={self.goal_id!r}, can_grant={self.can_grant!r}"
+            f"role_id={self.role_id!r}, right_id={self.right_id!r},"
+            f"goal_id={self.goal_id!r}, can_grant={self.can_grant!r}"
             ")"
         )

@@ -1,4 +1,3 @@
-from .check import check_user
 from .create import create_client_id, create_user_id
 from .filter import filter_by_user, filter_by_date
 from .get import (

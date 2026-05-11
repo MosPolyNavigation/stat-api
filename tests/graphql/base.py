@@ -1,3 +1,5 @@
+from typing import Any
+
 import uuid
 
 from tests.base import client
@@ -7,9 +9,9 @@ GRAPHQL_ENDPOINT = "/api/graphql"
 
 def graphql_query(query: str, variables: dict = None, headers: dict = None):
     """Хелпер для выполнения GraphQL-запросов."""
-    payload = {"query": query}
+    payload: dict[str, Any] = {"query": query}
     if variables:
-        payload["variables"] = variables  # noqa
+        payload["variables"] = variables
 
     response = client.post(
         GRAPHQL_ENDPOINT,

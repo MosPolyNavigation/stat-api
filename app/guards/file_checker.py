@@ -3,6 +3,7 @@ import os
 from fastapi import UploadFile, HTTPException, Request
 from typing import Optional
 
+
 class FileValidator:
     def __init__(
         self,
@@ -117,8 +118,10 @@ class PhotoValidator:
     async def __call__(
         self, 
         request: Request,
-        photos: list[UploadFile] = [],
+        photos: Optional[list[UploadFile]] = None,
     ) -> list[UploadFile]:
+        if photos is None:
+            photos = []
         # 1. Проверка количества файлов
         if len(photos) > self.max_files:
             raise HTTPException(
@@ -152,7 +155,10 @@ class PhotoValidator:
             if file_size > self.max_size_per_file:
                 raise HTTPException(
                     status_code=413,
-                    detail=f"File {i+1} ({photo.filename}): Too large. Max: {self.max_size_per_file} bytes, got: {file_size}"
+                    detail=(
+                        f"File {i+1} ({photo.filename}): Too large. "
+                        f"Max: {self.max_size_per_file} bytes, got: {file_size}"
+                    )
                 )
             
             total_size += file_size

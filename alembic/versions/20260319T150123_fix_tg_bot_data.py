@@ -25,9 +25,10 @@ def upgrade() -> None:
         batch_op.create_index(batch_op.f('ix_tg_event_types_name'), ['name'], unique=True)
 
     with op.batch_alter_table('tg_users', schema=None) as batch_op:
-        batch_op.alter_column('creation_date',
-               existing_type=sa.DATETIME(),
-               nullable=False)
+        batch_op.alter_column(
+            'creation_date',
+            existing_type=sa.DATETIME(),
+            nullable=False)
         batch_op.drop_index(batch_op.f('ix_tg_users_tg_id'))
         batch_op.create_index(batch_op.f('ix_tg_users_tg_id'), ['tg_id'], unique=True)
 
@@ -39,9 +40,10 @@ def downgrade() -> None:
     with op.batch_alter_table('tg_users', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_tg_users_tg_id'))
         batch_op.create_index(batch_op.f('ix_tg_users_tg_id'), ['tg_id'], unique=False)
-        batch_op.alter_column('creation_date',
-               existing_type=sa.DATETIME(),
-               nullable=True)
+        batch_op.alter_column(
+            'creation_date',
+            existing_type=sa.DATETIME(),
+            nullable=True)
 
     with op.batch_alter_table('tg_event_types', schema=None) as batch_op:
         batch_op.drop_index(batch_op.f('ix_tg_event_types_name'))

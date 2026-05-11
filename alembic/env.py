@@ -36,6 +36,7 @@ if config.config_file_name is not None:
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
+
 # ── Офлайн-режим (генерация миграций без подключения) ───────────────────
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -60,6 +61,7 @@ def run_migrations_offline() -> None:
     with context.begin_transaction():
         context.run_migrations()
 
+
 # ── Онлайн-режим (применение миграций) ──────────────────────────────────
 def do_run_migrations(connection):
     context.configure(
@@ -69,6 +71,7 @@ def do_run_migrations(connection):
     )
     with context.begin_transaction():
         context.run_migrations()
+
 
 async def _run_migrations_async():
     connectable = async_engine_from_config(
@@ -80,6 +83,7 @@ async def _run_migrations_async():
         await connection.run_sync(do_run_migrations)
     await connectable.dispose()
 
+
 def run_migrations_online() -> None:
     """Run migrations in 'online' mode.
 
@@ -88,6 +92,7 @@ def run_migrations_online() -> None:
 
     """
     asyncio.run(_run_migrations_async())
+
 
 if context.is_offline_mode():
     run_migrations_offline()

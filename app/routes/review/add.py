@@ -4,7 +4,7 @@ import aiofiles
 
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Response, UploadFile, Form, Depends
+from fastapi import APIRouter, UploadFile, Form, Depends
 
 from app.database import get_db
 from app.config import get_settings
@@ -76,7 +76,6 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def add_review(
-            response: Response,
             image: Optional[UploadFile] = Depends(image_validator),
             client_id: str = Form(
                 title="client_id",

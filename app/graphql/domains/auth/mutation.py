@@ -1,8 +1,9 @@
+from typing import cast
+from datetime import datetime
 import strawberry
 from strawberry import Info
 from sqlalchemy import select, delete, func
 from graphql import GraphQLError
-from datetime import datetime
 from pwdlib import PasswordHash
 
 from app.graphql.core.context import GraphQLContext
@@ -84,7 +85,7 @@ class UserMutation:
         await ctx.db.refresh(user)
         logger.log(current_user, f"Обновление пользователя {user.login}")
 
-        return _user_from_model(user)  # noqa
+        return _user_from_model(user)  # type: ignore[arg-type]
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def delete_user(self, info: Info, id: int) -> bool:
@@ -202,7 +203,7 @@ class RoleMutation:
         await ctx.db.commit()
         await ctx.db.refresh(role)
         logger.log(current_user, f"Обновлена роль {role.name}")
-        return _role_from_model(role)  # noqa
+        return _role_from_model(role)  # type: ignore[arg-type]
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def delete_role(self, info: Info, id: int) -> bool:
@@ -221,7 +222,7 @@ class RoleMutation:
         count = await ctx.db.execute(
             select(func.count()).select_from(UserRole).where(UserRole.role_id == id)
         )
-        if count.scalar() > 0:  # noqa
+        if cast(int, count.scalar()) > 0:
             raise GraphQLError("Роль назначена пользователям. Сначала отзовите её.")
 
         rights = await ctx.db.execute(select(RoleRightGoal).where(RoleRightGoal.role_id == id))

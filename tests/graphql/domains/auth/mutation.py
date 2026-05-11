@@ -1,5 +1,4 @@
 """Тесты для GraphQL Mutation операций с ролями (Role) в домене auth."""
-import pytest  # noqa
 import uuid
 
 from tests.base import client

@@ -1,6 +1,6 @@
 import hashlib
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Optional
 
 import uuid
 import jwt
@@ -24,6 +24,7 @@ REFRESH_COOKIE_NAME = "refresh_token"
 def hash_token_value(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
+
 # Преобразует permissions в JSON-сериализуемый список строк для JWT
 def build_permissions_claim(permissions: set[tuple[int, int]]) -> list[str]:
     result: list[str] = []
@@ -34,6 +35,7 @@ def build_permissions_claim(permissions: set[tuple[int, int]]) -> list[str]:
             continue
         result.append(f"{goal_name}:{right_name}")
     return result
+
 
 # Создаёт Access JWT для пользователя
 async def create_access_token(user: User, db: AsyncSession) -> str:
@@ -128,7 +130,7 @@ def validate_access_payload(payload: dict[str, Any]) -> int:
     if payload.get("type") != "access":
         raise InvalidAccessTokenError("Неверный тип токена")
 
-    subject = payload.get("sub")
+    subject: Optional[str] = payload.get("sub")
     if not subject:
         raise InvalidAccessTokenError("В токене отсутствует идентификатор пользователя")
 
@@ -138,12 +140,11 @@ def validate_access_payload(payload: dict[str, Any]) -> int:
         raise InvalidAccessTokenError("Некорректный идентификатор пользователя в токене") from exc
 
 
-
 def validate_refresh_payload(payload: dict[str, Any]) -> tuple[int, str]:
     if payload.get("type") != "refresh":
         raise InvalidRefreshTokenError("Неверный тип токена")
 
-    subject = payload.get("sub")
+    subject: Optional[str] = payload.get("sub")
     jti = payload.get("jti")
     if not subject or not jti:
         raise InvalidRefreshTokenError("В refresh токене отсутствуют обязательные поля")
@@ -152,7 +153,6 @@ def validate_refresh_payload(payload: dict[str, Any]) -> tuple[int, str]:
         return int(subject), str(jti)
     except (TypeError, ValueError) as exc:
         raise InvalidRefreshTokenError("Некорректные данные в refresh токене") from exc
-
 
 
 def normalize_token_error(exc: Exception, *, refresh: bool = False) -> str:
@@ -165,14 +165,12 @@ def normalize_token_error(exc: Exception, *, refresh: bool = False) -> str:
     return "Ошибка проверки токена"
 
 
-
 def parse_browser(user_agent: str | None) -> str | None:
     if not user_agent:
         return None
 
     ua = parse(user_agent)
     return f"{ua.browser.family} {ua.browser.version_string}".strip()
-
 
 
 # def is_secure_request(request: Request) -> bool:
@@ -182,8 +180,7 @@ def parse_browser(user_agent: str | None) -> str | None:
 #     return request.url.scheme.lower() == "https"
 
 
-
-def set_refresh_cookie(response: Response, request: Request, refresh_token: str) -> None:
+def set_refresh_cookie(response: Response, _request: Request, refresh_token: str) -> None:
     settings = get_settings()
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
@@ -197,8 +194,7 @@ def set_refresh_cookie(response: Response, request: Request, refresh_token: str)
     )
 
 
-
-def clear_refresh_cookie(response: Response, request: Request) -> None:
+def clear_refresh_cookie(response: Response, _request: Request) -> None:
     response.delete_cookie(
         key=REFRESH_COOKIE_NAME,
         httponly=True,

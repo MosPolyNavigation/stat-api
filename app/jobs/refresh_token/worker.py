@@ -7,6 +7,7 @@ from app.services.refresh_token_service import RefreshTokenService
 
 logger = logging.getLogger(f"uvicorn.{__name__}")
 
+
 # отзывает все refresh-токены, срок действия которых уже истёк
 async def revoke_expired_refresh_tokens() -> None:
     try:

@@ -17,8 +17,10 @@ class CorpusNav(BaseModel):
     planLinks: PlanLinks
     stairsGroups: StairsGroups
 
+
 # Динамический словарь корпусов, ключ = id_sys корпуса
 type Corpuses = dict[str, CorpusNav]
+
 
 class CampusNav(BaseModel):
     """

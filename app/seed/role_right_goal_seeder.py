@@ -8,5 +8,5 @@ class RoleRightGoalSeeder(BaseSeeder):
 
     pk_fields = ("role_id", "right_id", "goal_id")
 
-    def gather_data(self) -> list[dict[str, int|str]]:
+    def gather_data(self) -> list[dict[str, int | str]]:
         return [{"role_id": 1, "right_id": t[1], "goal_id": t[0], "can_grant": True} for t in GOAL_RIGHTS]

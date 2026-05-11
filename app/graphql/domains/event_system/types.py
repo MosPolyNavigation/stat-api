@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import Optional, List, cast
 from datetime import datetime
 import strawberry
 
@@ -269,8 +269,8 @@ class Payload:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event(self, info: strawberry.Info) -> Optional[Event]:
         ctx: GraphQLContext = info.context
-        ev_model = await ctx.db.get(EventModel, self.event_id)
-        return _event_from_model(ev_model) if ev_model else None  # noqa
+        ev_model = cast(Optional[EventModel], await ctx.db.get(EventModel, self.event_id))
+        return _event_from_model(ev_model) if ev_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def payload_type(self, info: strawberry.Info) -> Optional[PayloadType]:

@@ -23,6 +23,7 @@ class RefreshTokenService:
         Помечает refresh-токен как отозванный.
         Возвращает False, если токен уже был отозван, иначе True.
         """
+        _ = self
         if token.revoked:
             return False
 
@@ -43,7 +44,7 @@ class RefreshTokenService:
             .values(revoked=True)
         )
 
-        affected_rows = result.rowcount
+        affected_rows = result.rowcount  # type: ignore[attr-defined]
         if affected_rows is None:
             return 0
         return affected_rows
@@ -60,7 +61,7 @@ class RefreshTokenService:
             delete(RefreshToken).where(RefreshToken.exp_date <= delete_before)
         )
 
-        affected_rows = result.rowcount
+        affected_rows = result.rowcount  # type: ignore[attr-defined]
         if affected_rows is None:
             return 0
         return affected_rows

@@ -9,7 +9,7 @@ from .resource import ResourceConfig
 from .permissions import require_permissions
 from .filters import apply_filters
 from .ordering import apply_order_by
-from .pagination import paginate_query, PaginationInput, Connection
+from .pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
 from .context import GraphQLContext
 from .logging import GraphQLLoggingExtension, should_skip_graphql_logging
 
@@ -43,7 +43,8 @@ def create_query_resource(
             pagination: Optional[PaginationInput] = None,
             filter=None,
             order_by=None,
-        ) -> Connection[_node_type]:  # noqa
+        ) -> Connection[_node_type]:  # type: ignore[valid-type]
+            _ = self
             if config.permissions.view:
                 await require_permissions(info, config.permissions.view)
             ctx: GraphQLContext = info.context
@@ -55,7 +56,7 @@ def create_query_resource(
                 stmt = apply_order_by(stmt, config.model, order_by)
 
             if pagination is None:
-                pagination = PaginationInput(page=1, page_size=page_size_default)  # noqa
+                pagination = pagination_input_from_attrs(page=1, page_size=page_size_default)
 
             return await paginate_query(
                 session=ctx.db,
@@ -70,7 +71,7 @@ def create_query_resource(
             "pagination": Optional[PaginationInput],
             "filter": Optional[config.filter_input],  # type: ignore
             "order_by": Optional[config.order_by_input] if config.order_by_input else Optional[Any],  # type: ignore
-            "return": Connection[_node_type],  # noqa
+            "return": Connection[_node_type],  # type: ignore[valid-type]
         }
 
         # 🔹 Логирование
@@ -89,11 +90,12 @@ def create_query_resource(
             "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
         }
         id_python_type = (
-            _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int)  # noqa
+            _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int)  # type: ignore[union-attr]
             if pk_column is not None else int
         )
 
         async def _get_resolver(self, info, id):
+            _ = self
             if config.permissions.view:
                 await require_permissions(info, config.permissions.view)
             ctx: GraphQLContext = info.context
@@ -145,11 +147,14 @@ def create_mutation_resource(
         "INTEGER": int, "BIGINT": int, "SMALLINT": int,
         "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
     }
-    id_python_type = _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int) if pk_column is not None else int
+    id_python_type = _ID_TYPE_MAP.get(
+        pk_column.type.__class__.__name__.upper(), int  # type: ignore[union-attr]
+    ) if pk_column is not None else int
 
     # --- CREATE ---
     if enable_create and create_input:
         async def _create_resolver(self, info, data):
+            _ = self
             if config.permissions.create:
                 await require_permissions(info, config.permissions.create)
             ctx: GraphQLContext = info.context
@@ -188,6 +193,7 @@ def create_mutation_resource(
     # --- UPDATE (БЕЗ RELAY) ---
     if enable_update and update_input:
         async def _update_resolver(self, info, id, data):
+            _ = self
             if config.permissions.edit:
                 await require_permissions(info, config.permissions.edit)
             ctx: GraphQLContext = info.context
@@ -232,6 +238,7 @@ def create_mutation_resource(
     # --- DELETE (БЕЗ RELAY) ---
     if enable_delete:
         async def _delete_resolver(self, info, id):
+            _ = self
             if config.permissions.delete:
                 await require_permissions(info, config.permissions.delete)
             ctx: GraphQLContext = info.context

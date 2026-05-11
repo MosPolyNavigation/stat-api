@@ -1,5 +1,4 @@
 """Integration tests for GraphQL Mutation operations in navigation domain."""
-import pytest  # noqa
 from tests.graphql.base import graphql_query
 
 # =============================================================================
@@ -193,7 +192,18 @@ class TestGraphQLMutationsNavStatic:
 # =============================================================================
 class TestGraphQLMutationsNavUnauthorized:
     def test_401_create_without_token(self):
-        q = 'mutation { createNavLocation(data: { idSys: "x", name: "x", short: "x", ready: true, address: "x", metro: "x" }) { id } }'  # noqa
+        q = """mutation {
+                   createNavLocation(
+                       data: {
+                           idSys: "x",
+                           name: "x",
+                           short: "x",
+                           ready: true,
+                           address: "x",
+                           metro: "x"
+                       }
+                   ) { id }
+               }"""
         r = graphql_query(q)
         assert r["status_code"] == 401
 

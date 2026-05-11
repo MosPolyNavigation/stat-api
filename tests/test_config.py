@@ -8,8 +8,8 @@ from pathlib import Path
 import pytest
 
 from app.config import (
-    _load_dotenv,  # noqa
-    _substitute_env,  # noqa
+    _load_dotenv,
+    _substitute_env,
     load_settings,
     Settings,
     StaticFileConfig,
@@ -94,6 +94,7 @@ class TestLoadDotenv:
 
 class TestLoadSettings:
     def _write_config(self, tmp_path: Path, content: str) -> Path:
+        _ = self
         cfg = tmp_path / "config.yaml"
         cfg.write_text(textwrap.dedent(content), encoding="utf-8")
         return cfg
@@ -297,6 +298,7 @@ class TestStaticFileConfig:
 
 class TestBackwardCompatProperties:
     def _make_settings(self, tmp_path, monkeypatch, extra_yaml: str = "") -> Settings:
+        _ = self
         content = textwrap.dedent(f"""
             server:
               cors:

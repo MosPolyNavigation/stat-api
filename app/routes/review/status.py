@@ -13,8 +13,6 @@ from app.models import User
 
 
 def register_endpoint(router: APIRouter):
-    "Эндпоинт для назначения статуса Review"
-
     @router.patch(
         "/{review_id}/status",
         description="Назначение статуса отзыву по ID статуса",
@@ -30,6 +28,7 @@ def register_endpoint(router: APIRouter):
         ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
+        """Эндпоинт для назначения статуса Review"""
         review: Union[Review, None] = (
             await db.execute(
                 Select(Review).filter(Review.id == review_id)

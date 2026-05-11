@@ -21,7 +21,7 @@ def svobodn(schedule: Union[Auditory, None], filter_: FilterSvobodn) -> RaspOut:
             lessons = dict({str(num): True for num in range(1, 8)})
         days = dict({day: lessons for day in days_names})
         if filter_.day:
-            return {filter_.day.name: days.get(filter_.day.name)}
+            return {filter_.day.name: days.get(filter_.day.name) or dict()}
         else:
             return days
     if filter_.day:

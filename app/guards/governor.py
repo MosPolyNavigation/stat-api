@@ -139,7 +139,7 @@ class RateLimiter:
         return removed_count
 
     def cleanup_now(self, state: AppState) -> int:
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None:
             return 0
         return self.cleanup_expired(access_store)

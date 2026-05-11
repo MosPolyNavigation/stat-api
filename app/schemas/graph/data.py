@@ -9,7 +9,7 @@ class LocationData(BaseModel):
     short: str
     available: bool
     address: str
-    crossings: List[Tuple[str, str, int]]
+    crossings: List[Tuple[str, str, float]]
 
 
 class CorpusData(BaseModel):

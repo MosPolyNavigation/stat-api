@@ -89,8 +89,7 @@ def register_endpoint(router: APIRouter):
 
         db.add_all(photos_to_create)
         await db.commit()
-        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",
-        )
+        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",)
         return Status(status=f"Uploaded {len(photos_to_create)} image(s)")
 
     @router.get(

@@ -16,7 +16,7 @@ def register_endpoint(router: APIRouter):
                     "Доступно только пользователям с правом `roles:view`.",
         dependencies=[Depends(require_rights(ROLES_GOAL_NAME, VIEW_RIGHT_NAME))],
     )
-    async def get_allowed_permissions():
+    async def get_allowed_permissions() -> AllowedPermissionsResponse:
         """
         Возвращает системный маппинг допустимых прав для каждой цели.
         Данные формируются из константы GOAL_RIGHTS — единого источника истины.

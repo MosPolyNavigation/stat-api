@@ -62,7 +62,11 @@ def register_endpoint(router: APIRouter):
         user_id: str,
         request: Request,
             current_user: User = Depends(
-                require_rights_with_logging("admin", "view",  error_text="Попытка доступа к несуществующей записи/без прав",)
+                require_rights_with_logging(
+                    "admin",
+                    "view",
+                    error_text="Попытка доступа к несуществующей записи/без прав",
+                )
             ),
             logger: UserLoggerService = Depends(get_user_logger_service),
     ):
@@ -104,7 +108,7 @@ def register_endpoint(router: APIRouter):
     async def unban_user(
         rq: Request,
         user_id: str,
-        request: UnbanRequest = None,
+        _request: UnbanRequest = None,
         current_user: User = Depends(
             require_rights_with_logging("admin", "edit",  error_text="Попытка снятия бана без прав",)
         ),
@@ -124,7 +128,7 @@ def register_endpoint(router: APIRouter):
             )
 
         # Опционально: логирование для аудита
-        reason = request.reason if request and request.reason else "No reason provided"
+        # reason = request.reason if request and request.reason else "No reason provided"
         # logger.info(f"Admin unbanned user {user_id}: {reason}")
 
         logger.log(current_user, f"Снятие бана с пользователя {user_id}")

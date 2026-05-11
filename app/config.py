@@ -13,7 +13,7 @@ from app.helpers.dsn import SqliteDsn
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Паттерн: {{ env("VAR_NAME", "default") }} или {{ env("VAR_NAME") }}
-_ENV_PATTERN = re.compile(r'\{\{\s*env\("([^"]+)"(?:\s*,\s*"([^"]*)"\s*)?\)\s*\}\}')
+_ENV_PATTERN = re.compile(r'\{\{\s*env\("([^"]+)"(?:\s*,\s*"([^"]*)"\s*)?\)\s*}}')
 
 
 # ─── Загрузка .env без перезаписи системных переменных ────────────────────────
@@ -36,8 +36,8 @@ def _load_dotenv(dotenv_path: Path) -> None:
 
 def _substitute_env(raw: str) -> str:
     def replacer(match: re.Match) -> str:
-        var_name = match.group(1)
-        default = match.group(2)
+        var_name: str = match.group(1)
+        default: str = match.group(2)
         value = os.environ.get(var_name)
         if value is not None:
             return value
@@ -198,7 +198,7 @@ class Settings(BaseModel):
         return ["Authorization"]
     
     @property
-    def allow_credentials(self) -> list[str]:
+    def allow_credentials(self) -> bool:
         if self.server.cors:
             return self.server.cors.allow_credentials
         return False

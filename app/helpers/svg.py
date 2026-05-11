@@ -3,6 +3,7 @@ import uuid
 import aiofiles
 from xml.etree import ElementTree
 
+
 # Проверка, что файл svg
 def is_valid_svg(svg_text: str) -> bool:
     # Пустое содержимое - точно не svg
@@ -19,6 +20,7 @@ def is_valid_svg(svg_text: str) -> bool:
     tag = root.tag
     return tag == "svg" or tag.endswith("}svg")
 
+
 # Проверка bytes (для multipart UploadFile)
 def is_valid_svg_bytes(data: bytes) -> bool:
     if not data:
@@ -29,6 +31,7 @@ def is_valid_svg_bytes(data: bytes) -> bool:
     except UnicodeDecodeError:
         return False
     return is_valid_svg(text)
+
 
 # Сохранение svg из bytes (для multipart UploadFile)
 async def save_svg_bytes_to_disk(data: bytes, base_path: str) -> str | None:

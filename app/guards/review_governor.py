@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Optional, Dict
+from typing import Optional, Dict, cast
 
 from fastapi import HTTPException, Request, status
 
@@ -165,7 +165,7 @@ class ReviewRateLimiter:
             
             if "multipart/form-data" in content_type:
                 form = await request.form()
-                return form.get("client_id")
+                return cast(Optional[str], form.get("client_id"))
             else:
                 body = await request.json()
                 return body.get("client_id")
@@ -242,7 +242,7 @@ class ReviewRateLimiter:
     
     def cleanup_now(self, state: AppState) -> int:
         """Публичный метод для ручной очистки (используется воркером)."""
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None:
             return 0
         return self.cleanup_expired(access_store)

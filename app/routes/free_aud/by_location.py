@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Request
+from typing import Annotated
+from fastapi import APIRouter, Request, Response
 from fastapi.params import Depends
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import Response
 
 from app.database import get_db
 from app.handlers.filter import filter_svobodn
@@ -24,8 +24,8 @@ def register_endpoint(router: APIRouter):
     async def by_loc(
         request: Request,
         response: Response,
-        db: AsyncSession = Depends(get_db),
-        filter_: FilterSvobodnByLocation = Depends()
+        db: Annotated[AsyncSession, Depends(get_db)],
+        filter_: Annotated[FilterSvobodnByLocation, Depends()]
     ):
         state: AppState = request.app.state.app_state
         if state.rasp_lock.locked() or state.global_rasp is None:

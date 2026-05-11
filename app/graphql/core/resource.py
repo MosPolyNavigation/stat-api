@@ -23,7 +23,7 @@ class ResourceConfig(Generic[M, T, F]):
     graphql_type: Type[T]
     filter_input: Type[F]
     order_by_input: Type[BaseOrderByInput]
-    convert: C  # noqa
+    convert: C
     permissions: "ResourcePermissions"
 
     # Пагинация

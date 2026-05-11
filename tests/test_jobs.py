@@ -124,7 +124,7 @@ class TestScheduledTaskDecorator:
         run(init_queue_db(tmp_db))
 
         @scheduled_task(name="logged_job")
-        async def my_job():
+        async def my_job(**_kwargs):
             pass
 
         run(my_job(_triggered_by="manual"))
@@ -179,7 +179,7 @@ class TestScheduledTaskDecorator:
         run(init_queue_db(tmp_db))
 
         @scheduled_task(name="id_job")
-        async def id_job():
+        async def id_job(**_kwargs):
             pass
 
         custom_id = "my-custom-run-id"
@@ -417,7 +417,7 @@ class TestJobManager:
 
     def test_history_returns_records(self, tmp_path):
         @scheduled_task(name="hist_job")
-        async def hist_job():
+        async def hist_job(**_kwargs):
             pass
 
         manager = JobManager(static_path=str(tmp_path))

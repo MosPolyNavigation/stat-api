@@ -90,7 +90,10 @@ class TestGraphQLMutationsEventType:
 class TestGraphQLMutationsPayloadType:
     def test_200_crud_payload_type_full_cycle(self):
         # Получаем валидный valueTypeId из сидов (простой Int)
-        vt_id_resp = graphql_query("{ valueTypes(pagination: { pageSize: 1 }) { nodes { id } } }", headers=ADMIN_HEADERS)
+        vt_id_resp = graphql_query(
+            "{ valueTypes(pagination: { pageSize: 1 }) { nodes { id } } }",
+            headers=ADMIN_HEADERS
+        )
         vt_raw_id = vt_id_resp["data"]["data"]["valueTypes"]["nodes"][0]["id"]
 
         # 1. CREATE
@@ -359,8 +362,27 @@ class TestGraphQLDashboardMutation:
 
     def test_401_dashboard_mutations_without_token(self):
         mutations = [
-            'mutation { createDashboard(data: { displayOrder: 1, eventTypeId: 1, dashboardTypeId: 1, titleText: "test" }) { id } }',  # noqa
-            'mutation { updateDashboard(id: 1, data: { displayOrder: 1, eventTypeId: 1, dashboardTypeId: 1, titleText: "test" }) { id } }',  # noqa
+            """mutation {
+                   createDashboard(
+                       data: {
+                           displayOrder: 1,
+                           eventTypeId: 1,
+                           dashboardTypeId: 1,
+                           titleText: "test"
+                       }
+                   ) { id }
+               }""",
+            """mutation {
+                   updateDashboard(
+                       id: 1,
+                       data: {
+                           displayOrder: 1,
+                           eventTypeId: 1,
+                           dashboardTypeId: 1,
+                           titleText: "test"
+                       }
+                   ) { id }
+               }""",
             'mutation { deleteDashboard(id: 1) }',
         ]
         for mutation in mutations:

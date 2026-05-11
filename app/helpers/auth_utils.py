@@ -30,7 +30,8 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Получить пользователя по Access JWT."""
-    user: User | None = None  # noqa
+    user: User | None = None
+    _ = user
 
     try:
         # Сначала пытаемся найти пользователя по новому Access JWT
