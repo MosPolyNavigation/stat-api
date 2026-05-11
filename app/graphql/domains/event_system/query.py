@@ -94,7 +94,7 @@ DashboardTypeQuery = create_query_resource(
 @strawberry.type
 class AllowedPayloadRuleQuery:
     # 🔹 Используем наш кастомный декоратор пагинации
-    @strawberry.field()
+    @strawberry.field  # type: ignore[unresolved-reference]
     async def allowed_payload_rules(
             self,
             info: Info,
