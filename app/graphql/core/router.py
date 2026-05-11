@@ -9,7 +9,7 @@ from app.helpers.auth_utils import get_current_active_user
 from app.models import User
 from app.services.permission_service import PermissionService
 from app.services.user_logger_service import UserLoggerService
-from app.routes.graphql.logging import (
+from app.graphql.core.logging import (
     build_public_graphql_error_message,
     is_graphql_permission_error_message,
 )
