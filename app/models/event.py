@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, text as text_
 from sqlalchemy.orm import Mapped, relationship
 
 from app.models.base import Base
@@ -165,4 +166,134 @@ class AllowedPayload(Base):
     payload_type: Mapped["PayloadType"] = relationship(
         "PayloadType",
         back_populates="allowed_payloads",
+    )
+
+
+class DashboardType(Base):
+    __tablename__ = "dashboard_types"
+
+    id: int = Column(Integer, primary_key=True)
+    code_name: str = Column(String(20), unique=True, nullable=False)
+    description: str | None = Column(String(100), nullable=True)
+
+    dashboards: Mapped[list["Dashboard"]] = relationship(
+        "Dashboard",
+        back_populates="dashboard_type",
+    )
+
+
+class Dashboard(Base):
+    __tablename__ = "dashboards"
+
+    id: int = Column(Integer, primary_key=True)
+    display_order: int = Column(Integer, nullable=False)
+    event_type_id: int = Column(
+        ForeignKey("event_types.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    dashboard_type_id: int = Column(
+        ForeignKey("dashboard_types.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+    title_text: str = Column(String(100), nullable=False)
+
+    event_type: Mapped["EventType"] = relationship(
+        "EventType",
+        back_populates="dashboards",
+    )
+    dashboard_type: Mapped["DashboardType"] = relationship(
+        "DashboardType",
+        back_populates="dashboards",
+    )
+
+
+class Problem(Base):
+    """
+    Класс для хранения проблемы.
+
+    Этот класс представляет таблицу "problems" в базе данных.
+
+    Attributes:
+        id: Наименование проблемы.
+    """
+    __tablename__ = "problems"
+
+    id: str = Column(String(5), primary_key=True, index=True)
+
+
+class ReviewStatus(Base):
+    """Статус отзыва."""
+
+    __tablename__ = "review_statuses"
+
+    id: int = Column(Integer, primary_key=True, autoincrement=True)
+    name: str = Column(String(255), nullable=False, unique=True)
+
+    # Все отзывы с данным статусом
+    reviews: Mapped[list["Review"]] = relationship(
+        "Review",
+        back_populates="review_status",
+    )
+
+
+class Review(Base):
+    """
+    Класс для отзыва.
+
+    Этот класс представляет таблицу "reviews" в базе данных.
+
+    Attributes:
+        id: Идентификатор отзыва.
+        client_id: Идентификатор клиента из таблицы "client_ids".
+        text: Отзыв пользователя.
+        problem_id: Вид проблемы, с которой столкнулся пользователь.
+        image_name: Id изображения в директории статических объектов.
+        client: Связь с таблицей "client_ids".
+        problem: Связь с таблицей "problem".
+    """
+    __tablename__ = "reviews"
+
+    id: int = Column(
+        Integer,
+        primary_key=True,
+        index=True
+    )
+    client_id: int = Column(
+        ForeignKey("client_ids.id"),
+        nullable=False
+    )
+    text: str = Column(
+        Text,
+        nullable=False
+    )
+    problem_id: str = Column(
+        ForeignKey("problems.id"),
+        nullable=False
+    )
+    # FK на статус
+    review_status_id: int = Column(
+        ForeignKey("review_statuses.id"),
+        nullable=False,
+        server_default=text_("1"),  # по умолчанию бэклог
+    )
+    image_name: Optional[str] = Column(
+        String(255),
+        nullable=True
+    )
+    creation_date: datetime = Column(
+        DateTime,
+        default=datetime.now,
+        nullable=False
+    )
+
+    client: Mapped["ClientId"] = relationship(
+        "ClientId",
+        back_populates="reviews",
+    )
+    problem: Mapped["Problem"] = relationship()
+
+    # relation на статус
+    review_status: Mapped["ReviewStatus"] = relationship(
+        "ReviewStatus",
+        back_populates="reviews",
     )
