@@ -208,7 +208,7 @@ class AllowedPayloadRuleOrderByInput(BaseOrderByInput):
 
 
 @strawberry.input
-class ReviewStatusOrderByInput(BaseFilterInput):
+class ReviewStatusOrderByInput(BaseOrderByInput):
     id: Optional[OrderDir] = None
     name: Optional[OrderDir] = None
     then_by: Optional["ReviewStatusOrderByInput"] = None

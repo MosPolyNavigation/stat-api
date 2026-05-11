@@ -97,7 +97,7 @@ def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
         "review_status": SQLAlchemyLoader(session, ReviewStatus),
         "dashboard_type": SQLAlchemyLoader(session, DashboardType),
         "payloads_by_event_id": ForeignKeyLoader(session, Payload, "event_id"),
-        "reviews_by_status_id": ForeignKeyLoader(session, Review, "status_id"),
+        "reviews_by_status_id": ForeignKeyLoader(session, Review, "review_status_id"),
 
         # === navigation ===
         "nav_location": SQLAlchemyLoader(session, Location),
