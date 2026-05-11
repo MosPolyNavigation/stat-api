@@ -4,6 +4,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from typing import Annotated
+
+from app.constants import GOAL_RIGHTS
 from app.database import get_db
 from app.models.auth.user import User
 from app.helpers.token_utils import decode_access_token, normalize_token_error, validate_access_payload
@@ -17,6 +19,7 @@ async def get_user_by_access_token(token: str, db: AsyncSession) -> User | None:
     user_id = validate_access_payload(payload)
     return (await db.execute(select(User).filter(User.id == user_id))).scalar_one_or_none()
 
+
 # Получает пользователя по старому токену из БД
 async def get_user_by_legacy_token(token: str, db: AsyncSession) -> User | None:
     return (await db.execute(select(User).filter(User.token == token))).scalar_one_or_none()
@@ -27,7 +30,7 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ):
     """Получить пользователя по Access JWT."""
-    user: User | None = None
+    user: User | None = None  # noqa
 
     try:
         # Сначала пытаемся найти пользователя по новому Access JWT
@@ -100,3 +103,25 @@ async def get_current_active_user(
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Неактивный пользователь")
     return current_user
+
+
+def get_goal_rights_map() -> dict[int, list[int]]:
+    """
+    Формирует маппинг {goal_id: [right_ids]} из константы GOAL_RIGHTS.
+
+    Returns:
+        dict[int, list[int]]: маппинг целей к списку допустимых прав
+    """
+
+    result: dict[int, list[int]] = {}
+    for goal_id, right_id in GOAL_RIGHTS:
+        if goal_id not in result:
+            result[goal_id] = []
+        if right_id not in result[goal_id]:  # на случай дублей в константе
+            result[goal_id].append(right_id)
+
+    # Сортируем права по возрастанию для консистентности ответа
+    for goal_id in result:
+        result[goal_id].sort()
+
+    return result
