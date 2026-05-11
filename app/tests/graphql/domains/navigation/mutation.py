@@ -1,20 +1,12 @@
 """Integration tests for GraphQL Mutation operations in navigation domain."""
 import pytest  # noqa
-from app.tests.base import client
+from app.tests.graphql.base import graphql_query
 
 # =============================================================================
 # Конфигурация
 # =============================================================================
 ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
-
-
-def graphql_query(query: str, headers: dict = None, variables: dict = None):
-    return client.post(
-        "/api/graphql",
-        json={"query": query, "variables": variables or {}},
-        headers=headers or {},
-    )
 
 
 # =============================================================================
@@ -30,10 +22,11 @@ class TestGraphQLMutationsNavLocation:
             }) { id idSys name }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert r.status_code == 200
-        assert "errors" not in r.json()
-        loc = r.json()["data"]["createNavLocation"]
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)
+        assert r["status_code"] == 200
+        r = r["data"]
+        assert "errors" not in r
+        loc = r["data"]["createNavLocation"]
         assert loc["idSys"] == "test-loc"
         loc_id = loc["id"]
 
@@ -43,16 +36,16 @@ class TestGraphQLMutationsNavLocation:
             {{ id name }}
         }}
         """
-        r = graphql_query(update_q, ADMIN_HEADERS)
-        assert r.json()["data"]["updateNavLocation"]["name"] == "Updated Location"
+        r = graphql_query(update_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["updateNavLocation"]["name"] == "Updated Location"
 
         delete_q = f"mutation {{ deleteNavLocation(id: {loc_id}) }}"
-        r = graphql_query(delete_q, ADMIN_HEADERS)
-        assert r.json()["data"]["deleteNavLocation"] is True
+        r = graphql_query(delete_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["deleteNavLocation"] is True
 
         verify_q = f"{{ navLocation(id: {loc_id}) {{ id }} }}"
-        r = graphql_query(verify_q, ADMIN_HEADERS)
-        assert r.json()["data"]["navLocation"] is None
+        r = graphql_query(verify_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["navLocation"] is None
 
     def test_400_create_nav_location_validation(self):
         q = """
@@ -60,8 +53,8 @@ class TestGraphQLMutationsNavLocation:
             createNavLocation(data: { name: "No idSys" }) { id }
         }
         """
-        r = graphql_query(q, ADMIN_HEADERS)
-        assert "errors" in r.json()
+        r = graphql_query(q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" in r
 
 
 # =============================================================================
@@ -77,9 +70,9 @@ class TestGraphQLMutationsNavCampus:
             }) { id idSys name }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert "errors" not in r.json()
-        campus = r.json()["data"]["createNavCampus"]
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" not in r
+        campus = r["data"]["createNavCampus"]
         campus_id = campus["id"]
 
         update_q = f"""
@@ -88,12 +81,12 @@ class TestGraphQLMutationsNavCampus:
             {{ name }}
         }}
         """
-        r = graphql_query(update_q, ADMIN_HEADERS)
-        assert r.json()["data"]["updateNavCampus"]["name"] == "Updated Campus"
+        r = graphql_query(update_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["updateNavCampus"]["name"] == "Updated Campus"
 
         delete_q = f"mutation {{ deleteNavCampus(id: {campus_id}) }}"
-        r = graphql_query(delete_q, ADMIN_HEADERS)
-        assert r.json()["data"]["deleteNavCampus"] is True
+        r = graphql_query(delete_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["deleteNavCampus"] is True
 
 
 # =============================================================================
@@ -111,9 +104,9 @@ class TestGraphQLMutationsNavPlan:
             }) { id idSys entrances graph }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert "errors" not in r.json()
-        plan = r.json()["data"]["createNavPlan"]
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" not in r
+        plan = r["data"]["createNavPlan"]
         assert plan["entrances"] == "[1, 2]"
 
     def test_400_create_nav_plan_invalid_json(self):
@@ -125,10 +118,10 @@ class TestGraphQLMutationsNavPlan:
             }) { id }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert "errors" in r.json()
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" in r
         assert any("entrances" in e["message"].lower() and "json" in e["message"].lower()
-                   for e in r.json()["errors"])
+                   for e in r["errors"])
 
 
 # =============================================================================
@@ -144,9 +137,9 @@ class TestGraphQLMutationsNavAuditory:
             }) { id idSys name }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert "errors" not in r.json()
-        aud = r.json()["data"]["createNavAuditory"]
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" not in r
+        aud = r["data"]["createNavAuditory"]
         aud_id = aud["id"]
 
         update_q = f"""
@@ -155,12 +148,12 @@ class TestGraphQLMutationsNavAuditory:
             {{ name }}
         }}
         """
-        r = graphql_query(update_q, ADMIN_HEADERS)
-        assert r.json()["data"]["updateNavAuditory"]["name"] == "Updated Aud"
+        r = graphql_query(update_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["updateNavAuditory"]["name"] == "Updated Aud"
 
         delete_q = f"mutation {{ deleteNavAuditory(id: {aud_id}) }}"
-        r = graphql_query(delete_q, ADMIN_HEADERS)
-        assert r.json()["data"]["deleteNavAuditory"] is True
+        r = graphql_query(delete_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["deleteNavAuditory"] is True
 
 
 # =============================================================================
@@ -176,9 +169,9 @@ class TestGraphQLMutationsNavStatic:
             }) { id name path }
         }
         """
-        r = graphql_query(create_q, ADMIN_HEADERS)
-        assert "errors" not in r.json()
-        static = r.json()["data"]["createNavStatic"]
+        r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" not in r
+        static = r["data"]["createNavStatic"]
         static_id = static["id"]
 
         update_q = f"""
@@ -187,12 +180,12 @@ class TestGraphQLMutationsNavStatic:
             {{ name }}
         }}
         """
-        r = graphql_query(update_q, ADMIN_HEADERS)
-        assert r.json()["data"]["updateNavStatic"]["name"] == "updated.png"
+        r = graphql_query(update_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["updateNavStatic"]["name"] == "updated.png"
 
         delete_q = f"mutation {{ deleteNavStatic(id: {static_id}) }}"
-        r = graphql_query(delete_q, ADMIN_HEADERS)
-        assert r.json()["data"]["deleteNavStatic"] is True
+        r = graphql_query(delete_q, headers=ADMIN_HEADERS)["data"]
+        assert r["data"]["deleteNavStatic"] is True
 
 
 # =============================================================================
@@ -202,17 +195,17 @@ class TestGraphQLMutationsNavUnauthorized:
     def test_401_create_without_token(self):
         q = 'mutation { createNavLocation(data: { idSys: "x", name: "x", short: "x", ready: true, address: "x", metro: "x" }) { id } }'  # noqa
         r = graphql_query(q)
-        assert r.status_code == 401
+        assert r["status_code"] == 401
 
     def test_401_update_without_token(self):
         q = 'mutation { updateNavLocation(id: 1, data: { name: "hack" }) { id } }'
         r = graphql_query(q)
-        assert r.status_code == 401
+        assert r["status_code"] == 401
 
     def test_401_delete_without_token(self):
         q = 'mutation { deleteNavLocation(id: 1) }'
         r = graphql_query(q)
-        assert r.status_code == 401
+        assert r["status_code"] == 401
 
 
 # =============================================================================
@@ -225,9 +218,9 @@ class TestGraphQLMutationsNavEdgeCases:
             updateNavLocation(id: 999999, data: {{ name: "ghost" }}) {{ id }}
         }}
         """
-        r = graphql_query(q, ADMIN_HEADERS)
-        assert "errors" in r.json()
-        assert any("not found" in e["message"].lower() for e in r.json()["errors"])
+        r = graphql_query(q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" in r
+        assert any("not found" in e["message"].lower() for e in r["errors"])
 
     def test_200_create_without_fk_validation(self):
         """
@@ -241,6 +234,6 @@ class TestGraphQLMutationsNavEdgeCases:
             }) { id }
         }
         """
-        r = graphql_query(q, ADMIN_HEADERS)
-        assert "errors" not in r.json()
-        assert r.json()["data"]["createNavCampus"]["id"] is not None
+        r = graphql_query(q, headers=ADMIN_HEADERS)["data"]
+        assert "errors" not in r
+        assert r["data"]["createNavCampus"]["id"] is not None

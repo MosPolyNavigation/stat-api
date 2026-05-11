@@ -1,22 +1,13 @@
 """Integration tests for GraphQL Query operations in navigation domain."""
 import pytest  # noqa
 
-from app.tests.base import client
+from app.tests.graphql.base import graphql_query
 
 # =============================================================================
 # Конфигурация
 # =============================================================================
 ADMIN_TOKEN = "11e1a4b8-7fa7-4501-9faa-541a5e0ff1ed"
 ADMIN_HEADERS = {"Authorization": f"Bearer {ADMIN_TOKEN}"}
-
-
-def graphql_query(query: str, headers: dict = None, variables: dict = None):
-    """Хелпер для выполнения GraphQL-запросов через тестовый клиент."""
-    return client.post(
-        "/api/graphql",
-        json={"query": query, "variables": variables or {}},
-        headers=headers or {},
-    )
 
 
 # =============================================================================
@@ -35,9 +26,10 @@ class TestGraphQLNavigationBasic:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        data = resp.json()["data"]["navLocations"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        data = resp["data"]["navLocations"]
         assert isinstance(data["nodes"], list)
         assert len(data["nodes"]) >= 1  # есть сиды
         assert data["paginationInfo"]["totalCount"] >= 1
@@ -45,9 +37,10 @@ class TestGraphQLNavigationBasic:
     def test_200_nav_location_single_by_id(self):
         # ID из сидов
         query = '{ navLocation(id: 1) { id idSys name short address } }'
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        loc = resp.json()["data"]["navLocation"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        loc = resp["data"]["navLocation"]
         assert loc["id"] == 1
         assert loc["idSys"] == "AV"
         assert loc["name"] == "Автозаводская"
@@ -75,9 +68,10 @@ class TestGraphQLNavigationRelations:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        loc = resp.json()["data"]["navLocation"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        loc = resp["data"]["navLocation"]
         assert loc["id"] == 1
         campuses = loc["campuses"]
         assert len(campuses) >= 1
@@ -99,9 +93,10 @@ class TestGraphQLNavigationRelations:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        campus = resp.json()["data"]["navCampus"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        campus = resp["data"]["navCampus"]
         assert campus["location"]["name"] == "Автозаводская"
         assert len(campus["plans"]) >= 1
         assert campus["plans"][0]["floor"]["name"] == 1
@@ -128,9 +123,10 @@ class TestGraphQLNavigationRelations:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        plan = resp.json()["data"]["navPlan"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        plan = resp["data"]["navPlan"]
         assert plan["campus"]["location"]["name"] == "Автозаводская"
         assert plan["floor"]["name"] == 1
         assert len(plan["auditories"]) >= 1
@@ -153,9 +149,10 @@ class TestGraphQLNavigationRelations:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        aud = resp.json()["data"]["navAuditory"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        aud = resp["data"]["navAuditory"]
         assert aud["type"]["name"] == "Учебная аудитория"
         assert aud["plan"]["idSys"] == "test-plan-1"
         assert aud["photos"][0]["ext"] == "jpg"
@@ -175,9 +172,10 @@ class TestGraphQLNavigationFiltering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        nodes = resp.json()["data"]["navLocations"]["nodes"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        nodes = resp["data"]["navLocations"]["nodes"]
         assert all(n["idSys"] == "AV" for n in nodes)
 
     def test_200_nav_campuses_filter_by_ready_and_name(self):
@@ -193,9 +191,10 @@ class TestGraphQLNavigationFiltering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        nodes = resp.json()["data"]["navCampuses"]["nodes"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        nodes = resp["data"]["navCampuses"]["nodes"]
         assert all(n["ready"] is True for n in nodes)
         assert all("Тест" in n["name"] for n in nodes)
 
@@ -212,9 +211,10 @@ class TestGraphQLNavigationFiltering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        nodes = resp.json()["data"]["navAuditories"]["nodes"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        nodes = resp["data"]["navAuditories"]["nodes"]
         assert all(n["planId"] == 1 and n["typeId"] == 1 for n in nodes)
 
     def test_200_nav_photos_filter_by_aud_id_and_ext(self):
@@ -227,9 +227,10 @@ class TestGraphQLNavigationFiltering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        nodes = resp.json()["data"]["navAuditoryPhotos"]["nodes"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        nodes = resp["data"]["navAuditoryPhotos"]["nodes"]
         assert all(n["ext"] == "jpg" for n in nodes)
 
 
@@ -247,9 +248,10 @@ class TestGraphQLNavigationOrdering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        names = [n["name"] for n in resp.json()["data"]["navLocations"]["nodes"]]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        names = [n["name"] for n in resp["data"]["navLocations"]["nodes"]]
         assert names == sorted(names)
 
     def test_200_nav_campuses_order_by_name_desc(self):
@@ -260,9 +262,10 @@ class TestGraphQLNavigationOrdering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        names = [n["name"] for n in resp.json()["data"]["navCampuses"]["nodes"]]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        names = [n["name"] for n in resp["data"]["navCampuses"]["nodes"]]
         assert names == sorted(names, reverse=True)
 
     def test_200_nav_auditories_order_by_id_then_name(self):
@@ -273,9 +276,10 @@ class TestGraphQLNavigationOrdering:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        nodes = resp.json()["data"]["navAuditories"]["nodes"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        nodes = resp["data"]["navAuditories"]["nodes"]
         # Проверяем, что по id отсортировано (thenBy не сработает при уникальных id)
         ids = [n["id"] for n in nodes]
         assert ids == sorted(ids)
@@ -297,9 +301,10 @@ class TestGraphQLNavigationPagination:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        data = resp.json()["data"]["navLocations"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        data = resp["data"]["navLocations"]
         assert len(data["nodes"]) == 1
         assert data["paginationInfo"]["currentPage"] == 1
         assert data["pageInfo"]["hasNextPage"] is False  # всего 1 локация в сидах
@@ -327,8 +332,8 @@ class TestGraphQLNavigationPagination:
                 }
             }
             """
-            r1 = graphql_query(q1, ADMIN_HEADERS)
-            p1 = r1.json()["data"]["navCampuses"]
+            r1 = graphql_query(q1, headers=ADMIN_HEADERS)["data"]
+            p1 = r1["data"]["navCampuses"]
             ids1 = {n["id"] for n in p1["nodes"]}
 
             # Страница 2
@@ -340,8 +345,8 @@ class TestGraphQLNavigationPagination:
                 }
             }
             """
-            r2 = graphql_query(q2, ADMIN_HEADERS)
-            p2 = r2.json()["data"]["navCampuses"]
+            r2 = graphql_query(q2, headers=ADMIN_HEADERS)["data"]
+            p2 = r2["data"]["navCampuses"]
             ids2 = {n["id"] for n in p2["nodes"]}
 
             # IDs не должны пересекаться
@@ -350,7 +355,7 @@ class TestGraphQLNavigationPagination:
         finally:
             # Cleanup
             for i in range(2, 6):
-                graphql_query(f"mutation {{ deleteNavCampus(id: {i}) }}", ADMIN_HEADERS)
+                graphql_query(f"mutation {{ deleteNavCampus(id: {i}) }}", headers=ADMIN_HEADERS)
 
 
 # =============================================================================
@@ -362,12 +367,12 @@ class TestGraphQLNavigationUnauthorized:
     def test_401_nav_locations_without_token(self):
         query = "{ navLocations(pagination: { pageSize: 1 }) { nodes { id } } }"
         resp = graphql_query(query)
-        assert resp.status_code == 401
+        assert resp["status_code"] == 401
 
     def test_401_nav_auditory_single_without_token(self):
         query = "{ navAuditory(id: 1) { id } }"
         resp = graphql_query(query)
-        assert resp.status_code == 401
+        assert resp["status_code"] == 401
 
 
 # =============================================================================
@@ -378,9 +383,10 @@ class TestGraphQLNavigationEdgeCases:
 
     def test_404_nav_location_non_existent_id(self):
         query = "{ navLocation(id: 999999) { id } }"
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        assert resp.json()["data"]["navLocation"] is None
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        assert resp["data"]["navLocation"] is None
 
     def test_200_empty_filter_result(self):
         query = """
@@ -391,9 +397,10 @@ class TestGraphQLNavigationEdgeCases:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        data = resp.json()["data"]["navAuditories"]
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        data = resp["data"]["navAuditories"]
         assert len(data["nodes"]) == 0
         assert data["paginationInfo"]["totalCount"] == 0
 
@@ -407,6 +414,7 @@ class TestGraphQLNavigationEdgeCases:
             }
         }
         """
-        resp = graphql_query(query, ADMIN_HEADERS)
-        assert resp.status_code == 200
-        assert resp.json()["data"]["navPlan"]["svg"] is None
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        resp = resp["data"]
+        assert resp["data"]["navPlan"]["svg"] is None
