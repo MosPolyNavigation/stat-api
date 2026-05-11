@@ -1,3 +1,5 @@
+import uuid
+
 from app.tests.base import client
 
 GRAPHQL_ENDPOINT = "/api/graphql"
@@ -38,3 +40,8 @@ def assert_graphql_error(response: dict, error_substring: str):
     error_message = response["data"]["errors"][0]["message"].lower()
     assert error_substring.lower() in error_message
     return response["data"]["errors"][0]
+
+
+def unique_login(base="testuser"):
+    """Генерирует уникальный логин для изоляции тестов"""
+    return f"{base}_{uuid.uuid4().hex[:8]}"
