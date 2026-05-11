@@ -673,3 +673,78 @@ class TestGraphQLDashboardQuery:
         dash = resp["data"]["dashboard"]
         assert dash["id"] == dash_id
         assert "titleText" in dash
+
+
+# =============================================================================
+# Тесты для ReviewStatus (справочник статусов)
+# =============================================================================
+class TestReviewStatusQueries:
+    """Тесты для GraphQL query операций со статусами отзывов."""
+
+    def test_200_review_statuses_success(self):
+        """Успешное получение списка статусов."""
+        query = """
+        {
+            reviewStatuses(pagination: { page: 1, pageSize: 10 }) {
+                nodes { id name }
+                paginationInfo { totalCount }
+            }
+        }
+        """
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        data = resp["data"]["data"]["reviewStatuses"]
+        assert isinstance(data["nodes"], list)
+        assert data["paginationInfo"]["totalCount"] > 0
+
+    def test_200_review_status_single_by_id(self):
+        """Получение одного статуса по ID."""
+        query = """
+        {
+            reviewStatus(id: 1) { id name }
+        }
+        """
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        status = resp["data"]["data"]["reviewStatus"]
+        assert status is not None
+        assert "id" in status
+        assert "name" in status
+
+    def test_200_review_status_nested_reviews(self):
+        """Проверка вложенного поля reviews."""
+        query = """
+        {
+            reviewStatus(id: 1) {
+                id
+                name
+                reviews(first: 2) {
+                    id
+                    text
+                }
+            }
+        }
+        """
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        assert resp["status_code"] == 200
+        status = resp["data"]["data"]["reviewStatus"]
+        assert status is not None
+        # Проверяем, что массив reviews вернулся (даже если пустой)
+        assert "reviews" in status
+        assert isinstance(status["reviews"], list)
+
+    def test_200_review_status_ordering(self):
+        """Проверка сортировки статусов по имени."""
+        query = """
+        {
+            reviewStatuses(orderBy: { name: ASC }) {
+                nodes { id name }
+            }
+        }
+        """
+        resp = graphql_query(query, headers=ADMIN_HEADERS)
+        print(resp)
+        assert resp["status_code"] == 200
+        nodes = resp["data"]["data"]["reviewStatuses"]["nodes"]
+        names = [n["name"] for n in nodes]
+        assert names == sorted(names)
