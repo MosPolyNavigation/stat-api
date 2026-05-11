@@ -526,8 +526,8 @@ class TestRightQueries:
         assert "pageInfo" in result
         assert "paginationInfo" in result
         assert isinstance(result["nodes"], list)
-        assert len(result["nodes"]) == 4
-        assert result["paginationInfo"]["totalCount"] == 4
+        assert len(result["nodes"]) == 5
+        assert result["paginationInfo"]["totalCount"] == 5
 
     def test_rights_query_with_filter_id(self):
         """Фильтрация прав по id"""
