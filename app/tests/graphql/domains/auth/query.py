@@ -1,4 +1,5 @@
 """Тесты для GraphQL Query операций с целями (Goal) в домене auth."""
+import pytest
 import uuid
 
 from app.tests.base import client
@@ -844,7 +845,7 @@ class TestRoleRightGoalQueries:
             createUser(data: $data) { id login }
         }
         """
-        r = graphql_query(
+        graphql_query(
             create_user_query,
             variables={"data": {"login": test_login, "password": "pass1234", "isActive": True}},
             headers=ADMIN_HEADERS,
@@ -1120,7 +1121,7 @@ class TestUserRoleQueries:
             grantRole(data: $data)
         }
         """
-        r = graphql_query(
+        graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
             headers=ADMIN_HEADERS
@@ -1545,12 +1546,11 @@ class TestUserQueries:
             }
         }
         """
-        create_response = graphql_query(
+        graphql_query(
             create_query,
             variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
             headers=ADMIN_HEADERS
         )
-        user_id = create_response["data"]["data"]["createUser"]["id"]
 
         # Получаем токен пользователя
         token_response = client.post(
@@ -1574,3 +1574,241 @@ class TestUserQueries:
 
         response = graphql_query(query, headers=user_headers)
         assert_graphql_error(response, "недостаточно прав")
+
+
+class TestRefreshTokenQueries:
+    """Тесты для GraphQL query операций с refresh токенами"""
+
+    def test_refresh_tokens_query_success(self):
+        """Успешное получение списка refresh токенов с пагинацией"""
+        query = """
+        query GetRefreshTokens($pagination: PaginationInput, $filter: RefreshTokenFilterInput) {
+            refreshTokens(pagination: $pagination, filter: $filter) {
+                nodes {
+                    id
+                    userId
+                    jti
+                    expDate
+                    browser
+                    userIp
+                    revoked
+                    createdAt
+                }
+                pageInfo { hasPreviousPage hasNextPage startCursor endCursor }
+                paginationInfo { totalCount currentPage totalPages }
+            }
+        }
+        """
+        response = graphql_query(
+            query,
+            variables={"pagination": {"page": 1, "pageSize": 10}, "filter": None},
+            headers=ADMIN_HEADERS,
+        )
+        result = assert_graphql_success(response, "refreshTokens")
+        assert "nodes" in result
+        assert "pageInfo" in result
+        assert "paginationInfo" in result
+        assert isinstance(result["nodes"], list)
+        assert result["paginationInfo"]["totalCount"] >= 0
+
+    def test_refresh_tokens_query_with_filter_user_id(self):
+        """Фильтрация токенов по userId"""
+        # Создаём пользователя и логинимся, чтобы гарантированно сгенерировать токен
+        test_login = f"rt_user_{uuid.uuid4().hex[:8]}"
+        create_q = """
+        mutation CreateUser($data: CreateUserInput!) { createUser(data: $data) { id } }
+        """
+        create_resp = graphql_query(
+            create_q,
+            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
+            headers=ADMIN_HEADERS,
+        )
+        user_id = create_resp["data"]["data"]["createUser"]["id"]
+
+        # Генерируем refresh token через REST login
+        client.post("/api/auth/token", data={"username": test_login, "password": "pass123", "scope": "long"})
+
+        query = """
+        query GetRefreshTokens($filter: RefreshTokenFilterInput) {
+            refreshTokens(filter: $filter) { nodes { id userId jti revoked } }
+        }
+        """
+        response = graphql_query(
+            query,
+            variables={"filter": {"userId": {"eq": user_id}}},
+            headers=ADMIN_HEADERS,
+        )
+        result = assert_graphql_success(response, "refreshTokens")
+        assert len(result["nodes"]) > 0
+        assert all(rt["userId"] == user_id for rt in result["nodes"])
+
+    def test_refresh_tokens_query_with_filter_revoked(self):
+        """Фильтрация токенов по статусу отзыва"""
+        query = """
+        query GetRefreshTokens($filter: RefreshTokenFilterInput) {
+            refreshTokens(filter: $filter) { nodes { id revoked } }
+        }
+        """
+        # Активные токены
+        response = graphql_query(
+            query,
+            variables={"filter": {"revoked": {"eq": False}}},
+            headers=ADMIN_HEADERS,
+        )
+        result = assert_graphql_success(response, "refreshTokens")
+        assert all(rt["revoked"] is False for rt in result["nodes"])
+
+    def test_refresh_tokens_query_pagination(self):
+        """Проверка пагинации refresh токенов"""
+        query = """
+        query GetRefreshTokens($pagination: PaginationInput) {
+            refreshTokens(pagination: $pagination) {
+                nodes { id jti }
+                pageInfo { hasPreviousPage hasNextPage }
+                paginationInfo { totalCount currentPage totalPages }
+            }
+        }
+        """
+        resp1 = graphql_query(
+            query, variables={"pagination": {"page": 1, "pageSize": 5}}, headers=ADMIN_HEADERS
+        )
+        res1 = assert_graphql_success(resp1, "refreshTokens")
+
+        resp2 = graphql_query(
+            query, variables={"pagination": {"page": 2, "pageSize": 5}}, headers=ADMIN_HEADERS
+        )
+        res2 = assert_graphql_success(resp2, "refreshTokens")
+
+        assert res1["pageInfo"]["hasPreviousPage"] is False
+        if res1["nodes"] and res2["nodes"]:
+            ids1 = {n["id"] for n in res1["nodes"]}
+            ids2 = {n["id"] for n in res2["nodes"]}
+            assert ids1.isdisjoint(ids2), "Страницы не должны пересекаться"
+
+    def test_refresh_token_single_by_id(self):
+        """Получение одного refresh токена по ID"""
+        list_q = """
+        query GetRefreshTokens {
+            refreshTokens(pagination: {page: 1, pageSize: 1}) { nodes { id userId } }
+        }
+        """
+        list_resp = graphql_query(list_q, headers=ADMIN_HEADERS)
+        nodes = list_resp["data"]["data"]["refreshTokens"]["nodes"]
+        if not nodes:
+            pytest.skip("No refresh tokens found in DB")
+
+        token_id = nodes[0]["id"]
+        query = """
+        query GetRefreshToken($id: Int!) {
+            refreshToken(id: $id) { id userId jti expDate revoked createdAt }
+        }
+        """
+        resp = graphql_query(
+            query, variables={"id": token_id}, headers=ADMIN_HEADERS
+        )
+        result = assert_graphql_success(resp, "refreshToken")
+        assert result["id"] == token_id
+
+    def test_refresh_token_single_not_found(self):
+        """Запрос несуществующего refresh токена"""
+        query = """
+        query GetRefreshToken($id: Int!) {
+            refreshToken(id: $id) { id }
+        }
+        """
+        resp = graphql_query(
+            query, variables={"id": 999999}, headers=ADMIN_HEADERS
+        )
+        assert resp["status_code"] == 200
+        assert resp["data"]["data"]["refreshToken"] is None
+
+    def test_refresh_tokens_query_no_permission(self):
+        """Ошибка при отсутствии прав на просмотр refresh токенов"""
+        test_login = f"noperms_rt_{uuid.uuid4().hex[:8]}"
+        create_q = """
+        mutation CreateUser($data: CreateUserInput!) { createUser(data: $data) { id login } }
+        """
+        graphql_query(
+            create_q,
+            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
+            headers=ADMIN_HEADERS,
+        )
+        token_resp = client.post("/api/auth/token", data={"username": test_login, "password": "pass123"})
+        user_headers = {"Authorization": f"Bearer {token_resp.json()['access_token']}"}
+
+        query = """
+        query GetRefreshTokens {
+            refreshTokens(pagination: {page: 1, pageSize: 10}) { nodes { id } }
+        }
+        """
+        resp = graphql_query(query, headers=user_headers)
+        assert_graphql_error(resp, "недостаточно прав")
+
+    def test_refresh_tokens_query_with_nested_user(self):
+        """Проверка разрешения вложенного поля user"""
+        query = """
+        query GetRefreshTokens($pagination: PaginationInput) {
+            refreshTokens(pagination: $pagination) {
+                nodes {
+                    id
+                    userId
+                    user { id login }
+                }
+            }
+        }
+        """
+        resp = graphql_query(
+            query, variables={"pagination": {"page": 1, "pageSize": 5}}, headers=ADMIN_HEADERS
+        )
+        result = assert_graphql_success(resp, "refreshTokens")
+        assert len(result["nodes"]) > 0
+        for rt in result["nodes"]:
+            assert rt["user"] is not None
+            assert "login" in rt["user"]
+            assert rt["user"]["id"] == rt["userId"]
+
+    def test_refresh_tokens_query_order_by_created_at_desc(self):
+        """Проверка сортировки токенов по дате создания (DESC)"""
+        query = """
+        query GetRefreshTokens($orderBy: RefreshTokenOrderByInput, $pagination: PaginationInput) {
+            refreshTokens(orderBy: $orderBy, pagination: $pagination) {
+                nodes { id createdAt }
+            }
+        }
+        """
+        resp = graphql_query(
+            query,
+            variables={"orderBy": {"createdAt": "DESC"}, "pagination": {"page": 1, "pageSize": 20}},
+            headers=ADMIN_HEADERS,
+        )
+        result = assert_graphql_success(resp, "refreshTokens")
+        dates = [rt["createdAt"] for rt in result["nodes"]]
+        assert dates == sorted(dates, reverse=True)
+
+    def test_refresh_tokens_query_filter_by_jti(self):
+        """Фильтрация токенов по jti (строковый фильтр)"""
+        # Получаем первый токен, чтобы взять его jti
+        list_q = """
+        query GetRefreshTokens {
+            refreshTokens(pagination: {page: 1, pageSize: 1}) { nodes { jti } }
+        }
+        """
+        list_resp = graphql_query(list_q, headers=ADMIN_HEADERS)
+        nodes = list_resp["data"]["data"]["refreshTokens"]["nodes"]
+        if not nodes:
+            pytest.skip("No refresh tokens to filter by jti")
+
+        target_jti = nodes[0]["jti"]
+        query = """
+        query GetRefreshTokens($filter: RefreshTokenFilterInput) {
+            refreshTokens(filter: $filter) { nodes { id jti } }
+        }
+        """
+        resp = graphql_query(
+            query,
+            variables={"filter": {"jti": {"eq": target_jti}}},
+            headers=ADMIN_HEADERS,
+        )
+        result = assert_graphql_success(resp, "refreshTokens")
+        assert len(result["nodes"]) == 1
+        assert result["nodes"][0]["jti"] == target_jti

@@ -69,8 +69,6 @@ async def issue_refresh_token(
     set_refresh_cookie(response, request, refresh_token)
 
 
-
-
 def register_endpoint(router: APIRouter):
     """Эндпоинт для аутентификации и выдачи токена пользователя"""
 

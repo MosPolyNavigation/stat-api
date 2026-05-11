@@ -1,5 +1,5 @@
 """Тесты для GraphQL Mutation операций с ролями (Role) в домене auth."""
-import pytest
+import pytest  # noqa
 import uuid
 
 from app.tests.base import client
@@ -736,7 +736,7 @@ class TestCreateUserMutation:
             }
         }
         """
-        create_response = graphql_query(
+        graphql_query(
             create_query,
             variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
             headers=ADMIN_HEADERS
@@ -950,7 +950,7 @@ class TestUpdateUserMutation:
             }
         }
         """
-        create_response = graphql_query(
+        graphql_query(
             create_query,
             variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
             headers=ADMIN_HEADERS
@@ -1368,7 +1368,6 @@ class TestUserRolesRelationship:
             variables={"userId": user_id},
             headers=ADMIN_HEADERS
         )
-        print(user_response)
 
         user_result = assert_graphql_success(user_response, "user")
         assert user_result["userRoles"] is not None

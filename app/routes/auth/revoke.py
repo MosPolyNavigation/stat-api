@@ -10,7 +10,6 @@ from app.services.refresh_token_service import RefreshTokenService
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
 
-
 def register_endpoint(router: APIRouter):
     @router.post(
         "/revoke",
