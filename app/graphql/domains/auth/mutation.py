@@ -61,10 +61,12 @@ class UserMutation:
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def update_user(self, info: Info, id: int, data: UpdateUserInput) -> UserType:
-        await require_permissions(info, P.USERS_EDIT)
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
         logger = info.context.user_logger
+
+        if current_user.id != id:
+            await require_permissions(info, P.USERS_EDIT)
 
         user = await ctx.db.get(User, id)
         if not user:

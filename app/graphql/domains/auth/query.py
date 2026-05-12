@@ -3,6 +3,7 @@ import strawberry
 from strawberry import Info
 from sqlalchemy import select
 
+from app.graphql.core.logging import GraphQLLoggingExtension
 from app.graphql.core.pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
 from app.graphql.core.filters import apply_filters
 from app.graphql.core.ordering import apply_order_by
@@ -11,32 +12,28 @@ from app.graphql.core.permissions import require_permissions, P
 from app.graphql.core.context import GraphQLContext
 
 from app.graphql.domains.auth.resources import (
-    UserResource, RoleResource, RightResource, GoalResource,
+    RoleResource, RightResource, GoalResource,
     RefreshTokenResource, UserLogResource
 )
 from app.graphql.domains.auth.types import (
     UserRole as UserRoleType,
     RoleRightGoal as RoleRightGoalType,
+    User as UserType,
     _user_role_from_model,
-    _role_right_goal_from_model
+    _role_right_goal_from_model,
+    _user_from_model
 )
 from app.graphql.domains.auth.inputs import (
     UserRoleFilterInput,
     UserRoleOrderByInput,
     RoleRightGoalFilterInput,
-    RoleRightGoalOrderByInput
+    RoleRightGoalOrderByInput, UserFilterInput, UserOrderByInput
 )
-from app.models import UserRole, RoleRightGoal
+from app.models import UserRole, RoleRightGoal, User
 
 # =============================================================================
 # Фабричные запросы
 # =============================================================================
-UserQuery = create_query_resource(
-    UserResource,
-    name_list="users",
-    name_get="user"
-)
-
 RoleQuery = create_query_resource(
     RoleResource,
     name_list="roles",
@@ -72,8 +69,54 @@ UserLogQuery = create_query_resource(
 # Кастомные запросы для Join-таблиц
 # =============================================================================
 @strawberry.type
+class UserQuery:
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
+    async def user(
+        self,
+        info: Info,
+        id: int
+    ) -> Optional[UserType]:
+        ctx: GraphQLContext = info.context
+        current_user = info.context.current_user
+        if current_user.id != id:
+            await require_permissions(info, P.USERS_VIEW)
+
+        stmt = select(User).where(User.id == id)
+        model = (await ctx.db.execute(stmt)).scalar_one_or_none()
+
+        return _user_from_model(model) if model else None
+
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
+    async def users(
+        self,
+        info: Info,
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[UserFilterInput] = None,
+        order_by: Optional[UserOrderByInput] = None,
+    ) -> Connection[UserType]:
+        await require_permissions(info, P.USERS_VIEW)
+        ctx: GraphQLContext = info.context
+
+        stmt = select(User)
+        if filter:
+            stmt = apply_filters(stmt, User, filter)
+        if order_by:
+            stmt = apply_order_by(stmt, User, order_by)
+
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+
+        return await paginate_query(
+            session=ctx.db,
+            stmt=stmt,
+            pagination=pagination,
+            convert=_user_from_model,
+        )
+
+
+@strawberry.type
 class UserRoleQuery:
-    @strawberry.field()
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
     async def user_roles(
         self,
         info: Info,
@@ -100,7 +143,7 @@ class UserRoleQuery:
             convert=_user_role_from_model,
         )
 
-    @strawberry.field()
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
     async def user_role(self, info: Info, user_id: int, role_id: int) -> Optional[UserRoleType]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
@@ -113,7 +156,7 @@ class UserRoleQuery:
 
 @strawberry.type
 class RoleRightGoalQuery:
-    @strawberry.field()
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
     async def role_right_goals(
             self,
             info: Info,
@@ -140,7 +183,7 @@ class RoleRightGoalQuery:
             convert=_role_right_goal_from_model,
         )
 
-    @strawberry.field()
+    @strawberry.field(extensions=[GraphQLLoggingExtension()])
     async def role_right_goal(
         self, info: Info, role_id: int, right_id: int, goal_id: int
     ) -> Optional[RoleRightGoalType]:
