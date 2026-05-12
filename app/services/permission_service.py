@@ -24,6 +24,19 @@ class PermissionService:
         required = {(action_id, resource_id) for action_id in action_ids}
         return required.issubset(perms)
 
+    async def get_user_permissions_with_grant(
+            self, user_id: int
+    ) -> set[tuple[int, int, bool]]:
+        """
+        Возвращает множество кортежей вида (right_id, goal_id, can_grant),
+        где can_grant указывает, может ли пользователь делегировать данное право.
+        """
+        permissions, grantable = await self._get_cached_permissions(user_id)
+        return {
+            (right_id, goal_id, (right_id, goal_id) in grantable)
+            for right_id, goal_id in permissions
+        }
+
     async def _get_cached_permissions(
         self,
         user_id: int,

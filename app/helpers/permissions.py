@@ -5,6 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
 from app.models import User
 from app.helpers.auth_utils import get_current_active_user
+from app.schemas.user import PermissionGrantInfo
 from app.services.permission_service import PermissionService
 from app.constants import RIGHTS_BY_ID, GOALS_BY_ID
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
@@ -17,6 +18,24 @@ def group_rights_by_goals(rights_goals: set[tuple[int, int]]) -> dict[str, list[
         right_name = RIGHTS_BY_ID.get(right_id)
         rights_by_goals[goal_name].append(right_name)
     return dict(rights_by_goals)
+
+
+def group_rights_by_goals_with_grant(
+        permissions: set[tuple[int, int, bool]]
+) -> dict[str, list[PermissionGrantInfo]]:
+    grouped: dict[str, list[PermissionGrantInfo]] = {}
+
+    for right_id, goal_id, can_grant in permissions:
+        goal_name = GOALS_BY_ID.get(goal_id)
+        right_name = RIGHTS_BY_ID.get(right_id)
+
+        # Добавляем только если оба идентификатора успешно разрешены
+        if goal_name is not None and right_name is not None:
+            grouped.setdefault(goal_name, []).append(
+                PermissionGrantInfo(right=right_name, can_grant=can_grant)
+            )
+
+    return grouped
 
 
 def require_rights(goal_name: str, *rights: str):
@@ -88,4 +107,3 @@ def require_rights_with_logging(goal_name: str, *rights: str, error_text: str):
             )
         return current_user
     return check_rights
-

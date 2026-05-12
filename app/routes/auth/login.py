@@ -8,7 +8,7 @@ from pydantic import BaseModel
 from app.database import get_db
 from app.models import User, RefreshToken
 from app.helpers.auth_utils import get_current_active_user
-from app.helpers.permissions import group_rights_by_goals
+from app.helpers.permissions import group_rights_by_goals_with_grant
 from app.schemas import UserOut
 from app.services.permission_service import PermissionService
 from app.helpers.token_utils import (
@@ -134,13 +134,14 @@ def register_endpoint(router: APIRouter):
         await db.refresh(current_user)
         service: PermissionService = PermissionService(db)
 
+        perms_with_grant = await service.get_user_permissions_with_grant(current_user.id)
         result = UserOut(
             id=current_user.id,
             login=current_user.login,
-            is_active=current_user.is_active
+            is_active=current_user.is_active,
+            rights_by_goals=group_rights_by_goals_with_grant(perms_with_grant)
         )
-        rights_goals = await service.get_user_permissions(current_user.id)
-        result.rights_by_goals = group_rights_by_goals(rights_goals)
+
         logger.log(current_user, "Запрос сведений о пользователе")
         return result
 
