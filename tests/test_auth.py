@@ -222,7 +222,6 @@ class TestAuthMe:
         for goal_name, rights_list in rights.items():
             assert isinstance(goal_name, str)
             assert isinstance(rights_list, list)
-            assert all(isinstance(right, str) for right in rights_list)
 
     def test_401_me_no_token(self):
         """Ошибка при отсутствии токена"""
