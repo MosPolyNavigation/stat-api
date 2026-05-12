@@ -1,5 +1,27 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app import schemas, models
+from app.schemas.old_events import UserId
+
+
+# TODO: Удалить, как фронты перейдут на новую схему событий
+async def create_user_id(db: AsyncSession) -> UserId:
+    """
+    Функция для создания уникального идентификатора пользователя.
+
+    Эта функция создает уникальный идентификатор пользователя
+    и добавляет его в базу данных.
+
+    Args:
+        db: Сессия базы данных.
+
+    Returns:
+        Созданный уникальный идентификатор пользователя.
+    """
+    client = await create_client_id(db)
+    return UserId(
+        user_id=client.ident,
+        creation_date=client.creation_date,
+    )
 
 
 async def create_client_id(db: AsyncSession) -> schemas.ClientIdentResponse:

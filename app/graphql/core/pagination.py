@@ -52,7 +52,7 @@ async def paginate_query(
         convert: Callable[[Any], T] = lambda x: x,
 ) -> Connection[T]:
     page = max(1, pagination.page)
-    page_size = max(1, min(100, pagination.page_size))
+    page_size = max(1, min(200, pagination.page_size))
     offset = (page - 1) * page_size
 
     count_stmt = select(func.count()).select_from(stmt.subquery())

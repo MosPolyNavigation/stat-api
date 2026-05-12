@@ -127,7 +127,7 @@ class NavLocation:
         info: strawberry.Info,
         first: int = 10
     ) -> List["NavCampus"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         nc_models = await ctx.loaders["nav_campus_by_loc_id"].load(self.id)
         return [_campus_from_model(nc_model) for nc_model in nc_models[:limit]]
@@ -155,7 +155,7 @@ class NavCampus:
         info: strawberry.Info,
         first: int = 10
     ) -> List["NavPlan"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         np_models = await ctx.loaders["nav_plan_by_cor_id"].load(self.id)
         return [_plan_from_model(np_model) for np_model in np_models[:limit]]
@@ -214,7 +214,7 @@ class NavPlan:
         info: strawberry.Info,
         first: int = 10
     ) -> List["NavAuditory"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         na_models = await ctx.loaders["nav_auditory_by_plan_id"].load(self.id)
         return [_auditory_from_model(na_model) for na_model in na_models[:limit]]
@@ -251,7 +251,7 @@ class NavAuditory:
         info: strawberry.Info,
         first: int = 10
     ) -> List["NavAuditoryPhoto"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         nap_models = await ctx.loaders["nav_photos_by_aud_id"].load(self.id)
         return [_aud_photo_from_model(nap_model) for nap_model in nap_models[:limit]]

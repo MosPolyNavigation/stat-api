@@ -37,23 +37,6 @@ from app.graphql.domains.auth.inputs import (
     UserLogOrderByInput
 )
 
-UserResource = ResourceConfig(
-    model=UserModel,
-    graphql_type=UserType,
-    filter_input=UserFilterInput,
-    order_by_input=UserOrderByInput,
-    convert=_user_from_model,
-    cursor_field="id",
-    permissions=ResourcePermissions(
-        view=P.USERS_VIEW,
-        create=P.USERS_CREATE,
-        edit=P.USERS_EDIT,
-        delete=P.USERS_DELETE
-    ),
-    enable_logging=True,
-    enable_logging_list=False
-)
-
 RoleResource = ResourceConfig(
     model=RoleModel,
     graphql_type=RoleType,
