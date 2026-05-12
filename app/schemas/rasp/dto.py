@@ -30,8 +30,10 @@ class GroupDto(BaseModel):
     evening: int
     comment: str
 
+
 type LessonDto = list[VarietyDto]
 type DayDto = dict[str, LessonDto]
+
 
 class Dto(BaseModel):
     status: str

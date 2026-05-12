@@ -1,7 +1,9 @@
+from pathlib import Path
+from typing import cast
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 from starlette.exceptions import HTTPException
-from pathlib import Path
+
 
 class SPAStaticFiles(StaticFiles):
     def __init__(self, directory: str, html: bool):
@@ -14,7 +16,7 @@ class SPAStaticFiles(StaticFiles):
         except HTTPException as ex:
             print(ex)
             if ex.status_code == 404:
-                full_path = Path(self.directory) / self.index_file
+                full_path = Path(cast(str, self.directory)) / self.index_file
                 if full_path.exists():
                     return FileResponse(full_path)
             raise ex

@@ -1,10 +1,41 @@
-from sqlalchemy import Select
 from typing import Annotated
+from collections import defaultdict
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models import User, Goal
+from app.models import User
 from app.helpers.auth_utils import get_current_active_user
+from app.schemas.user import PermissionGrantInfo
+from app.services.permission_service import PermissionService
+from app.constants import RIGHTS_BY_ID, GOALS_BY_ID
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
+
+
+def group_rights_by_goals(rights_goals: set[tuple[int, int]]) -> dict[str, list[str]]:
+    rights_by_goals = defaultdict(list)
+    for right_id, goal_id in rights_goals:
+        goal_name = GOALS_BY_ID.get(goal_id)
+        right_name = RIGHTS_BY_ID.get(right_id)
+        rights_by_goals[goal_name].append(right_name)
+    return dict(rights_by_goals)
+
+
+def group_rights_by_goals_with_grant(
+        permissions: set[tuple[int, int, bool]]
+) -> dict[str, list[PermissionGrantInfo]]:
+    grouped: dict[str, list[PermissionGrantInfo]] = {}
+
+    for right_id, goal_id, can_grant in permissions:
+        goal_name = GOALS_BY_ID.get(goal_id)
+        right_name = RIGHTS_BY_ID.get(right_id)
+
+        # Добавляем только если оба идентификатора успешно разрешены
+        if goal_name is not None and right_name is not None:
+            grouped.setdefault(goal_name, []).append(
+                PermissionGrantInfo(right=right_name, can_grant=can_grant)
+            )
+
+    return grouped
 
 
 def require_rights(goal_name: str, *rights: str):
@@ -21,25 +52,15 @@ def require_rights(goal_name: str, *rights: str):
         db: AsyncSession = Depends(get_db),
     ):
         # Находим цель по имени
-        goal = (await db.execute(Select(Goal).filter(Goal.name == goal_name))).scalar_one()
-        if not goal:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Цель (субъект) '{goal_name}' не найдена"
-            )
-
-        # Получаем роли пользователя
-        user_rights_by_goal = await current_user.get_rights(db)
-        await db.close()
-        user_rights = user_rights_by_goal[goal.name]
-
-        user_rights_set = {r for r in user_rights}
+        service: PermissionService = PermissionService(db)
+        rights_goals = await service.get_user_permissions(current_user.id)
+        user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
 
         # Проверяем наличие всех нужных прав
-        missing_rights = [r for r in rights if r not in user_rights_set]
+        missing_rights = [r for r in rights if r not in user_rights]
         if missing_rights:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+                status_code=status.HTTP_403_FORBIDDEN,
                 detail=(
                     f"Пользователь не имеет права(а) "
                     f"{', '.join(missing_rights)} для цели '{goal_name}'"
@@ -49,4 +70,40 @@ def require_rights(goal_name: str, *rights: str):
         # Всё хорошо, просто начинает запускаться эндпоинт
         return True
 
+    return check_rights
+
+
+def require_rights_with_logging(goal_name: str, *rights: str, error_text: str):
+    """
+    Возвращает dependency для проверки, что текущий пользователь имеет указанные
+    права для заданной цели. Если хотя бы одного права не хватает,
+    записывает указанное сообщение в лог через UserLoggerService и выбрасывает
+    HTTPException со статусом 403.
+
+    Args:
+        goal_name: имя цели (субъекта доступа)
+        *rights: список прав, которые должны быть у пользователя
+        error_text: текст, который будет записан в лог при отказе в доступе
+    """
+    async def check_rights(
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        db: AsyncSession = Depends(get_db),
+        logger: UserLoggerService = Depends(get_user_logger_service),
+    ) -> User:
+        service = PermissionService(db)
+
+        rights_goals = await service.get_user_permissions(current_user.id)
+        user_rights = group_rights_by_goals(rights_goals).get(goal_name, [])
+
+        missing_rights = [right for right in rights if right not in user_rights]
+        if missing_rights:
+            logger.log(current_user, error_text)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"Пользователь не имеет права(а) "
+                    f"{', '.join(missing_rights)} для цели '{goal_name}'"
+                ),
+            )
+        return current_user
     return check_rights

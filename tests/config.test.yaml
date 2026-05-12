@@ -1,0 +1,43 @@
+database:
+  uri: sqlite+aiosqlite:///app.test.db
+
+jwt:
+  access:
+    secret: {{ env("STATAPI_ACCESS_SECRET", "example1example1example1example1") }}
+    expiration: 900  # 15 минут
+
+  refresh:
+    secret: {{ env("STATAPI_REFRESH_SECRET", "example2example2example2example2") }}
+    expiration: 2592000  # 30 дней
+    cookie_name: refresh_token
+
+jobs:
+  queue: sqlite
+  url: queue.db
+
+  list:
+    - name: fetch_location_data
+      enabled: true
+      desc: "Fetch location data every hour"
+      trigger: interval
+      interval:
+        hours: 1
+      scheduler:
+        id: "hourly_location_fetch"
+        replace_existing: true
+        max_instances: 1
+        misfire_grace_time: 300
+        coalesce: true
+
+    - name: fetch_cur_rasp
+      enabled: true
+      desc: "Fetch current schedule at midnight"
+      trigger: cron
+      cron:
+        hour: 0
+        minute: 0
+        timezone: Europe/Moscow
+      scheduler:
+        id: "daily_rasp_fetch"
+        replace_existing: true
+        max_instances: 1

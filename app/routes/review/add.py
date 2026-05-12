@@ -4,7 +4,7 @@ import aiofiles
 
 from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import APIRouter, Response, UploadFile, File, Form, Depends
+from fastapi import APIRouter, UploadFile, Form, Depends, HTTPException
 
 from app.database import get_db
 from app.config import get_settings
@@ -76,15 +76,18 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def add_review(
-            response: Response,
             image: Optional[UploadFile] = Depends(image_validator),
-            user_id: str = Form(
-                title="id",
-                description="Unique user id",
+            # TODO: Поменять тип, как фронты перейдут на новую схему событий
+            client_id: Optional[str] = Form(
+                None,
+                title="client_id",
+                description="Уникальный идентификатор клиента",
                 min_length=36,
                 max_length=36,
                 pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
             ),
+            # TODO: Удалить, как фронты перейдут на новую схему событий
+            user_id: Optional[str] = Form(None, min_length=36, max_length=36),
             problem: Problem = Form(
                 title="problem",
                 description="User problem",
@@ -101,15 +104,31 @@ def register_endpoint(router: APIRouter):
             ),
             db: AsyncSession = Depends(get_db),
     ):
-        base_path = os.path.join(get_settings().static_files, "images")
-        if image is not None and image.content_type.split("/")[0] == "image":
+        # TODO: Удалить, как фронты перейдут на новую схему событий
+        if client_id is None and user_id is not None:
+            client_id = user_id
+        # TODO: Удалить, как фронты перейдут на новую схему событий
+        if client_id is None:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Validation failed"
+            )
+
+        base_path: str = os.path.join(get_settings().static_files, "images")
+        image_name: str | None = None
+
+        if (
+            image is not None
+            and image.content_type is not None
+            and image.filename is not None
+            and image.content_type.startswith("image/")
+        ):
             image_ext = os.path.splitext(image.filename)[-1]
             image_id = uuid.uuid4().hex
-            image_name = image_id + image_ext
+            image_name: str = f"{image_id}{image_ext}"
             image_path = os.path.join(base_path, image_name)
+
             async with aiofiles.open(image_path, "wb") as file:
                 contents = await image.read()
                 await file.write(contents)
-        else:
-            image_name = None
-        return await insert_review(db, image_name, user_id, problem, text)
+        return await insert_review(db, image_name, client_id, problem, text)

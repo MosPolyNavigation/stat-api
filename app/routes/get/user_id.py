@@ -1,8 +1,11 @@
+"""TODO: Удалить как фронты перейдут на новую схему событий"""
+
 from fastapi import Depends, APIRouter
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.handlers import create_user_id
-from app.schemas import UserId, Status
+from app.handlers.create import create_user_id
+from app.schemas import Status
+from app.schemas.old_events import UserId
 
 
 def register_endpoint(router: APIRouter):

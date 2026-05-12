@@ -14,6 +14,8 @@ NAV_GOAL_NAME = "nav_data"
 USER_PASS_GOAL_NAME = "user_pass"
 ADMIN_GOAL_NAME = "admin"
 REVIEWS_GOAL_NAME = "reviews"
+CLIENT_GOAL_NAME = "client"
+REFRESH_TOKEN_GOAL_NAME = "refresh_token"
 
 # ID целей
 STATS_GOAL_ID = 1
@@ -27,6 +29,73 @@ NAV_GOAL_ID = 8
 USER_PASS_GOAL_ID = 9
 ADMIN_GOAL_ID = 10
 REVIEWS_GOAL_ID = 11
+REFRESH_TOKEN_GOAL_ID = 12
+CLIENT_GOAL_ID = 13
+
+# =============================================================================
+# КОНСТАНТЫ НОВОЙ СХЕМЫ СОБЫТИЙ
+# =============================================================================
+EVENT_TYPE_SITE_ID = 1
+EVENT_TYPE_AUDS_ID = 2
+EVENT_TYPE_WAYS_ID = 3
+EVENT_TYPE_PLANS_ID = 4
+
+EVENT_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "site": EVENT_TYPE_SITE_ID,
+    "auds": EVENT_TYPE_AUDS_ID,
+    "ways": EVENT_TYPE_WAYS_ID,
+    "plans": EVENT_TYPE_PLANS_ID,
+}
+
+PAYLOAD_TYPE_ENDPOINT_ID = 1
+PAYLOAD_TYPE_AUDITORY_ID = 2
+PAYLOAD_TYPE_START_ID = 3
+PAYLOAD_TYPE_END_ID = 4
+PAYLOAD_TYPE_SUCCESS_ID = 5
+PAYLOAD_TYPE_PLAN_ID = 6
+
+PAYLOAD_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "endpoint": PAYLOAD_TYPE_ENDPOINT_ID,
+    "auditory_id": PAYLOAD_TYPE_AUDITORY_ID,
+    "start_id": PAYLOAD_TYPE_START_ID,
+    "end_id": PAYLOAD_TYPE_END_ID,
+    "success": PAYLOAD_TYPE_SUCCESS_ID,
+    "plan_id": PAYLOAD_TYPE_PLAN_ID,
+}
+
+ALLOWED_PAYLOADS: list[tuple[int, int]] = [
+    (EVENT_TYPE_SITE_ID, PAYLOAD_TYPE_ENDPOINT_ID),
+    (EVENT_TYPE_AUDS_ID, PAYLOAD_TYPE_AUDITORY_ID),
+    (EVENT_TYPE_AUDS_ID, PAYLOAD_TYPE_SUCCESS_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_START_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_END_ID),
+    (EVENT_TYPE_WAYS_ID, PAYLOAD_TYPE_SUCCESS_ID),
+    (EVENT_TYPE_PLANS_ID, PAYLOAD_TYPE_PLAN_ID),
+]
+
+# =============================================================================
+# КОНСТАНТЫ ТИПОВ ДАШБОРДОВ (DASHBOARD TYPES)
+# =============================================================================
+DASHBOARD_TYPE_CHART_ID = 1
+DASHBOARD_TYPE_AVG_ID = 2
+
+DASHBOARD_TYPE_IDS_BY_CODE: dict[str, int] = {
+    "chart": DASHBOARD_TYPE_CHART_ID,
+    "avg": DASHBOARD_TYPE_AVG_ID,
+}
+
+# =============================================================================
+# КОНСТАНТЫ ТИПОВ ЗНАЧЕНИЙ (VALUE TYPES)
+# =============================================================================
+VALUE_TYPE_INT_ID = 1
+VALUE_TYPE_STRING_ID = 2
+VALUE_TYPE_BOOL_ID = 3
+
+VALUE_TYPE_IDS_BY_NAME: dict[str, int] = {
+    "int": VALUE_TYPE_INT_ID,
+    "string": VALUE_TYPE_STRING_ID,
+    "bool": VALUE_TYPE_BOOL_ID,
+}
 
 # =============================================================================
 # КОНСТАНТЫ ПРАВ (RIGHTS)
@@ -51,48 +120,95 @@ GRANT_RIGHT_ID = 5
 # =============================================================================
 
 GOALS_BY_ID: dict[int, str] = {
-    1: "stats",
-    2: "dashboards",
-    3: "users",
-    4: "roles",
-    5: "tables",
-    6: "resources",
-    7: "tasks",
-    8: "nav_data",
-    9: "user_pass",
-    10: "admin",
-    11: "reviews",
+    STATS_GOAL_ID: STATS_GOAL_NAME,
+    DASHBOARDS_GOAL_ID: DASHBOARDS_GOAL_NAME,
+    USERS_GOAL_ID: USERS_GOAL_NAME,
+    ROLES_GOAL_ID: ROLES_GOAL_NAME,
+    TABLES_GOAL_ID: TABLES_GOAL_NAME,
+    RESOURCES_GOAL_ID: RESOURCES_GOAL_NAME,
+    TASKS_GOAL_ID: TASKS_GOAL_NAME,
+    NAV_GOAL_ID: NAV_GOAL_NAME,
+    USER_PASS_GOAL_ID: USER_PASS_GOAL_NAME,
+    ADMIN_GOAL_ID: ADMIN_GOAL_NAME,
+    REVIEWS_GOAL_ID: REVIEWS_GOAL_NAME,
+    REFRESH_TOKEN_GOAL_ID: REFRESH_TOKEN_GOAL_NAME,
+    CLIENT_GOAL_ID: CLIENT_GOAL_NAME
 }
 
 GOALS_BY_NAME: dict[str, int] = {
-    "stats": 1,
-    "dashboards": 2,
-    "users": 3,
-    "roles": 4,
-    "tables": 5,
-    "resources": 6,
-    "tasks": 7,
-    "nav_data": 8,
-    "user_pass": 9,
-    "admin": 10,
-    "reviews": 11,
+    STATS_GOAL_NAME: STATS_GOAL_ID,
+    DASHBOARDS_GOAL_NAME: DASHBOARDS_GOAL_ID,
+    USERS_GOAL_NAME: USERS_GOAL_ID,
+    ROLES_GOAL_NAME: ROLES_GOAL_ID,
+    TABLES_GOAL_NAME: TABLES_GOAL_ID,
+    RESOURCES_GOAL_NAME: RESOURCES_GOAL_ID,
+    TASKS_GOAL_NAME: TASKS_GOAL_ID,
+    NAV_GOAL_NAME: NAV_GOAL_ID,
+    USER_PASS_GOAL_NAME: USER_PASS_GOAL_ID,
+    ADMIN_GOAL_NAME: ADMIN_GOAL_ID,
+    REVIEWS_GOAL_NAME: REVIEWS_GOAL_ID,
+    REFRESH_TOKEN_GOAL_NAME: REFRESH_TOKEN_GOAL_ID,
+    CLIENT_GOAL_NAME: CLIENT_GOAL_ID
 }
 
 RIGHTS_BY_ID: dict[int, str] = {
-    1: "view",
-    2: "create",
-    3: "edit",
-    4: "delete",
-    5: "grant",
+    VIEW_RIGHT_ID: VIEW_RIGHT_NAME,
+    CREATE_RIGHT_ID: CREATE_RIGHT_NAME,
+    EDIT_RIGHT_ID: EDIT_RIGHT_NAME,
+    DELETE_RIGHT_ID: DELETE_RIGHT_NAME,
+    GRANT_RIGHT_ID: GRANT_RIGHT_NAME,
 }
 
 RIGHTS_BY_NAME: dict[str, int] = {
-    "view": 1,
-    "create": 2,
-    "edit": 3,
-    "delete": 4,
-    "grant": 5,
+    VIEW_RIGHT_NAME: VIEW_RIGHT_ID,
+    CREATE_RIGHT_NAME: CREATE_RIGHT_ID,
+    EDIT_RIGHT_NAME: EDIT_RIGHT_ID,
+    DELETE_RIGHT_NAME: DELETE_RIGHT_ID,
+    GRANT_RIGHT_NAME: GRANT_RIGHT_ID,
 }
+
+GOAL_RIGHTS: list[tuple[int, int]] = [
+    (STATS_GOAL_ID, VIEW_RIGHT_ID),
+    (STATS_GOAL_ID, CREATE_RIGHT_ID),
+    (STATS_GOAL_ID, EDIT_RIGHT_ID),
+    (STATS_GOAL_ID, DELETE_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, VIEW_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, CREATE_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, EDIT_RIGHT_ID),
+    (DASHBOARDS_GOAL_ID, DELETE_RIGHT_ID),
+    (USERS_GOAL_ID, VIEW_RIGHT_ID),
+    (USERS_GOAL_ID, CREATE_RIGHT_ID),
+    (USERS_GOAL_ID, EDIT_RIGHT_ID),
+    (USERS_GOAL_ID, DELETE_RIGHT_ID),
+    (ROLES_GOAL_ID, VIEW_RIGHT_ID),
+    (ROLES_GOAL_ID, CREATE_RIGHT_ID),
+    (ROLES_GOAL_ID, EDIT_RIGHT_ID),
+    (ROLES_GOAL_ID, DELETE_RIGHT_ID),
+    (ROLES_GOAL_ID, GRANT_RIGHT_ID),
+    (TABLES_GOAL_ID, VIEW_RIGHT_ID),
+    (TABLES_GOAL_ID, EDIT_RIGHT_ID),
+    (RESOURCES_GOAL_ID, VIEW_RIGHT_ID),
+    (RESOURCES_GOAL_ID, CREATE_RIGHT_ID),
+    (RESOURCES_GOAL_ID, EDIT_RIGHT_ID),
+    (RESOURCES_GOAL_ID, DELETE_RIGHT_ID),
+    (TASKS_GOAL_ID, VIEW_RIGHT_ID),
+    (TASKS_GOAL_ID, CREATE_RIGHT_ID),
+    (TASKS_GOAL_ID, EDIT_RIGHT_ID),
+    (TASKS_GOAL_ID, DELETE_RIGHT_ID),
+    (NAV_GOAL_ID, VIEW_RIGHT_ID),
+    (NAV_GOAL_ID, CREATE_RIGHT_ID),
+    (NAV_GOAL_ID, EDIT_RIGHT_ID),
+    (NAV_GOAL_ID, DELETE_RIGHT_ID),
+    (USER_PASS_GOAL_ID, EDIT_RIGHT_ID),
+    (ADMIN_GOAL_ID, VIEW_RIGHT_ID),
+    (ADMIN_GOAL_ID, EDIT_RIGHT_ID),
+    (REVIEWS_GOAL_ID, VIEW_RIGHT_ID),
+    (REVIEWS_GOAL_ID, EDIT_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, VIEW_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, EDIT_RIGHT_ID),
+    (REFRESH_TOKEN_GOAL_ID, DELETE_RIGHT_ID),
+    (CLIENT_GOAL_ID, CREATE_RIGHT_ID)
+]
 
 # =============================================================================
 # КОНСТАНТЫ проблем (Problems)

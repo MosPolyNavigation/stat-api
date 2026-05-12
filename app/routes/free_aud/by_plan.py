@@ -1,17 +1,17 @@
-from fastapi import APIRouter
+from typing import Annotated
+from fastapi import APIRouter, Request, Response
 from fastapi.params import Depends
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import Response
+
 from app.database import get_db
 from app.handlers.filter import filter_svobodn
 from app.helpers.svobodn import auditory_is_empty
-from app.models import Plan, Type
+from app.models import Plan, Type, Auditory
 from app.schemas import Status
 from app.schemas.filter import FilterSvobodnForPlan
 from app.schemas.rasp.schedule import ScheduleOut
-from app.models.nav.auditory import Auditory
-import app.globals as globals_
+from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
@@ -21,14 +21,16 @@ def register_endpoint(router: APIRouter):
         tags=["free-aud"]
     )
     async def by_plan(
+        request: Request,
         response: Response,
-        db: AsyncSession = Depends(get_db),
-        filter_: FilterSvobodnForPlan = Depends()
+        db: Annotated[AsyncSession, Depends(get_db)],
+        filter_: Annotated[FilterSvobodnForPlan, Depends()]
     ):
-        if globals_.locker:
+        state: AppState = request.app.state.app_state
+        if state.rasp_lock.locked() or state.global_rasp is None:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
-        schedule = filter_svobodn(globals_.global_rasp, filter_)
+        schedule = filter_svobodn(state.global_rasp, filter_)
         auditories = (await db.execute(
             Select(Auditory.id_sys)
             .join(Auditory.plans)

@@ -1,0 +1,95 @@
+from app.graphql.core.resource import ResourceConfig, ResourcePermissions
+from app.graphql.core.permissions import P
+from app.models import (
+    User as UserModel,
+    Role as RoleModel,
+    Right as RightModel,
+    Goal as GoalModel,
+    RefreshToken as RTModel,
+    UserLog as ULModel
+)
+from app.graphql.domains.auth.types import (
+    User as UserType,
+    Role as RoleType,
+    Right as RightType,
+    Goal as GoalType,
+    RefreshToken as RefreshTokenType,
+    UserLog as UserLogType,
+    _user_from_model,
+    _role_from_model,
+    _right_from_model,
+    _goal_from_model,
+    _refresh_token_from_model,
+    _user_log_from_model
+)
+from app.graphql.domains.auth.inputs import (
+    UserFilterInput,
+    UserOrderByInput,
+    RoleFilterInput,
+    RoleOrderByInput,
+    RightFilterInput,
+    RightOrderByInput,
+    GoalFilterInput,
+    GoalOrderByInput,
+    RefreshTokenFilterInput,
+    RefreshTokenOrderByInput,
+    UserLogFilterInput,
+    UserLogOrderByInput
+)
+
+RoleResource = ResourceConfig(
+    model=RoleModel,
+    graphql_type=RoleType,
+    filter_input=RoleFilterInput,
+    order_by_input=RoleOrderByInput,
+    convert=_role_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(
+        view=P.ROLES_VIEW,
+        create=P.ROLES_CREATE,
+        edit=P.ROLES_EDIT,
+        delete=P.ROLES_DELETE
+    ),
+    enable_logging=True,
+    enable_logging_list=False
+)
+
+RightResource = ResourceConfig(
+    model=RightModel,
+    graphql_type=RightType,
+    filter_input=RightFilterInput,
+    order_by_input=RightOrderByInput,
+    convert=_right_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(view=P.ROLES_VIEW)
+)
+
+GoalResource = ResourceConfig(
+    model=GoalModel,
+    graphql_type=GoalType,
+    filter_input=GoalFilterInput,
+    order_by_input=GoalOrderByInput,
+    convert=_goal_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(view=P.ROLES_VIEW)
+)
+
+RefreshTokenResource = ResourceConfig(
+    model=RTModel,
+    graphql_type=RefreshTokenType,
+    filter_input=RefreshTokenFilterInput,
+    order_by_input=RefreshTokenOrderByInput,
+    convert=_refresh_token_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(view=P.REFRESH_TOKEN_VIEW),
+)
+
+UserLogResource = ResourceConfig(
+    model=ULModel,
+    graphql_type=UserLogType,
+    filter_input=UserLogFilterInput,
+    order_by_input=UserLogOrderByInput,
+    convert=_user_log_from_model,
+    cursor_field="id",
+    permissions=ResourcePermissions(view=P.ADMIN_VIEW),
+)

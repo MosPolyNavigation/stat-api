@@ -1,20 +1,32 @@
-import uuid
+from datetime import datetime, timezone
 from typing import Annotated, Optional
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi import APIRouter, Depends, HTTPException, Cookie, Form, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
 from pydantic import BaseModel
 from app.database import get_db
-from app.models.auth.user import User
+from app.models import User, RefreshToken
 from app.helpers.auth_utils import get_current_active_user
-from app.schemas import UserOut
+from app.helpers.permissions import group_rights_by_goals_with_grant
+from app.schemas import UserOut, Status
+from app.services.permission_service import PermissionService
+from app.helpers.token_utils import (
+    REFRESH_COOKIE_NAME,
+    clear_refresh_cookie,
+    create_access_token,
+    create_refresh_token_session,
+    decode_refresh_token,
+    normalize_token_error,
+    set_refresh_cookie,
+    validate_refresh_payload,
+    get_refresh_session
+)
+from app.schemas.auth import AuthScheme
+from app.services.user_logger_service import UserLoggerService, get_user_logger_service
 
 # Будет использоваться рекомендуемый алгоритм хэширования паролей
 password_hash = PasswordHash.recommended()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
 
 class Token(BaseModel):
@@ -50,14 +62,21 @@ async def authenticate_user(db: AsyncSession, login: str, password: str) -> Opti
     return user
 
 
-async def create_token(user: User, db: AsyncSession) -> str:
-    """Создать токен для пользователя (просто UUID)"""
-    token = str(uuid.uuid4())
-    user.token = token
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return token
+# Создаёт refresh сессию и устанавливает refresh токен в cookie
+async def issue_refresh_token(
+    user: User,
+    db: AsyncSession,
+    request: Request,
+    response: Response,
+    user_ip: str | None = None,
+) -> None:
+    refresh_token, _ = await create_refresh_token_session(
+        user=user,
+        db=db,
+        request=request,
+        user_ip=user_ip,
+    )
+    set_refresh_cookie(response, request, refresh_token)
 
 
 def register_endpoint(router: APIRouter):
@@ -70,16 +89,33 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def login(
-            form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-            db: AsyncSession = Depends(get_db)
+            request: Request,
+            response: Response,
+            form_data: Annotated[AuthScheme, Form()],
+            db: AsyncSession = Depends(get_db),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
+        target_user = await get_user_by_login(db, form_data.username)
         user = await authenticate_user(db, form_data.username, form_data.password)
         if not user:
+            if target_user is not None:
+                logger.log(target_user, "Неудачная попытка входа в аккаунт")
             raise HTTPException(status_code=400, detail="Некорректный логин или пароль")
 
-        # Создание токена (UUID)
-        access_token = create_token(user, db)
-        return Token(access_token=await access_token, token_type="bearer")
+        access_token = await create_access_token(user, db)
+
+        if form_data.scope == "long":
+            await issue_refresh_token(
+                user=user,
+                db=db,
+                request=request,
+                response=response,
+                user_ip=form_data.user_ip,
+            )
+            await db.commit()
+
+        logger.log(user, "Запрос авторизации (разовый/постоянный вход)")
+        return Token(access_token=access_token, token_type="bearer")
 
     """Эндпоинт для получения данных пользователя по токену"""
 
@@ -92,37 +128,142 @@ def register_endpoint(router: APIRouter):
     async def read_users_me(
             current_user: Annotated[User, Depends(get_current_active_user)],
             db: AsyncSession = Depends(get_db),
+            logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """Возвращает актуальные данные текущего пользователя"""
         await db.refresh(current_user)
+        service: PermissionService = PermissionService(db)
+
+        perms_with_grant = await service.get_user_permissions_with_grant(current_user.id)
         result = UserOut(
             id=current_user.id,
             login=current_user.login,
-            is_active=current_user.is_active
+            is_active=current_user.is_active,
+            rights_by_goals=group_rights_by_goals_with_grant(perms_with_grant)
         )
-        result.rights_by_goals = await current_user.get_rights(db)
+
+        logger.log(current_user, "Запрос сведений о пользователе")
         return result
 
-    # # Создал для того, чтобы проверить /me с активным/неактивным пользователем
-    # @router.post(
-    #     "/deactivate",
-    #     description="Эндпоинт для деактивации текущего пользователя",
-    #     tags=["auth"],
-    # )
-    # async def deactivate_user(
-    #         current_user: Annotated[User, Depends(get_current_user)],
-    #         db: AsyncSession = Depends(get_db)
-    # ):
-    #     """Деактивирует текущего пользователя"""
-    #     if not current_user.is_active:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Пользователь уже неактивен"
-    #         )
-    #
-    #     current_user.is_active = False
-    #     db.add(current_user)
-    #     db.commit()
-    #     db.refresh(current_user)
-    #
-    #     return {"message": f"Пользователь {current_user.login} деактивирован", "is_active": current_user.is_active}
+    """Эндпоинт для обновления пары токенов по refresh cookie"""
+
+    @router.post(
+        "/refresh",
+        description="Эндпоинт для обновления пары токенов по refresh cookie",
+        response_model=Token,
+        tags=["auth"],
+    )
+    async def refresh(
+            request: Request,
+            response: Response,
+            db: AsyncSession = Depends(get_db),
+            user_ip: str | None = Form(default=None),
+            refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+            logger: UserLoggerService = Depends(get_user_logger_service),
+    ):
+        # Refresh токен должен приходить в cookie
+        if not refresh_token:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh токен отсутствует")
+
+        try:
+            # Проверка подписи refresh токена и извлечение данных из payload
+            payload = decode_refresh_token(refresh_token)
+            user_id, raw_jti = validate_refresh_payload(payload)
+        except Exception as exc:
+            clear_refresh_cookie(response, request)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=normalize_token_error(exc, refresh=True),
+            ) from exc
+
+        # Получаем пользователя, которому принадлежит refresh токен
+        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+
+        # Ищем активную refresh сессию в БД
+        session: Optional[RefreshToken] = await get_refresh_session(db, user_id, raw_jti)
+        if not session or session.revoked:
+            clear_refresh_cookie(response, request)
+            if user is not None:
+                logger.log(user, "Неудачная попытка ротации токена")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="Refresh сессия не найдена или отозвана")
+
+        # Если refresh сессия истекла, помечаем её отозванной
+        if session.exp_date <= datetime.now(timezone.utc).replace(tzinfo=None):
+            session.revoked = True
+            await db.commit()
+            clear_refresh_cookie(response, request)
+            if user is not None:
+                logger.log(user, "Неудачная попытка ротации токена")
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Срок действия refresh токена истёк")
+
+        if not user:
+            session.revoked = True
+            await db.commit()
+            clear_refresh_cookie(response, request)
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не найден")
+
+        # Refresh токены выдаются только активным пользователям
+        if not user.is_active:
+            session.revoked = True
+            await db.commit()
+            clear_refresh_cookie(response, request)
+            logger.log(user, "Неудачная попытка ротации токена")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Неактивный пользователь")
+
+        # Ротация refresh токена: старую сессию отзываем
+        session.revoked = True
+
+        # Выдаём новый access токен
+        access_token = await create_access_token(user, db)
+
+        # Создаём новую refresh сессию и обновляем cookie
+        await issue_refresh_token(
+            user=user,
+            db=db,
+            request=request,
+            response=response,
+            user_ip=user_ip if user_ip is not None else session.user_ip,
+        )
+        await db.commit()
+
+        logger.log(user, "Ротация refresh-токена, получение нового access")
+        return Token(access_token=access_token, token_type="bearer")
+
+    @router.post(
+        "/logout",
+        description="Эндпоинт для выхода: отзывает refresh-токен (если передан) и очищает куку",
+        response_model=Status,
+        status_code=status.HTTP_200_OK,
+        tags=["auth"],
+    )
+    async def logout(
+        request: Request,
+        response: Response,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+        logger: UserLoggerService = Depends(get_user_logger_service),
+        db: AsyncSession = Depends(get_db),
+    ) -> Status:
+        if refresh_token:
+            try:
+                # Декодируем и валидируем payload
+                payload = decode_refresh_token(refresh_token)
+                user_id, raw_jti = validate_refresh_payload(payload)
+
+                # Безопасность: отзываем токен только если он принадлежит текущему пользователю
+                if user_id == current_user.id:
+                    session = await get_refresh_session(db, user_id, raw_jti)
+                    if session and not session.revoked:
+                        session.revoked = True
+                        await db.commit()
+            except Exception:
+                pass
+            finally:
+                clear_refresh_cookie(response, request)
+                logger.log(current_user, "Выход из системы (с отзывом refresh-токена)")
+        else:
+            # Если refresh токена нет, просто логируем и возвращаем 200
+            logger.log(current_user, "Выход из системы (без refresh-токена)")
+
+        return Status()

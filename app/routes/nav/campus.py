@@ -4,9 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import Select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_db
-from app.models.nav.location import Location
-from app.models.nav.corpus import Corpus
-from app.models.nav.plan import Plan
+from app.models import Location, Corpus, Plan
 from app.schemas.nav.campus import CampusNav, CorpusNav
 
 

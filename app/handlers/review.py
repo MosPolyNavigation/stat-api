@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import Select
 from app import schemas, models
@@ -6,19 +8,19 @@ from app.helpers.errors import LookupException
 
 async def insert_review(
         db: AsyncSession,
-        image_name: str,
-        user_id: str,
+        image_name: Optional[str],
+        client_id: str,
         problem: schemas.Problem,
         text: str
 ) -> schemas.Status:
-    user = (await db.execute(
-        Select(models.UserId).filter_by(user_id=user_id)
+    client = (await db.execute(
+        Select(models.ClientId).filter_by(ident=client_id)
     )).scalar_one_or_none()
-    if user is None:
-        raise LookupException("User")
+    if client is None:
+        raise LookupException("Client")
     item = models.Review(
         image_name=image_name,
-        user=user,
+        client=client,
         problem_id=problem.__str__(),
         text=text
     )

@@ -132,8 +132,8 @@ class Graph:
     def __add_neighbor_both(
         vertex1: Vertex,
         vertex2: Vertex,
-        distance1to2: int,
-        distance2to1: int
+        distance1to2: float,
+        distance2to1: float
     ):
         vertex1.neighborData.append((vertex2.id, distance1to2))
         vertex2.neighborData.append((vertex1.id, distance2to1))
@@ -210,11 +210,3 @@ class Graph:
             way=[self.vertexes[vid] for vid in reversed(path) if vid],
             distance=math.floor(distances.get(end, math.inf))
         )
-
-    @staticmethod
-    def get_distance_between2_vertexes(
-        vertex1: Vertex, vertex2_id: str
-    ) -> float:
-        return next(
-            note for note in vertex1.neighborData if note[0] == vertex2_id
-        )[1]

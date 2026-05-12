@@ -1,16 +1,11 @@
 from fastapi import APIRouter
-from .site import register_endpoint as register_site
-from .aud import register_endpoint as register_aud
-from .way import register_endpoint as register_way
-from .plan import register_endpoint as register_plan
-from .tg_bot import register_endpoint as register_tg_bot
+from app.routes.stat.client import register_endpoint as register_client_endpoint
+from app.routes.stat.event import register_endpoint as register_event_endpoint
+from app.routes.stat.old_events import register_endpoints as register_old_endpoints
 
-router = APIRouter(
-    prefix="/api/stat"
-)
+router = APIRouter(prefix="/api/stat")
 
-register_site(router)
-register_aud(router)
-register_way(router)
-register_plan(router)
-register_tg_bot(router)
+register_client_endpoint(router)
+register_event_endpoint(router)
+# TODO: Удалить, как фронты перейдут на новую схему событий
+register_old_endpoints(router)

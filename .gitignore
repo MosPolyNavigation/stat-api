@@ -1,5 +1,5 @@
 /venv/
-/**/app.db
+/**/*.db
 /**/__pycache__/
 /.idea/
 /**/.env
@@ -11,3 +11,4 @@
 /nav_data/
 /.coverage
 /htmlcov/
+/config.yaml

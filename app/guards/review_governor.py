@@ -1,13 +1,13 @@
-import os
 import json
 from pathlib import Path
 from collections import OrderedDict
 from datetime import datetime, timedelta
-from typing import Optional, Union, List, Dict, TYPE_CHECKING
+from typing import Optional, Dict, cast
 
 from fastapi import HTTPException, Request, status
 
 from app.state import AppState
+from app.config import Settings
 
 
 class ReviewRateLimiter:
@@ -61,7 +61,7 @@ class ReviewRateLimiter:
         if not self.enabled:
             return
         
-        state: AppState = request.app.state
+        state: AppState = request.app.state.app_state
         access_store = getattr(state, self.state_attr, None)
         
         if access_store is None:
@@ -158,22 +158,23 @@ class ReviewRateLimiter:
         # LRU-вытеснение при превышении лимита пользователей
         self._enforce_max_users(access_store)
     
-    async def _extract_user_id(self, request: Request) -> Optional[str]:
-        """Извлекает user_id из multipart/form-data или JSON."""
+    @staticmethod
+    async def _extract_user_id(request: Request) -> Optional[str]:
+        """Извлекает client_id из multipart/form-data или JSON."""
         try:
             content_type = request.headers.get("content-type", "")
             
             if "multipart/form-data" in content_type:
                 form = await request.form()
-                return form.get("user_id")
+                return cast(Optional[str], form.get("client_id"))
             else:
                 body = await request.json()
-                return body.get("user_id")
+                return body.get("client_id")
         except Exception:
             return None
     
+    @staticmethod
     def _cleanup_old_requests(
-        self,
         user_data: Dict,
         now: datetime,
     ) -> None:
@@ -242,7 +243,7 @@ class ReviewRateLimiter:
     
     def cleanup_now(self, state: AppState) -> int:
         """Публичный метод для ручной очистки (используется воркером)."""
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None:
             return 0
         return self.cleanup_expired(access_store)
@@ -255,7 +256,7 @@ class ReviewRateLimiter:
         """
         Возвращает статус пользователя (для админки/мониторинга).
         """
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None or user_id not in access_store:
             return {"exists": False}
         
@@ -301,7 +302,7 @@ class ReviewRateLimiter:
         Returns:
             Dict с пагинированным списком банов
         """
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None:
             return {"items": [], "total": 0, "page": 1, "size": limit}
         
@@ -344,7 +345,7 @@ class ReviewRateLimiter:
         Returns:
             Dict с информацией о бане или None если пользователь не найден/не забанен
         """
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None or user_id not in access_store:
             return None
         
@@ -373,7 +374,7 @@ class ReviewRateLimiter:
         Returns:
             True если успешно, False если пользователь не найден или не был забанен
         """
-        access_store = getattr(state, self.state_attr, None)
+        access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
         if access_store is None or user_id not in access_store:
             return False
         
@@ -408,7 +409,7 @@ class ReviewRateLimiter:
             bool: True если успешно, False если ошибка
         """
         try:
-            access_store = getattr(state, self.state_attr, None)
+            access_store: Optional[OrderedDict] = getattr(state, self.state_attr, None)
             if access_store is None:
                 return True  # Нечего сохранять
             

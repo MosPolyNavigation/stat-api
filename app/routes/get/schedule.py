@@ -1,9 +1,11 @@
-from fastapi import APIRouter
-from starlette.responses import Response
 from typing import Union
+
+from fastapi import APIRouter, Request
+from starlette.responses import Response
+
 from app.schemas import Status
-from app.schemas.rasp.schedule import Schedule, Auditory
-import app.globals as globals_
+from app.schemas.rasp.schedule import Auditory, Schedule
+from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
@@ -37,15 +39,17 @@ def register_endpoint(router: APIRouter):
         }
     )
     async def get_schedule(
+            request: Request,
             response: Response,
             auditory: Union[str, None] = None,
     ):
-        if not globals_.global_rasp:
+        state: AppState = request.app.state.app_state
+        if not state.global_rasp:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
         if not auditory:
-            return globals_.global_rasp
-        aud_schedule = globals_.global_rasp[auditory]
+            return state.global_rasp
+        aud_schedule = state.global_rasp[auditory]
         if aud_schedule:
             return aud_schedule
         response.status_code = 404
