@@ -9,7 +9,7 @@ from app.database import get_db
 from app.models import User, RefreshToken
 from app.helpers.auth_utils import get_current_active_user
 from app.helpers.permissions import group_rights_by_goals_with_grant
-from app.schemas import UserOut
+from app.schemas import UserOut, Status
 from app.services.permission_service import PermissionService
 from app.helpers.token_utils import (
     REFRESH_COOKIE_NAME,
@@ -229,3 +229,41 @@ def register_endpoint(router: APIRouter):
 
         logger.log(user, "Ротация refresh-токена, получение нового access")
         return Token(access_token=access_token, token_type="bearer")
+
+    @router.post(
+        "/logout",
+        description="Эндпоинт для выхода: отзывает refresh-токен (если передан) и очищает куку",
+        response_model=Status,
+        status_code=status.HTTP_200_OK,
+        tags=["auth"],
+    )
+    async def logout(
+        request: Request,
+        response: Response,
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+        logger: UserLoggerService = Depends(get_user_logger_service),
+        db: AsyncSession = Depends(get_db),
+    ) -> Status:
+        if refresh_token:
+            try:
+                # Декодируем и валидируем payload
+                payload = decode_refresh_token(refresh_token)
+                user_id, raw_jti = validate_refresh_payload(payload)
+
+                # Безопасность: отзываем токен только если он принадлежит текущему пользователю
+                if user_id == current_user.id:
+                    session = await get_refresh_session(db, user_id, raw_jti)
+                    if session and not session.revoked:
+                        session.revoked = True
+                        await db.commit()
+            except Exception:
+                pass
+            finally:
+                clear_refresh_cookie(response, request)
+                logger.log(current_user, "Выход из системы (с отзывом refresh-токена)")
+        else:
+            # Если refresh токена нет, просто логируем и возвращаем 200
+            logger.log(current_user, "Выход из системы (без refresh-токена)")
+
+        return Status()
