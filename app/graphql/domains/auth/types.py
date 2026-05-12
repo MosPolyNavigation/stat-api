@@ -209,8 +209,12 @@ class User:
         first: int = 10
     ) -> List["RefreshToken"]:
         ctx: GraphQLContext = info.context
+        current_user = info.context.current_user
+        if current_user.id != id:
+            await require_permissions(info, P.REFRESH_TOKEN_VIEW)
         limit = min(200, first)
         rt_models = await ctx.loaders["refresh_token_by_user_id"].load(self.id)
+        rt_models = [rt_model for rt_model in rt_models if not rt_model.revoked]
         return [_refresh_token_from_model(rt_model) for rt_model in rt_models[:limit]]
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -220,9 +224,9 @@ class User:
         first: int = 10
     ) -> List["UserLog"]:
         ctx: GraphQLContext = info.context
-        limit = min(200, first)
+        limit = min(200, first) + 1
         ul_models = await ctx.loaders["user_log_by_user_id"].load(self.id)
-        return [_user_log_from_model(ul_model) for ul_model in ul_models[:limit]]
+        return [_user_log_from_model(ul_model) for ul_model in ul_models[:-limit:-1]]
 
 
 @strawberry.type
