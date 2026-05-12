@@ -192,7 +192,7 @@ class ReviewStatus:
         info: strawberry.Info,
         first: int = 10
     ) -> List["Review"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         r_models = await ctx.loaders["reviews_by_status_id"].load(self.id)
         return [_review_from_model(r_model) for r_model in r_models[:limit]]
@@ -252,7 +252,7 @@ class Event:
         info: strawberry.Info,
         first: int = 10
     ) -> List["Payload"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         p_models = await ctx.loaders["payloads_by_event_id"].load(self.id)
         return [_payload_from_model(p_model) for p_model in p_models[:limit]]

@@ -103,7 +103,7 @@ class Goal:
         info: strawberry.Info,
         first: int = 10
     ) -> List["RoleRightGoal"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_goal_id"].load(self.id)
         return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
@@ -120,7 +120,7 @@ class Right:
         info: strawberry.Info,
         first: int = 10
     ) -> List["RoleRightGoal"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_right_id"].load(self.id)
         return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
@@ -164,7 +164,7 @@ class Role:
         info: strawberry.Info,
         first: int = 10
     ) -> List["RoleRightGoal"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_role_id"].load(self.id)
         return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
@@ -175,7 +175,7 @@ class Role:
         info: strawberry.Info,
         first: int = 10
     ) -> List["UserRole"]:
-        limit = min(100, first)
+        limit = min(200, first)
         ctx: GraphQLContext = info.context
         ur_models = await ctx.loaders["user_role_by_role_id"].load(self.id)
         return [_user_role_from_model(ur_model) for ur_model in ur_models[:limit]]
@@ -198,7 +198,7 @@ class User:
     ) -> List["UserRole"]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
-        limit = min(100, first)
+        limit = min(200, first)
         ur_models = await ctx.loaders["user_role_by_user_id"].load(self.id)
         return [_user_role_from_model(ur_model) for ur_model in ur_models[:limit]]
 
@@ -209,7 +209,7 @@ class User:
         first: int = 10
     ) -> List["RefreshToken"]:
         ctx: GraphQLContext = info.context
-        limit = min(100, first)
+        limit = min(200, first)
         rt_models = await ctx.loaders["refresh_token_by_user_id"].load(self.id)
         return [_refresh_token_from_model(rt_model) for rt_model in rt_models[:limit]]
 
@@ -220,7 +220,7 @@ class User:
         first: int = 10
     ) -> List["UserLog"]:
         ctx: GraphQLContext = info.context
-        limit = min(100, first)
+        limit = min(200, first)
         ul_models = await ctx.loaders["user_log_by_user_id"].load(self.id)
         return [_user_log_from_model(ul_model) for ul_model in ul_models[:limit]]
 
