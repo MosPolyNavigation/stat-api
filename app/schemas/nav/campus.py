@@ -13,6 +13,7 @@ class CorpusNav(BaseModel):
     """
     Описание одного корпуса в CAMPUS-{loc}.json
     """
+
     rusName: str
     planLinks: PlanLinks
     stairsGroups: StairsGroups
@@ -26,6 +27,7 @@ class CampusNav(BaseModel):
     """
     Весь CAMPUS-{loc}.json
     """
+
     id: str
     rusName: str
     corpuses: Corpuses

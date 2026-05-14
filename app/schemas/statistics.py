@@ -13,6 +13,7 @@ class Statistics(BaseModel):
         all_visits: Общее количество посещений;
         period: Дата за которую собрана статистика.
     """
+
     unique_visitors: int
     visitor_count: int
     all_visits: int
@@ -39,6 +40,7 @@ class AggregatedStatistics(BaseModel):
         avg_visitor_count_per_day: Среднее количество посетителей в день;
         entries_analized: Количество проанализированных записей.
     """
+
     total_all_visits: int
     total_unique_visitors: int
     total_visitor_count: int

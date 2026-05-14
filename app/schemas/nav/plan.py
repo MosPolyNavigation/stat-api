@@ -15,6 +15,7 @@ class Node(BaseModel):
     Элемент графа из поля "graph" в {loc}{plan}.json:
 
     """
+
     id: str
     x: float
     y: float
@@ -30,6 +31,7 @@ class PlanNav(BaseModel):
     """
     Формат одного плана
     """
+
     planName: str
     svgLink: str | None
     campus: str
