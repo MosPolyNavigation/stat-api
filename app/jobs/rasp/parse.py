@@ -119,8 +119,9 @@ async def parse(db: AsyncSession) -> Schedule:
 
     if aud_ids:
         result = await db.execute(
-            select(AuditoryModel.id_sys, AuditoryModel.link)
-            .where(AuditoryModel.id_sys.in_(aud_ids))
+            select(AuditoryModel.id_sys, AuditoryModel.link).where(
+                AuditoryModel.id_sys.in_(aud_ids)
+            )
         )
         links_map = dict(result.tuples().all())
     else:

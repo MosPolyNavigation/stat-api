@@ -30,7 +30,7 @@ class AppState:
     user_access: OrderedDict[str, Dict[str, datetime]]
     user_review_access: OrderedDict[
         str,
-        Dict[str, Union[List[datetime], bool, Optional[str], Optional[datetime], int]]
+        Dict[str, Union[List[datetime], bool, Optional[str], Optional[datetime], int]],
     ]
 
     global_graph: Dict[str, Graph]

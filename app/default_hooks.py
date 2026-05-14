@@ -51,7 +51,10 @@ TAGS_METADATA = [
     {"name": "free-aud", "description": "Эндпоинты для получения свободных аудиторий"},
     {"name": "nav", "description": "Эндпоинты для работы с данными навигации"},
     {"name": "check", "description": "Эндпоинты для проверки"},
-    {"name": "admin", "description": "Эндпоинты для управления забаненными пользователями"},
+    {
+        "name": "admin",
+        "description": "Эндпоинты для управления забаненными пользователями",
+    },
 ]
 
 APP_VERSION = "0.2.1"
@@ -81,6 +84,7 @@ class DefaultHooks(BaseHooks):
             RoleSeeder,
             ValueTypeSeeder,
         )
+
         return [
             ProblemSeeder(),
             ReviewStatusSeeder(),
@@ -93,7 +97,7 @@ class DefaultHooks(BaseHooks):
             EventTypeSeeder(),
             PayloadTypeSeeder(),
             AllowedPayloadSeeder(),
-            DashboardTypeSeeder()
+            DashboardTypeSeeder(),
         ]
 
     def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
@@ -116,7 +120,7 @@ class DefaultHooks(BaseHooks):
         if settings.server.compression and settings.server.compression.enable:
             app.add_middleware(
                 GZipMiddleware,  # type: ignore[arg-type]
-                minimum_size=settings.server.compression.minimum_size
+                minimum_size=settings.server.compression.minimum_size,
             )
 
     def setup_routers(self, app: FastAPI) -> None:
@@ -160,7 +164,9 @@ class DefaultHooks(BaseHooks):
     def setup_exception_handlers(self, app: FastAPI) -> None:
         @app.exception_handler(SQLAlchemyError)
         async def sqlalchemy_exception_handler(_, _exc: SQLAlchemyError):
-            return JSONResponse(status_code=500, content={"status": "Internal server error"})
+            return JSONResponse(
+                status_code=500, content={"status": "Internal server error"}
+            )
 
         @app.exception_handler(LookupException)
         async def lookup_exception_handler(_, exc: LookupException):
@@ -168,7 +174,9 @@ class DefaultHooks(BaseHooks):
 
         @app.exception_handler(HTTPException)
         async def http_exception_handler(_: Request, exc: HTTPException):
-            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+            return JSONResponse(
+                status_code=exc.status_code, content={"detail": exc.detail}
+            )
 
     # ── Lifespan ─────────────────────────────────────────────────────────────
 
@@ -180,7 +188,9 @@ class DefaultHooks(BaseHooks):
         try:
             loaded = review_rate_limiter.load_bans(state, settings)
             if loaded > 0:
-                logger.info("Loaded %d banned users from %s", loaded, settings.static_files)
+                logger.info(
+                    "Loaded %d banned users from %s", loaded, settings.static_files
+                )
         except Exception as e:
             logger.warning("Could not load banned users: %s", e)
 
@@ -190,7 +200,7 @@ class DefaultHooks(BaseHooks):
             static_path=settings.static_files,
             queue_type=jobs_config.queue,
             queue_db=jobs_config.url,
-            state=state
+            state=state,
         )
         job_manager.setup_from_config(jobs_config)
 

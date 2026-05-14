@@ -18,6 +18,7 @@ _ENV_PATTERN = re.compile(r'\{\{\s*env\("([^"]+)"(?:\s*,\s*"([^"]*)"\s*)?\)\s*}}
 
 # ─── Загрузка .env без перезаписи системных переменных ────────────────────────
 
+
 def _load_dotenv(dotenv_path: Path) -> None:
     if not dotenv_path.exists():
         return
@@ -34,6 +35,7 @@ def _load_dotenv(dotenv_path: Path) -> None:
 
 # ─── Подстановка переменных окружения в YAML-строку ───────────────────────────
 
+
 def _substitute_env(raw: str) -> str:
     def replacer(match: re.Match) -> str:
         var_name: str = match.group(1)
@@ -49,6 +51,7 @@ def _substitute_env(raw: str) -> str:
 
 
 # ─── Pydantic-модели конфигурации ─────────────────────────────────────────────
+
 
 class CronConfig(BaseModel):
     minute: str | int = "*"
@@ -196,7 +199,7 @@ class Settings(BaseModel):
         if self.server.cors:
             return self.server.cors.allowed_headers
         return ["Authorization"]
-    
+
     @property
     def allow_credentials(self) -> bool:
         if self.server.cors:
@@ -221,6 +224,7 @@ class Settings(BaseModel):
 
 
 # ─── Загрузка конфигурации ────────────────────────────────────────────────────
+
 
 def load_settings() -> Settings:
     # [1] Определяем путь к конфигу

@@ -28,7 +28,7 @@ class BaseHooks:
         if not settings.server.docs.redoc:
             kwargs["redoc_url"] = None
         return kwargs
-    
+
     def setup_seeders(self) -> Sequence[BaseSeeder]:
         return []
 
