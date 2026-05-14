@@ -13,6 +13,4 @@ seed_cli = typer.Typer(
 # Регистрация команды через прямое применение декоратора
 seed_cli.command(name="run", help="Запуск сидеров")(seed_command)
 
-seed_cli.command(
-    name="nav-csv", help="🗺️ Загрузка навигации из CSV"
-)(nav_csv_command)
+seed_cli.command(name="nav-csv", help="🗺️ Загрузка навигации из CSV")(nav_csv_command)
