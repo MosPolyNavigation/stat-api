@@ -12,8 +12,8 @@ def register_endpoint(router: APIRouter):
         response_model=AllowedPermissionsResponse,
         summary="Получить допустимые права для целей",
         description="Возвращает маппинг ID целей к спискам допустимых ID прав, "
-                    "сформированный динамически из константы GOAL_RIGHTS. "
-                    "Доступно только пользователям с правом `roles:view`.",
+        "сформированный динамически из константы GOAL_RIGHTS. "
+        "Доступно только пользователям с правом `roles:view`.",
         dependencies=[Depends(require_rights(ROLES_GOAL_NAME, VIEW_RIGHT_NAME))],
         tags=["auth"],
     )
@@ -23,6 +23,4 @@ def register_endpoint(router: APIRouter):
         Данные формируются из константы GOAL_RIGHTS — единого источника истины.
         Служебные цели (refresh_token, client) исключаются из ответа.
         """
-        return AllowedPermissionsResponse(
-            allowed_permissions=get_goal_rights_map()
-        )
+        return AllowedPermissionsResponse(allowed_permissions=get_goal_rights_map())

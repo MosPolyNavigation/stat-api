@@ -15,32 +15,39 @@ from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
-    @router.get(
-        "/by-plan",
-        response_model=ScheduleOut | Status,
-        tags=["free-aud"]
-    )
+    @router.get("/by-plan", response_model=ScheduleOut | Status, tags=["free-aud"])
     async def by_plan(
         request: Request,
         response: Response,
         db: Annotated[AsyncSession, Depends(get_db)],
-        filter_: Annotated[FilterSvobodnForPlan, Depends()]
+        filter_: Annotated[FilterSvobodnForPlan, Depends()],
     ):
         state: AppState = request.app.state.app_state
         if state.rasp_lock.locked() or state.global_rasp is None:
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
         schedule = filter_svobodn(state.global_rasp, filter_)
-        auditories = (await db.execute(
-            Select(Auditory.id_sys)
-            .join(Auditory.plans)
-            .filter(Plan.id_sys == filter_.plan_id)
-            .join(Auditory.typ)
-            .filter(Type.name.in_(
-                ["Лаборатория",
-                 "Учебная аудитория",
-                 "Пока не известно",
-                 "Клуб / секция / внеучебка"]))
-        )).scalars().all()
+        auditories = (
+            (
+                await db.execute(
+                    Select(Auditory.id_sys)
+                    .join(Auditory.plans)
+                    .filter(Plan.id_sys == filter_.plan_id)
+                    .join(Auditory.typ)
+                    .filter(
+                        Type.name.in_(
+                            [
+                                "Лаборатория",
+                                "Учебная аудитория",
+                                "Пока не известно",
+                                "Клуб / секция / внеучебка",
+                            ]
+                        )
+                    )
+                )
+            )
+            .scalars()
+            .all()
+        )
 
         return auditory_is_empty(schedule, list(auditories), filter_)

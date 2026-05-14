@@ -12,25 +12,19 @@ def register_endpoint(router: APIRouter):
         tags=["get"],
         responses={
             500: {
-                'model': Status,
-                'description': "Server side error",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                }
+                "model": Status,
+                "description": "Server side error",
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
             200: {
-                'description': 'Popular auditories in descending order',
-                'content': {
-                    'application/json': {
+                "description": "Popular auditories in descending order",
+                "content": {
+                    "application/json": {
                         "example": ["a-100", "a-101", "a-103", "a-102"]
                     }
-                }
-            }
-        }
+                },
+            },
+        },
     )
-    async def get_popular(
-            db: AsyncSession = Depends(get_db)
-    ) -> list[PopularAudience]:
+    async def get_popular(db: AsyncSession = Depends(get_db)) -> list[PopularAudience]:
         return await get_popular_audiences(db)

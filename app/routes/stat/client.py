@@ -31,9 +31,7 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
     ) -> Status:
         client = (
-            await db.execute(
-                select(ClientId).where(ClientId.ident == data.ident)
-            )
+            await db.execute(select(ClientId).where(ClientId.ident == data.ident))
         ).scalar_one_or_none()
 
         if client is not None:

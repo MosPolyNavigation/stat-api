@@ -1,6 +1,15 @@
 from datetime import datetime, timezone
 from typing import Annotated, Optional
-from fastapi import APIRouter, Depends, HTTPException, Cookie, Form, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Cookie,
+    Form,
+    Request,
+    Response,
+    status,
+)
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from pwdlib import PasswordHash
@@ -20,7 +29,7 @@ from app.helpers.token_utils import (
     normalize_token_error,
     set_refresh_cookie,
     validate_refresh_payload,
-    get_refresh_session
+    get_refresh_session,
 )
 from app.schemas.auth import AuthScheme
 from app.services.user_logger_service import UserLoggerService, get_user_logger_service
@@ -54,7 +63,9 @@ async def get_user_by_login(db: AsyncSession, login: str) -> Optional[User]:
     return (await db.execute(select(User).filter_by(login=login))).scalar()
 
 
-async def authenticate_user(db: AsyncSession, login: str, password: str) -> Optional[User]:
+async def authenticate_user(
+    db: AsyncSession, login: str, password: str
+) -> Optional[User]:
     """проверка, существует ли пользователь и правильный ли пароль"""
     user = await get_user_by_login(db, login)
     if not user or not verify_password(password, user.hash):
@@ -89,11 +100,11 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def login(
-            request: Request,
-            response: Response,
-            form_data: Annotated[AuthScheme, Form()],
-            db: AsyncSession = Depends(get_db),
-            logger: UserLoggerService = Depends(get_user_logger_service),
+        request: Request,
+        response: Response,
+        form_data: Annotated[AuthScheme, Form()],
+        db: AsyncSession = Depends(get_db),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         target_user = await get_user_by_login(db, form_data.username)
         user = await authenticate_user(db, form_data.username, form_data.password)
@@ -126,20 +137,22 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def read_users_me(
-            current_user: Annotated[User, Depends(get_current_active_user)],
-            db: AsyncSession = Depends(get_db),
-            logger: UserLoggerService = Depends(get_user_logger_service),
+        current_user: Annotated[User, Depends(get_current_active_user)],
+        db: AsyncSession = Depends(get_db),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """Возвращает актуальные данные текущего пользователя"""
         await db.refresh(current_user)
         service: PermissionService = PermissionService(db)
 
-        perms_with_grant = await service.get_user_permissions_with_grant(current_user.id)
+        perms_with_grant = await service.get_user_permissions_with_grant(
+            current_user.id
+        )
         result = UserOut(
             id=current_user.id,
             login=current_user.login,
             is_active=current_user.is_active,
-            rights_by_goals=group_rights_by_goals_with_grant(perms_with_grant)
+            rights_by_goals=group_rights_by_goals_with_grant(perms_with_grant),
         )
 
         logger.log(current_user, "Запрос сведений о пользователе")
@@ -154,16 +167,19 @@ def register_endpoint(router: APIRouter):
         tags=["auth"],
     )
     async def refresh(
-            request: Request,
-            response: Response,
-            db: AsyncSession = Depends(get_db),
-            user_ip: str | None = Form(default=None),
-            refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
-            logger: UserLoggerService = Depends(get_user_logger_service),
+        request: Request,
+        response: Response,
+        db: AsyncSession = Depends(get_db),
+        user_ip: str | None = Form(default=None),
+        refresh_token: str | None = Cookie(default=None, alias=REFRESH_COOKIE_NAME),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         # Refresh токен должен приходить в cookie
         if not refresh_token:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh токен отсутствует")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh токен отсутствует",
+            )
 
         try:
             # Проверка подписи refresh токена и извлечение данных из payload
@@ -177,16 +193,22 @@ def register_endpoint(router: APIRouter):
             ) from exc
 
         # Получаем пользователя, которому принадлежит refresh токен
-        user = (await db.execute(select(User).where(User.id == user_id))).scalar_one_or_none()
+        user = (
+            await db.execute(select(User).where(User.id == user_id))
+        ).scalar_one_or_none()
 
         # Ищем активную refresh сессию в БД
-        session: Optional[RefreshToken] = await get_refresh_session(db, user_id, raw_jti)
+        session: Optional[RefreshToken] = await get_refresh_session(
+            db, user_id, raw_jti
+        )
         if not session or session.revoked:
             clear_refresh_cookie(response, request)
             if user is not None:
                 logger.log(user, "Неудачная попытка ротации токена")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
-                                detail="Refresh сессия не найдена или отозвана")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh сессия не найдена или отозвана",
+            )
 
         # Если refresh сессия истекла, помечаем её отозванной
         if session.exp_date <= datetime.now(timezone.utc).replace(tzinfo=None):
@@ -195,13 +217,19 @@ def register_endpoint(router: APIRouter):
             clear_refresh_cookie(response, request)
             if user is not None:
                 logger.log(user, "Неудачная попытка ротации токена")
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Срок действия refresh токена истёк")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Срок действия refresh токена истёк",
+            )
 
         if not user:
             session.revoked = True
             await db.commit()
             clear_refresh_cookie(response, request)
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Пользователь не найден")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Пользователь не найден",
+            )
 
         # Refresh токены выдаются только активным пользователям
         if not user.is_active:
@@ -209,7 +237,10 @@ def register_endpoint(router: APIRouter):
             await db.commit()
             clear_refresh_cookie(response, request)
             logger.log(user, "Неудачная попытка ротации токена")
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Неактивный пользователь")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Неактивный пользователь",
+            )
 
         # Ротация refresh токена: старую сессию отзываем
         session.revoked = True

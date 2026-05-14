@@ -17,46 +17,27 @@ def register_endpoint(router: APIRouter):
         tags=["review"],
         responses={
             500: {
-                'model': Status,
-                'description': "Server side error",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                }
+                "model": Status,
+                "description": "Server side error",
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
             404: {
-                'model': Status,
-                'description': "Item not found",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Image not found"}
-                    }
-                }
+                "model": Status,
+                "description": "Item not found",
+                "content": {
+                    "application/json": {"example": {"status": "Image not found"}}
+                },
             },
             200: {
-                'content': {
-                    "image/png": {
-                        "schema": {
-                            "type": "string",
-                            "format": "binary"
-                        }
-                    },
-                    "image/jpeg": {
-                        "schema": {
-                            "type": "string",
-                            "format": "binary"
-                        }
-                    },
+                "content": {
+                    "image/png": {"schema": {"type": "string", "format": "binary"}},
+                    "image/jpeg": {"schema": {"type": "string", "format": "binary"}},
                 },
                 "description": "Review image",
-
-            }
-        }
+            },
+        },
     )
-    async def get_image(
-            image_path: str
-    ) -> FileResponse:
+    async def get_image(image_path: str) -> FileResponse:
         base_path = os.path.join(get_settings().static_files, "images")
         sanitized_path = secure_image_path(base_path, image_path)
         if sanitized_path is None:
