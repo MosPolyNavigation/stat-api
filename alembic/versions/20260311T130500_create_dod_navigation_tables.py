@@ -1,10 +1,11 @@
-﻿"""Create DOD-prefixed navigation tables
+"""Create DOD-prefixed navigation tables
 
 Revision ID: 1d4cf4d7f8aa
 Revises: f3b1f4129f0e
 Create Date: 2026-03-11 13:05:00.000000
 
 """
+
 from typing import Sequence, Union
 
 from alembic import op
