@@ -34,7 +34,7 @@ def register_endpoint(router: APIRouter):
         /api/nav/plan?plan={plan_id}
 
         Возвращает JSON формата {loc_id}{plan_id}.json
-        """ 
+        """
         #  находим план по id_sys и подгружаем corpus, floor, svg
         stmt = (
             Select(Plan)
@@ -46,9 +46,7 @@ def register_endpoint(router: APIRouter):
             .filter(Plan.id_sys == plan)
         )
 
-        plan_obj: Plan | None = (
-            await db.execute(stmt)
-        ).scalar_one_or_none()
+        plan_obj: Plan | None = (await db.execute(stmt)).scalar_one_or_none()
 
         if plan_obj is None:
             raise HTTPException(status_code=404, detail="Plan not found")
@@ -56,9 +54,7 @@ def register_endpoint(router: APIRouter):
         # Находим кампус по loc_id корпуса
         location: Location | None = (
             await db.execute(
-                Select(Location).filter(
-                    Location.id == plan_obj.corpus.loc_id
-                )
+                Select(Location).filter(Location.id == plan_obj.corpus.loc_id)
             )
         ).scalar_one_or_none()
 
@@ -79,9 +75,7 @@ def register_endpoint(router: APIRouter):
         except ValueError:
             graph = []
 
-        svg_link: str | None = (
-            plan_obj.svg.link if plan_obj.svg is not None else None
-        )
+        svg_link: str | None = plan_obj.svg.link if plan_obj.svg is not None else None
 
         spaces: list = []
 
@@ -110,9 +104,9 @@ def register_endpoint(router: APIRouter):
         },
     )
     async def upload_plan(
-            plan_id: str = Form(..., max_length=20),
-            file: UploadFile = Depends(plan_validator),
-            db: AsyncSession = Depends(get_db),
+        plan_id: str = Form(..., max_length=20),
+        file: UploadFile = Depends(plan_validator),
+        db: AsyncSession = Depends(get_db),
     ) -> Status:
         """
         Эндпоинт для загрузки svg-плана:
@@ -132,9 +126,7 @@ def register_endpoint(router: APIRouter):
 
         # находим план + svg
         stmt = (
-            Select(Plan)
-            .options(selectinload(Plan.svg))
-            .filter(Plan.id_sys == plan_id)
+            Select(Plan).options(selectinload(Plan.svg)).filter(Plan.id_sys == plan_id)
         )
         plan_obj: Plan | None = (await db.execute(stmt)).scalar_one_or_none()
         if plan_obj is None:
@@ -175,7 +167,12 @@ def register_endpoint(router: APIRouter):
         saved_file = await save_svg_bytes_to_disk(contents, base_path)
         if saved_file is None:
             # откатить backup
-            if backup_done and old_disk_path and backup_disk_path and os.path.exists(backup_disk_path):
+            if (
+                backup_done
+                and old_disk_path
+                and backup_disk_path
+                and os.path.exists(backup_disk_path)
+            ):
                 os.replace(backup_disk_path, old_disk_path)
 
                 if old_static is not None:
@@ -191,7 +188,9 @@ def register_endpoint(router: APIRouter):
                     )
                     await db.commit()
 
-            raise HTTPException(status_code=400, detail="Invalid SVG or file was not saved")
+            raise HTTPException(
+                status_code=400, detail="Invalid SVG or file was not saved"
+            )
 
         # saved_file == uuid.svg
         rel_dir = "plans"
@@ -207,9 +206,7 @@ def register_endpoint(router: APIRouter):
 
         # обновляем plans.svg_id
         await db.execute(
-            update(Plan)
-            .where(Plan.id == plan_obj.id)
-            .values(svg_id=new_static_id)
+            update(Plan).where(Plan.id == plan_obj.id).values(svg_id=new_static_id)
         )
         await db.commit()
 
@@ -241,9 +238,7 @@ def register_endpoint(router: APIRouter):
 
         # Ищем план и его svg-статику
         stmt = (
-            Select(Plan)
-            .options(selectinload(Plan.svg))
-            .filter(Plan.id_sys == plan_id)
+            Select(Plan).options(selectinload(Plan.svg)).filter(Plan.id_sys == plan_id)
         )
         plan_obj: Plan | None = (await db.execute(stmt)).scalar_one_or_none()
         if plan_obj is None:

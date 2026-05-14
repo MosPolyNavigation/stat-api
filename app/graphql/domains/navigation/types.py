@@ -1,8 +1,24 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 import strawberry
 
 from app.graphql.core.context import GraphQLContext
+from app.graphql.core.list_ops import process_list
+from app.graphql.core.pagination import (
+    PaginationInput,
+    Connection,
+    pagination_input_from_attrs,
+)
+from app.graphql.domains.navigation.inputs import (
+    NavCampusFilterInput,
+    NavCampusOrderByInput,
+    NavPlanFilterInput,
+    NavPlanOrderByInput,
+    NavAuditoryFilterInput,
+    NavAuditoryOrderByInput,
+    NavAuditoryPhotoFilterInput,
+    NavAuditoryPhotoOrderByInput,
+)
 from app.models import (
     Location as LModel,
     Corpus as CModel,
@@ -125,12 +141,22 @@ class NavLocation:
     async def campuses(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavCampus"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavCampusFilterInput] = None,
+        order_by: Optional[NavCampusOrderByInput] = None,
+    ) -> Connection["NavCampus"]:
         ctx: GraphQLContext = info.context
-        nc_models = await ctx.loaders["nav_campus_by_loc_id"].load(self.id)
-        return [_campus_from_model(nc_model) for nc_model in nc_models[:limit]]
+        nc_models = await ctx.loaders.nav_campus_by_loc_id.load(self.id)
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=nc_models,
+            model_type=CModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_campus_from_model,
+        )
 
 
 @strawberry.type
@@ -146,19 +172,29 @@ class NavCampus:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def location(self, info: strawberry.Info) -> Optional[NavLocation]:
         ctx: GraphQLContext = info.context
-        nl_model = await ctx.loaders["nav_location"].load(self.loc_id)
+        nl_model = await ctx.loaders.nav_location.load(self.loc_id)
         return _location_from_model(nl_model) if nl_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def plans(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavPlan"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavPlanFilterInput] = None,
+        order_by: Optional[NavPlanOrderByInput] = None,
+    ) -> Connection["NavPlan"]:
         ctx: GraphQLContext = info.context
-        np_models = await ctx.loaders["nav_plan_by_cor_id"].load(self.id)
-        return [_plan_from_model(np_model) for np_model in np_models[:limit]]
+        np_models = await ctx.loaders.nav_plan_by_cor_id.load(self.id)
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=np_models,
+            model_type=PModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_plan_from_model,
+        )
 
 
 @strawberry.type
@@ -191,13 +227,13 @@ class NavPlan:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def campus(self, info: strawberry.Info) -> Optional[NavCampus]:
         ctx: GraphQLContext = info.context
-        nc_model = await ctx.loaders["nav_campus"].load(self.cor_id)
+        nc_model = await ctx.loaders.nav_campus.load(self.cor_id)
         return _campus_from_model(nc_model) if nc_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def floor(self, info: strawberry.Info) -> Optional[NavFloor]:
         ctx: GraphQLContext = info.context
-        nf_model = await ctx.loaders["nav_floor"].load(self.floor_id)
+        nf_model = await ctx.loaders.nav_floor.load(self.floor_id)
         return _floor_from_model(nf_model) if nf_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -205,19 +241,29 @@ class NavPlan:
         ctx: GraphQLContext = info.context
         if self.svg_id is None:
             return None
-        ns_model = await ctx.loaders["nav_static"].load(self.svg_id)
+        ns_model = await ctx.loaders.nav_static.load(self.svg_id)
         return _static_from_model(ns_model) if ns_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def auditories(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavAuditory"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavAuditoryFilterInput] = None,
+        order_by: Optional[NavAuditoryOrderByInput] = None,
+    ) -> Connection["NavAuditory"]:
         ctx: GraphQLContext = info.context
-        na_models = await ctx.loaders["nav_auditory_by_plan_id"].load(self.id)
-        return [_auditory_from_model(na_model) for na_model in na_models[:limit]]
+        na_models = await ctx.loaders.nav_auditory_by_plan_id.load(self.id)
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=na_models,
+            model_type=AModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_auditory_from_model,
+        )
 
 
 @strawberry.type
@@ -236,25 +282,35 @@ class NavAuditory:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def type(self, info: strawberry.Info) -> Optional[NavType]:
         ctx: GraphQLContext = info.context
-        nt_model = await ctx.loaders["nav_type"].load(self.type_id)
+        nt_model = await ctx.loaders.nav_type.load(self.type_id)
         return _type_from_model(nt_model) if nt_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def plan(self, info: strawberry.Info) -> Optional[NavPlan]:
         ctx: GraphQLContext = info.context
-        np_model = await ctx.loaders["nav_plan"].load(self.plan_id)
+        np_model = await ctx.loaders.nav_plan.load(self.plan_id)
         return _plan_from_model(np_model) if np_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def photos(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavAuditoryPhoto"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavAuditoryPhotoFilterInput] = None,
+        order_by: Optional[NavAuditoryPhotoOrderByInput] = None,
+    ) -> Connection["NavAuditoryPhoto"]:
         ctx: GraphQLContext = info.context
-        nap_models = await ctx.loaders["nav_photos_by_aud_id"].load(self.id)
-        return [_aud_photo_from_model(nap_model) for nap_model in nap_models[:limit]]
+        nap_models = await ctx.loaders.nav_photos_by_aud_id.load(self.id)
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=nap_models,
+            model_type=APModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_aud_photo_from_model,
+        )
 
 
 @strawberry.type
@@ -271,7 +327,7 @@ class NavAuditoryPhoto:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def auditory(self, info: strawberry.Info) -> Optional[NavAuditory]:
         ctx: GraphQLContext = info.context
-        na_model = await ctx.loaders["nav_auditory"].load(self.aud_id)
+        na_model = await ctx.loaders.nav_auditory.load(self.aud_id)
         return _auditory_from_model(na_model) if na_model else None
 
 

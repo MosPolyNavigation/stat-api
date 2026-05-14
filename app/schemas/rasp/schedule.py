@@ -33,12 +33,7 @@ class Rasp(BaseModel):
             variety_map: dict[tuple[str, date, date, str], Variety] = {}
 
             for var in lesson_list:
-                key = (
-                    var.discipline,
-                    var.dt,
-                    var.df,
-                    var.dts
-                )
+                key = (var.discipline, var.dt, var.df, var.dts)
 
                 if key in variety_map:
                     existing = variety_map[key]
@@ -51,7 +46,14 @@ class Rasp(BaseModel):
             day_schedule[lesson_key] = list(variety_map.values())
 
     def merge(self):
-        for day_name in ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']:
+        for day_name in [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+        ]:
             self.merge_day(day_name)
 
 

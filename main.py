@@ -26,10 +26,16 @@ def root_callback() -> None:
 app_cli.add_typer(db_cli, name="db")
 
 
-@app_cli.command(name="serve", help=f"🌐 Запуск FastAPI-сервера через Uvicorn.{CONFIG_ENV_NOTE}")
+@app_cli.command(
+    name="serve", help=f"🌐 Запуск FastAPI-сервера через Uvicorn.{CONFIG_ENV_NOTE}"
+)
 def serve(
-    host: str | None = typer.Option(None, help="Хост для привязки (переопределяет config.yaml)"),
-    port: int | None = typer.Option(None, help="Порт для привязки (переопределяет config.yaml)"),
+    host: str | None = typer.Option(
+        None, help="Хост для привязки (переопределяет config.yaml)"
+    ),
+    port: int | None = typer.Option(
+        None, help="Порт для привязки (переопределяет config.yaml)"
+    ),
     reload: bool = typer.Option(False, help="Автоперезагрузка при изменении кода"),
     workers: int = typer.Option(1, help="Количество worker-процессов Uvicorn"),
 ) -> None:
@@ -40,13 +46,7 @@ def serve(
         host = cfg.server.host
     if port is None:
         port = cfg.server.port
-    uvicorn.run(
-        app,
-        host=host,
-        port=port,
-        reload=reload,
-        workers=workers
-    )
+    uvicorn.run(app, host=host, port=port, reload=reload, workers=workers)
 
 
 if __name__ == "__main__":

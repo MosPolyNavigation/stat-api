@@ -5,9 +5,15 @@ from .review_seeder import ReviewSeeder
 from .user_seeder import UserSeeder
 from .user_role_seeder import UserRoleSeeder
 from .navigation_seeders import (
-    LocationSeeder, CorpusSeeder, PlanSeeder, FloorSeeder,
-    TypeSeeder, AuditorySeeder, AudPhotoSeeder
+    LocationSeeder,
+    CorpusSeeder,
+    PlanSeeder,
+    FloorSeeder,
+    TypeSeeder,
+    AuditorySeeder,
+    AudPhotoSeeder,
 )
+
 # from .dod_seeders import (
 #     DodLocationSeeder, DodCorpusSeeder, DodFloorSeeder, DodStaticSeeder,
 #     DodPlanSeeder, DodTypeSeeder, DodAuditorySeeder, DodAudPhotoSeeder
@@ -28,11 +34,16 @@ TEST_ONLY_SEEDERS = [
     UserSeeder(),
     UserRoleSeeder(),
     # Навигация
-    LocationSeeder(), CorpusSeeder(), FloorSeeder(), PlanSeeder(),
-    TypeSeeder(), AuditorySeeder(), AudPhotoSeeder(),
+    LocationSeeder(),
+    CorpusSeeder(),
+    FloorSeeder(),
+    PlanSeeder(),
+    TypeSeeder(),
+    AuditorySeeder(),
+    AudPhotoSeeder(),
     # DOD
     # DodLocationSeeder(), DodCorpusSeeder(), DodFloorSeeder(), DodStaticSeeder(),
     # DodPlanSeeder(), DodTypeSeeder(), DodAuditorySeeder(), DodAudPhotoSeeder(),
-
-    DashboardSeeder(), RefreshTokenSeeder()
+    DashboardSeeder(),
+    RefreshTokenSeeder(),
 ]

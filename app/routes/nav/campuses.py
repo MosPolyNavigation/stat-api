@@ -22,9 +22,7 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
     ) -> CampusesLinks:
         # Берём только готовые локации
-        result = await db.execute(
-            Select(Location).filter(Location.ready.is_(True))
-        )
+        result = await db.execute(Select(Location).filter(Location.ready.is_(True)))
         locations: Sequence[Location] = result.scalars().all()
 
         links = [f"/api/nav/campus?loc={loc.id_sys}" for loc in locations]

@@ -2,7 +2,15 @@ from datetime import datetime
 from typing import Optional
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text, text as text_
+from sqlalchemy import (
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    text as text_,
+)
 from sqlalchemy.orm import Mapped, relationship
 
 from app.models.base import Base
@@ -216,6 +224,7 @@ class Problem(Base):
     Attributes:
         id: Наименование проблемы.
     """
+
     __tablename__ = "problems"
 
     id: str = Column(String(5), primary_key=True, index=True)
@@ -251,40 +260,21 @@ class Review(Base):
         client: Связь с таблицей "client_ids".
         problem: Связь с таблицей "problem".
     """
+
     __tablename__ = "reviews"
 
-    id: int = Column(
-        Integer,
-        primary_key=True,
-        index=True
-    )
-    client_id: int = Column(
-        ForeignKey("client_ids.id"),
-        nullable=False
-    )
-    text: str = Column(
-        Text,
-        nullable=False
-    )
-    problem_id: str = Column(
-        ForeignKey("problems.id"),
-        nullable=False
-    )
+    id: int = Column(Integer, primary_key=True, index=True)
+    client_id: int = Column(ForeignKey("client_ids.id"), nullable=False)
+    text: str = Column(Text, nullable=False)
+    problem_id: str = Column(ForeignKey("problems.id"), nullable=False)
     # FK на статус
     review_status_id: int = Column(
         ForeignKey("review_statuses.id"),
         nullable=False,
         server_default=text_("1"),  # по умолчанию бэклог
     )
-    image_name: Optional[str] = Column(
-        String(255),
-        nullable=True
-    )
-    creation_date: datetime = Column(
-        DateTime,
-        default=datetime.now,
-        nullable=False
-    )
+    image_name: Optional[str] = Column(String(255), nullable=True)
+    creation_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
 
     client: Mapped["ClientId"] = relationship(
         "ClientId",

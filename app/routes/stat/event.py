@@ -61,9 +61,7 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
     ) -> Status:
         client = (
-            await db.execute(
-                select(ClientId).where(ClientId.ident == data.ident)
-            )
+            await db.execute(select(ClientId).where(ClientId.ident == data.ident))
         ).scalar_one_or_none()
         if client is None:
             raise HTTPException(
@@ -90,10 +88,7 @@ def register_endpoint(router: APIRouter):
                 .where(AllowedPayload.event_type_id == data.event_type_id)
             )
         ).all()
-        allowed_payload_types = {
-            int(row.id): str(row.name)
-            for row in allowed_rows
-        }
+        allowed_payload_types = {int(row.id): str(row.name) for row in allowed_rows}
 
         normalized_payloads: list[tuple[int, str]] = []
         for payload_type_id, value in data.payloads.items():

@@ -13,11 +13,14 @@ def register_endpoint(router: APIRouter):
         response_model=list[EventTypeResponse],
         tags=["get"],
     )
-    async def get_event_types(db: AsyncSession = Depends(get_db)) -> list[EventTypeResponse]:
+    async def get_event_types(
+        db: AsyncSession = Depends(get_db),
+    ) -> list[EventTypeResponse]:
         rows = (
             await db.execute(
                 select(EventType.id, EventType.code_name).order_by(EventType.id.asc())
             )
         ).all()
-        return [EventTypeResponse(id=int(row.id), name=str(row.code_name)) for row in rows]
-
+        return [
+            EventTypeResponse(id=int(row.id), name=str(row.code_name)) for row in rows
+        ]

@@ -46,16 +46,8 @@ class Static(Base):
     path: str = Column(String(255), nullable=False)
     name: str = Column(String(50), nullable=False, unique=True)
     link: str = Column(String(255), nullable=False)
-    creation_date: datetime = Column(
-        DateTime,
-        default=datetime.now,
-        nullable=False
-    )
-    update_date: datetime = Column(
-        DateTime,
-        default=datetime.now,
-        nullable=False
-    )
+    creation_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
+    update_date: datetime = Column(DateTime, default=datetime.now, nullable=False)
 
 
 class Plan(Base):
@@ -99,7 +91,9 @@ class Auditory(Base):
 
     typ: Mapped["Type"] = relationship("Type")
     plans: Mapped["Plan"] = relationship("Plan")
-    photos: Mapped[List["AudPhoto"]] = relationship("AudPhoto", back_populates="auditory")
+    photos: Mapped[List["AudPhoto"]] = relationship(
+        "AudPhoto", back_populates="auditory"
+    )
 
 
 class AudPhoto(Base):

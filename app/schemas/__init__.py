@@ -9,8 +9,15 @@ from app.schemas.event import (
     PayloadTypeResponse,
 )
 from app.schemas.stat.user_id import ClientIdCheck
-from app.schemas.graph.dto import DataDto, GraphDto, LocationDto, \
-    CorpusDto, PlanDto, RoomDto, NearestDto
+from app.schemas.graph.dto import (
+    DataDto,
+    GraphDto,
+    LocationDto,
+    CorpusDto,
+    PlanDto,
+    RoomDto,
+    NearestDto,
+)
 from app.schemas.graph.data import LocationData, CorpusData, PlanData
 from app.schemas.graph.graph import Graph, Vertex, DataEntry
 from .user import UserOut

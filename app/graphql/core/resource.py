@@ -9,7 +9,7 @@ from app.graphql.core.ordering import BaseOrderByInput
 
 # Типы для обобщения
 M = TypeVar("M", bound=DeclarativeBase)  # SQLAlchemy модель
-T = TypeVar("T")                         # GraphQL Strawberry тип
+T = TypeVar("T")  # GraphQL Strawberry тип
 F = TypeVar("F", bound=BaseFilterInput)  # Filter Input
 
 
@@ -18,6 +18,7 @@ class ResourceConfig(Generic[M, T, F]):
     """
     Конфигурация ресурса для авто-генерации резолверов.
     """
+
     model: Type[M]
     graphql_type: Type[T]
     filter_input: Type[F]
@@ -67,6 +68,7 @@ class ResourceConfig(Generic[M, T, F]):
 @dataclass
 class ResourcePermissions:
     """Набор разрешений для операций CRUD."""
+
     view: Optional[Permission] = None
     create: Optional[Permission] = None
     edit: Optional[Permission] = None

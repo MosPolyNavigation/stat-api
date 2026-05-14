@@ -11,10 +11,17 @@ from app.jobs.location_data.worker import fetch_location_data
 from app.seed.base_seeder import BaseSeeder
 from tests.seed import TEST_ONLY_SEEDERS
 from app.seed import (
-    AllowedPayloadSeeder, DashboardTypeSeeder, EventTypeSeeder,
-    GoalSeeder, PayloadTypeSeeder, ProblemSeeder,
-    ReviewStatusSeeder, RightSeeder, RoleRightGoalSeeder,
-    RoleSeeder, ValueTypeSeeder,
+    AllowedPayloadSeeder,
+    DashboardTypeSeeder,
+    EventTypeSeeder,
+    GoalSeeder,
+    PayloadTypeSeeder,
+    ProblemSeeder,
+    ReviewStatusSeeder,
+    RightSeeder,
+    RoleRightGoalSeeder,
+    RoleSeeder,
+    ValueTypeSeeder,
 )
 
 
@@ -22,7 +29,9 @@ class Schedule(RootModel[dict[str, Auditory]]):
     pass
 
 
-async def init_test_database(test_engine: AsyncEngine, test_session_maker: async_sessionmaker, app: FastAPI) -> None:
+async def init_test_database(
+    test_engine: AsyncEngine, test_session_maker: async_sessionmaker, app: FastAPI
+) -> None:
     """Инициализирует тестовую БД: создаёт таблицы + применяет сидеры + загружает state."""
     # 1️⃣ Создаём таблицы
     async with test_engine.begin() as conn:
@@ -31,13 +40,20 @@ async def init_test_database(test_engine: AsyncEngine, test_session_maker: async
 
     # 2️⃣ Применяем сидеры (и апп, и тест-специфичные)
     seeders: list[BaseSeeder] = [
-        ProblemSeeder(), ReviewStatusSeeder(), GoalSeeder(), RightSeeder(),
-        RoleSeeder(), RoleRightGoalSeeder(), ValueTypeSeeder(),
-        EventTypeSeeder(), PayloadTypeSeeder(), AllowedPayloadSeeder(),
+        ProblemSeeder(),
+        ReviewStatusSeeder(),
+        GoalSeeder(),
+        RightSeeder(),
+        RoleSeeder(),
+        RoleRightGoalSeeder(),
+        ValueTypeSeeder(),
+        EventTypeSeeder(),
+        PayloadTypeSeeder(),
+        AllowedPayloadSeeder(),
         DashboardTypeSeeder(),
         *TEST_ONLY_SEEDERS,
     ]
-    
+
     await apply_seeding(seeders, session_maker=test_session_maker)
 
     # 3️⃣ Загружаем расписание в app.state

@@ -9,24 +9,29 @@ from .resource import ResourceConfig
 from .permissions import require_permissions
 from .filters import apply_filters
 from .ordering import apply_order_by
-from .pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
+from .pagination import (
+    paginate_query,
+    PaginationInput,
+    Connection,
+    pagination_input_from_attrs,
+)
 from .context import GraphQLContext
 from .logging import GraphQLLoggingExtension, should_skip_graphql_logging
 
 
 def _make_base_name(name: str) -> str:
     base = name.removesuffix("Type").removesuffix("Model")
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', base).lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", base).lower()
 
 
 def create_query_resource(
-        config: ResourceConfig,
-        *,
-        enable_list: bool = True,
-        enable_get: bool = True,
-        name_list: Optional[str] = None,
-        name_get: Optional[str] = None,
-        page_size_default: int = 10,
+    config: ResourceConfig,
+    *,
+    enable_list: bool = True,
+    enable_get: bool = True,
+    name_list: Optional[str] = None,
+    name_get: Optional[str] = None,
+    page_size_default: int = 10,
 ) -> Type[Any]:
     base_name = _make_base_name(config.graphql_type.__name__)
     list_name = name_list or f"{base_name}s"
@@ -56,7 +61,9 @@ def create_query_resource(
                 stmt = apply_order_by(stmt, config.model, order_by)
 
             if pagination is None:
-                pagination = pagination_input_from_attrs(page=1, page_size=page_size_default)
+                pagination = pagination_input_from_attrs(
+                    page=1, page_size=page_size_default
+                )
 
             return await paginate_query(
                 session=ctx.db,
@@ -70,7 +77,9 @@ def create_query_resource(
             "info": Info,
             "pagination": Optional[PaginationInput],
             "filter": Optional[config.filter_input],  # type: ignore
-            "order_by": Optional[config.order_by_input] if config.order_by_input else Optional[Any],  # type: ignore
+            "order_by": Optional[config.order_by_input]
+            if config.order_by_input
+            else Optional[Any],  # type: ignore
             "return": Connection[_node_type],  # type: ignore[valid-type]
         }
 
@@ -86,12 +95,19 @@ def create_query_resource(
     if enable_get:
         pk_column = next(iter(config.model.__table__.primary_key.columns), None)
         _ID_TYPE_MAP = {
-            "INTEGER": int, "BIGINT": int, "SMALLINT": int,
-            "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
+            "INTEGER": int,
+            "BIGINT": int,
+            "SMALLINT": int,
+            "VARCHAR": str,
+            "TEXT": str,
+            "CHAR": str,
+            "UUID": str,
+            "STRING": str,
         }
         id_python_type = (
             _ID_TYPE_MAP.get(pk_column.type.__class__.__name__.upper(), int)  # type: ignore[union-attr]
-            if pk_column is not None else int
+            if pk_column is not None
+            else int
         )
 
         async def _get_resolver(self, info, id):
@@ -123,16 +139,16 @@ def create_query_resource(
 # Фабрика Mutation
 # =============================================================================
 def create_mutation_resource(
-        config: ResourceConfig,
-        *,
-        enable_create: bool = True,
-        enable_update: bool = True,
-        enable_delete: bool = True,
-        name_create: Optional[str] = None,
-        name_update: Optional[str] = None,
-        name_delete: Optional[str] = None,
-        create_input: Optional[Type] = None,
-        update_input: Optional[Type] = None,
+    config: ResourceConfig,
+    *,
+    enable_create: bool = True,
+    enable_update: bool = True,
+    enable_delete: bool = True,
+    name_create: Optional[str] = None,
+    name_update: Optional[str] = None,
+    name_delete: Optional[str] = None,
+    create_input: Optional[Type] = None,
+    update_input: Optional[Type] = None,
 ) -> Type[Any]:
     """Создаёт Strawberry-класс Mutation с настраиваемыми операциями."""
     base_name = _make_base_name(config.graphql_type.__name__)
@@ -144,15 +160,27 @@ def create_mutation_resource(
     # 🔹 0. Определяем тип первичного ключа ОДИН РАЗ для всех операций
     pk_column = next(iter(config.model.__table__.primary_key.columns), None)
     _ID_TYPE_MAP = {
-        "INTEGER": int, "BIGINT": int, "SMALLINT": int,
-        "VARCHAR": str, "TEXT": str, "CHAR": str, "UUID": str, "STRING": str,
+        "INTEGER": int,
+        "BIGINT": int,
+        "SMALLINT": int,
+        "VARCHAR": str,
+        "TEXT": str,
+        "CHAR": str,
+        "UUID": str,
+        "STRING": str,
     }
-    id_python_type = _ID_TYPE_MAP.get(
-        pk_column.type.__class__.__name__.upper(), int  # type: ignore[union-attr]
-    ) if pk_column is not None else int
+    id_python_type = (
+        _ID_TYPE_MAP.get(
+            pk_column.type.__class__.__name__.upper(),  # type: ignore[union-attr]
+            int,
+        )
+        if pk_column is not None
+        else int
+    )
 
     # --- CREATE ---
     if enable_create and create_input:
+
         async def _create_resolver(self, info, data):
             _ = self
             if config.permissions.create:
@@ -167,10 +195,14 @@ def create_mutation_resource(
                     if res is not True and isinstance(res, str):
                         raise GraphQLError(f"{field_name}: {res}")
 
-            instance = config.model(**{
-                k: v for k, v in data.__dict__.items()
-                if k in {c.name for c in config.model.__table__.columns} and v is not None
-            })
+            instance = config.model(
+                **{
+                    k: v
+                    for k, v in data.__dict__.items()
+                    if k in {c.name for c in config.model.__table__.columns}
+                    and v is not None
+                }
+            )
             ctx.db.add(instance)
             await ctx.db.commit()
             await ctx.db.refresh(instance)
@@ -192,6 +224,7 @@ def create_mutation_resource(
 
     # --- UPDATE (БЕЗ RELAY) ---
     if enable_update and update_input:
+
         async def _update_resolver(self, info, id, data):
             _ = self
             if config.permissions.edit:
@@ -237,6 +270,7 @@ def create_mutation_resource(
 
     # --- DELETE (БЕЗ RELAY) ---
     if enable_delete:
+
         async def _delete_resolver(self, info, id):
             _ = self
             if config.permissions.delete:

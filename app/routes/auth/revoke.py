@@ -19,7 +19,10 @@ def register_endpoint(router: APIRouter):
         responses={
             400: {"model": Status, "description": "Передан некорректный jti"},
             401: {"model": Status, "description": "Пользователь не авторизован"},
-            403: {"model": Status, "description": "Недостаточно прав для отзыва токена"},
+            403: {
+                "model": Status,
+                "description": "Недостаточно прав для отзыва токена",
+            },
             404: {"model": Status, "description": "Refresh-токен не найден"},
         },
     )
@@ -30,9 +33,9 @@ def register_endpoint(router: APIRouter):
         logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         """
-            Отзывает refresh-токен по его jti.
-            Если токен принадлежит текущему пользователю, достаточно валидного access token.
-            Если токен принадлежит другому пользователю, требуется право refresh_token - edit.
+        Отзывает refresh-токен по его jti.
+        Если токен принадлежит текущему пользователю, достаточно валидного access token.
+        Если токен принадлежит другому пользователю, требуется право refresh_token - edit.
         """
         refresh_token_service = RefreshTokenService(db)
 
@@ -65,5 +68,8 @@ def register_endpoint(router: APIRouter):
 
         await refresh_token_service.revoke_token(refresh_token)
         await db.commit()
-        logger.log(current_user, f"Отзыв refresh-токена (себя/пользователя {refresh_token.user_id})")
+        logger.log(
+            current_user,
+            f"Отзыв refresh-токена (себя/пользователя {refresh_token.user_id})",
+        )
         return Status()

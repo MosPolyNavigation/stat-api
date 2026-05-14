@@ -28,7 +28,9 @@ class UserLoggerService:
         self._session_factory = get_db
 
     # Создаёт независимую сессию БД для фонового логирования
-    async def get_background_session(self) -> tuple[AsyncSession, Optional[AsyncGenerator]]:
+    async def get_background_session(
+        self,
+    ) -> tuple[AsyncSession, Optional[AsyncGenerator]]:
         if self._session is not None and self._session.bind is not None:
             session_factory = async_sessionmaker(
                 bind=self._session.bind,

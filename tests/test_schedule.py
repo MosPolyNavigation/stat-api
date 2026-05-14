@@ -46,7 +46,14 @@ class TestGetSchedule:
 
         # Проверяем дни недели
         rasp = data["rasp"]
-        expected_days = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
+        expected_days = [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+        ]
         for day in expected_days:
             assert day in rasp
 

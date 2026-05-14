@@ -16,7 +16,9 @@ def _to_endpoint_statistics(model: Statistics) -> "EndpointStatistics":
     )
 
 
-def _to_aggregated_endpoint_statistics(model: AggregatedStatistics) -> "AggregatedEndpointStatistics":
+def _to_aggregated_endpoint_statistics(
+    model: AggregatedStatistics,
+) -> "AggregatedEndpointStatistics":
     return AggregatedEndpointStatistics(
         total_visits=model.total_all_visits,
         total_unique=model.total_unique_visitors,
@@ -28,7 +30,9 @@ def _to_aggregated_endpoint_statistics(model: AggregatedStatistics) -> "Aggregat
     )
 
 
-def _fill_missing_dates(stats: List[Statistics], start_date: date, end_date: date) -> List[Statistics]:
+def _fill_missing_dates(
+    stats: List[Statistics], start_date: date, end_date: date
+) -> List[Statistics]:
     stats_map = {stat.period: stat for stat in stats}
     filled_stats = []
     current_date = start_date

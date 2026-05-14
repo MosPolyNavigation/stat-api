@@ -6,10 +6,17 @@ import typer
 from app.config import load_settings
 from app.database import init_database, close_database
 from app.default_hooks import DefaultHooks
-from app.helpers.seeder import apply_seeding, apply_seeding_isolated, rollback_seeding, rollback_seeding_isolated
+from app.helpers.seeder import (
+    apply_seeding,
+    apply_seeding_isolated,
+    rollback_seeding,
+    rollback_seeding_isolated,
+)
 
 
-def _filter_seeders(all_seeders, include: list[str] | None, exclude: list[str] | None) -> list:
+def _filter_seeders(
+    all_seeders, include: list[str] | None, exclude: list[str] | None
+) -> list:
     """Фильтрация сидеров по имени модели."""
     if not include and not exclude:
         return all_seeders
@@ -56,7 +63,9 @@ async def _run_seeding(
 def seed_command(
     isolated: Annotated[
         bool,
-        typer.Option("--isolated", help="Запускать каждый сидер в отдельной транзакции"),
+        typer.Option(
+            "--isolated", help="Запускать каждый сидер в отдельной транзакции"
+        ),
     ] = False,
     rollback: Annotated[
         bool,
@@ -68,7 +77,9 @@ def seed_command(
     ] = False,
     only: Annotated[
         list[str] | None,
-        typer.Option("--only", help="Запустить только указанные сидеры (по имени модели)"),
+        typer.Option(
+            "--only", help="Запустить только указанные сидеры (по имени модели)"
+        ),
     ] = None,
     skip: Annotated[
         list[str] | None,
@@ -102,7 +113,9 @@ def seed_command(
         typer.echo(f"✅ Будет выполнено: {len(seeders)}")
 
         # Запуск
-        asyncio.run(_run_seeding(seeders, isolated=isolated, rollback=rollback, dry_run=dry_run))
+        asyncio.run(
+            _run_seeding(seeders, isolated=isolated, rollback=rollback, dry_run=dry_run)
+        )
 
         if not dry_run:
             action = "🗑️ Откачено" if rollback else "🌱 Заполнено"

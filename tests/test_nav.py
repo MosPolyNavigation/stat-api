@@ -1,6 +1,7 @@
 """
 Тесты для навигационных эндпоинтов /api/nav/*
 """
+
 from tests.base import client
 
 

@@ -9,13 +9,17 @@ from app.constants import RIGHTS_BY_NAME, GOALS_BY_NAME, GOALS_BY_ID, RIGHTS_BY_
 class PermissionService:
     def __init__(self, db: AsyncSession):
         self.db = db
-        self._permissions_cache: dict[int, tuple[set[tuple[int, int]], set[tuple[int, int]]]] = {}
+        self._permissions_cache: dict[
+            int, tuple[set[tuple[int, int]], set[tuple[int, int]]]
+        ] = {}
 
     async def get_user_permissions(self, user_id: int) -> set[tuple[int, int]]:
         permissions, _ = await self._get_cached_permissions(user_id)
         return permissions
 
-    async def check_permission(self, user_id: int, resource: str, *actions: str) -> bool:
+    async def check_permission(
+        self, user_id: int, resource: str, *actions: str
+    ) -> bool:
         perms: set[tuple[int, int]] = await self.get_user_permissions(user_id)
 
         action_ids = [RIGHTS_BY_NAME.get(action) for action in actions]
@@ -25,7 +29,7 @@ class PermissionService:
         return required.issubset(perms)
 
     async def get_user_permissions_with_grant(
-            self, user_id: int
+        self, user_id: int
     ) -> set[tuple[int, int, bool]]:
         """
         Возвращает множество кортежей вида (right_id, goal_id, can_grant),
@@ -80,7 +84,9 @@ class PermissionService:
         if not permissions:
             return []
 
-        all_permissions, grantable_permissions = await self._get_cached_permissions(user_id)
+        all_permissions, grantable_permissions = await self._get_cached_permissions(
+            user_id
+        )
         required_permissions = set(permissions)
 
         if required_permissions.issubset(grantable_permissions):
@@ -97,7 +103,9 @@ class PermissionService:
                     unknown.append(f"right_id={right_id}")
                 if goal_name is None:
                     unknown.append(f"goal_id={goal_id}")
-                raise GraphQLError(f"Неизвестный идентификатор права/цели: {', '.join(unknown)}")
+                raise GraphQLError(
+                    f"Неизвестный идентификатор права/цели: {', '.join(unknown)}"
+                )
 
             permission = (right_id, goal_id)
             if permission not in all_permissions:

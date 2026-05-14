@@ -23,96 +23,75 @@ def register_endpoint(router: APIRouter):
         dependencies=[Depends(review_rate_limiter)],
         responses={
             500: {
-                'model': Status,
-                'description': "Server side error",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                }
+                "model": Status,
+                "description": "Server side error",
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
             404: {
-                'model': Status,
-                'description': "Item not found",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "User not found"}
-                    }
-                }
+                "model": Status,
+                "description": "Item not found",
+                "content": {
+                    "application/json": {"example": {"status": "User not found"}}
+                },
             },
             413: {
-                'model': Status,
-                'description': "File or text too large",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Image too large"}
-                    }
-                }
+                "model": Status,
+                "description": "File or text too large",
+                "content": {
+                    "application/json": {"example": {"status": "Image too large"}}
+                },
             },
             415: {
-                'model': Status,
-                'description': "Unsupported Media Type",
-                'content': {
+                "model": Status,
+                "description": "Unsupported Media Type",
+                "content": {
                     "application/json": {
                         "example": {"status": "This endpoint accepts only images"}
                     }
-                }
+                },
             },
-            200: {
-                'model': Status,
-                "description": "Status of adding new object to db"
-            },
+            200: {"model": Status, "description": "Status of adding new object to db"},
             429: {
                 "description": "Too many requests",
-                'content': {
+                "content": {
                     "application/json": {
                         "example": {
-                            "detail":
-                                "Too many requests for this user within one second"
+                            "detail": "Too many requests for this user within one second"
                         }
                     }
-                }
-            }
-        }
+                },
+            },
+        },
     )
     async def add_review(
-            image: Optional[UploadFile] = Depends(image_validator),
-            # TODO: Поменять тип, как фронты перейдут на новую схему событий
-            client_id: Optional[str] = Form(
-                None,
-                title="client_id",
-                description="Уникальный идентификатор клиента",
-                min_length=36,
-                max_length=36,
-                pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
-            ),
-            # TODO: Удалить, как фронты перейдут на новую схему событий
-            user_id: Optional[str] = Form(None, min_length=36, max_length=36),
-            problem: Problem = Form(
-                title="problem",
-                description="User problem",
-                json_schema_extra={
-                    "type": "string",
-                    "pattern": r"way|other|plan|work"
-                }
-            ),
-            text: str = Form(
-                title="text",
-                description="User review",
-                min_length=1,
-                max_length=5000
-            ),
-            db: AsyncSession = Depends(get_db),
+        image: Optional[UploadFile] = Depends(image_validator),
+        # TODO: Поменять тип, как фронты перейдут на новую схему событий
+        client_id: Optional[str] = Form(
+            None,
+            title="client_id",
+            description="Уникальный идентификатор клиента",
+            min_length=36,
+            max_length=36,
+            pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
+        ),
+        # TODO: Удалить, как фронты перейдут на новую схему событий
+        user_id: Optional[str] = Form(None, min_length=36, max_length=36),
+        problem: Problem = Form(
+            title="problem",
+            description="User problem",
+            json_schema_extra={"type": "string", "pattern": r"way|other|plan|work"},
+        ),
+        text: str = Form(
+            title="text", description="User review", min_length=1, max_length=5000
+        ),
+        db: AsyncSession = Depends(get_db),
     ):
         # TODO: Удалить, как фронты перейдут на новую схему событий
         if client_id is None and user_id is not None:
             client_id = user_id
         # TODO: Удалить, как фронты перейдут на новую схему событий
         if client_id is None:
-            raise HTTPException(
-                status_code=422,
-                detail=f"Validation failed"
-            )
+            raise HTTPException(status_code=422, detail="Validation failed")
 
         base_path: str = os.path.join(get_settings().static_files, "images")
         image_name: str | None = None

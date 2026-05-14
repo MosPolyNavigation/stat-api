@@ -98,12 +98,18 @@ class TestGraphQLLogging:
 
             payload = response.json()
             assert "errors" in payload
-            assert payload["errors"][0]["message"] == "Недостаточно прав для выполнения операции"
+            assert (
+                payload["errors"][0]["message"]
+                == "Недостаточно прав для выполнения операции"
+            )
             assert "extensions" not in payload["errors"][0]
 
             after_logs = wait_for_log_count(len(before_logs) + 1)
             assert len(after_logs) == len(before_logs) + 1
-            assert "Попытка выполнить действие за рамками прав пользователя" in after_logs[-1].text
+            assert (
+                "Попытка выполнить действие за рамками прав пользователя"
+                in after_logs[-1].text
+            )
 
         finally:
             if old_value is None:

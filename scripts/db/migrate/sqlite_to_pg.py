@@ -10,23 +10,64 @@ from typing import Annotated
 
 from app.config import load_settings
 from app.models import (
-    Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus,
-    ClientId, User, RefreshToken, UserLog, ValueType,
-    EventType, Event, PayloadType, Payload, AllowedPayload,
-    Corpus, Plan, Auditory, AudPhoto,
-    RoleRightGoal, UserRole, Review,
+    Problem,
+    Goal,
+    Right,
+    Role,
+    Floor,
+    Location,
+    Static,
+    Type,
+    ReviewStatus,
+    ClientId,
+    User,
+    RefreshToken,
+    UserLog,
+    ValueType,
+    EventType,
+    Event,
+    PayloadType,
+    Payload,
+    AllowedPayload,
+    Corpus,
+    Plan,
+    Auditory,
+    AudPhoto,
+    RoleRightGoal,
+    UserRole,
+    Review,
 )
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Порядок миграции — тот же, что в оригинальном скрипте
 MIGRATION_ORDER = [
-    ValueType, Problem, Goal, Right, Role, Floor, Location, Static, Type, ReviewStatus, User,
-    ClientId, RefreshToken, UserLog, EventType, PayloadType,
-    Corpus, Plan, Auditory, AudPhoto,
-    RoleRightGoal, UserRole, Review,
-    Event, AllowedPayload, Payload,
+    ValueType,
+    Problem,
+    Goal,
+    Right,
+    Role,
+    Floor,
+    Location,
+    Static,
+    Type,
+    ReviewStatus,
+    User,
+    ClientId,
+    RefreshToken,
+    UserLog,
+    EventType,
+    PayloadType,
+    Corpus,
+    Plan,
+    Auditory,
+    AudPhoto,
+    RoleRightGoal,
+    UserRole,
+    Review,
+    Event,
+    AllowedPayload,
+    Payload,
 ]
 CLEANUP_ORDER = list(reversed(MIGRATION_ORDER))
 
@@ -61,7 +102,9 @@ async def update_sequence(session: AsyncSession, model):
     seq_name = f"{table}_{pk}_seq"
     try:
         await session.execute(
-            text(f"SELECT setval('{seq_name}', COALESCE((SELECT MAX({pk}) FROM {table}), 1), true)")
+            text(
+                f"SELECT setval('{seq_name}', COALESCE((SELECT MAX({pk}) FROM {table}), 1), true)"
+            )
         )
         await session.commit()
     except Exception as e:
@@ -121,7 +164,7 @@ async def migrate_model(session_sqlite: AsyncSession, session_pg: AsyncSession, 
     total = len(new_objects)
 
     for i in range(0, total, batch_size):
-        batch = new_objects[i:i + batch_size]
+        batch = new_objects[i : i + batch_size]
         session_pg.add_all(batch)
         await session_pg.commit()
         logger.info("  ✓ Вставлено {len(batch)}/{total} записей")
@@ -156,6 +199,7 @@ async def _run_migration(sqlite_dsn: str, pg_dsn: str, clean_before: bool):
 
 
 # ── Typer-команда ──────────────────────────────────────────────────────
+
 
 def sqlite_to_pg_command(
     sqlite_path: Annotated[

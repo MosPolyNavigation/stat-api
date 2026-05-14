@@ -70,7 +70,11 @@ def build_refresh_token(user_id: int) -> tuple[str, str, datetime]:
         "type": "refresh",
         "jti": raw_jti,
     }
-    return raw_jti, jwt.encode(payload, settings.refresh_secret, algorithm=ALGORITHM), expires_at
+    return (
+        raw_jti,
+        jwt.encode(payload, settings.refresh_secret, algorithm=ALGORITHM),
+        expires_at,
+    )
 
 
 async def create_refresh_token_session(
@@ -93,7 +97,9 @@ async def create_refresh_token_session(
     return refresh_token, session
 
 
-async def get_refresh_session(db: AsyncSession, user_id: int, raw_jti: str) -> RefreshToken | None:
+async def get_refresh_session(
+    db: AsyncSession, user_id: int, raw_jti: str
+) -> RefreshToken | None:
     hashed_jti = hash_token_value(raw_jti)
 
     result = await db.execute(
@@ -136,7 +142,9 @@ def validate_access_payload(payload: dict[str, Any]) -> int:
     try:
         return int(subject)
     except (TypeError, ValueError) as exc:
-        raise InvalidAccessTokenError("Некорректный идентификатор пользователя в токене") from exc
+        raise InvalidAccessTokenError(
+            "Некорректный идентификатор пользователя в токене"
+        ) from exc
 
 
 def validate_refresh_payload(payload: dict[str, Any]) -> tuple[int, str]:
@@ -157,7 +165,9 @@ def validate_refresh_payload(payload: dict[str, Any]) -> tuple[int, str]:
 def normalize_token_error(exc: Exception, *, refresh: bool = False) -> str:
     if isinstance(exc, ExpiredSignatureError):
         return "Срок действия токена истёк"
-    if isinstance(exc, (InvalidTokenError, InvalidAccessTokenError, InvalidRefreshTokenError)):
+    if isinstance(
+        exc, (InvalidTokenError, InvalidAccessTokenError, InvalidRefreshTokenError)
+    ):
         if refresh:
             return "Неверный refresh токен"
         return "Неверный access токен"
@@ -179,9 +189,13 @@ def parse_browser(user_agent: str | None) -> str | None:
 #     return request.url.scheme.lower() == "https"
 
 
-def set_refresh_cookie(response: Response, _request: Request, refresh_token: str) -> None:
+def set_refresh_cookie(
+    response: Response, _request: Request, refresh_token: str
+) -> None:
     settings = get_settings()
-    expires_at = datetime.now(timezone.utc) + timedelta(seconds=settings.refresh_duration)
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        seconds=settings.refresh_duration
+    )
     response.set_cookie(
         key=REFRESH_COOKIE_NAME,
         value=refresh_token,

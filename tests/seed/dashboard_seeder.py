@@ -12,13 +12,13 @@ class DashboardSeeder(BaseSeeder):
                 "display_order": 1,
                 "event_type_id": 1,
                 "dashboard_type_id": 1,
-                "title_text": "Главный дашборд"
+                "title_text": "Главный дашборд",
             },
             {
                 "id": 2,
                 "display_order": 2,
                 "event_type_id": 1,
                 "dashboard_type_id": 1,
-                "title_text": "Вторичный дашборд"
-            }
+                "title_text": "Вторичный дашборд",
+            },
         ]

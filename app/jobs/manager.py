@@ -33,6 +33,7 @@ _DB_PATH: str | None = None
 
 # ─── Публичный API реестра ────────────────────────────────────────────────────
 
+
 def get_task_registry() -> list[dict[str, Any]]:
     """Возвращает копию реестра для чтения."""
     return list(__TASK_REGISTRY)
@@ -48,6 +49,7 @@ def clear_task_registry() -> None:
 
 # ─── Декоратор @scheduled_task ────────────────────────────────────────────────
 
+
 def scheduled_task(name: str, **overrides: Any) -> Callable:
     """
     Статический декоратор для регистрации async-функции в реестре задач.
@@ -59,6 +61,7 @@ def scheduled_task(name: str, **overrides: Any) -> Callable:
         @scheduled_task(name="fetch_location_data")
         async def fetch_location_data(): ...
     """
+
     def decorator(func: Callable[..., Awaitable]) -> Callable:
         @functools.wraps(func)
         async def wrapper(
@@ -75,7 +78,9 @@ def scheduled_task(name: str, **overrides: Any) -> Callable:
             if current >= max_instances:
                 logger.warning(
                     "Task '%s' already has %d/%d running instance(s), skipping",
-                    name, current, max_instances,
+                    name,
+                    current,
+                    max_instances,
                 )
                 return None
 
@@ -108,20 +113,23 @@ def scheduled_task(name: str, **overrides: Any) -> Callable:
                 _RUNNING_TASKS[name] = max(0, _RUNNING_TASKS.get(name, 1) - 1)
 
         # Регистрируем в реестре при импорте модуля
-        __TASK_REGISTRY.append({
-            "name": name,
-            "func": wrapper,
-            "original": func,
-            "overrides": overrides,
-            # max_instances может быть переопределён из конфига в setup_from_config
-            "max_instances": overrides.get("max_instances", 1),
-        })
+        __TASK_REGISTRY.append(
+            {
+                "name": name,
+                "func": wrapper,
+                "original": func,
+                "overrides": overrides,
+                # max_instances может быть переопределён из конфига в setup_from_config
+                "max_instances": overrides.get("max_instances", 1),
+            }
+        )
         return wrapper
 
     return decorator
 
 
 # ─── JobManager ──────────────────────────────────────────────────────────────
+
 
 class JobManager:
     """
@@ -162,7 +170,9 @@ class JobManager:
 
             # Обновляем max_instances в реестре из конфига
             if job_cfg.name in registry_by_name:
-                registry_by_name[job_cfg.name]["max_instances"] = job_cfg.scheduler.max_instances
+                registry_by_name[job_cfg.name]["max_instances"] = (
+                    job_cfg.scheduler.max_instances
+                )
 
             if not job_cfg.enabled:
                 logger.info("Job '%s' disabled in config, skipping", job_cfg.name)
@@ -181,7 +191,9 @@ class JobManager:
             func = self._inject_state(func)
 
             self._scheduler.add_job(func, **self._build_apscheduler_kwargs(job_cfg))  # type: ignore[union-attr]
-            logger.info("Scheduled job '%s' with trigger '%s'", job_cfg.name, job_cfg.trigger)
+            logger.info(
+                "Scheduled job '%s' with trigger '%s'", job_cfg.name, job_cfg.trigger
+            )
 
     def add_job(self, func: Callable, **kwargs) -> None:
         """Добавляет произвольную задачу в планировщик (для системных задач, не входящих в реестр)."""
@@ -288,9 +300,7 @@ class JobManager:
         if not self._scheduler:
             raise RuntimeError("Планировщик не запущен")
         if not job_cfg or not job_cfg.scheduler.id:
-            raise ValueError(
-                f"Для задачи '{name}' не задан scheduler.id в конфиге"
-            )
+            raise ValueError(f"Для задачи '{name}' не задан scheduler.id в конфиге")
         return job_cfg.scheduler.id
 
     @staticmethod

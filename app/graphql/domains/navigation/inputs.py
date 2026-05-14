@@ -1,6 +1,11 @@
 from typing import Optional, List
 import strawberry
-from app.graphql.core.filters import BaseFilterInput, StringFilterInput, IntFilterInput, BooleanFilterInput
+from app.graphql.core.filters import (
+    BaseFilterInput,
+    StringFilterInput,
+    IntFilterInput,
+    BooleanFilterInput,
+)
 from app.graphql.core.ordering import BaseOrderByInput, OrderDir
 
 
@@ -14,9 +19,15 @@ class NavLocationFilterInput(BaseFilterInput):
     name: Optional[StringFilterInput] = None
     short: Optional[StringFilterInput] = None
     ready: Optional[BooleanFilterInput] = None
-    and_: Optional[List["NavLocationFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavLocationFilterInput"]] = strawberry.field(name="or", default=None)
-    not_: Optional["NavLocationFilterInput"] = strawberry.field(name="not", default=None)
+    and_: Optional[List["NavLocationFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavLocationFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
+    not_: Optional["NavLocationFilterInput"] = strawberry.field(
+        name="not", default=None
+    )
 
 
 @strawberry.input
@@ -26,8 +37,12 @@ class NavCampusFilterInput(BaseFilterInput):
     loc_id: Optional[IntFilterInput] = None
     name: Optional[StringFilterInput] = None
     ready: Optional[BooleanFilterInput] = None
-    and_: Optional[List["NavCampusFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavCampusFilterInput"]] = strawberry.field(name="or", default=None)
+    and_: Optional[List["NavCampusFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavCampusFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
     not_: Optional["NavCampusFilterInput"] = strawberry.field(name="not", default=None)
 
 
@@ -35,8 +50,12 @@ class NavCampusFilterInput(BaseFilterInput):
 class NavFloorFilterInput(BaseFilterInput):
     id: Optional[IntFilterInput] = None
     name: Optional[IntFilterInput] = None
-    and_: Optional[List["NavFloorFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavFloorFilterInput"]] = strawberry.field(name="or", default=None)
+    and_: Optional[List["NavFloorFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavFloorFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
     not_: Optional["NavFloorFilterInput"] = strawberry.field(name="not", default=None)
 
 
@@ -44,8 +63,12 @@ class NavFloorFilterInput(BaseFilterInput):
 class NavTypeFilterInput(BaseFilterInput):
     id: Optional[IntFilterInput] = None
     name: Optional[StringFilterInput] = None
-    and_: Optional[List["NavTypeFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavTypeFilterInput"]] = strawberry.field(name="or", default=None)
+    and_: Optional[List["NavTypeFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavTypeFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
     not_: Optional["NavTypeFilterInput"] = strawberry.field(name="not", default=None)
 
 
@@ -57,8 +80,12 @@ class NavPlanFilterInput(BaseFilterInput):
     floor_id: Optional[IntFilterInput] = None
     ready: Optional[BooleanFilterInput] = None
     svg_id: Optional[IntFilterInput] = None
-    and_: Optional[List["NavPlanFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavPlanFilterInput"]] = strawberry.field(name="or", default=None)
+    and_: Optional[List["NavPlanFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavPlanFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
     not_: Optional["NavPlanFilterInput"] = strawberry.field(name="not", default=None)
 
 
@@ -70,9 +97,15 @@ class NavAuditoryFilterInput(BaseFilterInput):
     type_id: Optional[IntFilterInput] = None
     ready: Optional[BooleanFilterInput] = None
     name: Optional[StringFilterInput] = None
-    and_: Optional[List["NavAuditoryFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavAuditoryFilterInput"]] = strawberry.field(name="or", default=None)
-    not_: Optional["NavAuditoryFilterInput"] = strawberry.field(name="not", default=None)
+    and_: Optional[List["NavAuditoryFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavAuditoryFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
+    not_: Optional["NavAuditoryFilterInput"] = strawberry.field(
+        name="not", default=None
+    )
 
 
 @strawberry.input
@@ -81,9 +114,15 @@ class NavAuditoryPhotoFilterInput(BaseFilterInput):
     aud_id: Optional[IntFilterInput] = None
     name: Optional[StringFilterInput] = None
     ext: Optional[StringFilterInput] = None
-    and_: Optional[List["NavAuditoryPhotoFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavAuditoryPhotoFilterInput"]] = strawberry.field(name="or", default=None)
-    not_: Optional["NavAuditoryPhotoFilterInput"] = strawberry.field(name="not", default=None)
+    and_: Optional[List["NavAuditoryPhotoFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavAuditoryPhotoFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
+    not_: Optional["NavAuditoryPhotoFilterInput"] = strawberry.field(
+        name="not", default=None
+    )
 
 
 @strawberry.input
@@ -92,8 +131,12 @@ class NavStaticFilterInput(BaseFilterInput):
     name: Optional[StringFilterInput] = None
     ext: Optional[StringFilterInput] = None
     link: Optional[StringFilterInput] = None
-    and_: Optional[List["NavStaticFilterInput"]] = strawberry.field(name="and", default=None)
-    or_: Optional[List["NavStaticFilterInput"]] = strawberry.field(name="or", default=None)
+    and_: Optional[List["NavStaticFilterInput"]] = strawberry.field(
+        name="and", default=None
+    )
+    or_: Optional[List["NavStaticFilterInput"]] = strawberry.field(
+        name="or", default=None
+    )
     not_: Optional["NavStaticFilterInput"] = strawberry.field(name="not", default=None)
 
 

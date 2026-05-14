@@ -11,15 +11,11 @@ from app.state import AppState
 
 
 def register_endpoint(router: APIRouter):
-    @router.get(
-        "/by-aud",
-        response_model=ScheduleOut | Status,
-        tags=["free-aud"]
-    )
+    @router.get("/by-aud", response_model=ScheduleOut | Status, tags=["free-aud"])
     async def by_aud(
         request: Request,
         response: Response,
-        filter_: Annotated[FilterSvobodnForAud, Depends()]
+        filter_: Annotated[FilterSvobodnForAud, Depends()],
     ):
         state: AppState = request.app.state.app_state
         if state.rasp_lock.locked() or state.global_rasp is None:
@@ -27,6 +23,8 @@ def register_endpoint(router: APIRouter):
             return Status(status="Schedule is not loaded yet. Try again later")
         schedule = {filter_.aud_id: state.global_rasp[filter_.aud_id]}
         schedule = filter_svobodn(schedule, filter_)
-        auditories = [filter_.aud_id,]
+        auditories = [
+            filter_.aud_id,
+        ]
 
         return auditory_is_empty(schedule, auditories, filter_)

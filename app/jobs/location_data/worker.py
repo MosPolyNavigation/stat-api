@@ -34,7 +34,11 @@ def safe_json_loads(raw: str | None, default):
 
 async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
     """Сбор структуры locationData."""
-    locs = (await db.execute(select(Location).where(Location.ready.is_(True)))).scalars().all()
+    locs = (
+        (await db.execute(select(Location).where(Location.ready.is_(True))))
+        .scalars()
+        .all()
+    )
 
     locations_json: List[Dict[str, Any]] = []
     for loc in locs:
@@ -50,12 +54,16 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
         )
 
     corpuses = (
-        await db.execute(
-            select(Corpus)
-            .options(selectinload(Corpus.locations))
-            .where(Corpus.ready.is_(True))
+        (
+            await db.execute(
+                select(Corpus)
+                .options(selectinload(Corpus.locations))
+                .where(Corpus.ready.is_(True))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     corpuses_json: List[Dict[str, Any]] = []
     for corpus in corpuses:
@@ -70,16 +78,20 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
         )
 
     plans = (
-        await db.execute(
-            select(Plan)
-            .options(
-                selectinload(Plan.corpus).selectinload(Corpus.locations),
-                selectinload(Plan.floor),
-                selectinload(Plan.svg),
+        (
+            await db.execute(
+                select(Plan)
+                .options(
+                    selectinload(Plan.corpus).selectinload(Corpus.locations),
+                    selectinload(Plan.floor),
+                    selectinload(Plan.svg),
+                )
+                .where(Plan.ready.is_(True))
             )
-            .where(Plan.ready.is_(True))
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     plans_json: List[Dict[str, Any]] = []
     for plan in plans:
@@ -102,12 +114,16 @@ async def build_location_data_json(db: AsyncSession) -> Dict[str, Any]:
         )
 
     rooms = (
-        await db.execute(
-            select(Auditory)
-            .options(selectinload(Auditory.typ), selectinload(Auditory.plans))
-            .where(Auditory.ready.is_(True))
+        (
+            await db.execute(
+                select(Auditory)
+                .options(selectinload(Auditory.typ), selectinload(Auditory.plans))
+                .where(Auditory.ready.is_(True))
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     rooms_json: List[Dict[str, Any]] = []
     for room in rooms:
@@ -164,7 +180,9 @@ async def fetch_location_data(state: Optional[AppState] = None):
             new_graphs: Dict[str, Graph] = {}
             for loc_id in map(lambda loc: loc.id, data_entry.Locations):
                 location = next((x for x in data_entry.Locations if x.id == loc_id))
-                new_graphs[loc_id] = Graph(location, data_entry.Plans, data_entry.Corpuses)
+                new_graphs[loc_id] = Graph(
+                    location, data_entry.Plans, data_entry.Corpuses
+                )
             state.global_graph = new_graphs
 
             logger.info("locationData fetching finished successful")

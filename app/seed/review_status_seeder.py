@@ -7,4 +7,4 @@ class ReviewStatusSeeder(BaseSeeder):
     model = ReviewStatus
 
     def gather_data(self) -> list[dict[str, int | str]]:
-        return [{'id': k, 'name': v} for k, v in REVIEW_STATUSES.items()]
+        return [{"id": k, "name": v} for k, v in REVIEW_STATUSES.items()]

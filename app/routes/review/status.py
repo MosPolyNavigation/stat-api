@@ -23,15 +23,17 @@ def register_endpoint(router: APIRouter):
         status_id: int = Form(...),
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(
-            require_rights_with_logging("reviews", "edit",  error_text="Попытка смены статуса без прав",)
+            require_rights_with_logging(
+                "reviews",
+                "edit",
+                error_text="Попытка смены статуса без прав",
+            )
         ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """Эндпоинт для назначения статуса Review"""
         review: Union[Review, None] = (
-            await db.execute(
-                Select(Review).filter(Review.id == review_id)
-            )
+            await db.execute(Select(Review).filter(Review.id == review_id))
         ).scalar_one_or_none()
 
         if not review:
@@ -41,9 +43,7 @@ def register_endpoint(router: APIRouter):
             )
 
         status_obj: Optional[ReviewStatus] = (
-            await db.execute(
-                Select(ReviewStatus).filter(ReviewStatus.id == status_id)
-            )
+            await db.execute(Select(ReviewStatus).filter(ReviewStatus.id == status_id))
         ).scalar_one_or_none()
 
         if not status_obj:

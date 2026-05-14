@@ -7,4 +7,4 @@ class ProblemSeeder(BaseSeeder):
     model = Problem
 
     def gather_data(self) -> list[dict[str, str]]:
-        return [{"id": v, } for v in PROBLEMS]
+        return [{"id": v} for v in PROBLEMS]

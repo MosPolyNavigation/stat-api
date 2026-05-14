@@ -15,36 +15,34 @@ def register_endpoint(router: APIRouter):
         response_model=Union[Schedule, Auditory, Status],
         responses={
             404: {
-                'model': Status,
-                'description': "No schedule for auditory",
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'status': 'No schedule for specified auditory'
-                        }
+                "model": Status,
+                "description": "No schedule for auditory",
+                "content": {
+                    "application/json": {
+                        "example": {"status": "No schedule for specified auditory"}
                     }
-                }
+                },
             },
             425: {
-                'model': Status,
-                'description': "Schedule is not loaded yet",
-                'content': {
-                    'application/json': {
-                        'example': {
-                            'status': "Schedule is not loaded yet. Try again later"
+                "model": Status,
+                "description": "Schedule is not loaded yet",
+                "content": {
+                    "application/json": {
+                        "example": {
+                            "status": "Schedule is not loaded yet. Try again later"
                         }
                     }
-                }
-            }
-        }
+                },
+            },
+        },
     )
     async def get_schedule(
-            request: Request,
-            response: Response,
-            auditory: Union[str, None] = None,
+        request: Request,
+        response: Response,
+        auditory: Union[str, None] = None,
     ):
         state: AppState = request.app.state.app_state
-        if not state.global_rasp:
+        if not state.global_rasp or state.rasp_lock.locked():
             response.status_code = 425
             return Status(status="Schedule is not loaded yet. Try again later")
         if not auditory:

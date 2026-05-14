@@ -4,6 +4,7 @@ import strawberry
 from sqlalchemy import func, Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+M = TypeVar("M")
 T = TypeVar("T")
 
 
@@ -12,12 +13,14 @@ def pagination_input_from_attrs(page: int = 1, page_size: int = 10):
 
 
 # =============================================================================
-# 1. GraphQL-типы (без изменений)
+# 1. GraphQL-типы
 # =============================================================================
 @strawberry.input
 class PaginationInput:
     page: int = strawberry.field(default=1, description="Номер страницы (1-based)")
-    page_size: int = strawberry.field(default=10, description="Количество элементов на странице")
+    page_size: int = strawberry.field(
+        default=10, description="Количество элементов на странице"
+    )
 
 
 @strawberry.type
@@ -43,13 +46,13 @@ class Connection(Generic[T]):
 
 
 # =============================================================================
-# 2. Ядро пагинации (без изменений)
+# 2. Ядро пагинации
 # =============================================================================
 async def paginate_query(
-        session: AsyncSession,
-        stmt: Select,
-        pagination: PaginationInput,
-        convert: Callable[[Any], T] = lambda x: x,
+    session: AsyncSession,
+    stmt: Select,
+    pagination: PaginationInput,
+    convert: Callable[[Any], T] = lambda x: x,
 ) -> Connection[T]:
     page = max(1, pagination.page)
     page_size = max(1, min(200, pagination.page_size))
@@ -76,5 +79,38 @@ async def paginate_query(
             total_count=total_count,
             current_page=page,
             total_pages=total_pages,
-        )
+        ),
+    )
+
+
+def paginate_list(
+    models: List[M],
+    pagination: Optional[PaginationInput],
+    convert: Callable[[M], T] = lambda x: x,
+) -> Connection[T]:
+    """Пагинирует уже отфильтрованный и отсортированный список."""
+    pagination = pagination or PaginationInput(page=1, page_size=10)
+    page = max(1, pagination.page)
+    page_size = max(1, min(200, pagination.page_size))
+
+    total_count = len(models)
+    total_pages = max(1, (total_count + page_size - 1) // page_size)
+
+    offset = (page - 1) * page_size
+    paginated = models[offset : offset + page_size]
+    nodes = [convert(m) for m in paginated]
+
+    return Connection(
+        nodes=nodes,
+        page_info=PageInfo(
+            has_previous_page=page > 1,
+            has_next_page=page < total_pages,
+            start_cursor=str(offset) if nodes else None,
+            end_cursor=str(offset + len(nodes) - 1) if nodes else None,
+        ),
+        pagination_info=PaginationInfo(
+            total_count=total_count,
+            current_page=page,
+            total_pages=total_pages,
+        ),
     )

@@ -44,7 +44,9 @@ def _extract_updated_fields(data) -> list[str]:
 
 def _extract_role_rights(role) -> list[str]:
     rights = []
-    role_right_goals: list[RoleRightGoal] = getattr(role, "role_right_goals", None) or []
+    role_right_goals: list[RoleRightGoal] = (
+        getattr(role, "role_right_goals", None) or []
+    )
     for role_right_goal in role_right_goals:
         right: Optional[Right] = getattr(role_right_goal, "right", None)
         goal: Optional[Goal] = getattr(role_right_goal, "goal", None)
@@ -72,7 +74,7 @@ def build_graphql_success_log(field_name: str, kwargs: dict, result) -> str | No
         "update_role",
         "delete_role",
         "grant_role",
-        "revoke_role"
+        "revoke_role",
     }:
         return None
 
@@ -104,8 +106,20 @@ def build_graphql_error_log(field_name: str | None, error: GraphQLError) -> str 
     error_message = str(error)
     lowered = error_message.lower()
 
-    if any(token in lowered for token in ["недостаточно прав", "not authorized", "forbidden", "unauthorized"]):
-        if field_name == "create_role" or field_name == "update_role" or field_name == "grant_role":
+    if any(
+        token in lowered
+        for token in [
+            "недостаточно прав",
+            "not authorized",
+            "forbidden",
+            "unauthorized",
+        ]
+    ):
+        if (
+            field_name == "create_role"
+            or field_name == "update_role"
+            or field_name == "grant_role"
+        ):
             return "Попытка повысить привилегии"
         if field_name == "revoke_role":
             return "Попытка отозвать роль с большими правами"
@@ -114,7 +128,11 @@ def build_graphql_error_log(field_name: str | None, error: GraphQLError) -> str 
         return "Попытка выполнить действие за рамками прав пользователя"
 
     original_error = getattr(error, "original_error", None)
-    error_type = type(original_error).__name__ if original_error is not None else type(error).__name__
+    error_type = (
+        type(original_error).__name__
+        if original_error is not None
+        else type(error).__name__
+    )
     return f"GraphQL-запрос завершился с ошибкой: {error_type}"
 
 

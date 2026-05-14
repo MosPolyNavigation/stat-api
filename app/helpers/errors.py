@@ -7,6 +7,7 @@ class LookupException(Exception):
     Attributes:
         name: Имя, которое не было найдено.
     """
+
     def __init__(self, name: str):
         self.name = name
 

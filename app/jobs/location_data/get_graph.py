@@ -10,20 +10,17 @@ def parse_location(location: LocationDto) -> LocationData:
         short=location.short,
         address=location.address,
         available=location.available,
-        crossings=location.crossings or []
+        crossings=location.crossings or [],
     )
 
 
-def parse_corpus(
-    corpus: CorpusDto,
-    locations: List[LocationData]
-) -> CorpusData:
+def parse_corpus(corpus: CorpusDto, locations: List[LocationData]) -> CorpusData:
     return CorpusData(
         id=corpus.id,
         title=corpus.title,
         location=next((v for v in locations if v.id == corpus.locationId)),
         available=corpus.available,
-        stairs=corpus.stairs or []
+        stairs=corpus.stairs or [],
     )
 
 
@@ -35,5 +32,5 @@ def parse_plan(plan: PlanDto, corpuses: List[CorpusData]) -> PlanData:
         wayToSvg=plan.wayToSvg,
         graph=plan.graph or [],
         floor=int(plan.floor),
-        entrances=plan.entrances or []
+        entrances=plan.entrances or [],
     )

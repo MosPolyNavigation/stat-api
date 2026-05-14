@@ -22,10 +22,7 @@ class TestFreeAudByAud:
         """Успешный поиск свободной аудитории по ID"""
         response = client.get(
             "/api/free-aud/by-aud",
-            params={
-                "aud_id": "test-101",
-                "start_date": "2025-02-01"
-            }
+            params={"aud_id": "test-101", "start_date": "2025-02-01"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -37,11 +34,7 @@ class TestFreeAudByAud:
         """Поиск свободной аудитории с фильтром по дню недели"""
         response = client.get(
             "/api/free-aud/by-aud",
-            params={
-                "aud_id": "test-101",
-                "start_date": "2025-02-01",
-                "day": "monday"
-            }
+            params={"aud_id": "test-101", "start_date": "2025-02-01", "day": "monday"},
         )
         assert response.status_code == 200
 
@@ -49,11 +42,7 @@ class TestFreeAudByAud:
         """Поиск свободной аудитории с фильтром по номеру пары"""
         response = client.get(
             "/api/free-aud/by-aud",
-            params={
-                "aud_id": "test-101",
-                "start_date": "2025-02-01",
-                "para": "1"
-            }
+            params={"aud_id": "test-101", "start_date": "2025-02-01", "para": "1"},
         )
         assert response.status_code == 200
 
@@ -64,8 +53,8 @@ class TestFreeAudByAud:
             params={
                 "aud_id": "test-101",
                 "start_date": "2025-02-01",
-                "end_date": "2025-06-30"
-            }
+                "end_date": "2025-06-30",
+            },
         )
         assert response.status_code == 200
 
@@ -78,29 +67,21 @@ class TestFreeAudByAud:
                 "start_date": "2025-02-01",
                 "end_date": "2025-06-30",
                 "day": "wednesday",
-                "para": "3"
-            }
+                "para": "3",
+            },
         )
         assert response.status_code == 200
 
     def test_422_free_aud_by_aud_missing_aud_id(self):
         """Ошибка валидации при отсутствии aud_id"""
         response = client.get(
-            "/api/free-aud/by-aud",
-            params={
-                "start_date": "2025-02-01"
-            }
+            "/api/free-aud/by-aud", params={"start_date": "2025-02-01"}
         )
         assert response.status_code == 422
 
     def test_422_free_aud_by_aud_missing_start_date(self):
         """Ошибка валидации при отсутствии start_date"""
-        response = client.get(
-            "/api/free-aud/by-aud",
-            params={
-                "aud_id": "test-101"
-            }
-        )
+        response = client.get("/api/free-aud/by-aud", params={"aud_id": "test-101"})
         assert response.status_code == 422
 
     def test_425_free_aud_by_aud_schedule_not_loaded(self):
@@ -113,10 +94,7 @@ class TestFreeAudByAud:
 
             response = client.get(
                 "/api/free-aud/by-aud",
-                params={
-                    "aud_id": "test-101",
-                    "start_date": "2025-02-01"
-                }
+                params={"aud_id": "test-101", "start_date": "2025-02-01"},
             )
             assert response.status_code == 425
             data = response.json()
@@ -133,10 +111,7 @@ class TestFreeAudByPlan:
         """Успешный поиск свободных аудиторий по плану"""
         response = client.get(
             "/api/free-aud/by-plan",
-            params={
-                "plan_id": "test-plan-1",
-                "start_date": "2025-02-01"
-            }
+            params={"plan_id": "test-plan-1", "start_date": "2025-02-01"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -151,28 +126,22 @@ class TestFreeAudByPlan:
                 "start_date": "2025-02-01",
                 "end_date": "2025-06-30",
                 "day": "friday",
-                "para": "2"
-            }
+                "para": "2",
+            },
         )
         assert response.status_code == 200
 
     def test_422_free_aud_by_plan_missing_plan_id(self):
         """Ошибка валидации при отсутствии plan_id"""
         response = client.get(
-            "/api/free-aud/by-plan",
-            params={
-                "start_date": "2025-02-01"
-            }
+            "/api/free-aud/by-plan", params={"start_date": "2025-02-01"}
         )
         assert response.status_code == 422
 
     def test_422_free_aud_by_plan_missing_start_date(self):
         """Ошибка валидации при отсутствии start_date"""
         response = client.get(
-            "/api/free-aud/by-plan",
-            params={
-                "plan_id": "test-plan-1"
-            }
+            "/api/free-aud/by-plan", params={"plan_id": "test-plan-1"}
         )
         assert response.status_code == 422
 
@@ -186,10 +155,7 @@ class TestFreeAudByPlan:
 
             response = client.get(
                 "/api/free-aud/by-plan",
-                params={
-                    "plan_id": "test-plan-1",
-                    "start_date": "2025-02-01"
-                }
+                params={"plan_id": "test-plan-1", "start_date": "2025-02-01"},
             )
             assert response.status_code == 425
             data = response.json()
@@ -206,10 +172,7 @@ class TestFreeAudByCorpus:
         """Успешный поиск свободных аудиторий по корпусу"""
         response = client.get(
             "/api/free-aud/by-corpus",
-            params={
-                "corpus_id": "av-test",
-                "start_date": "2025-02-01"
-            }
+            params={"corpus_id": "av-test", "start_date": "2025-02-01"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -223,28 +186,22 @@ class TestFreeAudByCorpus:
                 "corpus_id": "av-test",
                 "start_date": "2025-02-01",
                 "end_date": "2025-06-30",
-                "day": "thursday"
-            }
+                "day": "thursday",
+            },
         )
         assert response.status_code == 200
 
     def test_422_free_aud_by_corpus_missing_corpus_id(self):
         """Ошибка валидации при отсутствии corpus_id"""
         response = client.get(
-            "/api/free-aud/by-corpus",
-            params={
-                "start_date": "2025-02-01"
-            }
+            "/api/free-aud/by-corpus", params={"start_date": "2025-02-01"}
         )
         assert response.status_code == 422
 
     def test_422_free_aud_by_corpus_missing_start_date(self):
         """Ошибка валидации при отсутствии start_date"""
         response = client.get(
-            "/api/free-aud/by-corpus",
-            params={
-                "corpus_id": "av-test"
-            }
+            "/api/free-aud/by-corpus", params={"corpus_id": "av-test"}
         )
         assert response.status_code == 422
 
@@ -258,10 +215,7 @@ class TestFreeAudByCorpus:
 
             response = client.get(
                 "/api/free-aud/by-corpus",
-                params={
-                    "corpus_id": "av-test",
-                    "start_date": "2025-02-01"
-                }
+                params={"corpus_id": "av-test", "start_date": "2025-02-01"},
             )
             assert response.status_code == 425
             data = response.json()
@@ -277,11 +231,7 @@ class TestFreeAudByLocation:
     def test_200_free_aud_by_loc_success(self):
         """Успешный поиск свободных аудиторий по локации"""
         response = client.get(
-            "/api/free-aud/by-loc",
-            params={
-                "loc_id": "AV",
-                "start_date": "2025-02-01"
-            }
+            "/api/free-aud/by-loc", params={"loc_id": "AV", "start_date": "2025-02-01"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -296,29 +246,21 @@ class TestFreeAudByLocation:
                 "start_date": "2025-02-01",
                 "end_date": "2025-06-30",
                 "day": "saturday",
-                "para": "4"
-            }
+                "para": "4",
+            },
         )
         assert response.status_code == 200
 
     def test_422_free_aud_by_loc_missing_loc_id(self):
         """Ошибка валидации при отсутствии loc_id"""
         response = client.get(
-            "/api/free-aud/by-loc",
-            params={
-                "start_date": "2025-02-01"
-            }
+            "/api/free-aud/by-loc", params={"start_date": "2025-02-01"}
         )
         assert response.status_code == 422
 
     def test_422_free_aud_by_loc_missing_start_date(self):
         """Ошибка валидации при отсутствии start_date"""
-        response = client.get(
-            "/api/free-aud/by-loc",
-            params={
-                "loc_id": "AV"
-            }
-        )
+        response = client.get("/api/free-aud/by-loc", params={"loc_id": "AV"})
         assert response.status_code == 422
 
     def test_425_free_aud_by_loc_schedule_not_loaded(self):
@@ -331,10 +273,7 @@ class TestFreeAudByLocation:
 
             response = client.get(
                 "/api/free-aud/by-loc",
-                params={
-                    "loc_id": "AV",
-                    "start_date": "2025-02-01"
-                }
+                params={"loc_id": "AV", "start_date": "2025-02-01"},
             )
             assert response.status_code == 425
             data = response.json()
@@ -350,10 +289,6 @@ class TestFreeAudByLocation:
         for day in days:
             response = client.get(
                 "/api/free-aud/by-loc",
-                params={
-                    "loc_id": "AV",
-                    "start_date": "2025-02-01",
-                    "day": day
-                }
+                params={"loc_id": "AV", "start_date": "2025-02-01", "day": day},
             )
             assert response.status_code == 200

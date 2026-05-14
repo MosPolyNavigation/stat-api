@@ -15,15 +15,19 @@ from app.graphql.domains.event_system.resources import (
     ReviewResource,
 )
 from app.graphql.domains.event_system.inputs import (
-    CreateEventTypeInput, UpdateEventTypeInput,
-    CreatePayloadTypeInput, UpdatePayloadTypeInput,
+    CreateEventTypeInput,
+    UpdateEventTypeInput,
+    CreatePayloadTypeInput,
+    UpdatePayloadTypeInput,
     UpdateReviewInput,
-    CreateAllowedPayloadRuleInput, UpdateAllowedPayloadRuleInput, DashboardTypeInput,
+    CreateAllowedPayloadRuleInput,
+    UpdateAllowedPayloadRuleInput,
+    DashboardTypeInput,
 )
 from app.graphql.domains.event_system.types import (
     AllowedPayloadRule as AllowedPayloadRuleType,
     Dashboard as DashboardType,
-    _dashboard_from_model
+    _dashboard_from_model,
 )
 from app.models import (
     EventType as ETModel,
@@ -70,9 +74,9 @@ ReviewMutation = create_mutation_resource(
 class AllowedPayloadRuleMutation:
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def create_allowed_payload_rule(
-            self,
-            info: Info,
-            data: CreateAllowedPayloadRuleInput,
+        self,
+        info: Info,
+        data: CreateAllowedPayloadRuleInput,
     ) -> AllowedPayloadRuleType:
         await require_permissions(info, P.STATS_CREATE)
         ctx: GraphQLContext = info.context
@@ -101,16 +105,16 @@ class AllowedPayloadRuleMutation:
         return AllowedPayloadRuleType(
             event_type_id=item.event_type_id,  # type: ignore[call-arg]
             payload_type_id=item.payload_type_id,  # type: ignore[call-arg]
-            _composite_key=f"{item.event_type_id}:{item.payload_type_id}"  # type: ignore[call-arg]
+            _composite_key=f"{item.event_type_id}:{item.payload_type_id}",  # type: ignore[call-arg]
         )
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def update_allowed_payload_rule(
-            self,
-            info: Info,
-            event_type_id: int,
-            payload_type_id: int,
-            data: UpdateAllowedPayloadRuleInput,
+        self,
+        info: Info,
+        event_type_id: int,
+        payload_type_id: int,
+        data: UpdateAllowedPayloadRuleInput,
     ) -> AllowedPayloadRuleType:
         await require_permissions(info, P.STATS_EDIT)
         ctx: GraphQLContext = info.context
@@ -154,15 +158,12 @@ class AllowedPayloadRuleMutation:
         return AllowedPayloadRuleType(
             event_type_id=new_rule.event_type_id,  # type: ignore[call-arg]
             payload_type_id=new_rule.payload_type_id,  # type: ignore[call-arg]
-            _composite_key=f"{new_rule.event_type_id}:{new_rule.payload_type_id}"  # type: ignore[call-arg]
+            _composite_key=f"{new_rule.event_type_id}:{new_rule.payload_type_id}",  # type: ignore[call-arg]
         )
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
     async def delete_allowed_payload_rule(
-            self,
-            info: Info,
-            event_type_id: int,
-            payload_type_id: int
+        self, info: Info, event_type_id: int, payload_type_id: int
     ) -> bool:
         await require_permissions(info, P.STATS_DELETE)
         ctx: GraphQLContext = info.context
@@ -189,9 +190,9 @@ class AllowedPayloadRuleMutation:
 class DashboardMutation:
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
     async def create_dashboard(
-            self,
-            info: Info,
-            data: DashboardTypeInput,
+        self,
+        info: Info,
+        data: DashboardTypeInput,
     ) -> DashboardType:
         await require_permissions(info, P.DASHBOARDS_CREATE)
         ctx: GraphQLContext = info.context
@@ -209,8 +210,10 @@ class DashboardMutation:
             raise GraphQLError(f"DashboardType {data.dashboard_type_id} не найден")
 
         model = DashboardModel(
-            display_order=data.display_order, event_type_id=data.event_type_id,
-            dashboard_type_id=data.dashboard_type_id, title_text=data.title_text.strip()
+            display_order=data.display_order,
+            event_type_id=data.event_type_id,
+            dashboard_type_id=data.dashboard_type_id,
+            title_text=data.title_text.strip(),
         )
         ctx.db.add(model)
         await ctx.db.commit()
@@ -219,9 +222,9 @@ class DashboardMutation:
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
     async def create_dashboards(
-            self,
-            info: Info,
-            inputs: List[DashboardTypeInput],
+        self,
+        info: Info,
+        inputs: List[DashboardTypeInput],
     ) -> List[DashboardType]:
         await require_permissions(info, P.DASHBOARDS_CREATE)
         ctx: GraphQLContext = info.context
@@ -242,19 +245,22 @@ class DashboardMutation:
             if not await ctx.db.get(DTModel, dt_id):
                 raise GraphQLError(f"DashboardType {dt_id} не найден")
 
-        models = [DashboardModel(
-            display_order=i.display_order,
-            event_type_id=i.event_type_id,
-            dashboard_type_id=i.dashboard_type_id,
-            title_text=i.title_text.strip()
-        ) for i in inputs]
+        models = [
+            DashboardModel(
+                display_order=i.display_order,
+                event_type_id=i.event_type_id,
+                dashboard_type_id=i.dashboard_type_id,
+                title_text=i.title_text.strip(),
+            )
+            for i in inputs
+        ]
         ctx.db.add_all(models)
         await ctx.db.commit()
         return [_dashboard_from_model(m) for m in models]
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])  # type: ignore
     async def update_dashboard(
-            self, info: Info, id: int, data: DashboardTypeInput
+        self, info: Info, id: int, data: DashboardTypeInput
     ) -> DashboardType:
         await require_permissions(info, P.DASHBOARDS_EDIT)
         ctx: GraphQLContext = info.context
@@ -316,4 +322,5 @@ class Mutation(
        - create/update/delete_allowed_payload_rule
        - create/update/delete_dashboard
     """
+
     pass

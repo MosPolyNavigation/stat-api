@@ -14,7 +14,7 @@ def _get_first_node_id(list_field: str) -> int | None:
     """Утилита: получает ID первой записи из списка (простой Int)."""
     resp = graphql_query(
         f"{{ {list_field}(pagination: {{ pageSize: 1 }}) {{ nodes {{ id }} }} }}",
-        headers=ADMIN_HEADERS
+        headers=ADMIN_HEADERS,
     )
     if resp["status_code"] == 200 and resp["data"].get("data"):
         nodes = resp["data"]["data"][list_field]["nodes"]
@@ -80,8 +80,10 @@ class TestGraphQLMutationsEventType:
         resp = graphql_query(create_query, headers=ADMIN_HEADERS)
         if resp["status_code"] == 200:
             assert "errors" in resp["data"]
-            assert any("unique" in e["message"].lower() or "duplicate" in e["message"].lower()
-                       for e in resp["data"]["errors"])
+            assert any(
+                "unique" in e["message"].lower() or "duplicate" in e["message"].lower()
+                for e in resp["data"]["errors"]
+            )
 
 
 # =============================================================================
@@ -92,7 +94,7 @@ class TestGraphQLMutationsPayloadType:
         # Получаем валидный valueTypeId из сидов (простой Int)
         vt_id_resp = graphql_query(
             "{ valueTypes(pagination: { pageSize: 1 }) { nodes { id } } }",
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         vt_raw_id = vt_id_resp["data"]["data"]["valueTypes"]["nodes"][0]["id"]
 
@@ -130,7 +132,10 @@ class TestGraphQLMutationsPayloadType:
         """
         resp = graphql_query(update_query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
-        assert resp["data"]["data"]["updatePayloadType"]["description"] == "Updated payload type"
+        assert (
+            resp["data"]["data"]["updatePayloadType"]["description"]
+            == "Updated payload type"
+        )
 
         # 3. DELETE
         delete_query = f"mutation {{ deletePayloadType(id: {node_id}) }}"
@@ -182,11 +187,15 @@ class TestGraphQLMutationsAllowedPayloadRule:
         }}
         """
         graphql_query(create_query, headers=ADMIN_HEADERS)  # Первый раз — создаём
-        resp2 = graphql_query(create_query, headers=ADMIN_HEADERS)  # Второй раз — дубликат
+        resp2 = graphql_query(
+            create_query, headers=ADMIN_HEADERS
+        )  # Второй раз — дубликат
         assert resp2["status_code"] == 200
         assert "errors" in resp2["data"]
-        assert any("существует" in e["message"].lower() or "exists" in e["message"].lower()
-                   for e in resp2["data"]["errors"])
+        assert any(
+            "существует" in e["message"].lower() or "exists" in e["message"].lower()
+            for e in resp2["data"]["errors"]
+        )
 
 
 # =============================================================================
@@ -194,17 +203,21 @@ class TestGraphQLMutationsAllowedPayloadRule:
 # =============================================================================
 class TestGraphQLMutationsUnauthorized:
     def test_401_create_without_token(self):
-        query = 'mutation { createEventType(data: { codeName: "unauthorized" }) { id } }'
+        query = (
+            'mutation { createEventType(data: { codeName: "unauthorized" }) { id } }'
+        )
         resp = graphql_query(query)
         assert resp["status_code"] == 401
 
     def test_401_update_without_token(self):
-        query = 'mutation { updateEventType(id: 1, data: { description: "hack" }) { id } }'
+        query = (
+            'mutation { updateEventType(id: 1, data: { description: "hack" }) { id } }'
+        )
         resp = graphql_query(query)
         assert resp["status_code"] == 401
 
     def test_401_delete_without_token(self):
-        query = 'mutation { deleteEventType(id: 1) }'
+        query = "mutation { deleteEventType(id: 1) }"
         resp = graphql_query(query)
         assert resp["status_code"] == 401
 
@@ -231,8 +244,10 @@ class TestGraphQLMutationsEdgeCases:
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("codeName" in e["message"] or "required" in e["message"].lower()
-                   for e in resp["data"]["errors"])
+        assert any(
+            "codeName" in e["message"] or "required" in e["message"].lower()
+            for e in resp["data"]["errors"]
+        )
 
 
 # =============================================================================
@@ -283,7 +298,7 @@ class TestGraphQLDashboardMutation:
         assert resp["data"]["data"]["deleteDashboard"] is True
 
         # Verify deletion
-        verify_query = f'{{ dashboard(id: {dashboard_id}) {{ id }} }}'
+        verify_query = f"{{ dashboard(id: {dashboard_id}) {{ id }} }}"
         resp = graphql_query(verify_query, headers=ADMIN_HEADERS)
         assert resp["data"]["data"]["dashboard"] is None
 
@@ -305,7 +320,10 @@ class TestGraphQLDashboardMutation:
         assert created[1]["displayOrder"] == 302
         # Cleanup
         for item in created:
-            graphql_query(f"mutation {{ deleteDashboard(id: {item['id']}) }}", headers=ADMIN_HEADERS)
+            graphql_query(
+                f"mutation {{ deleteDashboard(id: {item['id']}) }}",
+                headers=ADMIN_HEADERS,
+            )
 
     def test_400_create_dashboard_validation_errors(self):
         query = """
@@ -329,7 +347,9 @@ class TestGraphQLDashboardMutation:
         """
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert "errors" in resp["data"]
-        assert any("display_order" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "display_order" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     def test_400_create_dashboard_invalid_fk(self):
         query = """
@@ -342,8 +362,10 @@ class TestGraphQLDashboardMutation:
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("EventType" in e["message"] and "не найден" in e["message"]
-                   for e in resp["data"]["errors"])
+        assert any(
+            "EventType" in e["message"] and "не найден" in e["message"]
+            for e in resp["data"]["errors"]
+        )
 
     def test_404_update_non_existent_dashboard(self):
         query = """
@@ -357,8 +379,10 @@ class TestGraphQLDashboardMutation:
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("not found" in e["message"].lower() or "не найден" in e["message"]
-                   for e in resp["data"]["errors"])
+        assert any(
+            "not found" in e["message"].lower() or "не найден" in e["message"]
+            for e in resp["data"]["errors"]
+        )
 
     def test_401_dashboard_mutations_without_token(self):
         mutations = [
@@ -383,7 +407,7 @@ class TestGraphQLDashboardMutation:
                        }
                    ) { id }
                }""",
-            'mutation { deleteDashboard(id: 1) }',
+            "mutation { deleteDashboard(id: 1) }",
         ]
         for mutation in mutations:
             resp = graphql_query(mutation)

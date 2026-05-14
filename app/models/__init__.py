@@ -1,4 +1,4 @@
-﻿from .base import Base
+from .base import Base
 from .auth import (
     Goal,
     Right,
@@ -31,7 +31,7 @@ from .event import (
     Review,
     ReviewStatus,
     Dashboard,
-    DashboardType
+    DashboardType,
 )
 
 __all__ = [
