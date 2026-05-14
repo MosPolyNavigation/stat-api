@@ -4,6 +4,7 @@ import strawberry
 from sqlalchemy import func, Select, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+M = TypeVar("M")
 T = TypeVar("T")
 
 
@@ -83,9 +84,9 @@ async def paginate_query(
 
 
 def paginate_list(
-    models: List[T],
+    models: List[M],
     pagination: Optional[PaginationInput],
-    convert: Callable[[Any], T] = lambda x: x,
+    convert: Callable[[M], T] = lambda x: x,
 ) -> Connection[T]:
     """Пагинирует уже отфильтрованный и отсортированный список."""
     pagination = pagination or PaginationInput(page=1, page_size=10)

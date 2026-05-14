@@ -156,7 +156,7 @@ class NavLocation:
             order_by=order_by,
             pagination=pagination,
             convert=_campus_from_model,
-        )  # type: ignore[call-arg]
+        )
 
 
 @strawberry.type

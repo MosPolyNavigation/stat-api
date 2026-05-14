@@ -4,16 +4,17 @@ from .filters import BaseFilterInput, filter_list
 from .ordering import BaseOrderByInput, sort_list
 from .pagination import PaginationInput, Connection, paginate_list
 
+M = TypeVar("M")
 T = TypeVar("T")
 
 
 def process_list(
-    models: List[T],
+    models: List[M],
     model_type: Type,
     filters: Optional[BaseFilterInput] = None,
     order_by: Optional[BaseOrderByInput] = None,
     pagination: Optional[PaginationInput] = None,
-    convert: Callable[[Any], T] = lambda x: x,
+    convert: Callable[[M], T] = lambda x: x,
 ) -> Connection[T]:
     """
     Применяет фильтрацию → сортировку → пагинацию к списку моделей.
