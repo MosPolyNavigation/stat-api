@@ -39,7 +39,9 @@ def _validate_year_value(value: str, field_name: str) -> None:
         raise ValueError(f"{field_name} должен быть в формате YYYY") from exc
 
 
-def _resolve_event_type_id(endpoint: Optional[str], event_type_id: Optional[int]) -> Optional[int]:
+def _resolve_event_type_id(
+    endpoint: Optional[str], event_type_id: Optional[int]
+) -> Optional[int]:
     if endpoint is not None and event_type_id is not None:
         raise ValueError("Можно передать только один фильтр типа события")
     if event_type_id is not None:
@@ -52,13 +54,17 @@ def _resolve_event_type_id(endpoint: Optional[str], event_type_id: Optional[int]
 
 
 def _resolve_window(
-        by_date: Optional[EndpointStatisticsByDateInput],
-        by_month: Optional[EndpointStatisticsByMonthInput],
-        by_year: Optional[EndpointStatisticsByYearInput],
+    by_date: Optional[EndpointStatisticsByDateInput],
+    by_month: Optional[EndpointStatisticsByMonthInput],
+    by_year: Optional[EndpointStatisticsByYearInput],
 ) -> tuple[str, datetime, datetime, Optional[date], Optional[date]]:
-    active_filters_count = sum(item is not None for item in (by_date, by_month, by_year))
+    active_filters_count = sum(
+        item is not None for item in (by_date, by_month, by_year)
+    )
     if active_filters_count != 1:
-        raise ValueError("Нужно передать ровно один фильтр: by_date, by_month или by_year")
+        raise ValueError(
+            "Нужно передать ровно один фильтр: by_date, by_month или by_year"
+        )
 
     if by_date is not None:
         if by_date.start > by_date.end:
@@ -82,7 +88,9 @@ def _resolve_window(
             raise ValueError("by_month.start должен быть меньше или равен by_month.end")
         start = datetime.strptime(by_month.start, "%Y-%m")
         end_month = datetime.strptime(by_month.end, "%Y-%m")
-        end = datetime(end_month.year + (end_month.month == 12), end_month.month % 12 + 1, 1)
+        end = datetime(
+            end_month.year + (end_month.month == 12), end_month.month % 12 + 1, 1
+        )
         return "month", start, end, None, None
 
     if by_year is None:
@@ -107,17 +115,19 @@ def _resolve_window(
 class Query:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def endpoint_statistics(
-            self,
-            info: Info,
-            endpoint: Optional[str] = None,
-            event_type_id: Optional[int] = None,
-            by_date: Optional[EndpointStatisticsByDateInput] = None,
-            by_month: Optional[EndpointStatisticsByMonthInput] = None,
-            by_year: Optional[EndpointStatisticsByYearInput] = None,
+        self,
+        info: Info,
+        endpoint: Optional[str] = None,
+        event_type_id: Optional[int] = None,
+        by_date: Optional[EndpointStatisticsByDateInput] = None,
+        by_month: Optional[EndpointStatisticsByMonthInput] = None,
+        by_year: Optional[EndpointStatisticsByYearInput] = None,
     ) -> List[EndpointStatistics]:
         await require_permissions(info, P.STATS_VIEW)
         ctx: GraphQLContext = info.context
-        period_type, start, end, fill_start, fill_end = _resolve_window(by_date, by_month, by_year)
+        period_type, start, end, fill_start, fill_end = _resolve_window(
+            by_date, by_month, by_year
+        )
 
         stats = await get_period_stats(
             ctx.db,
@@ -134,13 +144,13 @@ class Query:
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def endpoint_statistics_avg(
-            self,
-            info: Info,
-            endpoint: Optional[str] = None,
-            event_type_id: Optional[int] = None,
-            by_date: Optional[EndpointStatisticsByDateInput] = None,
-            by_month: Optional[EndpointStatisticsByMonthInput] = None,
-            by_year: Optional[EndpointStatisticsByYearInput] = None,
+        self,
+        info: Info,
+        endpoint: Optional[str] = None,
+        event_type_id: Optional[int] = None,
+        by_date: Optional[EndpointStatisticsByDateInput] = None,
+        by_month: Optional[EndpointStatisticsByMonthInput] = None,
+        by_year: Optional[EndpointStatisticsByYearInput] = None,
     ) -> AggregatedEndpointStatistics:
         await require_permissions(info, P.STATS_VIEW)
         ctx: GraphQLContext = info.context
