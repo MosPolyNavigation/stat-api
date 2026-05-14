@@ -132,7 +132,7 @@ class PayloadType:
     async def value_type(self, info: strawberry.Info) -> Optional["ValueType"]:
         """Ленивая загрузка связанного ValueType через DataLoader."""
         ctx: GraphQLContext = info.context
-        vt_model = await ctx.loaders["value_type"].load(self.value_type_id)
+        vt_model = await ctx.loaders.value_type.load(self.value_type_id)
         return _value_type_from_model(vt_model) if vt_model else None
 
 
@@ -156,13 +156,13 @@ class AllowedPayloadRule:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
         ctx: GraphQLContext = info.context
-        et_model = await ctx.loaders["event_type"].load(self.event_type_id)
+        et_model = await ctx.loaders.event_type.load(self.event_type_id)
         return _event_type_from_model(et_model) if et_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def payload_type(self, info: strawberry.Info) -> Optional[PayloadType]:
         ctx: GraphQLContext = info.context
-        pt_model = await ctx.loaders["payload_type"].load(self.payload_type_id)
+        pt_model = await ctx.loaders.payload_type.load(self.payload_type_id)
         return _payload_type_from_model(pt_model) if pt_model else None
 
 
@@ -194,7 +194,7 @@ class ReviewStatus:
     ) -> List["Review"]:
         limit = min(200, first)
         ctx: GraphQLContext = info.context
-        r_models = await ctx.loaders["reviews_by_status_id"].load(self.id)
+        r_models = await ctx.loaders.reviews_by_status_id.load(self.id)
         return [_review_from_model(r_model) for r_model in r_models[:limit]]
 
 
@@ -212,7 +212,7 @@ class Review:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def client(self, info: strawberry.Info) -> Optional[ClientId]:
         ctx: GraphQLContext = info.context
-        ci_model = await ctx.loaders["client_id"].load(self.client_id)
+        ci_model = await ctx.loaders.client_id.load(self.client_id)
         return _client_id_from_model(ci_model) if ci_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -222,7 +222,7 @@ class Review:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def status(self, info: strawberry.Info) -> Optional[ReviewStatus]:
         ctx: GraphQLContext = info.context
-        rs_model = await ctx.loaders["review_status"].load(self.status_id)
+        rs_model = await ctx.loaders.review_status.load(self.status_id)
         return _review_status_from_model(rs_model) if rs_model else None
 
 
@@ -237,13 +237,13 @@ class Event:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def client(self, info: strawberry.Info) -> Optional[ClientId]:
         ctx: GraphQLContext = info.context
-        ci_model = await ctx.loaders["client_id"].load(self.client_id)
+        ci_model = await ctx.loaders.client_id.load(self.client_id)
         return _client_id_from_model(ci_model) if ci_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
         ctx: GraphQLContext = info.context
-        et_model = await ctx.loaders["event_type"].load(self.event_type_id)
+        et_model = await ctx.loaders.event_type.load(self.event_type_id)
         return _event_type_from_model(et_model) if et_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -254,7 +254,7 @@ class Event:
     ) -> List["Payload"]:
         limit = min(200, first)
         ctx: GraphQLContext = info.context
-        p_models = await ctx.loaders["payloads_by_event_id"].load(self.id)
+        p_models = await ctx.loaders.payloads_by_event_id.load(self.id)
         return [_payload_from_model(p_model) for p_model in p_models[:limit]]
 
 
@@ -275,7 +275,7 @@ class Payload:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def payload_type(self, info: strawberry.Info) -> Optional[PayloadType]:
         ctx: GraphQLContext = info.context
-        pt_model = await ctx.loaders["payload_type"].load(self.type_id)
+        pt_model = await ctx.loaders.payload_type.load(self.type_id)
         return _payload_type_from_model(pt_model) if pt_model else None
 
 
@@ -299,11 +299,11 @@ class Dashboard:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event_type(self, info: strawberry.Info) -> Optional[EventType]:
         ctx: GraphQLContext = info.context
-        et_model = await ctx.loaders["event_type"].load(self.event_type_id)
+        et_model = await ctx.loaders.event_type.load(self.event_type_id)
         return _event_type_from_model(et_model) if et_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def dashboard_type(self, info: strawberry.Info) -> Optional[DashboardType]:
         ctx: GraphQLContext = info.context
-        dt_model = await ctx.loaders["dashboard_type"].load(self.dashboard_type_id)
+        dt_model = await ctx.loaders.dashboard_type.load(self.dashboard_type_id)
         return _dashboard_type_from_model(dt_model) if dt_model else None

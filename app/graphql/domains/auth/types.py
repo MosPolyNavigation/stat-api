@@ -118,7 +118,7 @@ class Goal:
         order_by: Optional[RoleRightGoalOrderByInput] = None,
     ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
-        rrg_models = await ctx.loaders["role_right_goal_by_goal_id"].load(self.id)
+        rrg_models = await ctx.loaders.role_right_goal_by_goal_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -145,7 +145,7 @@ class Right:
         order_by: Optional[RoleRightGoalOrderByInput] = None,
     ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
-        rrg_models = await ctx.loaders["role_right_goal_by_right_id"].load(self.id)
+        rrg_models = await ctx.loaders.role_right_goal_by_right_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -169,19 +169,19 @@ class RoleRightGoal:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def role(self, info: strawberry.Info) -> Optional["Role"]:
         ctx: GraphQLContext = info.context
-        role_model = await ctx.loaders["role"].load(self.role_id)
+        role_model = await ctx.loaders.role.load(self.role_id)
         return _role_from_model(role_model) if role_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def right(self, info: strawberry.Info) -> Optional["Right"]:
         ctx: GraphQLContext = info.context
-        right_model = await ctx.loaders["right"].load(self.right_id)
+        right_model = await ctx.loaders.right.load(self.right_id)
         return _right_from_model(right_model) if right_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def goal(self, info: strawberry.Info) -> Optional["Goal"]:
         ctx: GraphQLContext = info.context
-        goal_model = await ctx.loaders["goal"].load(self.goal_id)
+        goal_model = await ctx.loaders.goal.load(self.goal_id)
         return _goal_from_model(goal_model) if goal_model else None
 
 
@@ -199,7 +199,7 @@ class Role:
         order_by: Optional[RoleRightGoalOrderByInput] = None,
     ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
-        rrg_models = await ctx.loaders["role_right_goal_by_role_id"].load(self.id)
+        rrg_models = await ctx.loaders.role_right_goal_by_role_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -220,7 +220,7 @@ class Role:
         order_by: Optional[UserRoleOrderByInput] = None,
     ) -> Connection["UserRole"]:
         ctx: GraphQLContext = info.context
-        ur_models = await ctx.loaders["user_role_by_role_id"].load(self.id)
+        ur_models = await ctx.loaders.user_role_by_role_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -252,7 +252,7 @@ class User:
     ) -> Connection["UserRole"]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
-        ur_models = await ctx.loaders["user_role_by_user_id"].load(self.id)
+        ur_models = await ctx.loaders.user_role_by_user_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -276,7 +276,7 @@ class User:
         current_user = info.context.current_user
         if current_user.id != id:
             await require_permissions(info, P.REFRESH_TOKEN_VIEW)
-        rt_models = await ctx.loaders["refresh_token_by_user_id"].load(self.id)
+        rt_models = await ctx.loaders.refresh_token_by_user_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -297,7 +297,7 @@ class User:
         order_by: Optional[UserLogOrderByInput] = None,
     ) -> Connection["UserLog"]:
         ctx: GraphQLContext = info.context
-        ul_models = await ctx.loaders["user_log_by_user_id"].load(self.id)
+        ul_models = await ctx.loaders.user_log_by_user_id.load(self.id)
         if pagination is None:
             pagination = pagination_input_from_attrs(page=1, page_size=10)
         return process_list(
@@ -319,13 +319,13 @@ class UserRole:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user(self, info: strawberry.Info) -> Optional["User"]:
         ctx: GraphQLContext = info.context
-        user_model = await ctx.loaders["user"].load(self.user_id)
+        user_model = await ctx.loaders.user.load(self.user_id)
         return _user_from_model(user_model) if user_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def role(self, info: strawberry.Info) -> Optional["Role"]:
         ctx: GraphQLContext = info.context
-        role_model = await ctx.loaders["role"].load(self.role_id)
+        role_model = await ctx.loaders.role.load(self.role_id)
         return _role_from_model(role_model) if role_model else None
 
 
@@ -343,7 +343,7 @@ class RefreshToken:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user(self, info: strawberry.Info) -> Optional["User"]:
         ctx: GraphQLContext = info.context
-        user_model = await ctx.loaders["user"].load(self.user_id)
+        user_model = await ctx.loaders.user.load(self.user_id)
         return _user_from_model(user_model) if user_model else None
 
 
@@ -357,5 +357,5 @@ class UserLog:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user(self, info: strawberry.Info) -> Optional["User"]:
         ctx: GraphQLContext = info.context
-        user_model = await ctx.loaders["user"].load(self.user_id)
+        user_model = await ctx.loaders.user.load(self.user_id)
         return _user_from_model(user_model) if user_model else None
