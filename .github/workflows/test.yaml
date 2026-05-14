@@ -15,7 +15,7 @@ jobs:
         with:
           enable-cache: true
           cache-dependency-glob: "uv.lock"
-      - run: uv sync --dev --frozen
+      - run: uv sync --frozen --dev --group lint
       - name: Ruff Check
         run: uv run ruff check . --output-format=github
       - name: Ruff Format
