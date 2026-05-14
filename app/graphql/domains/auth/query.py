@@ -4,7 +4,12 @@ from strawberry import Info
 from sqlalchemy import select
 
 from app.graphql.core.logging import GraphQLLoggingExtension
-from app.graphql.core.pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
+from app.graphql.core.pagination import (
+    paginate_query,
+    PaginationInput,
+    Connection,
+    pagination_input_from_attrs,
+)
 from app.graphql.core.filters import apply_filters
 from app.graphql.core.ordering import apply_order_by
 from app.graphql.core.resource_factory import create_query_resource
@@ -12,8 +17,11 @@ from app.graphql.core.permissions import require_permissions, P
 from app.graphql.core.context import GraphQLContext
 
 from app.graphql.domains.auth.resources import (
-    RoleResource, RightResource, GoalResource,
-    RefreshTokenResource, UserLogResource
+    RoleResource,
+    RightResource,
+    GoalResource,
+    RefreshTokenResource,
+    UserLogResource,
 )
 from app.graphql.domains.auth.types import (
     UserRole as UserRoleType,
@@ -21,47 +29,33 @@ from app.graphql.domains.auth.types import (
     User as UserType,
     _user_role_from_model,
     _role_right_goal_from_model,
-    _user_from_model
+    _user_from_model,
 )
 from app.graphql.domains.auth.inputs import (
     UserRoleFilterInput,
     UserRoleOrderByInput,
     RoleRightGoalFilterInput,
-    RoleRightGoalOrderByInput, UserFilterInput, UserOrderByInput
+    RoleRightGoalOrderByInput,
+    UserFilterInput,
+    UserOrderByInput,
 )
 from app.models import UserRole, RoleRightGoal, User
 
 # =============================================================================
 # Фабричные запросы
 # =============================================================================
-RoleQuery = create_query_resource(
-    RoleResource,
-    name_list="roles",
-    name_get="role"
-)
+RoleQuery = create_query_resource(RoleResource, name_list="roles", name_get="role")
 
-RightQuery = create_query_resource(
-    RightResource,
-    name_list="rights",
-    name_get="right"
-)
+RightQuery = create_query_resource(RightResource, name_list="rights", name_get="right")
 
-GoalQuery = create_query_resource(
-    GoalResource,
-    name_list="goals",
-    name_get="goal"
-)
+GoalQuery = create_query_resource(GoalResource, name_list="goals", name_get="goal")
 
 RefreshTokenQuery = create_query_resource(
-    RefreshTokenResource,
-    name_list="refresh_tokens",
-    name_get="refresh_token"
+    RefreshTokenResource, name_list="refresh_tokens", name_get="refresh_token"
 )
 
 UserLogQuery = create_query_resource(
-    UserLogResource,
-    name_list="user_logs",
-    name_get="user_log"
+    UserLogResource, name_list="user_logs", name_get="user_log"
 )
 
 
@@ -71,11 +65,7 @@ UserLogQuery = create_query_resource(
 @strawberry.type
 class UserQuery:
     @strawberry.field(extensions=[GraphQLLoggingExtension()])
-    async def user(
-        self,
-        info: Info,
-        id: int
-    ) -> Optional[UserType]:
+    async def user(self, info: Info, id: int) -> Optional[UserType]:
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
         if current_user.id != id:
@@ -144,11 +134,15 @@ class UserRoleQuery:
         )
 
     @strawberry.field(extensions=[GraphQLLoggingExtension()])
-    async def user_role(self, info: Info, user_id: int, role_id: int) -> Optional[UserRoleType]:
+    async def user_role(
+        self, info: Info, user_id: int, role_id: int
+    ) -> Optional[UserRoleType]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
 
-        stmt = select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
+        stmt = select(UserRole).where(
+            UserRole.user_id == user_id, UserRole.role_id == role_id
+        )
         model = (await ctx.db.execute(stmt)).scalar_one_or_none()
 
         return _user_role_from_model(model) if model else None
@@ -158,11 +152,11 @@ class UserRoleQuery:
 class RoleRightGoalQuery:
     @strawberry.field(extensions=[GraphQLLoggingExtension()])
     async def role_right_goals(
-            self,
-            info: Info,
-            pagination: Optional[PaginationInput] = None,
-            filter: Optional[RoleRightGoalFilterInput] = None,
-            order_by: Optional[RoleRightGoalOrderByInput] = None,
+        self,
+        info: Info,
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[RoleRightGoalFilterInput] = None,
+        order_by: Optional[RoleRightGoalOrderByInput] = None,
     ) -> Connection[RoleRightGoalType]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
@@ -215,4 +209,5 @@ class Query(
     RoleRightGoalQuery,
 ):
     """Корневой Query для домена auth."""
+
     pass

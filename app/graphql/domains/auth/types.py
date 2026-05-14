@@ -4,7 +4,11 @@ import strawberry
 
 from app.graphql.core.context import GraphQLContext
 from app.graphql.core.list_ops import process_list
-from app.graphql.core.pagination import PaginationInput, pagination_input_from_attrs, Connection
+from app.graphql.core.pagination import (
+    PaginationInput,
+    pagination_input_from_attrs,
+    Connection,
+)
 from app.graphql.core.permissions import require_permissions, P
 from app.graphql.domains.auth.inputs import (
     RoleRightGoalFilterInput,
@@ -14,7 +18,7 @@ from app.graphql.domains.auth.inputs import (
     RefreshTokenFilterInput,
     RefreshTokenOrderByInput,
     UserLogFilterInput,
-    UserLogOrderByInput
+    UserLogOrderByInput,
 )
 from app.models import (
     Goal as GoalModel,
@@ -88,7 +92,7 @@ def _refresh_token_from_model(m: RTModel) -> "RefreshToken":
         browser=m.browser,
         user_ip=m.user_ip,
         revoked=m.revoked,
-        created_at=m.created_at
+        created_at=m.created_at,
     )
 
 
@@ -161,6 +165,7 @@ class Right:
 @strawberry.type
 class RoleRightGoal:
     """Тип связи роли с правом и целью."""
+
     role_id: int
     right_id: int
     goal_id: int
@@ -313,6 +318,7 @@ class User:
 @strawberry.type
 class UserRole:
     """Тип связи пользователя с ролью."""
+
     user_id: int
     role_id: int
 
