@@ -5,11 +5,25 @@ from graphql import GraphQLError
 from strawberry.types import Info
 
 from app.constants import (
-    VIEW_RIGHT_ID, CREATE_RIGHT_ID, EDIT_RIGHT_ID, DELETE_RIGHT_ID,
-    STATS_GOAL_ID, DASHBOARDS_GOAL_ID, USERS_GOAL_ID, ROLES_GOAL_ID,
-    TABLES_GOAL_ID, RESOURCES_GOAL_ID, TASKS_GOAL_ID, NAV_GOAL_ID,
-    USER_PASS_GOAL_ID, ADMIN_GOAL_ID, REVIEWS_GOAL_ID,
-    REFRESH_TOKEN_GOAL_ID, CLIENT_GOAL_ID, GOAL_RIGHTS, GRANT_RIGHT_ID
+    VIEW_RIGHT_ID,
+    CREATE_RIGHT_ID,
+    EDIT_RIGHT_ID,
+    DELETE_RIGHT_ID,
+    STATS_GOAL_ID,
+    DASHBOARDS_GOAL_ID,
+    USERS_GOAL_ID,
+    ROLES_GOAL_ID,
+    TABLES_GOAL_ID,
+    RESOURCES_GOAL_ID,
+    TASKS_GOAL_ID,
+    NAV_GOAL_ID,
+    USER_PASS_GOAL_ID,
+    ADMIN_GOAL_ID,
+    REVIEWS_GOAL_ID,
+    REFRESH_TOKEN_GOAL_ID,
+    CLIENT_GOAL_ID,
+    GOAL_RIGHTS,
+    GRANT_RIGHT_ID,
 )
 from app.graphql.core.context import GraphQLContext
 
@@ -136,7 +150,7 @@ class P:
 
 
 async def _get_missing_permissions(
-        info: Info, permissions: Sequence[Permission]
+    info: Info, permissions: Sequence[Permission]
 ) -> Optional[Sequence[Permission]]:
     """Внутренняя функция: возвращает список отсутствующих прав."""
     ctx: GraphQLContext = info.context
@@ -155,4 +169,6 @@ async def require_permissions(info: Info, *permissions: Permission) -> None:
     missing = await _get_missing_permissions(info, permissions)
     if missing:
         names = ", ".join(repr(p) for p in missing)
-        raise GraphQLError(f"Недостаточно прав для выполнения операции. Отсутствуют: {names}")
+        raise GraphQLError(
+            f"Недостаточно прав для выполнения операции. Отсутствуют: {names}"
+        )

@@ -47,10 +47,12 @@ def _compare_values(val: Any, op: str, target: Any) -> bool:
         elif op == "like":
             # Простая эмуляция LIKE с % и _
             import re
+
             pattern = re.escape(str(target)).replace(r"\%", ".*").replace(r"\_", ".")
             return bool(re.fullmatch(pattern, str(val), re.IGNORECASE))
         elif op == "not_like":
             import re
+
             pattern = re.escape(str(target)).replace(r"\%", ".*").replace(r"\_", ".")
             return not re.fullmatch(pattern, str(val), re.IGNORECASE)
     except (TypeError, ValueError):

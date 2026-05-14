@@ -18,6 +18,7 @@ class BaseFilterInput:
     """Базовый датакласс для всех GraphQL-фильтров.
     Наследование от dataclass удовлетворяет статический анализатор для fields().
     """
+
     pass
 
 
@@ -64,7 +65,9 @@ class StringFilterInput(BaseFilterInput):
 # =============================================================================
 # 2. Ядро применения фильтров к колонке
 # =============================================================================
-def _build_column_conditions(col: ColumnElement, f: BaseFilterInput) -> Optional[ColumnElement]:
+def _build_column_conditions(
+    col: ColumnElement, f: BaseFilterInput
+) -> Optional[ColumnElement]:
     """Применяет операторы фильтра к конкретной колонке SQLAlchemy."""
     conditions: list[ColumnElement] = []
 
@@ -136,12 +139,16 @@ def _build_column_conditions(col: ColumnElement, f: BaseFilterInput) -> Optional
 # =============================================================================
 # 3. Рекурсивный сбор условий из GraphQL-фильтра
 # =============================================================================
-def _build_filter_condition(model: Type[DeclarativeBase], filters: BaseFilterInput) -> Optional[ColumnElement]:
+def _build_filter_condition(
+    model: Type[DeclarativeBase], filters: BaseFilterInput
+) -> Optional[ColumnElement]:
     """Рекурсивно собирает дерево условий WHERE из объекта фильтра."""
     if not filters:
         return None
     if not is_dataclass(filters):
-        raise TypeError(f"Ожидается Strawberry-инпут (dataclass), получен {type(filters).__name__}")
+        raise TypeError(
+            f"Ожидается Strawberry-инпут (dataclass), получен {type(filters).__name__}"
+        )
 
     conditions: list[ColumnElement] = []
     for field in fields(filters):
@@ -174,7 +181,9 @@ def _build_filter_condition(model: Type[DeclarativeBase], filters: BaseFilterInp
             # Полевой фильтр: имя поля фильтра = имя колонки модели
             col: Optional[ColumnElement] = getattr(model, field.name, None)
             if col is None:
-                raise ValueError(f"Model {model.__name__} не имеет колонки '{field.name}'")
+                raise ValueError(
+                    f"Model {model.__name__} не имеет колонки '{field.name}'"
+                )
             cond = _build_column_conditions(col, val)
             if cond is not None:
                 conditions.append(cond)
@@ -185,7 +194,9 @@ def _build_filter_condition(model: Type[DeclarativeBase], filters: BaseFilterInp
 # =============================================================================
 # 4. Публичный API для резолверов
 # =============================================================================
-def apply_filters(stmt: Select, model: Type[DeclarativeBase], filters: BaseFilterInput) -> Select:
+def apply_filters(
+    stmt: Select, model: Type[DeclarativeBase], filters: BaseFilterInput
+) -> Select:
     """
     Применяет GraphQL-фильтры к SQLAlchemy Select.
 
@@ -198,7 +209,9 @@ def apply_filters(stmt: Select, model: Type[DeclarativeBase], filters: BaseFilte
     return stmt.where(cond) if cond is not None else stmt
 
 
-def _apply_field_filter(model_instance: Any, field_name: str, filter_input: BaseFilterInput) -> bool:
+def _apply_field_filter(
+    model_instance: Any, field_name: str, filter_input: BaseFilterInput
+) -> bool:
     """Применяет условия фильтра к конкретному полю модели."""
     val = _get_attr(model_instance, field_name)
 
@@ -236,13 +249,21 @@ def _apply_field_filter(model_instance: Any, field_name: str, filter_input: Base
     if between and len(between) == 2 and not _compare_values(val, "between", between):
         return False
     not_between: Optional[List[Any]] = getattr(filter_input, "not_between", None)
-    if not_between and len(not_between) == 2 and not _compare_values(val, "not_between", not_between):
+    if (
+        not_between
+        and len(not_between) == 2
+        and not _compare_values(val, "not_between", not_between)
+    ):
         return False
 
     # Строковые операторы (только если значение — строка)
     if isinstance(val, (str, type(None))):
-        for op, attr in [("ci_eq", "eq"), ("contains", "contains"),
-                         ("starts_with", "starts_with"), ("ends_with", "ends_with")]:
+        for op, attr in [
+            ("ci_eq", "eq"),
+            ("contains", "contains"),
+            ("starts_with", "starts_with"),
+            ("ends_with", "ends_with"),
+        ]:
             cmp_val = getattr(filter_input, attr, None)
             if cmp_val is not None and not _compare_values(val, op, cmp_val):
                 return False
@@ -256,7 +277,9 @@ def _apply_field_filter(model_instance: Any, field_name: str, filter_input: Base
     return True
 
 
-def _matches_filter(model_instance: Any, model_type: Type, filters: BaseFilterInput) -> bool:
+def _matches_filter(
+    model_instance: Any, model_type: Type, filters: BaseFilterInput
+) -> bool:
     """Рекурсивно проверяет, соответствует ли экземпляр модели условиям фильтра."""
     if not filters or not is_dataclass(filters):
         return True
@@ -269,11 +292,15 @@ def _matches_filter(model_instance: Any, model_type: Type, filters: BaseFilterIn
         # Логические операторы
         if field.name == "and_":
             sub_filters: List[BaseFilterInput] = val or []
-            if not all(_matches_filter(model_instance, model_type, f) for f in sub_filters):
+            if not all(
+                _matches_filter(model_instance, model_type, f) for f in sub_filters
+            ):
                 return False
         elif field.name == "or_":
             sub_filters: List[BaseFilterInput] = val or []
-            if not any(_matches_filter(model_instance, model_type, f) for f in sub_filters):
+            if not any(
+                _matches_filter(model_instance, model_type, f) for f in sub_filters
+            ):
                 return False
         elif field.name == "not_":
             if _matches_filter(model_instance, model_type, val):
@@ -286,9 +313,7 @@ def _matches_filter(model_instance: Any, model_type: Type, filters: BaseFilterIn
 
 
 def filter_list(
-        models: List[T],
-        model_type: Type,
-        filters: Optional[BaseFilterInput]
+    models: List[T], model_type: Type, filters: Optional[BaseFilterInput]
 ) -> List[T]:
     """Фильтрует список моделей по GraphQL-фильтру."""
     if not filters:

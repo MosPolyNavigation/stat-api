@@ -8,12 +8,12 @@ T = TypeVar("T")
 
 
 def process_list(
-        models: List[T],
-        model_type: Type,
-        filters: Optional[BaseFilterInput] = None,
-        order_by: Optional[BaseOrderByInput] = None,
-        pagination: Optional[PaginationInput] = None,
-        convert: Callable[[Any], T] = lambda x: x,
+    models: List[T],
+    model_type: Type,
+    filters: Optional[BaseFilterInput] = None,
+    order_by: Optional[BaseOrderByInput] = None,
+    pagination: Optional[PaginationInput] = None,
+    convert: Callable[[Any], T] = lambda x: x,
 ) -> Connection[T]:
     """
     Применяет фильтрацию → сортировку → пагинацию к списку моделей.
