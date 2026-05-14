@@ -4,7 +4,11 @@ import strawberry
 
 from app.graphql.core.context import GraphQLContext
 from app.graphql.core.list_ops import process_list
-from app.graphql.core.pagination import PaginationInput, Connection, pagination_input_from_attrs
+from app.graphql.core.pagination import (
+    PaginationInput,
+    Connection,
+    pagination_input_from_attrs,
+)
 from app.graphql.domains.navigation.inputs import (
     NavCampusFilterInput,
     NavCampusOrderByInput,
@@ -13,7 +17,7 @@ from app.graphql.domains.navigation.inputs import (
     NavAuditoryFilterInput,
     NavAuditoryOrderByInput,
     NavAuditoryPhotoFilterInput,
-    NavAuditoryPhotoOrderByInput
+    NavAuditoryPhotoOrderByInput,
 )
 from app.models import (
     Location as LModel,
@@ -152,7 +156,7 @@ class NavLocation:
             order_by=order_by,
             pagination=pagination,
             convert=_campus_from_model,
-        )
+        )  # type: ignore[call-arg]
 
 
 @strawberry.type
