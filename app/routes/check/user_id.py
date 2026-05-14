@@ -75,7 +75,7 @@ def register_endpoint(router: APIRouter):
             },
         },
     )
-    async def check_client(
+    async def check_user(
             data: UserIdCheck = Depends(),
             db: AsyncSession = Depends(get_db),
     ):

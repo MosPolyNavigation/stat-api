@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from strawberry.fastapi import BaseContext
-from typing import Any, List, Dict
-from strawberry.dataloader import DataLoader
+from typing import Any, List
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.graphql.core.loaders import Loaders

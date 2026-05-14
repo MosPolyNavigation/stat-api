@@ -1,7 +1,6 @@
 from enum import IntEnum
 from dataclasses import dataclass
 from typing import Sequence, Optional
-from functools import wraps
 from graphql import GraphQLError
 from strawberry.types import Info
 

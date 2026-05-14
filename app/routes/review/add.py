@@ -111,7 +111,7 @@ def register_endpoint(router: APIRouter):
         if client_id is None:
             raise HTTPException(
                 status_code=422,
-                detail=f"Validation failed"
+                detail="Validation failed"
             )
 
         base_path: str = os.path.join(get_settings().static_files, "images")
