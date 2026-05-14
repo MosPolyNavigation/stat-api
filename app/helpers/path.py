@@ -4,10 +4,7 @@ from typing import Optional
 from urllib.parse import unquote
 
 # Белый список разрешенных расширений для изображений
-ALLOWED_EXTENSIONS = {
-    'png', 'jpg', 'jpeg', 'gif',
-    'webp', 'bmp', 'svg', 'heif'
-}
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp", "bmp", "svg", "heif"}
 
 
 def validate_filename(filename: str) -> bool:
@@ -21,9 +18,7 @@ def validate_filename(filename: str) -> bool:
             png|jpe?g|gif|webp|bmp|svg|heif
         )$                  # Конец строки
     """
-    return re.fullmatch(
-        pattern, filename, re.VERBOSE | re.IGNORECASE
-    ) is not None
+    return re.fullmatch(pattern, filename, re.VERBOSE | re.IGNORECASE) is not None
 
 
 def sanitize_image_filename(raw_name: str) -> Optional[str]:
@@ -60,9 +55,7 @@ def secure_image_path(base_dir: str, user_filename: str) -> Optional[str]:
     target_path = os.path.abspath(os.path.join(base_dir, safe_filename))
 
     # Проверка на выход за пределы базовой директории
-    if os.path.commonpath([base_dir]) != os.path.commonpath(
-            [base_dir, target_path]
-    ):
+    if os.path.commonpath([base_dir]) != os.path.commonpath([base_dir, target_path]):
         return None
 
     return target_path

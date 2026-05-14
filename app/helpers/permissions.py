@@ -21,7 +21,7 @@ def group_rights_by_goals(rights_goals: set[tuple[int, int]]) -> dict[str, list[
 
 
 def group_rights_by_goals_with_grant(
-        permissions: set[tuple[int, int, bool]]
+    permissions: set[tuple[int, int, bool]],
 ) -> dict[str, list[PermissionGrantInfo]]:
     grouped: dict[str, list[PermissionGrantInfo]] = {}
 
@@ -47,6 +47,7 @@ def require_rights(goal_name: str, *rights: str):
         goal_name: имя цели (субъекта доступа)
         *rights: список прав, которые должны быть у пользователя
     """
+
     async def check_rights(
         current_user: Annotated[User, Depends(get_current_active_user)],
         db: AsyncSession = Depends(get_db),
@@ -85,6 +86,7 @@ def require_rights_with_logging(goal_name: str, *rights: str, error_text: str):
         *rights: список прав, которые должны быть у пользователя
         error_text: текст, который будет записан в лог при отказе в доступе
     """
+
     async def check_rights(
         current_user: Annotated[User, Depends(get_current_active_user)],
         db: AsyncSession = Depends(get_db),
@@ -106,4 +108,5 @@ def require_rights_with_logging(goal_name: str, *rights: str, error_text: str):
                 ),
             )
         return current_user
+
     return check_rights
