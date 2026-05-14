@@ -1,8 +1,20 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 import strawberry
 
 from app.graphql.core.context import GraphQLContext
+from app.graphql.core.list_ops import process_list
+from app.graphql.core.pagination import PaginationInput, Connection, pagination_input_from_attrs
+from app.graphql.domains.navigation.inputs import (
+    NavCampusFilterInput,
+    NavCampusOrderByInput,
+    NavPlanFilterInput,
+    NavPlanOrderByInput,
+    NavAuditoryFilterInput,
+    NavAuditoryOrderByInput,
+    NavAuditoryPhotoFilterInput,
+    NavAuditoryPhotoOrderByInput
+)
 from app.models import (
     Location as LModel,
     Corpus as CModel,
@@ -125,12 +137,22 @@ class NavLocation:
     async def campuses(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavCampus"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavCampusFilterInput] = None,
+        order_by: Optional[NavCampusOrderByInput] = None,
+    ) -> Connection["NavCampus"]:
         ctx: GraphQLContext = info.context
         nc_models = await ctx.loaders.nav_campus_by_loc_id.load(self.id)
-        return [_campus_from_model(nc_model) for nc_model in nc_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=nc_models,
+            model_type=CModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_campus_from_model,
+        )
 
 
 @strawberry.type
@@ -153,12 +175,22 @@ class NavCampus:
     async def plans(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavPlan"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavPlanFilterInput] = None,
+        order_by: Optional[NavPlanOrderByInput] = None,
+    ) -> Connection["NavPlan"]:
         ctx: GraphQLContext = info.context
         np_models = await ctx.loaders.nav_plan_by_cor_id.load(self.id)
-        return [_plan_from_model(np_model) for np_model in np_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=np_models,
+            model_type=PModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_plan_from_model,
+        )
 
 
 @strawberry.type
@@ -212,12 +244,22 @@ class NavPlan:
     async def auditories(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavAuditory"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavAuditoryFilterInput] = None,
+        order_by: Optional[NavAuditoryOrderByInput] = None,
+    ) -> Connection["NavAuditory"]:
         ctx: GraphQLContext = info.context
         na_models = await ctx.loaders.nav_auditory_by_plan_id.load(self.id)
-        return [_auditory_from_model(na_model) for na_model in na_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=na_models,
+            model_type=AModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_auditory_from_model,
+        )
 
 
 @strawberry.type
@@ -249,12 +291,22 @@ class NavAuditory:
     async def photos(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["NavAuditoryPhoto"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[NavAuditoryPhotoFilterInput] = None,
+        order_by: Optional[NavAuditoryPhotoOrderByInput] = None,
+    ) -> Connection["NavAuditoryPhoto"]:
         ctx: GraphQLContext = info.context
         nap_models = await ctx.loaders.nav_photos_by_aud_id.load(self.id)
-        return [_aud_photo_from_model(nap_model) for nap_model in nap_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=nap_models,
+            model_type=APModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_aud_photo_from_model,
+        )
 
 
 @strawberry.type
