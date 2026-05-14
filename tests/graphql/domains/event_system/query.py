@@ -1,9 +1,8 @@
 """Integration tests for GraphQL Query operations in event_system domain."""
+
 import pytest
 
-from tests.graphql.base import (
-    graphql_query
-)
+from tests.graphql.base import graphql_query
 
 # =============================================================================
 # Конфигурация
@@ -24,7 +23,9 @@ class TestGraphQLBasic:
         assert "data" in response["data"]
 
     def test_200_graphql_introspection(self):
-        response = graphql_query("{ __schema { queryType { name } } }", headers=ADMIN_HEADERS)
+        response = graphql_query(
+            "{ __schema { queryType { name } } }", headers=ADMIN_HEADERS
+        )
         assert response["status_code"] == 200
         assert "data" in response["data"]
         assert response["data"]["data"]["__schema"]["queryType"]["name"] == "Query"
@@ -66,7 +67,9 @@ class TestGraphQLDictionaries:
 
     def test_200_event_type_single_by_id(self):
         # Сначала получаем реальный ID через список
-        list_query = "{ eventTypes(pagination: { pageSize: 1 }) { nodes { id codeName } } }"
+        list_query = (
+            "{ eventTypes(pagination: { pageSize: 1 }) { nodes { id codeName } } }"
+        )
         list_resp = graphql_query(list_query, headers=ADMIN_HEADERS)["data"]
         node_id = list_resp["data"]["eventTypes"]["nodes"][0]["id"]
 
@@ -417,7 +420,9 @@ class TestGraphQLFiltering:
         assert response["status_code"] == 200
         nodes = response["data"]["data"]["eventTypes"]["nodes"]
         ids = [n["id"] for n in nodes]
-        assert all(1 <= i <= 100 for i in ids), f"IDs {ids} должны быть в диапазоне [1, 100]"
+        assert all(1 <= i <= 100 for i in ids), (
+            f"IDs {ids} должны быть в диапазоне [1, 100]"
+        )
 
     def test_200_filter_string_operators(self):
         query = """
@@ -510,7 +515,7 @@ class TestGraphQLUnauthorized:
         assert response["status_code"] == 401
 
     def test_401_single_node_without_token(self):
-        query = '{ eventType(id: 1) { id } }'
+        query = "{ eventType(id: 1) { id } }"
         response = graphql_query(query)
         assert response["status_code"] == 401
 
@@ -529,7 +534,7 @@ class TestGraphQLEdgeCases:
         assert "errors" in response["data"]
 
     def test_404_non_existent_node(self):
-        query = '{ eventType(id: 999999) { id } }'
+        query = "{ eventType(id: 999999) { id } }"
         response = graphql_query(query, headers=ADMIN_HEADERS)
         assert response["status_code"] == 200
         assert response["data"]["data"]["eventType"] is None
@@ -548,7 +553,9 @@ class TestGraphQLEdgeCases:
         assert response["status_code"] == 200
         nodes = response["data"]["data"]["eventTypes"]["nodes"]
         assert len(nodes) == 0
-        assert response["data"]["data"]["eventTypes"]["paginationInfo"]["totalCount"] == 0
+        assert (
+            response["data"]["data"]["eventTypes"]["paginationInfo"]["totalCount"] == 0
+        )
 
     def test_200_multiple_queries_in_one_request(self):
         query = """
@@ -593,10 +600,10 @@ class TestGraphQLDashboardQuery:
     def test_200_dashboard_type_by_id(self):
         list_resp = graphql_query(
             "{ dashboardTypes(pagination: { pageSize: 1 }) { nodes { id } } }",
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )["data"]
         dt_id = list_resp["data"]["dashboardTypes"]["nodes"][0]["id"]
-        query = f'{{ dashboardType(id: {dt_id}) {{ id codeName }} }}'
+        query = f"{{ dashboardType(id: {dt_id}) {{ id codeName }} }}"
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         resp = resp["data"]
@@ -604,14 +611,17 @@ class TestGraphQLDashboardQuery:
 
     def test_200_dashboards_with_filter(self):
         # Создаём тестовый дашборд
-        create_resp = graphql_query("""
+        create_resp = graphql_query(
+            """
         mutation {
             createDashboard(data: {
                 displayOrder: 999, eventTypeId: 1, dashboardTypeId: 1,
                 titleText: "test-query-dashboard"
             }) { id }
         }
-        """, headers=ADMIN_HEADERS)["data"]
+        """,
+            headers=ADMIN_HEADERS,
+        )["data"]
 
         if "errors" not in create_resp:
             dashboard_id = create_resp["data"]["createDashboard"]["id"]
@@ -634,7 +644,10 @@ class TestGraphQLDashboardQuery:
                 titles = [n["titleText"] for n in nodes]
                 assert "test-query-dashboard" in titles
             finally:
-                graphql_query(f'mutation {{ deleteDashboard(id: {dashboard_id}) }}', headers=ADMIN_HEADERS)
+                graphql_query(
+                    f"mutation {{ deleteDashboard(id: {dashboard_id}) }}",
+                    headers=ADMIN_HEADERS,
+                )
 
     def test_200_dashboards_with_filter_and_pagination(self):
         query = """
@@ -660,13 +673,13 @@ class TestGraphQLDashboardQuery:
     def test_200_dashboard_single_by_id(self):
         list_resp = graphql_query(
             "{ dashboards(pagination: { pageSize: 1 }, filter: { dashboardTypeId: { eq: 1 } }) { nodes { id } } }",
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )["data"]
         nodes = list_resp["data"]["dashboards"]["nodes"]
         if not nodes:
             pytest.skip("No dashboards in test DB")
         dash_id = nodes[0]["id"]
-        query = f'{{ dashboard(id: {dash_id}) {{ id titleText eventType {{ codeName }} }} }}'
+        query = f"{{ dashboard(id: {dash_id}) {{ id titleText eventType {{ codeName }} }} }}"
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         resp = resp["data"]

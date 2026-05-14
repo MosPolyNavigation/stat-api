@@ -4,6 +4,7 @@
 Каждый тест-класс вызывает clear_task_registry() через фикстуру, чтобы
 глобальный реестр не загрязнялся между тестами.
 """
+
 import asyncio
 import os
 
@@ -34,6 +35,7 @@ from app.jobs.queue_db import (
 
 # ─── Фикстуры ────────────────────────────────────────────────────────────────
 
+
 @pytest.fixture(autouse=True)
 def reset_registry():
     """Очищает реестр и счётчики до и после каждого теста."""
@@ -55,6 +57,7 @@ def run(coro):
 
 # ─── Тесты декоратора @scheduled_task ────────────────────────────────────────
 
+
 class TestScheduledTaskDecorator:
     def test_registers_in_registry(self):
         @scheduled_task(name="test_job")
@@ -71,7 +74,11 @@ class TestScheduledTaskDecorator:
             return 42
 
         entry = get_task_registry()[0]
-        assert entry["original"] is my_job.__wrapped__ if hasattr(my_job, "__wrapped__") else True
+        assert (
+            entry["original"] is my_job.__wrapped__
+            if hasattr(my_job, "__wrapped__")
+            else True
+        )
         assert callable(entry["func"])
 
     def test_wrapper_preserves_name(self):
@@ -113,6 +120,7 @@ class TestScheduledTaskDecorator:
 
         # Устанавливаем db путь для логирования
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = tmp_db
 
         run(my_job())
@@ -120,6 +128,7 @@ class TestScheduledTaskDecorator:
 
     def test_wrapper_logs_to_db(self, tmp_db):
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = tmp_db
         run(init_queue_db(tmp_db))
 
@@ -136,6 +145,7 @@ class TestScheduledTaskDecorator:
 
     def test_wrapper_logs_error(self, tmp_db):
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = tmp_db
         run(init_queue_db(tmp_db))
 
@@ -153,6 +163,7 @@ class TestScheduledTaskDecorator:
     def test_single_instance_protection(self, tmp_db):
         """max_instances=1: второй запуск пропускается, пока первый выполняется."""
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = tmp_db
         run(init_queue_db(tmp_db))
 
@@ -175,6 +186,7 @@ class TestScheduledTaskDecorator:
 
     def test_custom_run_id_passed(self, tmp_db):
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = tmp_db
         run(init_queue_db(tmp_db))
 
@@ -190,6 +202,7 @@ class TestScheduledTaskDecorator:
 
 
 # ─── Тесты queue_db ──────────────────────────────────────────────────────────
+
 
 class TestQueueDb:
     def test_init_creates_table(self, tmp_db):
@@ -211,6 +224,7 @@ class TestQueueDb:
 
     def test_log_success(self, tmp_db):
         from datetime import datetime, timezone
+
         run(init_queue_db(tmp_db))
         run(log_job_start(tmp_db, "job", "run-1", "api"))
         started = datetime.now(timezone.utc)
@@ -222,6 +236,7 @@ class TestQueueDb:
 
     def test_log_error(self, tmp_db):
         from datetime import datetime, timezone
+
         run(init_queue_db(tmp_db))
         run(log_job_start(tmp_db, "job", "run-1", "scheduler"))
         started = datetime.now(timezone.utc)
@@ -254,6 +269,7 @@ class TestQueueDb:
 
 
 # ─── Тесты Pydantic-моделей конфига ──────────────────────────────────────────
+
 
 class TestJobConfigModels:
     def test_jobs_config_defaults(self):
@@ -310,22 +326,25 @@ class TestJobConfigModels:
 
 # ─── Тесты JobManager ─────────────────────────────────────────────────────────
 
+
 class TestJobManager:
     def test_setup_skips_disabled(self, tmp_path):
         @scheduled_task(name="disabled_job")
         async def disabled_job():
             pass
 
-        cfg = JobsConfig.model_validate({
-            "list": [
-                {
-                    "name": "disabled_job",
-                    "enabled": False,
-                    "trigger": "interval",
-                    "interval": {"minutes": 5},
-                }
-            ]
-        })
+        cfg = JobsConfig.model_validate(
+            {
+                "list": [
+                    {
+                        "name": "disabled_job",
+                        "enabled": False,
+                        "trigger": "interval",
+                        "interval": {"minutes": 5},
+                    }
+                ]
+            }
+        )
         manager = JobManager(static_path=str(tmp_path))
         manager.setup_from_config(cfg)
         # Планировщик создан, но задача не добавлена
@@ -335,6 +354,7 @@ class TestJobManager:
     def test_setup_warns_unregistered(self, tmp_path, caplog):
         """Задача в конфиге, но не зарегистрирована через @scheduled_task → warning."""
         import logging
+
         cfg = JobsConfig(
             list=[
                 JobConfig(
@@ -355,17 +375,19 @@ class TestJobManager:
         async def limited_job():
             pass
 
-        cfg = JobsConfig.model_validate({
-            "list": [
-                {
-                    "name": "limited_job",
-                    "enabled": False,
-                    "trigger": "interval",
-                    "interval": {"minutes": 1},
-                    "scheduler": {"max_instances": 3},
-                }
-            ]
-        })
+        cfg = JobsConfig.model_validate(
+            {
+                "list": [
+                    {
+                        "name": "limited_job",
+                        "enabled": False,
+                        "trigger": "interval",
+                        "interval": {"minutes": 1},
+                        "scheduler": {"max_instances": 3},
+                    }
+                ]
+            }
+        )
         manager = JobManager(static_path=str(tmp_path))
         manager.setup_from_config(cfg)
 
@@ -427,6 +449,7 @@ class TestJobManager:
         run(manager.start())
 
         import app.jobs.manager as mgr
+
         mgr._DB_PATH = manager.db_path
 
         run(hist_job(_triggered_by="manual"))

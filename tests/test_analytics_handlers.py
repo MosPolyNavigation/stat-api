@@ -25,7 +25,10 @@ def unique_client_ident():
 @pytest.fixture
 def unique_test_ids():
     """Генерирует уникальные ID для тестовых записей (чтобы избежать конфликтов PK)."""
-    return {"client_id": 300 + hash(uuid.uuid4()) % 1000, "event_id": 300 + hash(uuid.uuid4()) % 1000}
+    return {
+        "client_id": 300 + hash(uuid.uuid4()) % 1000,
+        "event_id": 300 + hash(uuid.uuid4()) % 1000,
+    }
 
 
 # =============================================================================
@@ -75,7 +78,9 @@ class TestPeriodStats:
         assert dumped[1]["all_visits"] == 1
 
     @pytest.mark.asyncio
-    async def test_counts_unique_visitors_by_requested_period(self, unique_client_ident, unique_test_ids):
+    async def test_counts_unique_visitors_by_requested_period(
+        self, unique_client_ident, unique_test_ids
+    ):
         """
         Проверяет подсчет уникальных посетителей за период.
 
@@ -127,8 +132,12 @@ class TestPeriodStats:
         finally:
             # 4. Teardown: гарантированная очистка
             async with session_maker.begin() as db:
-                await db.execute(delete(models.Event).where(models.Event.id == event_id))
-                await db.execute(delete(models.ClientId).where(models.ClientId.id == client_id))
+                await db.execute(
+                    delete(models.Event).where(models.Event.id == event_id)
+                )
+                await db.execute(
+                    delete(models.ClientId).where(models.ClientId.id == client_id)
+                )
 
 
 # =============================================================================

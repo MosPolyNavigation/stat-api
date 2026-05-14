@@ -1,4 +1,5 @@
 """Integration tests for GraphQL Query operations in navigation domain."""
+
 from tests.graphql.base import graphql_query
 
 # =============================================================================
@@ -34,7 +35,7 @@ class TestGraphQLNavigationBasic:
 
     def test_200_nav_location_single_by_id(self):
         # ID из сидов
-        query = '{ navLocation(id: 1) { id idSys name short address } }'
+        query = "{ navLocation(id: 1) { id idSys name short address } }"
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         resp = resp["data"]
@@ -318,14 +319,17 @@ class TestGraphQLNavigationPagination:
     def test_200_nav_campuses_pagination_navigation(self):
         # Создаём дополнительные кампусы для теста навигации
         for i in range(2, 6):
-            graphql_query(f"""
+            graphql_query(
+                f"""
             mutation {{
                 createNavCampus( {{
                     idSys: "test-{i}", locId: 1, name: "Campus {i}",
                     ready: true
                 }}) {{ id }}
             }}
-            """, ADMIN_HEADERS)
+            """,
+                ADMIN_HEADERS,
+            )
 
         try:
             # Страница 1
@@ -361,7 +365,9 @@ class TestGraphQLNavigationPagination:
         finally:
             # Cleanup
             for i in range(2, 6):
-                graphql_query(f"mutation {{ deleteNavCampus(id: {i}) }}", headers=ADMIN_HEADERS)
+                graphql_query(
+                    f"mutation {{ deleteNavCampus(id: {i}) }}", headers=ADMIN_HEADERS
+                )
 
 
 # =============================================================================

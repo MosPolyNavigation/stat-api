@@ -14,7 +14,7 @@ class LocationSeeder(BaseSeeder):
                 "short": "АВ",
                 "ready": True,
                 "address": "ул. Автозаводская, д. 16",
-                "metro": "Автозаводская"
+                "metro": "Автозаводская",
             }
         ]
 
@@ -29,7 +29,7 @@ class CorpusSeeder(BaseSeeder):
                 "id_sys": "av-test",
                 "loc_id": 1,
                 "name": "Тестовый корпус",
-                "ready": True
+                "ready": True,
             }
         ]
 
@@ -46,7 +46,7 @@ class PlanSeeder(BaseSeeder):
                 "floor_id": 1,
                 "ready": True,
                 "entrances": "[]",
-                "graph": "[]"
+                "graph": "[]",
             }
         ]
 
@@ -69,7 +69,7 @@ class AuditorySeeder(BaseSeeder):
                 "type_id": 1,
                 "ready": True,
                 "plan_id": 1,
-                "name": "101"
+                "name": "101",
             }
         ]
 
@@ -85,7 +85,7 @@ class AudPhotoSeeder(BaseSeeder):
                 "ext": "jpg",
                 "name": "test.jpg",
                 "path": "/tmp/test.jpg",
-                "link": "/api/nav/auditory/photos/test.jpg"
+                "link": "/api/nav/auditory/photos/test.jpg",
             }
         ]
 

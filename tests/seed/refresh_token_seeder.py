@@ -5,6 +5,7 @@ from app.models import RefreshToken
 
 class RefreshTokenSeeder(BaseSeeder):
     """Сидер для создания тестовых refresh токенов."""
+
     model = RefreshToken
 
     def gather_data(self):

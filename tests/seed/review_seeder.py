@@ -14,7 +14,7 @@ class ReviewSeeder(BaseSeeder):
                 "problem_id": "way",
                 "text": "test review",
                 "review_status_id": 1,
-                "creation_date": datetime(2026, 4, 25, 12, 0, 0)
+                "creation_date": datetime(2026, 4, 25, 12, 0, 0),
             },
             {
                 "id": 2,

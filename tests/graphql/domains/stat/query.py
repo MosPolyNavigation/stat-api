@@ -1,4 +1,5 @@
 """Integration tests for GraphQL Query operations in stat domain."""
+
 from datetime import date, timedelta
 
 from tests.graphql.base import graphql_query
@@ -118,7 +119,10 @@ class TestStatsQueries:
         """
         resp = graphql_query(
             query,
-            variables={"eventTypeId": 1, "byDate": {"start": "2024-01-01", "end": "2024-01-31"}},
+            variables={
+                "eventTypeId": 1,
+                "byDate": {"start": "2024-01-01", "end": "2024-01-31"},
+            },
             headers=ADMIN_HEADERS,
         )
         assert resp["status_code"] == 200
@@ -140,7 +144,9 @@ class TestStatsQueries:
         resp = graphql_query(query, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("ровно один фильтр" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "ровно один фильтр" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     def test_400_multiple_window_filters(self):
         """Ошибка при передаче нескольких фильтров окна."""
@@ -161,7 +167,9 @@ class TestStatsQueries:
         )
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("ровно один фильтр" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "ровно один фильтр" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     def test_400_invalid_date_range(self):
         """Ошибка при start > end."""
@@ -177,7 +185,9 @@ class TestStatsQueries:
         )
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("меньше или равен" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "меньше или равен" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     def test_400_invalid_month_format(self):
         """Ошибка при неверном формате месяца."""
@@ -205,12 +215,19 @@ class TestStatsQueries:
         """
         resp = graphql_query(
             query,
-            variables={"byDate": {"start": future.isoformat(), "end": (future + timedelta(days=5)).isoformat()}},
+            variables={
+                "byDate": {
+                    "start": future.isoformat(),
+                    "end": (future + timedelta(days=5)).isoformat(),
+                }
+            },
             headers=ADMIN_HEADERS,
         )
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("сегодняшней даты" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "сегодняшней даты" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     # =============================================================================
     # Тесты валидации фильтров событий
@@ -235,7 +252,9 @@ class TestStatsQueries:
         )
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("только один фильтр" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "только один фильтр" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     def test_400_unknown_endpoint_code(self):
         """Ошибка при неизвестном коде endpoint."""
@@ -254,7 +273,9 @@ class TestStatsQueries:
         )
         assert resp["status_code"] == 200
         assert "errors" in resp["data"]
-        assert any("неизвестный код" in e["message"].lower() for e in resp["data"]["errors"])
+        assert any(
+            "неизвестный код" in e["message"].lower() for e in resp["data"]["errors"]
+        )
 
     # =============================================================================
     # Тесты прав доступа

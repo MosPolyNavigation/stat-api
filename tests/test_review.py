@@ -17,10 +17,7 @@ class TestSetReviewStatus:
         # Предполагается что есть эндпоинт POST /api/review
         review_response = client.post(
             "/api/review",
-            json={
-                "text": "Тестовый отзыв для проверки статусов",
-                "rating": 5
-            }
+            json={"text": "Тестовый отзыв для проверки статусов", "rating": 5},
         )
 
         # Если review создается успешно
@@ -30,10 +27,8 @@ class TestSetReviewStatus:
             # Назначаем статус
             response = client.patch(
                 f"/api/review/{review_id}/status",
-                data={
-                    "status_id": 1
-                },
-                headers=ADMIN_HEADERS
+                data={"status_id": 1},
+                headers=ADMIN_HEADERS,
             )
             assert response.status_code == 200
             data = response.json()
@@ -50,26 +45,21 @@ class TestSetReviewStatus:
         """Ошибка 404 при попытке назначить статус несуществующему отзыву"""
 
         response = client.patch(
-            "/api/review/99999/status",
-            data={
-                "status_id": 1
-            },
-            headers=ADMIN_HEADERS
+            "/api/review/99999/status", data={"status_id": 1}, headers=ADMIN_HEADERS
         )
         assert response.status_code == 404
         data = response.json()
         assert "detail" in data
-        assert "не найден" in data["detail"].lower() or "отзыв" in data["detail"].lower()
+        assert (
+            "не найден" in data["detail"].lower() or "отзыв" in data["detail"].lower()
+        )
 
     def test_404_set_review_status_status_not_found(self):
         """Ошибка 404 при попытке назначить несуществующий статус"""
         # Создаём отзыв
         review_response = client.post(
             "/api/review",
-            json={
-                "text": "Отзыв для теста несуществующего статуса",
-                "rating": 4
-            }
+            json={"text": "Отзыв для теста несуществующего статуса", "rating": 4},
         )
 
         if review_response.status_code == 201:
@@ -78,44 +68,33 @@ class TestSetReviewStatus:
             # Пытаемся назначить несуществующий статус
             response = client.patch(
                 f"/api/review/{review_id}/status",
-                data={
-                    "status_id": 99999
-                },
-                headers=ADMIN_HEADERS
+                data={"status_id": 99999},
+                headers=ADMIN_HEADERS,
             )
             assert response.status_code == 404
             data = response.json()
             assert "detail" in data
-            assert "статус" in data["detail"].lower() and "не найден" in data["detail"].lower()
+            assert (
+                "статус" in data["detail"].lower()
+                and "не найден" in data["detail"].lower()
+            )
 
     def test_422_set_review_status_missing_status_id(self):
         """Ошибка валидации при отсутствии status_id"""
-        response = client.patch(
-            "/api/review/1/status",
-            data={},
-            headers=ADMIN_HEADERS
-        )
+        response = client.patch("/api/review/1/status", data={}, headers=ADMIN_HEADERS)
         assert response.status_code == 422
 
     def test_422_set_review_status_invalid_review_id(self):
         """Ошибка валидации при невалидном ID отзыва"""
 
         response = client.patch(
-            "/api/review/invalid/status",
-            data={
-                "status_id": 1
-            },
-            headers=ADMIN_HEADERS
+            "/api/review/invalid/status", data={"status_id": 1}, headers=ADMIN_HEADERS
         )
         assert response.status_code == 422
 
     def test_422_set_review_status_invalid_status_id(self):
         """Ошибка валидации при невалидном status_id"""
         response = client.patch(
-            "/api/review/1/status",
-            data={
-                "status_id": "invalid"
-            },
-            headers=ADMIN_HEADERS
+            "/api/review/1/status", data={"status_id": "invalid"}, headers=ADMIN_HEADERS
         )
         assert response.status_code == 422

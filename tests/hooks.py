@@ -30,7 +30,7 @@ class TestHooks(DefaultHooks):
     def setup_seeders(self) -> Sequence[BaseSeeder]:
         # 2. Добавляем тест-специфичные сидеры
         return []
-    
+
     def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
         return dict()
 
