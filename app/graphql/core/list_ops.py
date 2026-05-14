@@ -1,4 +1,4 @@
-from typing import TypeVar, List, Optional, Callable, Type, Any
+from typing import TypeVar, List, Optional, Callable, Type
 
 from .filters import BaseFilterInput, filter_list
 from .ordering import BaseOrderByInput, sort_list
