@@ -1,9 +1,21 @@
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 import strawberry
 
 from app.graphql.core.context import GraphQLContext
+from app.graphql.core.list_ops import process_list
+from app.graphql.core.pagination import PaginationInput, pagination_input_from_attrs, Connection
 from app.graphql.core.permissions import require_permissions, P
+from app.graphql.domains.auth.inputs import (
+    RoleRightGoalFilterInput,
+    RoleRightGoalOrderByInput,
+    UserRoleFilterInput,
+    UserRoleOrderByInput,
+    RefreshTokenFilterInput,
+    RefreshTokenOrderByInput,
+    UserLogFilterInput,
+    UserLogOrderByInput
+)
 from app.models import (
     Goal as GoalModel,
     Right as RightModel,
@@ -101,12 +113,22 @@ class Goal:
     async def role_right_goals(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["RoleRightGoal"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[RoleRightGoalFilterInput] = None,
+        order_by: Optional[RoleRightGoalOrderByInput] = None,
+    ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_goal_id"].load(self.id)
-        return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=rrg_models,
+            model_type=RRGModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_role_right_goal_from_model,
+        )
 
 
 @strawberry.type
@@ -118,12 +140,22 @@ class Right:
     async def role_right_goals(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["RoleRightGoal"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[RoleRightGoalFilterInput] = None,
+        order_by: Optional[RoleRightGoalOrderByInput] = None,
+    ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_right_id"].load(self.id)
-        return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=rrg_models,
+            model_type=RRGModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_role_right_goal_from_model,
+        )
 
 
 @strawberry.type
@@ -162,23 +194,43 @@ class Role:
     async def role_right_goals(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["RoleRightGoal"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[RoleRightGoalFilterInput] = None,
+        order_by: Optional[RoleRightGoalOrderByInput] = None,
+    ) -> Connection["RoleRightGoal"]:
         ctx: GraphQLContext = info.context
         rrg_models = await ctx.loaders["role_right_goal_by_role_id"].load(self.id)
-        return [_role_right_goal_from_model(rrg_model) for rrg_model in rrg_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=rrg_models,
+            model_type=RRGModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_role_right_goal_from_model,
+        )
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user_roles(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["UserRole"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[UserRoleFilterInput] = None,
+        order_by: Optional[UserRoleOrderByInput] = None,
+    ) -> Connection["UserRole"]:
         ctx: GraphQLContext = info.context
         ur_models = await ctx.loaders["user_role_by_role_id"].load(self.id)
-        return [_user_role_from_model(ur_model) for ur_model in ur_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=ur_models,
+            model_type=URModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_user_role_from_model,
+        )
 
 
 @strawberry.type
@@ -194,39 +246,68 @@ class User:
     async def user_roles(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["UserRole"]:
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[UserRoleFilterInput] = None,
+        order_by: Optional[UserRoleOrderByInput] = None,
+    ) -> Connection["UserRole"]:
         await require_permissions(info, P.ROLES_VIEW)
         ctx: GraphQLContext = info.context
-        limit = min(200, first)
         ur_models = await ctx.loaders["user_role_by_user_id"].load(self.id)
-        return [_user_role_from_model(ur_model) for ur_model in ur_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=ur_models,
+            model_type=URModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_user_role_from_model,
+        )
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def refresh_tokens(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["RefreshToken"]:
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[RefreshTokenFilterInput] = None,
+        order_by: Optional[RefreshTokenOrderByInput] = None,
+    ) -> Connection["RefreshToken"]:
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
         if current_user.id != id:
             await require_permissions(info, P.REFRESH_TOKEN_VIEW)
-        limit = min(200, first)
         rt_models = await ctx.loaders["refresh_token_by_user_id"].load(self.id)
-        rt_models = [rt_model for rt_model in rt_models if not rt_model.revoked]
-        return [_refresh_token_from_model(rt_model) for rt_model in rt_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=rt_models,
+            model_type=RTModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_refresh_token_from_model,
+        )
 
     @strawberry.field  # type: ignore[unresolved-reference]
     async def user_logs(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["UserLog"]:
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[UserLogFilterInput] = None,
+        order_by: Optional[UserLogOrderByInput] = None,
+    ) -> Connection["UserLog"]:
         ctx: GraphQLContext = info.context
-        limit = min(200, first) + 1
         ul_models = await ctx.loaders["user_log_by_user_id"].load(self.id)
-        return [_user_log_from_model(ul_model) for ul_model in ul_models[:-limit:-1]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=ul_models,
+            model_type=ULModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_user_log_from_model,
+        )
 
 
 @strawberry.type
