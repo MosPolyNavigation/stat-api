@@ -6,4 +6,6 @@ class RoleSeeder(BaseSeeder):
     model = Role
 
     def gather_data(self) -> list[dict[str, int | str]]:
-        return [{"id": 1, "name": "admin"}, ]
+        return [
+            {"id": 1, "name": "admin"},
+        ]
