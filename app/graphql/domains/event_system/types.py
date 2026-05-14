@@ -1,7 +1,11 @@
-from typing import Optional, List, cast
+from typing import Optional, cast
 from datetime import datetime
 import strawberry
 
+from app.graphql.core.list_ops import process_list
+from app.graphql.core.pagination import PaginationInput, pagination_input_from_attrs, Connection
+from app.graphql.domains.event_system.inputs import ReviewFilterInput, ReviewOrderByInput, PayloadFilterInput, \
+    PayloadOrderByInput
 from app.models import (
     EventType as ETModel,
     PayloadType as PTModel,
@@ -190,12 +194,22 @@ class ReviewStatus:
     async def reviews(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["Review"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[ReviewFilterInput] = None,
+        order_by: Optional[ReviewOrderByInput] = None,
+    ) -> Connection["Review"]:
         ctx: GraphQLContext = info.context
         r_models = await ctx.loaders.reviews_by_status_id.load(self.id)
-        return [_review_from_model(r_model) for r_model in r_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=r_models,
+            model_type=ReviewModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_review_from_model,
+        )
 
 
 @strawberry.type
@@ -250,12 +264,22 @@ class Event:
     async def payloads(
         self,
         info: strawberry.Info,
-        first: int = 10
-    ) -> List["Payload"]:
-        limit = min(200, first)
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[PayloadFilterInput] = None,
+        order_by: Optional[PayloadOrderByInput] = None,
+    ) -> Connection["Payload"]:
         ctx: GraphQLContext = info.context
         p_models = await ctx.loaders.payloads_by_event_id.load(self.id)
-        return [_payload_from_model(p_model) for p_model in p_models[:limit]]
+        if pagination is None:
+            pagination = pagination_input_from_attrs(page=1, page_size=10)
+        return process_list(
+            models=p_models,
+            model_type=PayloadModel,
+            filters=filter,
+            order_by=order_by,
+            pagination=pagination,
+            convert=_payload_from_model,
+        )
 
 
 @strawberry.type
