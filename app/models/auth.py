@@ -1,6 +1,17 @@
 from datetime import datetime
 
-from sqlalchemy import Column, Integer, String, Boolean, false, ForeignKey, DateTime, Text, TIMESTAMP, func
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    false,
+    ForeignKey,
+    DateTime,
+    Text,
+    TIMESTAMP,
+    func,
+)
 from sqlalchemy.orm import Mapped, relationship
 from app.models.base import Base
 
@@ -119,11 +130,7 @@ class UserRole(Base):
     role: Mapped["Role"] = relationship("Role", back_populates="user_roles")
 
     def __repr__(self) -> str:
-        return (
-            "UserRole("
-            f"user_id={self.user_id!r}, role_id={self.role_id!r}"
-            ")"
-        )
+        return f"UserRole(user_id={self.user_id!r}, role_id={self.role_id!r})"
 
 
 class User(Base):
@@ -137,8 +144,12 @@ class User(Base):
     token: str | None = Column(String(255), nullable=True)
     is_active: bool = Column(Boolean, default=True, nullable=False)
     fio: str | None = Column(String(255), nullable=True)
-    registration_date: datetime = Column(DateTime(), default=datetime.now, nullable=False)
-    updated_at: datetime = Column(DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False)
+    registration_date: datetime = Column(
+        DateTime(), default=datetime.now, nullable=False
+    )
+    updated_at: datetime = Column(
+        DateTime(), default=datetime.now, onupdate=datetime.now, nullable=False
+    )
     token_expired_at: datetime | None = Column(DateTime(), nullable=True)
 
     user_roles: Mapped[list["UserRole"]] = relationship(
@@ -194,4 +205,3 @@ class RefreshToken(Base):
 
     def __repr__(self) -> str:
         return f"RefreshToken(id={self.id!r}, user_id={self.user_id!r}, revoked={self.revoked!r})"
-
