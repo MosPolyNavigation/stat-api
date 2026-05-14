@@ -82,11 +82,12 @@ EventTypeResource = ResourceConfig(
     enable_logging_update=True,  # ✅ Логируем обновление
     enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
-        "code_name": lambda v: len(v) <= 20
-        or "code_name не должен превышать 20 символов",
-        "description": lambda v: not v
-        or len(v) <= 100
-        or "Описание не должно превышать 100 символов",
+        "code_name": lambda v: (
+            len(v) <= 20 or "code_name не должен превышать 20 символов"
+        ),
+        "description": lambda v: (
+            not v or len(v) <= 100 or "Описание не должно превышать 100 символов"
+        ),
     },
 )
 
@@ -110,8 +111,9 @@ PayloadTypeResource = ResourceConfig(
     enable_logging_update=True,  # ✅ Логируем обновление
     enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
-        "code_name": lambda v: len(v) <= 20
-        or "code_name не должен превышать 20 символов",
+        "code_name": lambda v: (
+            len(v) <= 20 or "code_name не должен превышать 20 символов"
+        ),
     },
 )
 
