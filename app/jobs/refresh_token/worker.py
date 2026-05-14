@@ -24,9 +24,13 @@ async def revoke_expired_refresh_tokens() -> None:
         logger.info("[RefreshTokenCleanup] Revoke job cancelled gracefully")
         raise
     except SQLAlchemyError:
-        logger.exception("[RefreshTokenCleanup] Database error during expired token revoke")
+        logger.exception(
+            "[RefreshTokenCleanup] Database error during expired token revoke"
+        )
     except Exception:
-        logger.exception("[RefreshTokenCleanup] Unexpected error during expired token revoke")
+        logger.exception(
+            "[RefreshTokenCleanup] Unexpected error during expired token revoke"
+        )
 
 
 # Удаляет refresh-токены, срок действия которых истек более 30 дней назад
@@ -47,4 +51,6 @@ async def delete_old_refresh_tokens() -> None:
     except SQLAlchemyError:
         logger.exception("[RefreshTokenCleanup] Database error during old token delete")
     except Exception:
-        logger.exception("[RefreshTokenCleanup] Unexpected error during old token delete")
+        logger.exception(
+            "[RefreshTokenCleanup] Unexpected error during old token delete"
+        )

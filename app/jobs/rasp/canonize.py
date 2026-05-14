@@ -1,11 +1,18 @@
 import re
 from transliterate import translit
 
-AV_REG = re.compile(r'ав(?P<cor>\d)(?P<num>\d{3})/?(?P<sub>[а-я]|\d)?', re.IGNORECASE)
-PR_REG = re.compile(r'пр ?(?:.*[(])?(?P<cor>\d)(?P<num>\d{3}) ?(?P<sub>[а-я](?![а-я]{3}))?', re.IGNORECASE)
-M_REG = re.compile(r'м((?P<cor>\d)(?P<num>\d{3}))?\s?(?P<sub>[а-я]{1,6})?', re.IGNORECASE)
-PK_REG = re.compile(r'пк(?P<num>\d{3})[( ]?(?P<sub>[а-я])?', re.IGNORECASE)
-BS_REG = re.compile(r'(?P<cor>а|б|в|нд|н)-?(?P<num>\d{1,3})?(?P<sub>[а-я]{1,3})?', re.IGNORECASE)
+AV_REG = re.compile(r"ав(?P<cor>\d)(?P<num>\d{3})/?(?P<sub>[а-я]|\d)?", re.IGNORECASE)
+PR_REG = re.compile(
+    r"пр ?(?:.*[(])?(?P<cor>\d)(?P<num>\d{3}) ?(?P<sub>[а-я](?![а-я]{3}))?",
+    re.IGNORECASE,
+)
+M_REG = re.compile(
+    r"м((?P<cor>\d)(?P<num>\d{3}))?\s?(?P<sub>[а-я]{1,6})?", re.IGNORECASE
+)
+PK_REG = re.compile(r"пк(?P<num>\d{3})[( ]?(?P<sub>[а-я])?", re.IGNORECASE)
+BS_REG = re.compile(
+    r"(?P<cor>а|б|в|нд|н)-?(?P<num>\d{1,3})?(?P<sub>[а-я]{1,3})?", re.IGNORECASE
+)
 
 
 def av(aud: str):
@@ -15,7 +22,7 @@ def av(aud: str):
         raise ValueError("Invalid input for av")
     groups = match.groupdict()
     nums = f"-{groups['cor']}{groups['num']}"
-    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
+    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups["sub"] else ""
     return f"av{nums}{sub}".lower()
 
 
@@ -26,7 +33,7 @@ def pr(aud: str):
         raise ValueError("Invalid input for pr")
     groups = match.groupdict()
     nums = f"-{groups['cor']}{groups['num']}"
-    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
+    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups["sub"] else ""
     return f"pr{nums}{sub}".lower()
 
 
@@ -36,8 +43,8 @@ def m(aud: str):
     if not match:
         raise ValueError("Invalid input for m")
     groups = match.groupdict()
-    nums = f"-{groups['cor']}{groups['num']}" if groups['cor'] and groups['num'] else ""
-    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
+    nums = f"-{groups['cor']}{groups['num']}" if groups["cor"] and groups["num"] else ""
+    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups["sub"] else ""
     return f"m{nums}{sub}".lower()
 
 
@@ -48,7 +55,7 @@ def pk(aud: str):
         raise ValueError("Invalid input for pk")
     groups = match.groupdict()
     nums = f"-{groups['num']}"
-    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
+    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups["sub"] else ""
     return f"pk{nums}{sub}".lower()
 
 
@@ -58,9 +65,9 @@ def bs(aud: str):
     if not match:
         raise ValueError("Invalid input for bs")
     groups = match.groupdict()
-    cor = translit(groups['cor'], 'ru', reversed=True)
-    nums = f"-{groups['num']}" if groups['num'] else ""
-    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups['sub'] else ""
+    cor = translit(groups["cor"], "ru", reversed=True)
+    nums = f"-{groups['num']}" if groups["num"] else ""
+    sub = f"-{translit(groups['sub'], 'ru', reversed=True)}" if groups["sub"] else ""
     return f"{cor}{nums}{sub}".lower()
 
 
@@ -69,7 +76,7 @@ LOCATION_NAMES = [
     "большая семеновская",
     "михалковская",
     "прянишникова",
-    "павла корчагина"
+    "павла корчагина",
 ]
 
 PATTERNS = {
@@ -77,7 +84,7 @@ PATTERNS = {
     "большая семеновская": bs,
     "михалковская": m,
     "прянишникова": pr,
-    "павла корчагина": pk
+    "павла корчагина": pk,
 }
 
 
