@@ -41,7 +41,7 @@ class TestRoleMutations:
         test_name = f"test_rights_{uuid.uuid4().hex[:8]}"
         query = """
         mutation CreateRole($data: CreateRoleInput!) {
-            createRole(data: $data) { id name roleRightGoals { rightId goalId } }
+            createRole(data: $data) { id name roleRightGoals { nodes { rightId goalId } } }
         }
         """
         response = graphql_query(
@@ -59,7 +59,7 @@ class TestRoleMutations:
         )
         result = assert_graphql_success(response, "createRole")
         assert result["name"] == test_name
-        assert len(result["roleRightGoals"]) == 2
+        assert len(result["roleRightGoals"]["nodes"]) == 2
 
     def test_create_role_duplicate_name(self):
         """Ошибка при создании роли с существующим name."""
@@ -1352,10 +1352,12 @@ class TestUserRolesRelationship:
                 id
                 login
                 userRoles {
-                    roleId
-                    role {
-                        id
-                        name
+                    nodes {
+                        roleId
+                        role {
+                            id
+                            name
+                        }
                     }
                 }
             }
@@ -1370,5 +1372,5 @@ class TestUserRolesRelationship:
 
         user_result = assert_graphql_success(user_response, "user")
         assert user_result["userRoles"] is not None
-        assert len(user_result["userRoles"]) > 0
-        assert user_result["userRoles"][0]["role"]["id"] == 1
+        assert len(user_result["userRoles"]["nodes"]) > 0
+        assert user_result["userRoles"]["nodes"][0]["role"]["id"] == 1

@@ -307,16 +307,16 @@ class TestGraphQLEventsAndPayloads:
             event(id: {event_id}) {{
                 id
                 triggerTime
-                payloads(first: 2) {{
+                payloads(pagination: {{ pageSize: 2 }}) {{ nodes {{
                     id value payloadType {{ codeName }}
-                }}
+                }}}}
             }}
         }}
         """
         response = graphql_query(query, headers=ADMIN_HEADERS)
         assert response["status_code"] == 200
         event = response["data"]["data"]["event"]
-        payloads = event["payloads"]
+        payloads = event["payloads"]["nodes"]
         assert len(payloads) <= 2
         if payloads:
             assert "value" in payloads[0]
@@ -718,9 +718,11 @@ class TestReviewStatusQueries:
             reviewStatus(id: 1) {
                 id
                 name
-                reviews(first: 2) {
-                    id
-                    text
+                reviews(pagination: { pageSize: 2 }) {
+                    nodes {
+                        id
+                        text
+                    }
                 }
             }
         }
@@ -731,7 +733,7 @@ class TestReviewStatusQueries:
         assert status is not None
         # Проверяем, что массив reviews вернулся (даже если пустой)
         assert "reviews" in status
-        assert isinstance(status["reviews"], list)
+        assert isinstance(status["reviews"]["nodes"], list)
 
     def test_200_review_status_ordering(self):
         """Проверка сортировки статусов по имени."""

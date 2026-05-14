@@ -57,11 +57,13 @@ class TestGraphQLNavigationRelations:
             navLocation(id: 1) {
                 id
                 name
-                campuses(first: 5) {
-                    id
-                    idSys
-                    name
-                    ready
+                campuses(pagination: { pageSize: 5 }) {
+                    nodes {
+                        id
+                        idSys
+                        name
+                        ready
+                    }
                 }
             }
         }
@@ -71,7 +73,7 @@ class TestGraphQLNavigationRelations:
         resp = resp["data"]
         loc = resp["data"]["navLocation"]
         assert loc["id"] == 1
-        campuses = loc["campuses"]
+        campuses = loc["campuses"]["nodes"]
         assert len(campuses) >= 1
         assert campuses[0]["idSys"] == "av-test"
 
@@ -83,10 +85,12 @@ class TestGraphQLNavigationRelations:
                 id
                 name
                 location { id name }
-                plans(first: 5) {
-                    id
-                    idSys
-                    floor { id name }
+                plans(pagination: { pageSize: 5 }) {
+                    nodes {
+                        id
+                        idSys
+                        floor { id name }
+                    }
                 }
             }
         }
@@ -96,8 +100,8 @@ class TestGraphQLNavigationRelations:
         resp = resp["data"]
         campus = resp["data"]["navCampus"]
         assert campus["location"]["name"] == "Автозаводская"
-        assert len(campus["plans"]) >= 1
-        assert campus["plans"][0]["floor"]["name"] == 1
+        assert len(campus["plans"]["nodes"]) >= 1
+        assert campus["plans"]["nodes"][0]["floor"]["name"] == 1
 
     def test_200_nav_plan_with_nested_relations(self):
         """Проверка сложных вложенных связей: Plan → Campus/Floor/SVG/Auditories."""
@@ -108,14 +112,18 @@ class TestGraphQLNavigationRelations:
                 idSys
                 campus { id name location { name } }
                 floor { id name }
-                auditories(first: 10) {
-                    id
-                    name
-                    type { name }
-                    photos(first: 5) {
+                auditories(pagination: { pageSize: 10 }) {
+                    nodes {
                         id
                         name
-                        path
+                        type { name }
+                        photos(pagination: { pageSize: 5 }) {
+                            nodes {
+                                id
+                                name
+                                path
+                            }
+                        }
                     }
                 }
             }
@@ -127,11 +135,11 @@ class TestGraphQLNavigationRelations:
         plan = resp["data"]["navPlan"]
         assert plan["campus"]["location"]["name"] == "Автозаводская"
         assert plan["floor"]["name"] == 1
-        assert len(plan["auditories"]) >= 1
-        aud = plan["auditories"][0]
+        assert len(plan["auditories"]["nodes"]) >= 1
+        aud = plan["auditories"]["nodes"][0]
         assert aud["type"]["name"] == "Учебная аудитория"
-        assert len(aud["photos"]) >= 1
-        assert aud["photos"][0]["name"] == "test.jpg"
+        assert len(aud["photos"]["nodes"]) >= 1
+        assert aud["photos"]["nodes"][0]["name"] == "test.jpg"
 
     def test_200_nav_auditory_with_nested_type_plan_photos(self):
         """Проверка всех связей аудитории."""
@@ -143,7 +151,7 @@ class TestGraphQLNavigationRelations:
                 name
                 type { id name }
                 plan { id idSys floor { name } }
-                photos(first: 5) { id name ext path }
+                photos(pagination: { pageSize: 5 }) { nodes { id name ext path } }
             }
         }
         """
@@ -153,7 +161,7 @@ class TestGraphQLNavigationRelations:
         aud = resp["data"]["navAuditory"]
         assert aud["type"]["name"] == "Учебная аудитория"
         assert aud["plan"]["idSys"] == "test-plan-1"
-        assert aud["photos"][0]["ext"] == "jpg"
+        assert aud["photos"]["nodes"][0]["ext"] == "jpg"
 
 
 # =============================================================================
