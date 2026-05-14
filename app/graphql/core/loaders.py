@@ -1,4 +1,4 @@
-from typing import Type, TypeVar, Dict, List, Optional, cast
+from typing import Type, TypeVar, Dict, List, Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
@@ -132,56 +132,3 @@ class Loaders:
         self.refresh_token_by_user_id: DataLoader[int, List[RefreshToken]] = ForeignKeyLoader(session, RefreshToken,
                                                                                               "user_id")
         self.user_log_by_user_id: DataLoader[int, List[UserLog]] = ForeignKeyLoader(session, UserLog, "user_id")
-
-    # =============================================================================
-    # Обратная совместимость: поддержка доступа как к словарю
-    # =============================================================================
-    _DICT_ACCESS_MAP: Dict[str, str] = {
-        # event_system
-        "value_type": "value_type",
-        "payload_type": "payload_type",
-        "event_type": "event_type",
-        "client_id": "client_id",
-        "review_status": "review_status",
-        "dashboard_type": "dashboard_type",
-        "payloads_by_event_id": "payloads_by_event_id",
-        "reviews_by_status_id": "reviews_by_status_id",
-        # navigation
-        "nav_location": "nav_location",
-        "nav_campus": "nav_campus",
-        "nav_floor": "nav_floor",
-        "nav_type": "nav_type",
-        "nav_plan": "nav_plan",
-        "nav_auditory": "nav_auditory",
-        "nav_auditory_photo": "nav_auditory_photo",
-        "nav_static": "nav_static",
-        "nav_campus_by_loc_id": "nav_campus_by_loc_id",
-        "nav_plan_by_cor_id": "nav_plan_by_cor_id",
-        "nav_auditory_by_plan_id": "nav_auditory_by_plan_id",
-        "nav_photos_by_aud_id": "nav_photos_by_aud_id",
-        # auth
-        "goal": "goal",
-        "right": "right",
-        "role": "role",
-        "user": "user",
-        "role_right_goal_by_goal_id": "role_right_goal_by_goal_id",
-        "role_right_goal_by_right_id": "role_right_goal_by_right_id",
-        "role_right_goal_by_role_id": "role_right_goal_by_role_id",
-        "user_role_by_role_id": "user_role_by_role_id",
-        "user_role_by_user_id": "user_role_by_user_id",
-        "refresh_token_by_user_id": "refresh_token_by_user_id",
-        "user_log_by_user_id": "user_log_by_user_id",
-    }
-
-    def __getitem__(self, key: str) -> DataLoader:
-        """Поддержка синтаксиса loaders['key'] для обратной совместимости."""
-        attr_name = self._DICT_ACCESS_MAP.get(key)
-        if attr_name is None:
-            raise KeyError(f"Unknown loader: {key}")
-        return cast(DataLoader, getattr(self, attr_name))
-
-    def __contains__(self, key: str) -> bool:
-        return key in self._DICT_ACCESS_MAP
-
-    def keys(self):
-        return self._DICT_ACCESS_MAP.keys()
