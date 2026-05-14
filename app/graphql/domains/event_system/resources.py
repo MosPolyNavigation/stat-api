@@ -1,11 +1,16 @@
 from app.graphql.core.resource import ResourceConfig, ResourcePermissions
 from app.graphql.core.permissions import P
 from app.models import (
-    EventType as ETModel, PayloadType as PTModel,
-    ValueType as VTModel, Review as ReviewModel,
-    ClientId as CIModel, Event as EventModel,
-    Payload as PayloadModel, DashboardType as DTModel,
-    Dashboard as DashboardModel, ReviewStatus as RSModel,
+    EventType as ETModel,
+    PayloadType as PTModel,
+    ValueType as VTModel,
+    Review as ReviewModel,
+    ClientId as CIModel,
+    Event as EventModel,
+    Payload as PayloadModel,
+    DashboardType as DTModel,
+    Dashboard as DashboardModel,
+    ReviewStatus as RSModel,
 )
 from app.graphql.domains.event_system.types import (
     EventType as EventTypeType,
@@ -72,14 +77,17 @@ EventTypeResource = ResourceConfig(
     order_by_input=EventTypeOrderByInput,
     enable_logging=True,
     enable_logging_list=False,  # ❌ Не логируем event_types (много запросов)
-    enable_logging_get=False,    # ✅ Не логируем event_type
+    enable_logging_get=False,  # ✅ Не логируем event_type
     enable_logging_create=True,  # ✅ Логируем создание
     enable_logging_update=True,  # ✅ Логируем обновление
     enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
-        "code_name": lambda v: len(v) <= 20 or "code_name не должен превышать 20 символов",
-        "description": lambda v: not v or len(v) <= 100 or "Описание не должно превышать 100 символов",
-    }
+        "code_name": lambda v: len(v) <= 20
+        or "code_name не должен превышать 20 символов",
+        "description": lambda v: not v
+        or len(v) <= 100
+        or "Описание не должно превышать 100 символов",
+    },
 )
 
 PayloadTypeResource = ResourceConfig(
@@ -97,13 +105,14 @@ PayloadTypeResource = ResourceConfig(
     order_by_input=PayloadTypeOrderByInput,
     enable_logging=True,
     enable_logging_list=False,  # ❌ Не логируем payload_types (много запросов)
-    enable_logging_get=False,    # ✅ Логируем payload_type
+    enable_logging_get=False,  # ✅ Логируем payload_type
     enable_logging_create=True,  # ✅ Логируем создание
     enable_logging_update=True,  # ✅ Логируем обновление
     enable_logging_delete=True,  # ✅ Логируем удаление
     validators={
-        "code_name": lambda v: len(v) <= 20 or "code_name не должен превышать 20 символов",
-    }
+        "code_name": lambda v: len(v) <= 20
+        or "code_name не должен превышать 20 символов",
+    },
 )
 
 ValueTypeResource = ResourceConfig(
@@ -121,7 +130,7 @@ ValueTypeResource = ResourceConfig(
     order_by_input=ValueTypeOrderByInput,
     validators={
         "name": lambda v: len(v) <= 20 or "name не должен превышать 20 символов",
-    }
+    },
 )
 
 ClientIdResource = ResourceConfig(
@@ -133,7 +142,7 @@ ClientIdResource = ResourceConfig(
     order_by_input=ClientIdOrderByInput,
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
-    )
+    ),
 )
 
 ReviewResource = ResourceConfig(
@@ -152,7 +161,7 @@ ReviewResource = ResourceConfig(
     permissions=ResourcePermissions(
         view=P.REVIEWS_VIEW,
         edit=P.REVIEWS_EDIT,
-    )
+    ),
 )
 
 ReviewStatusResource = ResourceConfig(
@@ -165,7 +174,7 @@ ReviewStatusResource = ResourceConfig(
     enable_logging=False,
     permissions=ResourcePermissions(
         view=P.REVIEWS_VIEW,
-    )
+    ),
 )
 
 EventResource = ResourceConfig(
@@ -177,7 +186,7 @@ EventResource = ResourceConfig(
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
-    )
+    ),
 )
 
 PayloadResource = ResourceConfig(
@@ -189,7 +198,7 @@ PayloadResource = ResourceConfig(
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.STATS_VIEW,
-    )
+    ),
 )
 
 DashboardTypeResource = ResourceConfig(
@@ -213,5 +222,5 @@ DashboardResource = ResourceConfig(
     cursor_field="id",
     permissions=ResourcePermissions(
         view=P.DASHBOARDS_VIEW,
-    )
+    ),
 )

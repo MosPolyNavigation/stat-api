@@ -3,12 +3,16 @@ from datetime import datetime
 import strawberry
 
 from app.graphql.core.list_ops import process_list
-from app.graphql.core.pagination import PaginationInput, pagination_input_from_attrs, Connection
+from app.graphql.core.pagination import (
+    PaginationInput,
+    pagination_input_from_attrs,
+    Connection,
+)
 from app.graphql.domains.event_system.inputs import (
     ReviewFilterInput,
     ReviewOrderByInput,
     PayloadFilterInput,
-    PayloadOrderByInput
+    PayloadOrderByInput,
 )
 from app.models import (
     EventType as ETModel,
@@ -120,9 +124,11 @@ def _dashboard_from_model(model: DashboardModel) -> "Dashboard":
 # Strawberry Types
 # =============================================================================
 
+
 @strawberry.type
 class ValueType:
     """Тип значения (int/string/bool)."""
+
     id: int
     name: str
     description: Optional[str] = None
@@ -131,6 +137,7 @@ class ValueType:
 @strawberry.type
 class PayloadType:
     """Тип полезной нагрузки события."""
+
     id: int
     code_name: str
     description: Optional[str] = None
@@ -147,6 +154,7 @@ class PayloadType:
 @strawberry.type
 class EventType:
     """Тип события (site/auds/ways/plans)."""
+
     id: int
     code_name: str
     description: Optional[str] = None
@@ -158,6 +166,7 @@ class AllowedPayloadRule:
     Правило: какой PayloadType допустим для какого EventType.
     Использует составной первичный ключ (event_type_id, payload_type_id).
     """
+
     event_type_id: int
     payload_type_id: int
 
@@ -177,6 +186,7 @@ class AllowedPayloadRule:
 @strawberry.type
 class ClientId:
     """Идентификатор клиента."""
+
     id: int
     ident: str
     creation_date: datetime
@@ -185,12 +195,14 @@ class ClientId:
 @strawberry.type
 class Problem:
     """Тип проблемы (string ID)."""
+
     id: str
 
 
 @strawberry.type
 class ReviewStatus:
     """Статус отзыва."""
+
     id: int
     name: str
 
@@ -219,6 +231,7 @@ class ReviewStatus:
 @strawberry.type
 class Review:
     """Отзыв пользователя."""
+
     id: int
     client_id: int
     problem_id: str
@@ -247,6 +260,7 @@ class Review:
 @strawberry.type
 class Event:
     """Событие, сгенерированное клиентом."""
+
     id: int
     client_id: int
     event_type_id: int
@@ -289,6 +303,7 @@ class Event:
 @strawberry.type
 class Payload:
     """Полезная нагрузка события."""
+
     id: int
     event_id: int
     type_id: int
@@ -297,7 +312,9 @@ class Payload:
     @strawberry.field  # type: ignore[unresolved-reference]
     async def event(self, info: strawberry.Info) -> Optional[Event]:
         ctx: GraphQLContext = info.context
-        ev_model = cast(Optional[EventModel], await ctx.db.get(EventModel, self.event_id))
+        ev_model = cast(
+            Optional[EventModel], await ctx.db.get(EventModel, self.event_id)
+        )
         return _event_from_model(ev_model) if ev_model else None
 
     @strawberry.field  # type: ignore[unresolved-reference]
@@ -310,6 +327,7 @@ class Payload:
 @strawberry.type
 class DashboardType:
     """Справочник типов дашбордов."""
+
     id: int
     code_name: str
     description: Optional[str] = None
@@ -318,6 +336,7 @@ class DashboardType:
 @strawberry.type
 class Dashboard:
     """Дашборд для отображения статистики."""
+
     id: int
     display_order: int
     event_type_id: int
