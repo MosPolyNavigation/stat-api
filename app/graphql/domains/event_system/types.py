@@ -4,8 +4,12 @@ import strawberry
 
 from app.graphql.core.list_ops import process_list
 from app.graphql.core.pagination import PaginationInput, pagination_input_from_attrs, Connection
-from app.graphql.domains.event_system.inputs import ReviewFilterInput, ReviewOrderByInput, PayloadFilterInput, \
+from app.graphql.domains.event_system.inputs import (
+    ReviewFilterInput,
+    ReviewOrderByInput,
+    PayloadFilterInput,
     PayloadOrderByInput
+)
 from app.models import (
     EventType as ETModel,
     PayloadType as PTModel,
