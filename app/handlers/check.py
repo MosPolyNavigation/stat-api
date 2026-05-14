@@ -15,9 +15,9 @@ async def check_user_id(db: AsyncSession, data: UserIdCheck) -> Status:
 
 
 async def check_client_id(db: AsyncSession, data: ClientIdCheck) -> Status:
-    client = (await db.execute(
-        Select(ClientId).filter_by(ident=data.client_id)
-    )).scalar_one_or_none()
+    client = (
+        await db.execute(Select(ClientId).filter_by(ident=data.client_id))
+    ).scalar_one_or_none()
     if client is None:
         raise LookupException("Client")
     return Status()
