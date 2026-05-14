@@ -12,21 +12,17 @@ migrate_cli = typer.Typer(
 )
 
 migrate_cli.command(
-    name="sqlite-to-pg",
-    help="🗄️ Перенос данных из SQLite в PostgreSQL"
+    name="sqlite-to-pg", help="🗄️ Перенос данных из SQLite в PostgreSQL"
 )(sqlite_to_pg_command)
 
 migrate_cli.command(  # ← новая команда
-    name="old-events-to-new",
-    help="🔄 Переход на новую систему событий"
+    name="old-events-to-new", help="🔄 Переход на новую систему событий"
 )(old_events_to_new_command)
 
 migrate_cli.command(  # ← новые команды
-    name="upgrade",
-    help="⬆️ Применить миграции Alembic"
+    name="upgrade", help="⬆️ Применить миграции Alembic"
 )(upgrade_command)
 
-migrate_cli.command(
-    name="downgrade",
-    help="⬇️ Откатить миграции Alembic"
-)(downgrade_command)
+migrate_cli.command(name="downgrade", help="⬇️ Откатить миграции Alembic")(
+    downgrade_command
+)

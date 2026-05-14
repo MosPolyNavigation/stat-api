@@ -15,7 +15,6 @@ db_cli = typer.Typer(
 db_cli.add_typer(migrate_cli, name="migrate")
 db_cli.add_typer(seed_cli, name="seed")
 
-db_cli.command(
-    name="create-admin",
-    help="👤 Создание или обновление администратора"
-)(create_admin_command)
+db_cli.command(name="create-admin", help="👤 Создание или обновление администратора")(
+    create_admin_command
+)
