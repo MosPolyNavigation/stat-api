@@ -1,7 +1,7 @@
 .env
 .env.example
 .envrc
-app.db
+*.db
 /static/
 /.venv/
 /**/__pycache__/
@@ -10,3 +10,11 @@ app.db
 /.github/
 /web/
 /admin-panel/
+.pre-commit-config.yaml
+config.example.yaml
+config.yaml
+docker-compose.yaml
+README.MD
+TEST_COVERAGE_REPORT.md
+test.sh
+shell.nix
