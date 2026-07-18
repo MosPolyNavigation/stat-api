@@ -6,8 +6,8 @@ from starlette.exceptions import HTTPException
 
 
 class SPAStaticFiles(StaticFiles):
-    def __init__(self, directory: str, html: bool):
-        self.index_file = "index.html"
+    def __init__(self, directory: str, html: bool, fallback_to: str = "index.html"):
+        self.index_file = fallback_to
         super().__init__(directory=directory, html=html)
 
     async def get_response(self, path: str, scope):

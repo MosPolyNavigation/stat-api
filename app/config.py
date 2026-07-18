@@ -112,6 +112,7 @@ class CorsConfig(BaseModel):
 class StaticFileConfig(BaseModel):
     path: str
     name: str
+    mount: str
     fallback: bool = False
     fallback_to: str | None = None
 
@@ -121,6 +122,18 @@ class StaticFileConfig(BaseModel):
             raise ValueError("При fallback=True поле 'fallback_to' обязательно")
         if self.fallback_to is not None and not self.fallback:
             raise ValueError("Поле 'fallback_to' допустимо только при fallback=True")
+        return self
+
+    @model_validator(mode="after")
+    def validate_mount(self) -> Self:
+        if not self.mount.startswith("/"):
+            raise ValueError(
+                f"Поле 'mount' должно начинаться с '/'. Получено: '{self.mount}'"
+            )
+        if not self.mount.endswith("/"):
+            raise ValueError(
+                f"Поле 'mount' должно заканчиваться на '/'. Получено: '{self.mount}'"
+            )
         return self
 
 
@@ -229,8 +242,7 @@ class Settings(BaseModel):
 def load_settings() -> Settings:
     # [1] Определяем путь к конфигу
     config_path = Path(os.getenv("STATAPI_CONFIG", "config.yaml"))
-    if not config_path.is_absolute():
-        config_path = BASE_DIR / config_path
+    config_path = Path(config_path.resolve())
 
     if not config_path.exists():
         raise FileNotFoundError(

@@ -29,11 +29,13 @@ server:
 
   # Статические файлы (опционально)
   static:
-    base_path: ./static
-    files: []
+    base_path: {{ env("STATAPI_STATIC", "./static") }}
+    files: [] # Перечислить так, чтобы mount с наибольшим включением путей был последним
+    # Например сперва /admin/, а уже потом /
     # Пример маршрута SPA:
     # - path: dist
     #   name: frontend
+    #   mount: / # Должно начинаться и заканчиваться на /
     #   fallback: true
     #   fallback_to: index.html
 
@@ -45,8 +47,8 @@ server:
 database:
   # В продакшене задавайте URI явно через переменную окружения,
   # не используйте SQLite со значением по умолчанию.
-  uri: {{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///app.db") }}
-  # Значение true только для разработки. Даже не думайте использовать в production
+  uri: {{ env("STATAPI_DB", "sqlite+aiosqlite:///app.db") }}
+  # Значение true только для разработки. Даже не думайте использовать в production.
   # Можно не указывать, т.к. значение по умолчанию - False
   auto_seed: false
 
@@ -70,7 +72,6 @@ jobs:
   url: queue.db
 
   list:
-    # Пример interval-задачи
     - name: fetch_location_data
       enabled: true
       desc: "Fetch location data every hour"
@@ -84,7 +85,6 @@ jobs:
         misfire_grace_time: 300
         coalesce: true
 
-    # Пример cron-задачи
     - name: fetch_cur_rasp
       enabled: true
       desc: "Fetch current schedule at midnight"
@@ -97,11 +97,3 @@ jobs:
         id: "daily_rasp_fetch"
         replace_existing: true
         max_instances: 1
-
-    # Пример отключённой задачи (зарегистрирована, но не запускается)
-    - name: experimental_job
-      enabled: false
-      desc: "Experimental feature - disabled by default"
-      trigger: interval
-      interval:
-        minutes: 30
