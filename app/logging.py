@@ -73,7 +73,7 @@ def setup_logging(level: str = "INFO", use_colors: bool = True) -> None:
     # ── Настройка конкретных логгеров ──────────────────────────────────
     logging.getLogger("apscheduler").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("aiosqlite").setLevel(logging.WARNING)
     logging.getLogger("app").setLevel(
         logging.DEBUG if level == "DEBUG" else logging.INFO
