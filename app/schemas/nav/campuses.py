@@ -10,4 +10,5 @@ class CampusesLinks(RootModel[list[str]]):
       ...
     ]
     """
+
     pass

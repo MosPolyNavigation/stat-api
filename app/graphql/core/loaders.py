@@ -4,6 +4,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
 from strawberry.dataloader import DataLoader
 
+from app.models import (
+    ValueType,
+    PayloadType,
+    EventType,
+    ClientId,
+    ReviewStatus,
+    DashboardType,
+    Payload,
+    Review,
+    Location,
+    Corpus,
+    Floor,
+    Type as NavTypeModel,
+    Plan,
+    Auditory,
+    AudPhoto,
+    Static,
+    Goal,
+    Role,
+    Right,
+    RoleRightGoal,
+    User,
+    UserRole,
+    RefreshToken,
+    UserLog,
+)
+
 M = TypeVar("M", bound=DeclarativeBase)
 
 
@@ -17,12 +44,13 @@ class SQLAlchemyLoader(DataLoader[int, M]):
         super().__init__(load_fn=self._batch_load)
         self.session = session
         self.model = model
+        self.id_column = getattr(model, "id")
 
     async def _batch_load(self, keys: List[int]) -> List[Optional[M]]:
         if not keys:
             return []
 
-        stmt = select(self.model).where(self.model.id.in_(keys))
+        stmt = select(self.model).where(self.id_column.in_(keys))
         result = await self.session.execute(stmt)
         items = {item.id: item for item in result.scalars().all()}
 
@@ -49,69 +77,109 @@ class ForeignKeyLoader(DataLoader[int, List[M]]):
         if not keys:
             return []
 
-        # Один запрос: WHERE event_id IN (1, 2, 3, ...)
         stmt = select(self.model).where(self.fk_column.in_(keys))
         result = await self.session.execute(stmt)
 
-        # Группируем результаты по foreign_key
         grouped: Dict[int, List[M]] = {}
         for item in result.scalars().all():
             fk_value = getattr(item, self.fk_column.key)
             grouped.setdefault(fk_value, []).append(item)
 
-        # Возвращаем в том же порядке, что и ключи
         return [grouped.get(key, []) for key in keys]
 
 
-def create_loaders(session: AsyncSession) -> Dict[str, DataLoader]:
-    """Фабрика лоадеров для контекста запроса."""
-    from app.models import (
-        ValueType, PayloadType, EventType,
-        ClientId, ReviewStatus, Payload,
-        DashboardType, Review, Location,
-        Corpus, Floor, Type as NavTypeModel,
-        Plan, Auditory, AudPhoto, Static,
-        Goal, Role, Right, RoleRightGoal,
-        User, UserRole, RefreshToken, UserLog
-    )
+# =============================================================================
+# Типизированный контейнер лоадеров
+# =============================================================================
+class Loaders:
+    """
+    Контейнер лоадеров с полной типизацией.
 
-    return {
+    Использование:
+        - Через атрибуты: ctx.loaders.user.load(1)
+    """
+
+    def __init__(self, session: AsyncSession):
         # === event_system ===
-        "value_type": SQLAlchemyLoader(session, ValueType),
-        "payload_type": SQLAlchemyLoader(session, PayloadType),
-        "event_type": SQLAlchemyLoader(session, EventType),
-        "client_id": SQLAlchemyLoader(session, ClientId),
-        "review_status": SQLAlchemyLoader(session, ReviewStatus),
-        "dashboard_type": SQLAlchemyLoader(session, DashboardType),
-        "payloads_by_event_id": ForeignKeyLoader(session, Payload, "event_id"),
-        "reviews_by_status_id": ForeignKeyLoader(session, Review, "review_status_id"),
+        self.value_type: DataLoader[int, ValueType] = SQLAlchemyLoader(
+            session, ValueType
+        )
+        self.payload_type: DataLoader[int, PayloadType] = SQLAlchemyLoader(
+            session, PayloadType
+        )
+        self.event_type: DataLoader[int, EventType] = SQLAlchemyLoader(
+            session, EventType
+        )
+        self.client_id: DataLoader[int, ClientId] = SQLAlchemyLoader(session, ClientId)
+        self.review_status: DataLoader[int, ReviewStatus] = SQLAlchemyLoader(
+            session, ReviewStatus
+        )
+        self.dashboard_type: DataLoader[int, DashboardType] = SQLAlchemyLoader(
+            session, DashboardType
+        )
+
+        self.payloads_by_event_id: DataLoader[int, List[Payload]] = ForeignKeyLoader(
+            session, Payload, "event_id"
+        )
+        self.reviews_by_status_id: DataLoader[int, List[Review]] = ForeignKeyLoader(
+            session, Review, "review_status_id"
+        )
 
         # === navigation ===
-        "nav_location": SQLAlchemyLoader(session, Location),
-        "nav_campus": SQLAlchemyLoader(session, Corpus),
-        "nav_floor": SQLAlchemyLoader(session, Floor),
-        "nav_type": SQLAlchemyLoader(session, NavTypeModel),
-        "nav_plan": SQLAlchemyLoader(session, Plan),
-        "nav_auditory": SQLAlchemyLoader(session, Auditory),
-        "nav_auditory_photo": SQLAlchemyLoader(session, AudPhoto),
-        "nav_static": SQLAlchemyLoader(session, Static),
+        self.nav_location: DataLoader[int, Location] = SQLAlchemyLoader(
+            session, Location
+        )
+        self.nav_campus: DataLoader[int, Corpus] = SQLAlchemyLoader(session, Corpus)
+        self.nav_floor: DataLoader[int, Floor] = SQLAlchemyLoader(session, Floor)
+        self.nav_type: DataLoader[int, NavTypeModel] = SQLAlchemyLoader(
+            session, NavTypeModel
+        )
+        self.nav_plan: DataLoader[int, Plan] = SQLAlchemyLoader(session, Plan)
+        self.nav_auditory: DataLoader[int, Auditory] = SQLAlchemyLoader(
+            session, Auditory
+        )
+        self.nav_auditory_photo: DataLoader[int, AudPhoto] = SQLAlchemyLoader(
+            session, AudPhoto
+        )
+        self.nav_static: DataLoader[int, Static] = SQLAlchemyLoader(session, Static)
 
-        "nav_campus_by_loc_id": ForeignKeyLoader(session, Corpus, "loc_id"),
-        "nav_plan_by_cor_id": ForeignKeyLoader(session, Plan, "cor_id"),
-        "nav_auditory_by_plan_id": ForeignKeyLoader(session, Auditory, "plan_id"),
-        "nav_photos_by_aud_id": ForeignKeyLoader(session, AudPhoto, "aud_id"),
+        self.nav_campus_by_loc_id: DataLoader[int, List[Corpus]] = ForeignKeyLoader(
+            session, Corpus, "loc_id"
+        )
+        self.nav_plan_by_cor_id: DataLoader[int, List[Plan]] = ForeignKeyLoader(
+            session, Plan, "cor_id"
+        )
+        self.nav_auditory_by_plan_id: DataLoader[int, List[Auditory]] = (
+            ForeignKeyLoader(session, Auditory, "plan_id")
+        )
+        self.nav_photos_by_aud_id: DataLoader[int, List[AudPhoto]] = ForeignKeyLoader(
+            session, AudPhoto, "aud_id"
+        )
 
         # === auth ===
-        "goal": SQLAlchemyLoader(session, Goal),
-        "right": SQLAlchemyLoader(session, Right),
-        "role": SQLAlchemyLoader(session, Role),
-        "user": SQLAlchemyLoader(session, User),
+        self.goal: DataLoader[int, Goal] = SQLAlchemyLoader(session, Goal)
+        self.right: DataLoader[int, Right] = SQLAlchemyLoader(session, Right)
+        self.role: DataLoader[int, Role] = SQLAlchemyLoader(session, Role)
+        self.user: DataLoader[int, User] = SQLAlchemyLoader(session, User)
 
-        "role_right_goal_by_goal_id": ForeignKeyLoader(session, RoleRightGoal, "goal_id"),
-        "role_right_goal_by_right_id": ForeignKeyLoader(session, RoleRightGoal, "right_id"),
-        "role_right_goal_by_role_id": ForeignKeyLoader(session, RoleRightGoal, "role_id"),
-        "user_role_by_role_id": ForeignKeyLoader(session, UserRole, "role_id"),
-        "user_role_by_user_id": ForeignKeyLoader(session, UserRole, "user_id"),
-        "refresh_token_by_user_id": ForeignKeyLoader(session, RefreshToken, "user_id"),
-        "user_log_by_user_id": ForeignKeyLoader(session, UserLog, "user_id"),
-    }
+        self.role_right_goal_by_goal_id: DataLoader[int, List[RoleRightGoal]] = (
+            ForeignKeyLoader(session, RoleRightGoal, "goal_id")
+        )
+        self.role_right_goal_by_right_id: DataLoader[int, List[RoleRightGoal]] = (
+            ForeignKeyLoader(session, RoleRightGoal, "right_id")
+        )
+        self.role_right_goal_by_role_id: DataLoader[int, List[RoleRightGoal]] = (
+            ForeignKeyLoader(session, RoleRightGoal, "role_id")
+        )
+        self.user_role_by_role_id: DataLoader[int, List[UserRole]] = ForeignKeyLoader(
+            session, UserRole, "role_id"
+        )
+        self.user_role_by_user_id: DataLoader[int, List[UserRole]] = ForeignKeyLoader(
+            session, UserRole, "user_id"
+        )
+        self.refresh_token_by_user_id: DataLoader[int, List[RefreshToken]] = (
+            ForeignKeyLoader(session, RefreshToken, "user_id")
+        )
+        self.user_log_by_user_id: DataLoader[int, List[UserLog]] = ForeignKeyLoader(
+            session, UserLog, "user_id"
+        )

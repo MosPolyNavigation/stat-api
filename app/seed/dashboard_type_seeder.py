@@ -8,6 +8,14 @@ class DashboardTypeSeeder(BaseSeeder):
 
     def gather_data(self) -> list[dict[str, int | str]]:
         return [
-            {"id": DASHBOARD_TYPE_CHART_ID, "code_name": "chart", "description": "График статистики"},
-            {"id": DASHBOARD_TYPE_AVG_ID, "code_name": "avg", "description": "Агрегированная статистика"},
+            {
+                "id": DASHBOARD_TYPE_CHART_ID,
+                "code_name": "chart",
+                "description": "График статистики",
+            },
+            {
+                "id": DASHBOARD_TYPE_AVG_ID,
+                "code_name": "avg",
+                "description": "Агрегированная статистика",
+            },
         ]

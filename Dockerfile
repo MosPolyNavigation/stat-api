@@ -11,9 +11,4 @@ RUN uv -n sync --frozen
 
 COPY . .
 
-RUN echo "#!/usr/bin/env sh" > start && \
-    echo "uv run stat-api db migrate upgrade head" >> start && \
-    echo "uv run stat-api serve" >> start && \
-    chmod +x start
-
-CMD ["/app/start"]
+CMD ["uv", "run", "stat-api", "serve"]

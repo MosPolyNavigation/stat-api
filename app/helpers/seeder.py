@@ -33,16 +33,17 @@ async def apply_seeding(
     # Ленивый импорт, чтобы избежать циклических зависимостей
     if session_maker is None:
         from app.database import get_session_maker
+
         session_maker = get_session_maker()
 
     logger.info("🌱 Applying database seeders...")
-    
+
     async with session_maker() as session:
         for seeder in seeders:
             await seeder.add_missing(session)
             logger.debug(f"  ↳ {seeder.model.__name__} processed")
         await session.commit()
-    
+
     logger.info("✅ Database seeded successfully.")
 
 
@@ -58,6 +59,7 @@ async def apply_seeding_isolated(
     """
     if session_maker is None:
         from app.database import get_session_maker
+
         session_maker = get_session_maker()
 
     for seeder in seeders:
@@ -79,14 +81,15 @@ async def rollback_seeding(
         return
     if session_maker is None:
         from app.database import get_session_maker
+
         session_maker = get_session_maker()
 
-    logger.info("🔄 Rolling back database seeders...")
+    logger.info("Rolling back database seeders...")
     async with session_maker() as session:
         for seeder in reversed(seeders):
             await seeder.remove_present(session)
         await session.commit()
-    logger.info("✅ Database rollback completed.")
+    logger.info("Database rollback completed.")
 
 
 async def rollback_seeding_isolated(
@@ -101,11 +104,12 @@ async def rollback_seeding_isolated(
         return
     if session_maker is None:
         from app.database import get_session_maker
+
         session_maker = get_session_maker()
 
-    logger.info("🔄 Rolling back database seeders (isolated)...")
+    logger.info("Rolling back database seeders (isolated)...")
     for seeder in reversed(seeders):
         async with session_maker() as session:
             await seeder.remove_present(session)
             await session.commit()
-        logger.debug(f"🗑️ {seeder.model.__name__} rolled back")
+        logger.debug(f"{seeder.model.__name__} rolled back")

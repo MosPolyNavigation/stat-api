@@ -19,25 +19,21 @@ def unique_login(base="testuser"):
 def graphql_query(query, variables=None, headers=None):
     """
     Хелпер для выполнения GraphQL запросов.
-    
+
     Args:
         query: GraphQL query/mutation строка
         variables: Переменные для запроса (dict)
         headers: HTTP заголовки
-    
+
     Returns:
         dict с данными из response.json()["data"]
     """
     payload = {"query": query}
     if variables:
         payload["variables"] = variables
-    
-    response = client.post(
-        GRAPHQL_ENDPOINT,
-        headers=headers or {},
-        json=payload
-    )
-    
+
+    response = client.post(GRAPHQL_ENDPOINT, headers=headers or {}, json=payload)
+
     # Проверяем наличие ошибок GraphQL
     if response.status_code == 200:
         data = response.json()
@@ -45,7 +41,7 @@ def graphql_query(query, variables=None, headers=None):
             # Сохраняем ошибки для отладки
             raise AssertionError(f"GraphQL errors: {data['errors']}")
         return data.get("data", {})
-    
+
     return response.json()
 
 
@@ -56,7 +52,7 @@ class TestAuthToken:
         """Успешная аутентификация с корректными учетными данными"""
         # Создаем тестового пользователя для проверки логина через GraphQL
         test_login = unique_login("logintest")
-        
+
         # GraphQL мутация для создания пользователя
         create_query = """
         mutation CreateUser($data: CreateUserInput!) {
@@ -67,26 +63,22 @@ class TestAuthToken:
             }
         }
         """
-        
+
         graphql_query(
             create_query,
             variables={
                 "data": {
                     "login": test_login,
                     "password": "testpass123",
-                    "isActive": True
+                    "isActive": True,
                 }
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         # Проверяем логин через REST API (OAuth2 flow остаётся)
         response = client.post(
-            "/api/auth/token",
-            data={
-                "username": test_login,
-                "password": "testpass123"
-            }
+            "/api/auth/token", data={"username": test_login, "password": "testpass123"}
         )
         assert response.status_code == 200
         data = response.json()
@@ -98,25 +90,21 @@ class TestAuthToken:
     def test_400_login_wrong_password(self):
         """Ошибка при неверном пароле"""
         response = client.post(
-            "/api/auth/token",
-            data={
-                "username": "admin",
-                "password": "wrongpassword"
-            }
+            "/api/auth/token", data={"username": "admin", "password": "wrongpassword"}
         )
         assert response.status_code == 400
         data = response.json()
         assert "detail" in data
-        assert "некорректный" in data["detail"].lower() or "incorrect" in data["detail"].lower()
+        assert (
+            "некорректный" in data["detail"].lower()
+            or "incorrect" in data["detail"].lower()
+        )
 
     def test_400_login_nonexistent_user(self):
         """Ошибка при попытке войти с несуществующим пользователем"""
         response = client.post(
             "/api/auth/token",
-            data={
-                "username": "nonexistent_user_12345",
-                "password": "anypassword"
-            }
+            data={"username": "nonexistent_user_12345", "password": "anypassword"},
         )
         assert response.status_code == 400
         data = response.json()
@@ -124,29 +112,19 @@ class TestAuthToken:
 
     def test_422_login_missing_username(self):
         """Ошибка валидации при отсутствии username"""
-        response = client.post(
-            "/api/auth/token",
-            data={
-                "password": "somepassword"
-            }
-        )
+        response = client.post("/api/auth/token", data={"password": "somepassword"})
         assert response.status_code == 422
 
     def test_422_login_missing_password(self):
         """Ошибка валидации при отсутствии password"""
-        response = client.post(
-            "/api/auth/token",
-            data={
-                "username": "admin"
-            }
-        )
+        response = client.post("/api/auth/token", data={"username": "admin"})
         assert response.status_code == 422
 
     def test_200_login_inactive_user(self):
         """Проверка, что неактивный пользователь может получить токен, но не может использовать его"""
         # Создаем неактивного пользователя через GraphQL
         login = unique_login("inactive")
-        
+
         create_query = """
         mutation CreateUser($data: CreateUserInput!) {
             createUser(data: $data) {
@@ -156,29 +134,21 @@ class TestAuthToken:
             }
         }
         """
-        
+
         create_response = graphql_query(
             create_query,
             variables={
-                "data": {
-                    "login": login,
-                    "password": "testpass123",
-                    "isActive": False
-                }
+                "data": {"login": login, "password": "testpass123", "isActive": False}
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
-        
+
         assert create_response is not None
         assert create_response.get("createUser") is not None
 
         # Пытаемся получить токен через REST API
         login_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "testpass123"
-            }
+            "/api/auth/token", data={"username": login, "password": "testpass123"}
         )
         # Токен должен выдаться
         assert login_response.status_code == 200
@@ -186,8 +156,7 @@ class TestAuthToken:
 
         # Но при попытке использовать токен для доступа к /me должна быть ошибка
         me_response = client.get(
-            "/api/auth/me",
-            headers={"Authorization": f"Bearer {token}"}
+            "/api/auth/me", headers={"Authorization": f"Bearer {token}"}
         )
         # Неактивный пользователь не может использовать API (может быть 400 или 401)
         assert me_response.status_code in [400, 401]
@@ -244,7 +213,7 @@ class TestAuthMe:
         """Проверка, что /me возвращает актуальные данные после изменений"""
         # Создаем нового пользователя через GraphQL
         login = unique_login("testfresh")
-        
+
         create_query = """
         mutation CreateUser($data: CreateUserInput!) {
             createUser(data: $data) {
@@ -254,29 +223,21 @@ class TestAuthMe:
             }
         }
         """
-        
+
         create_response = graphql_query(
             create_query,
             variables={
-                "data": {
-                    "login": login,
-                    "password": "password123",
-                    "isActive": True
-                }
+                "data": {"login": login, "password": "password123", "isActive": True}
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
-        
+
         assert create_response is not None
         user_id = create_response["createUser"]["id"]
 
         # Получаем токен для этого пользователя через REST API
         token_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "password123"
-            }
+            "/api/auth/token", data={"username": login, "password": "password123"}
         )
         assert token_response.status_code == 200
         user_token = token_response.json()["access_token"]
@@ -292,8 +253,10 @@ class TestAuthMe:
             }
         }
         """
-        
-        me_response = graphql_query(me_query, variables={"id": user_id}, headers=ADMIN_HEADERS)
+
+        me_response = graphql_query(
+            me_query, variables={"id": user_id}, headers=ADMIN_HEADERS
+        )
         assert me_response is not None
         assert me_response["user"]["isActive"] is True
 
@@ -306,14 +269,11 @@ class TestAuthMe:
             }
         }
         """
-        
+
         graphql_query(
             update_query,
-            variables={
-                "id": user_id,
-                "data": {"isActive": False}
-            },
-            headers=ADMIN_HEADERS
+            variables={"id": user_id, "data": {"isActive": False}},
+            headers=ADMIN_HEADERS,
         )
 
         # Пытаемся получить /me через REST API - должна быть ошибка, т.к. пользователь неактивен
@@ -328,7 +288,7 @@ class TestAuthChangePassword:
         """Успешная смена собственного пароля"""
         # Создаём пользователя через GraphQL
         login = unique_login("ownpasschange")
-        
+
         create_query = """
         mutation CreateUser($data: CreateUserInput!) {
             createUser(data: $data) {
@@ -337,26 +297,18 @@ class TestAuthChangePassword:
             }
         }
         """
-        
+
         graphql_query(
             create_query,
             variables={
-                "data": {
-                    "login": login,
-                    "password": "oldpassword123",
-                    "isActive": True
-                }
+                "data": {"login": login, "password": "oldpassword123", "isActive": True}
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен через REST API
         token_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "oldpassword123"
-            }
+            "/api/auth/token", data={"username": login, "password": "oldpassword123"}
         )
         assert token_response.status_code == 200
         user_token = token_response.json()["access_token"]
@@ -366,10 +318,7 @@ class TestAuthChangePassword:
         response = client.post(
             "/api/auth/change-pass",
             headers=user_headers,
-            data={
-                "old_password": "oldpassword123",
-                "new_password": "newpassword456"
-            }
+            data={"old_password": "oldpassword123", "new_password": "newpassword456"},
         )
         assert response.status_code == 200
         data = response.json()
@@ -378,22 +327,14 @@ class TestAuthChangePassword:
 
         # Проверяем что можем войти с новым паролем
         new_login_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "newpassword456"
-            }
+            "/api/auth/token", data={"username": login, "password": "newpassword456"}
         )
         assert new_login_response.status_code == 200
         assert "access_token" in new_login_response.json()
 
         # Проверяем что старый пароль не работает
         old_login_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "oldpassword123"
-            }
+            "/api/auth/token", data={"username": login, "password": "oldpassword123"}
         )
         assert old_login_response.status_code == 400
 
@@ -401,7 +342,7 @@ class TestAuthChangePassword:
         """Ошибка при неверном текущем пароле"""
         # Создаём пользователя через GraphQL
         login = unique_login("wrongoldpass")
-        
+
         create_query = """
         mutation CreateUser($data: CreateUserInput!) {
             createUser(data: $data) {
@@ -410,26 +351,22 @@ class TestAuthChangePassword:
             }
         }
         """
-        
+
         graphql_query(
             create_query,
             variables={
                 "data": {
                     "login": login,
                     "password": "correctpassword",
-                    "isActive": True
+                    "isActive": True,
                 }
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен через REST API
         token_response = client.post(
-            "/api/auth/token",
-            data={
-                "username": login,
-                "password": "correctpassword"
-            }
+            "/api/auth/token", data={"username": login, "password": "correctpassword"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -438,10 +375,7 @@ class TestAuthChangePassword:
         response = client.post(
             "/api/auth/change-pass",
             headers=user_headers,
-            data={
-                "old_password": "wrongoldpassword",
-                "new_password": "newpassword123"
-            }
+            data={"old_password": "wrongoldpassword", "new_password": "newpassword123"},
         )
         assert response.status_code == 400
         data = response.json()
@@ -452,10 +386,7 @@ class TestAuthChangePassword:
         """Ошибка при отсутствии токена аутентификации"""
         response = client.post(
             "/api/auth/change-pass",
-            data={
-                "old_password": "oldpass",
-                "new_password": "newpass"
-            }
+            data={"old_password": "oldpass", "new_password": "newpass"},
         )
         assert response.status_code == 401
 
@@ -464,9 +395,7 @@ class TestAuthChangePassword:
         response = client.post(
             "/api/auth/change-pass",
             headers=ADMIN_HEADERS,
-            data={
-                "new_password": "newpassword123"
-            }
+            data={"new_password": "newpassword123"},
         )
         assert response.status_code == 422
 
@@ -475,17 +404,11 @@ class TestAuthChangePassword:
         response = client.post(
             "/api/auth/change-pass",
             headers=ADMIN_HEADERS,
-            data={
-                "old_password": "oldpassword123"
-            }
+            data={"old_password": "oldpassword123"},
         )
         assert response.status_code == 422
 
     def test_422_change_own_password_missing_both_passwords(self):
         """Ошибка валидации при отсутствии обоих паролей"""
-        response = client.post(
-            "/api/auth/change-pass",
-            headers=ADMIN_HEADERS,
-            data={}
-        )
+        response = client.post("/api/auth/change-pass", headers=ADMIN_HEADERS, data={})
         assert response.status_code == 422

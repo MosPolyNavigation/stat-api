@@ -13,7 +13,11 @@ router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 async def list_jobs(
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "view", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "view",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -27,7 +31,11 @@ async def get_job(
     name: str,
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "view", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "view",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -46,7 +54,11 @@ async def trigger_job(
     background_tasks: BackgroundTasks,
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "create", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "create",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -65,7 +77,11 @@ async def pause_job(
     name: str,
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "edit", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "edit",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -83,7 +99,11 @@ async def resume_job(
     name: str,
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "edit", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "edit",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -101,7 +121,11 @@ async def stop_job(
     name: str,
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "delete", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "delete",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -121,7 +145,11 @@ async def get_job_history(
     offset: int = Query(0, ge=0),
     job_manager: JobManager = Depends(get_job_manager),
     current_user: User = Depends(
-        require_rights_with_logging("tasks", "view", error_text="Попытка управления задачей без прав",)
+        require_rights_with_logging(
+            "tasks",
+            "view",
+            error_text="Попытка управления задачей без прав",
+        )
     ),
     logger: UserLoggerService = Depends(get_user_logger_service),
 ):
@@ -131,4 +159,3 @@ async def get_job_history(
     history = await job_manager.get_history(name, limit=limit, offset=offset)
     logger.log(current_user, f"Просмотр истории задачи {name}")
     return {"history": history, "limit": limit, "offset": offset}
-

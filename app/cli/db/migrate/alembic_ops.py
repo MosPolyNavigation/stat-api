@@ -22,8 +22,12 @@ def _run_alembic(command: str, args: list[str]) -> int:
 
 
 def upgrade_command(
-    revision: Annotated[str, typer.Argument(help="Целевая ревизия (по умолчанию head)")] = "head",
-    sql: Annotated[bool, typer.Option("--sql", help="Вывести SQL-скрипт вместо выполнения")] = False,
+    revision: Annotated[
+        str, typer.Argument(help="Целевая ревизия (по умолчанию head)")
+    ] = "head",
+    sql: Annotated[
+        bool, typer.Option("--sql", help="Вывести SQL-скрипт вместо выполнения")
+    ] = False,
     tag: Annotated[str | None, typer.Option("--tag", help="Тег для миграции")] = None,
 ) -> None:
     """Применение миграций Alembic. DSN берётся из конфига (STATAPI_CONFIG)."""
@@ -36,8 +40,12 @@ def upgrade_command(
 
 
 def downgrade_command(
-    revision: Annotated[str, typer.Argument(help="Целевая ревизия (по умолчанию -1)")] = "-1",
-    sql: Annotated[bool, typer.Option("--sql", help="Вывести SQL-скрипт вместо выполнения")] = False,
+    revision: Annotated[
+        str, typer.Argument(help="Целевая ревизия (по умолчанию -1)")
+    ] = "-1",
+    sql: Annotated[
+        bool, typer.Option("--sql", help="Вывести SQL-скрипт вместо выполнения")
+    ] = False,
     tag: Annotated[str | None, typer.Option("--tag", help="Тег для миграции")] = None,
 ) -> None:
     """Откат миграций Alembic. DSN берётся из конфига (STATAPI_CONFIG)."""

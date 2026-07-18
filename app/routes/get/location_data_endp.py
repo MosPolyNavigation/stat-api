@@ -11,11 +11,13 @@ def register_endpoint(router: APIRouter):
         "/locationData",
         tags=["get"],
         response_model=DataDto,
-        responses={503: {"model": Status, "description": "locationData еще не сформирован"}},
+        responses={
+            503: {"model": Status, "description": "locationData еще не сформирован"}
+        },
     )
     async def get_location_data(request: Request):
         state: AppState = request.app.state.app_state
-        if state.location_data_json is None:
+        if state.location_lock.locked() or state.location_data_json is None:
             return JSONResponse(
                 status_code=503,
                 content=Status(status="locationData is not ready").model_dump(),

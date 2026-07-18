@@ -10,7 +10,7 @@ from .mutation import Mutation
 schema = StatAPISchema(
     query=Query,
     mutation=Mutation,
-    extensions=[QueryDepthLimiter(max_depth=10)],
+    extensions=[lambda: QueryDepthLimiter(max_depth=10)],
 )
 
 # Экспорт роутера для FastAPI

@@ -1,16 +1,17 @@
 services:
   server:
     environment:
-      SQLALCHEMY_DATABASE_URL: postgresql+asyncpg://statapi:test@172.16.0.11:5432/statapi
-      STATIC_FILES: /app/static
-      ALLOWED_HOSTS: 'http://localhost:3000'
-      ALLOWED_METHODS: '*,'
-      ALLOWED_HEADERS: "Authorization,"
+      STATAPI_DB: postgresql+asyncpg://statapi:test@172.16.0.11:5432/statapi # ПОМЕНЯТЬ НА БОЛЕЕ УСТОЙЧИВЫЕ ПАРОЛИ
+      STATAPI_STATIC: /app/static/
+      STATAPI_CONFIG: /app/config.yaml
+      STATAPI_ACCESS_SECRET: secret # ЗАМЕНИТЬ НА РЕАЛЬНЫЙ СЕКРЕТ
+      STATAPI_REFRESH_SECRET: secret # ЗАМЕНИТЬ НА РЕАЛЬНЫЙ СЕКРЕТ
     build: .
     ports:
       - "8080:8080"
     volumes:
       - app:/app/static
+      - ./config.yaml:/app/config.yaml
     networks:
       front-tier:
         ipv4_address: 172.16.0.10
@@ -19,7 +20,7 @@ services:
     environment:
       POSTGRES_DB: "statapi"
       POSTGRES_USER: "statapi"
-      POSTGRES_PASSWORD: "test"
+      POSTGRES_PASSWORD: "test" # ПОМЕНЯТЬ НА БОЛЕЕ УСТОЙЧИВЫЕ ПАРОЛИ
     ports:
       - "5432:5432"
     volumes:

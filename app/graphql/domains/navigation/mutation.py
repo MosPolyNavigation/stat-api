@@ -125,4 +125,5 @@ class Mutation(
        - create/update/delete_nav_static
        - delete_auditory_photo
     """
+
     pass

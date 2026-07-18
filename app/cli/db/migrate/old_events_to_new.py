@@ -41,10 +41,10 @@ async def _fetch_mapping(
     code_column: str = "code_name",
 ) -> dict[str, int]:
     rows = (
-        await conn.execute(
-            text(f"SELECT id, {code_column} FROM {table}")
-        )
-    ).mappings().all()
+        (await conn.execute(text(f"SELECT id, {code_column} FROM {table}")))
+        .mappings()
+        .all()
+    )
     return {str(row[code_column]): int(row["id"]) for row in rows}
 
 
@@ -58,7 +58,9 @@ async def _ensure_new_schema_ready(conn: AsyncConnection) -> None:
             f"Missing event_types rows for codes: {', '.join(missing_event_codes)}"
         )
 
-    missing_payload_codes = [code for code in PAYLOAD_CODES if code not in payload_types]
+    missing_payload_codes = [
+        code for code in PAYLOAD_CODES if code not in payload_types
+    ]
     if missing_payload_codes:
         raise RuntimeError(
             f"Missing payload_types rows for codes: {', '.join(missing_payload_codes)}"
@@ -67,18 +69,22 @@ async def _ensure_new_schema_ready(conn: AsyncConnection) -> None:
 
 async def _ensure_destination_empty(conn: AsyncConnection) -> None:
     counts = (
-        await conn.execute(
-            text(
-                """
+        (
+            await conn.execute(
+                text(
+                    """
                 SELECT
                     (SELECT COUNT(*) FROM client_ids) AS client_ids_count,
                     (SELECT COUNT(*) FROM events) AS events_count,
                     (SELECT COUNT(*) FROM payloads) AS payloads_count,
                     (SELECT COUNT(*) FROM reviews) AS reviews_count
                 """
+                )
             )
         )
-    ).mappings().one()
+        .mappings()
+        .one()
+    )
 
     if any(int(counts[key]) > 0 for key in counts):
         raise RuntimeError(
@@ -92,16 +98,20 @@ async def _insert_client_ids(
     new_conn: AsyncConnection,
 ) -> dict[str, int]:
     user_rows = (
-        await old_conn.execute(
-            text(
-                """
+        (
+            await old_conn.execute(
+                text(
+                    """
                 SELECT user_id, creation_date
                 FROM user_ids
                 ORDER BY creation_date, user_id
                 """
+                )
             )
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
 
     mapping: dict[str, int] = {}
     next_id = 1
@@ -255,9 +265,10 @@ async def _migrate_reviews(
     client_map: dict[str, int],
 ) -> dict[str, int]:
     rows = (
-        await old_conn.execute(
-            text(
-                """
+        (
+            await old_conn.execute(
+                text(
+                    """
                 SELECT
                     id,
                     user_id,
@@ -269,9 +280,12 @@ async def _migrate_reviews(
                 FROM reviews
                 ORDER BY id
                 """
+                )
             )
         )
-    ).mappings().all()
+        .mappings()
+        .all()
+    )
 
     stats = {"reviews": 0, "skipped_reviews": 0}
     for row in rows:
@@ -370,7 +384,10 @@ def old_events_to_new_command(
 
     # Валидация старой БД (разрешаем SQLite/Postgres)
     old_db_normalized = _to_async_dsn(old_db_url)
-    if not any(old_db_normalized.startswith(p) for p in ("sqlite+aiosqlite:///", "postgresql+asyncpg://")):
+    if not any(
+        old_db_normalized.startswith(p)
+        for p in ("sqlite+aiosqlite:///", "postgresql+asyncpg://")
+    ):
         typer.echo(f"❌ Некорректный DSN старой БД: {old_db_url}")
         raise typer.Exit(1)
 

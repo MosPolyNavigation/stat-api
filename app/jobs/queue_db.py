@@ -28,7 +28,9 @@ async def init_queue_db(db_path: str) -> None:
         await db.commit()
 
 
-async def log_job_start(db_path: str, job_name: str, run_id: str, triggered_by: str) -> None:
+async def log_job_start(
+    db_path: str, job_name: str, run_id: str, triggered_by: str
+) -> None:
     """Записывает строку о старте задачи со статусом 'running'."""
     async with aiosqlite.connect(db_path) as db:
         await db.execute(
@@ -57,7 +59,9 @@ async def log_job_success(db_path: str, run_id: str, started_at: datetime) -> No
         await db.commit()
 
 
-async def log_job_error(db_path: str, run_id: str, started_at: datetime, exc: Exception) -> None:
+async def log_job_error(
+    db_path: str, run_id: str, started_at: datetime, exc: Exception
+) -> None:
     """Обновляет статус на 'failed', записывает ошибку и traceback."""
     finished_at = datetime.now(timezone.utc)
     duration = (finished_at - started_at).total_seconds()

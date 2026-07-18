@@ -1,7 +1,7 @@
 import re
 import asyncio
 from datetime import date
-from sqlalchemy import Select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Union
 from app.jobs.rasp.canonize import is_valid, canonize
@@ -11,11 +11,19 @@ from app.schemas.rasp.schedule import Schedule, Variety, Auditory, Rasp
 from app.models import Auditory as AuditoryModel
 
 filter_reg = re.compile(
-    r'(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h'
-    r'ами|деятельность|базы практик|Базы практик)',
-    re.IGNORECASE)
+    r"(пд|зал|cпорт|онлайн|лайн|федеральная|имаш|hami|нами|техноград|биокомбинат|сколково|биотехнологии|h"
+    r"ами|деятельность|базы практик|Базы практик)",
+    re.IGNORECASE,
+)
 
-numToDay = {"1": "monday", "2": "tuesday", "3": "wednesday", "4": "thursday", "5": "friday", "6": "saturday"}
+numToDay = {
+    "1": "monday",
+    "2": "tuesday",
+    "3": "wednesday",
+    "4": "thursday",
+    "5": "friday",
+    "6": "saturday",
+}
 
 
 class AsyncQueueIterator:
@@ -32,7 +40,9 @@ class AsyncQueueIterator:
         return item
 
 
-def parse_variety(day: str, lesson: str, variety_dto: VarietyDto, group_name: str, schedule: Schedule):
+def parse_variety(
+    day: str, lesson: str, variety_dto: VarietyDto, group_name: str, schedule: Schedule
+):
     global filter_reg
     global numToDay
     if any(filter_reg.search(aud) for aud in variety_dto.shortRooms):
@@ -45,7 +55,7 @@ def parse_variety(day: str, lesson: str, variety_dto: VarietyDto, group_name: st
         groupType="study",
         groupNames=[group_name],
         discipline=variety_dto.sbj,
-        teachers=variety_dto.teacher.split(', ')
+        teachers=variety_dto.teacher.split(", "),
     )
     # Заполняем расписание по аудиториям
     for auditory_id in auditories:
@@ -67,7 +77,9 @@ def parse_variety(day: str, lesson: str, variety_dto: VarietyDto, group_name: st
         day_schedule[lesson].append(variety)
 
 
-def parse_lesson(day: str, lesson: str, lesson_dto: LessonDto, group_name: str, schedule: Schedule):
+def parse_lesson(
+    day: str, lesson: str, lesson_dto: LessonDto, group_name: str, schedule: Schedule
+):
     for varietyDto in lesson_dto:
         if not is_valid(varietyDto.location):
             continue
@@ -103,7 +115,19 @@ async def parse(db: AsyncSession) -> Schedule:
         tg.create_task(loader())
         tg.create_task(parser())
 
+    aud_ids = list({aud.id for aud in schedule.values()})
+
+    if aud_ids:
+        result = await db.execute(
+            select(AuditoryModel.id_sys, AuditoryModel.link).where(
+                AuditoryModel.id_sys.in_(aud_ids)
+            )
+        )
+        links_map = dict(result.tuples().all())
+    else:
+        links_map = {}
+
     for aud in schedule.values():
         aud.rasp.merge()
-        aud.link = (await db.execute(Select(AuditoryModel.link).filter_by(id_sys=aud.id))).scalars().first()
+        aud.link = links_map.get(aud.id)
     return schedule

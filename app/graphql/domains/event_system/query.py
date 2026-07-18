@@ -4,7 +4,12 @@ from strawberry import Info
 from sqlalchemy import select
 
 from app.graphql.core.ordering import apply_order_by
-from app.graphql.core.pagination import paginate_query, PaginationInput, Connection, pagination_input_from_attrs
+from app.graphql.core.pagination import (
+    paginate_query,
+    PaginationInput,
+    Connection,
+    pagination_input_from_attrs,
+)
 from app.graphql.core.resource_factory import create_query_resource
 from app.graphql.domains.event_system.resources import (
     EventTypeResource,
@@ -16,7 +21,7 @@ from app.graphql.domains.event_system.resources import (
     PayloadResource,
     DashboardResource,
     DashboardTypeResource,
-    ReviewStatusResource
+    ReviewStatusResource,
 )
 from app.models import AllowedPayload
 from app.graphql.core.permissions import require_permissions, P
@@ -27,7 +32,7 @@ from app.graphql.domains.event_system.types import (
 )
 from app.graphql.domains.event_system.inputs import (
     AllowedPayloadRuleFilterInput,
-    AllowedPayloadRuleOrderByInput
+    AllowedPayloadRuleOrderByInput,
 )
 
 # =============================================================================
@@ -103,11 +108,11 @@ class AllowedPayloadRuleQuery:
     # 🔹 Используем наш кастомный декоратор пагинации
     @strawberry.field  # type: ignore[unresolved-reference]
     async def allowed_payload_rules(
-            self,
-            info: Info,
-            pagination: Optional[PaginationInput] = None,
-            filter: Optional[AllowedPayloadRuleFilterInput] = None,
-            order_by: Optional[AllowedPayloadRuleOrderByInput] = None,
+        self,
+        info: Info,
+        pagination: Optional[PaginationInput] = None,
+        filter: Optional[AllowedPayloadRuleFilterInput] = None,
+        order_by: Optional[AllowedPayloadRuleOrderByInput] = None,
     ) -> Connection[AllowedPayloadRuleType]:
         """Построение запроса для правил — декоратор применит пагинацию."""
         await require_permissions(info, P.STATS_VIEW)
@@ -135,10 +140,10 @@ class AllowedPayloadRuleQuery:
     # 🔹 Одиночный запрос с составным ключом (два int аргумента)
     @strawberry.field  # type: ignore[unresolved-reference]
     async def allowed_payload_rule(
-            self,
-            info: Info,
-            event_type_id: int,
-            payload_type_id: int,
+        self,
+        info: Info,
+        event_type_id: int,
+        payload_type_id: int,
     ) -> Optional[AllowedPayloadRuleType]:
         """Получение правила по составному ключу."""
         await require_permissions(info, P.STATS_VIEW)
@@ -193,4 +198,5 @@ class Query(
     Ручная реализация:
     - allowed_payload_rules / allowed_payload_rule (составной ключ)
     """
+
     pass

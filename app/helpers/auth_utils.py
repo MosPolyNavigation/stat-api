@@ -7,7 +7,11 @@ from typing import Annotated
 from app.constants import GOAL_RIGHTS
 from app.database import get_db
 from app.models import User
-from app.helpers.token_utils import decode_access_token, normalize_token_error, validate_access_payload
+from app.helpers.token_utils import (
+    decode_access_token,
+    normalize_token_error,
+    validate_access_payload,
+)
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 
@@ -16,12 +20,16 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/token")
 async def get_user_by_access_token(token: str, db: AsyncSession) -> User | None:
     payload = decode_access_token(token)
     user_id = validate_access_payload(payload)
-    return (await db.execute(select(User).filter(User.id == user_id))).scalar_one_or_none()
+    return (
+        await db.execute(select(User).filter(User.id == user_id))
+    ).scalar_one_or_none()
 
 
 # Получает пользователя по старому токену из БД
 async def get_user_by_legacy_token(token: str, db: AsyncSession) -> User | None:
-    return (await db.execute(select(User).filter(User.token == token))).scalar_one_or_none()
+    return (
+        await db.execute(select(User).filter(User.token == token))
+    ).scalar_one_or_none()
 
 
 async def get_current_user(
@@ -56,7 +64,7 @@ async def get_current_user(
 
 
 async def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)]
+    current_user: Annotated[User, Depends(get_current_user)],
 ):
     """Проверить, активен ли пользователь"""
     if not current_user.is_active:

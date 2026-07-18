@@ -36,14 +36,16 @@ def register_endpoint(router: APIRouter):
         photos: list[UploadFile] = Depends(photo_validator),
         db: AsyncSession = Depends(get_db),
         current_user: User = Depends(
-            require_rights_with_logging("resources", "create", error_text="Попытка загрузки без прав/ошибка валидации",)
+            require_rights_with_logging(
+                "resources",
+                "create",
+                error_text="Попытка загрузки без прав/ошибка валидации",
+            )
         ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ) -> Status:
         auditory = (
-            await db.execute(
-                Select(Auditory).filter(Auditory.id_sys == aud_id)
-            )
+            await db.execute(Select(Auditory).filter(Auditory.id_sys == aud_id))
         ).scalar_one_or_none()
         if auditory is None:
             logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
@@ -58,12 +60,16 @@ def register_endpoint(router: APIRouter):
         for photo in photos:
             if not photo.content_type or photo.content_type.split("/")[0] != "image":
                 logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
-                raise HTTPException(status_code=415, detail="This endpoint accepts only images")
+                raise HTTPException(
+                    status_code=415, detail="This endpoint accepts only images"
+                )
 
             ext = os.path.splitext(photo.filename or "")[-1].lower().lstrip(".")
             if not ext or ext not in ALLOWED_EXTENSIONS:
                 logger.log(current_user, "Попытка загрузки без прав/ошибка валидации")
-                raise HTTPException(status_code=415, detail="Unsupported image extension")
+                raise HTTPException(
+                    status_code=415, detail="Unsupported image extension"
+                )
 
             image_name = f"{uuid.uuid4().hex}.{ext}"
             image_path = os.path.join(base_path, image_name)
@@ -88,7 +94,10 @@ def register_endpoint(router: APIRouter):
 
         db.add_all(photos_to_create)
         await db.commit()
-        logger.log(current_user, f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",)
+        logger.log(
+            current_user,
+            f"Загружено {len(photos_to_create)} фото аудитории {auditory.id_sys}",
+        )
         return Status(status=f"Uploaded {len(photos_to_create)} image(s)")
 
     @router.get(
@@ -119,9 +128,7 @@ def register_endpoint(router: APIRouter):
         db: AsyncSession = Depends(get_db),
     ) -> list[str]:
         auditory = (
-            await db.execute(
-                Select(Auditory).filter(Auditory.id_sys == aud_id)
-            )
+            await db.execute(Select(Auditory).filter(Auditory.id_sys == aud_id))
         ).scalar_one_or_none()
         if auditory is None:
             raise HTTPException(status_code=404, detail="Auditory not found")
@@ -162,9 +169,7 @@ def register_endpoint(router: APIRouter):
             }
         """
         auditory = (
-            await db.execute(
-                Select(Auditory).filter(Auditory.id_sys == aud_id)
-            )
+            await db.execute(Select(Auditory).filter(Auditory.id_sys == aud_id))
         ).scalar_one_or_none()
         if auditory is None:
             raise HTTPException(status_code=404, detail="Auditory not found")

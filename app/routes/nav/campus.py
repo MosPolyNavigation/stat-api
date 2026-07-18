@@ -26,9 +26,7 @@ def register_endpoint(router: APIRouter):
     ) -> CampusNav:
         # Проверяем, что локация существует по id_sys
         location: Location | None = (
-            await db.execute(
-                Select(Location).filter(Location.id_sys == loc)
-            )
+            await db.execute(Select(Location).filter(Location.id_sys == loc))
         ).scalar_one_or_none()
 
         if location is None:

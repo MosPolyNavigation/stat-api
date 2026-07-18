@@ -16,7 +16,7 @@ from app.graphql.core.logging import (
 )
 
 from .context import GraphQLContext
-from .loaders import create_loaders
+from .loaders import Loaders
 
 
 async def get_context(
@@ -38,7 +38,7 @@ async def get_context(
         permission_service=PermissionService(db),
         user_logger=user_logger,
         request=request,
-        loaders=create_loaders(db),
+        loaders=Loaders(db),
     )
 
 
@@ -46,7 +46,9 @@ class StatAPIGraphQLRouter(GraphQLRouter):
     async def process_result(
         self, request: Request, result: ExecutionResult
     ) -> GraphQLHTTPResponse:
-        logger: Optional[UserLoggerService] = getattr(request.state, "user_logger", None)
+        logger: Optional[UserLoggerService] = getattr(
+            request.state, "user_logger", None
+        )
         current_user = getattr(request.state, "current_user", None)
         error_logs = getattr(request.state, "graphql_error_logs", [])
 
@@ -62,7 +64,9 @@ class StatAPIGraphQLRouter(GraphQLRouter):
             for error in result.errors:
                 formatted = dict(error.formatted)
                 original_message = formatted.get("message", "")
-                formatted["message"] = build_public_graphql_error_message(original_message)
+                formatted["message"] = build_public_graphql_error_message(
+                    original_message
+                )
 
                 if is_graphql_permission_error_message(original_message):
                     formatted.pop("extensions", None)

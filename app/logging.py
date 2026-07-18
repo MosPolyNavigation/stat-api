@@ -12,10 +12,10 @@ class ColorFormatter(logging.Formatter):
     """
 
     LEVEL_COLORS = {
-        "DEBUG": "\x1b[36m",     # cyan
-        "INFO": "\x1b[32m",      # green
-        "WARNING": "\x1b[33m",   # yellow
-        "ERROR": "\x1b[31m",     # red
+        "DEBUG": "\x1b[36m",  # cyan
+        "INFO": "\x1b[32m",  # green
+        "WARNING": "\x1b[33m",  # yellow
+        "ERROR": "\x1b[31m",  # red
         "CRITICAL": "\x1b[35m",  # magenta
     }
     RESET = "\x1b[0m"
@@ -73,6 +73,8 @@ def setup_logging(level: str = "INFO", use_colors: bool = True) -> None:
     # ── Настройка конкретных логгеров ──────────────────────────────────
     logging.getLogger("apscheduler").setLevel(logging.WARNING)
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
-    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("httpx2").setLevel(logging.WARNING)
     logging.getLogger("aiosqlite").setLevel(logging.WARNING)
-    logging.getLogger("app").setLevel(logging.DEBUG if level == "DEBUG" else logging.INFO)
+    logging.getLogger("app").setLevel(
+        logging.DEBUG if level == "DEBUG" else logging.INFO
+    )

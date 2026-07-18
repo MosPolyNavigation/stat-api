@@ -13,15 +13,8 @@ def graphql_query(query: str, variables: dict = None, headers: dict = None):
     if variables:
         payload["variables"] = variables
 
-    response = client.post(
-        GRAPHQL_ENDPOINT,
-        headers=headers or {},
-        json=payload
-    )
-    return {
-        "status_code": response.status_code,
-        "data": response.json()
-    }
+    response = client.post(GRAPHQL_ENDPOINT, headers=headers or {}, json=payload)
+    return {"status_code": response.status_code, "data": response.json()}
 
 
 def assert_graphql_success(response: dict, field_name: str):

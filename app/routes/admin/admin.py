@@ -15,7 +15,10 @@ def register_endpoint(router: APIRouter):
         response_model=BanListOut,
         tags=["admin"],
         responses={
-            200: {"model": BanListOut, "description": "Список забаненных пользователей"},
+            200: {
+                "model": BanListOut,
+                "description": "Список забаненных пользователей",
+            },
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
         },
@@ -25,7 +28,11 @@ def register_endpoint(router: APIRouter):
         page: int = Query(1, ge=1, description="Номер страницы"),
         size: int = Query(100, ge=1, le=500, description="Размер страницы"),
         current_user: User = Depends(
-            require_rights_with_logging("admin", "view",  error_text="Попытка просмотра без прав",)
+            require_rights_with_logging(
+                "admin",
+                "view",
+                error_text="Попытка просмотра без прав",
+            )
         ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):
@@ -41,7 +48,7 @@ def register_endpoint(router: APIRouter):
         )
         logger.log(current_user, "Запрос списка забаненных клиентов")
         return result
-    
+
     @router.get(
         "/review-bans/{user_id}",
         description="Получение информации о бане конкретного пользователя",
@@ -52,7 +59,11 @@ def register_endpoint(router: APIRouter):
             404: {
                 "model": Status,
                 "description": "Пользователь не найден или не забанен",
-                "content": {"application/json": {"example": {"status": "User not banned or not found"}}}
+                "content": {
+                    "application/json": {
+                        "example": {"status": "User not banned or not found"}
+                    }
+                },
             },
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
@@ -61,14 +72,14 @@ def register_endpoint(router: APIRouter):
     async def get_user_ban_info(
         user_id: str,
         request: Request,
-            current_user: User = Depends(
-                require_rights_with_logging(
-                    "admin",
-                    "view",
-                    error_text="Попытка доступа к несуществующей записи/без прав",
-                )
-            ),
-            logger: UserLoggerService = Depends(get_user_logger_service),
+        current_user: User = Depends(
+            require_rights_with_logging(
+                "admin",
+                "view",
+                error_text="Попытка доступа к несуществующей записи/без прав",
+            )
+        ),
+        logger: UserLoggerService = Depends(get_user_logger_service),
     ):
         """
         Возвращает детальную информацию о бане пользователя.
@@ -86,7 +97,7 @@ def register_endpoint(router: APIRouter):
 
         logger.log(current_user, f"Запрос информации по забаненному клиенту {user_id}")
         return info
-    
+
     @router.post(
         "/review-bans/{user_id}/unban",
         description="Снятие бана с пользователя",
@@ -95,11 +106,19 @@ def register_endpoint(router: APIRouter):
         responses={
             200: {
                 "model": Status,
-                "content": {"application/json": {"example": {"status": "User unbanned successfully"}}}
+                "content": {
+                    "application/json": {
+                        "example": {"status": "User unbanned successfully"}
+                    }
+                },
             },
             404: {
                 "model": Status,
-                "content": {"application/json": {"example": {"status": "User not found or not banned"}}}
+                "content": {
+                    "application/json": {
+                        "example": {"status": "User not found or not banned"}
+                    }
+                },
             },
             401: {"description": "Требуется аутентификация"},
             403: {"description": "Недостаточно прав"},
@@ -110,7 +129,11 @@ def register_endpoint(router: APIRouter):
         user_id: str,
         _request: UnbanRequest = None,
         current_user: User = Depends(
-            require_rights_with_logging("admin", "edit",  error_text="Попытка снятия бана без прав",)
+            require_rights_with_logging(
+                "admin",
+                "edit",
+                error_text="Попытка снятия бана без прав",
+            )
         ),
         logger: UserLoggerService = Depends(get_user_logger_service),
     ):

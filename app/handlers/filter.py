@@ -23,9 +23,7 @@ def filter_lesson(lesson: Lesson | None, filter_: FilterSvobodn) -> Lesson:
     # Если только start_date — проверяем, попадает ли момент в занятие
     # (для случаев, когда несколько занятий на одну пару в разное время)
     return [
-        variety
-        for variety in lesson
-        if variety.dt <= filter_.start_date <= variety.df
+        variety for variety in lesson if variety.dt <= filter_.start_date <= variety.df
     ]
 
 
@@ -39,15 +37,10 @@ def filter_day(day: Day | None, filter_: FilterSvobodn) -> Day:
 
     if filter_.para is not None:
         para_key = str(filter_.para)
-        return {
-            para_key: filter_lesson(day.get(para_key), filter_)
-        }
+        return {para_key: filter_lesson(day.get(para_key), filter_)}
 
     # Если пара не указана — фильтруем все 7 пар
-    return {
-        str(num): filter_lesson(day.get(str(num)), filter_)
-        for num in range(1, 8)
-    }
+    return {str(num): filter_lesson(day.get(str(num)), filter_) for num in range(1, 8)}
 
 
 def filter_auditory(aud: Auditory, filter_: FilterSvobodn) -> Auditory:
@@ -77,11 +70,7 @@ def filter_auditory(aud: Auditory, filter_: FilterSvobodn) -> Auditory:
     # Создаём новый Rasp через model_construct (обходит валидацию, но сохраняет типизацию)
     filtered_rasp = Rasp.model_construct(**filtered_days)
 
-    return Auditory.model_construct(
-        id=aud.id,
-        link=aud.link,
-        rasp=filtered_rasp
-    )
+    return Auditory.model_construct(id=aud.id, link=aud.link, rasp=filtered_rasp)
 
 
 def filter_svobodn(schedule: Schedule, filter_: FilterSvobodn) -> Schedule:

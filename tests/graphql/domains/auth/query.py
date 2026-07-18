@@ -1,10 +1,14 @@
 """Тесты для GraphQL Query операций с целями (Goal) в домене auth."""
+
 import pytest
 import uuid
 
 from tests.base import client
 from tests.graphql.base import (
-    graphql_query, assert_graphql_success, assert_graphql_error, unique_login
+    graphql_query,
+    assert_graphql_success,
+    assert_graphql_error,
+    unique_login,
 )
 
 # =============================================================================
@@ -33,11 +37,8 @@ class TestGoalQueries:
         """
         response = graphql_query(
             query,
-            variables={
-                "pagination": {"page": 1, "pageSize": 10},
-                "filter": None
-            },
-            headers=ADMIN_HEADERS
+            variables={"pagination": {"page": 1, "pageSize": 10}, "filter": None},
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "goals")
         assert "nodes" in result
@@ -58,7 +59,7 @@ class TestGoalQueries:
             query,
             # 🔹 Новый синтаксис фильтра: { id: { eq: 1 } } вместо { id: 1 }
             variables={"filter": {"id": {"eq": 1}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "goals")
         assert len(result["nodes"]) == 1
@@ -75,7 +76,7 @@ class TestGoalQueries:
         response = graphql_query(
             query,
             variables={"filter": {"name": {"eq": "users"}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "goals")
         assert len(result["nodes"]) == 1
@@ -91,7 +92,7 @@ class TestGoalQueries:
         response = graphql_query(
             query,
             variables={"filter": {"name": {"contains": "ser"}}},  # найдёт "users"
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "goals")
         assert len(result["nodes"]) >= 1
@@ -112,7 +113,7 @@ class TestGoalQueries:
         response1 = graphql_query(
             query,
             variables={"pagination": {"page": 1, "pageSize": 3}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "goals")
 
@@ -120,7 +121,7 @@ class TestGoalQueries:
         response2 = graphql_query(
             query,
             variables={"pagination": {"page": 2, "pageSize": 3}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "goals")
 
@@ -161,9 +162,7 @@ class TestGoalQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"filter": {"id": {"eq": 9}}},
-            headers=ADMIN_HEADERS
+            query, variables={"filter": {"id": {"eq": 9}}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "goals")
         assert len(result["nodes"]) == 1
@@ -181,14 +180,15 @@ class TestGoalQueries:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_resp = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_resp.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -216,7 +216,7 @@ class TestGoalQueries:
         response1 = graphql_query(
             query,
             variables={"pagination": {"page": 1, "pageSize": 1}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "goals")
 
@@ -224,14 +224,20 @@ class TestGoalQueries:
         response2 = graphql_query(
             query,
             variables={"pagination": {"page": 1, "pageSize": 10}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "goals")
 
         # totalCount должен быть одинаковым
-        assert result1["paginationInfo"]["totalCount"] == result2["paginationInfo"]["totalCount"]
+        assert (
+            result1["paginationInfo"]["totalCount"]
+            == result2["paginationInfo"]["totalCount"]
+        )
         # totalPages должен отличаться
-        assert result1["paginationInfo"]["totalPages"] >= result2["paginationInfo"]["totalPages"]
+        assert (
+            result1["paginationInfo"]["totalPages"]
+            >= result2["paginationInfo"]["totalPages"]
+        )
 
     def test_goals_query_order_by_name_asc(self):
         """Проверка сортировки целей по имени (ASC)."""
@@ -243,9 +249,7 @@ class TestGoalQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"orderBy": {"name": "ASC"}},
-            headers=ADMIN_HEADERS
+            query, variables={"orderBy": {"name": "ASC"}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "goals")
         names = [n["name"] for n in result["nodes"]]
@@ -261,9 +265,7 @@ class TestGoalQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"orderBy": {"id": "DESC"}},
-            headers=ADMIN_HEADERS
+            query, variables={"orderBy": {"id": "DESC"}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "goals")
         ids = [n["id"] for n in result["nodes"]]
@@ -276,11 +278,7 @@ class TestGoalQueries:
             goal(id: $id) { id name }
         }
         """
-        response = graphql_query(
-            query,
-            variables={"id": 1},
-            headers=ADMIN_HEADERS
-        )
+        response = graphql_query(query, variables={"id": 1}, headers=ADMIN_HEADERS)
         result = assert_graphql_success(response, "goal")
         assert result["id"] == 1
         assert result["name"] == "stats"
@@ -292,11 +290,7 @@ class TestGoalQueries:
             goal(id: $id) { id name }
         }
         """
-        response = graphql_query(
-            query,
-            variables={"id": 999999},
-            headers=ADMIN_HEADERS
-        )
+        response = graphql_query(query, variables={"id": 999999}, headers=ADMIN_HEADERS)
         assert response["status_code"] == 200
         assert response["data"]["data"]["goal"] is None
 
@@ -320,11 +314,8 @@ class TestRoleQueries:
         """
         response = graphql_query(
             query,
-            variables={
-                "pagination": {"page": 1, "pageSize": 10},
-                "filter": None
-            },
-            headers=ADMIN_HEADERS
+            variables={"pagination": {"page": 1, "pageSize": 10}, "filter": None},
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "roles")
         assert "nodes" in result
@@ -345,7 +336,7 @@ class TestRoleQueries:
             query,
             # 🔹 Новый синтаксис фильтра: { name: { eq: "admin" } }
             variables={"filter": {"name": {"eq": "admin"}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "roles")
         assert len(result["nodes"]) >= 1
@@ -359,9 +350,7 @@ class TestRoleQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"filter": {"id": {"eq": 1}}},
-            headers=ADMIN_HEADERS
+            query, variables={"filter": {"id": {"eq": 1}}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "roles")
         assert len(result["nodes"]) == 1
@@ -382,7 +371,7 @@ class TestRoleQueries:
         response1 = graphql_query(
             query,
             variables={"pagination": {"page": 1, "pageSize": 1}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "roles")
 
@@ -390,7 +379,7 @@ class TestRoleQueries:
         response2 = graphql_query(
             query,
             variables={"pagination": {"page": 2, "pageSize": 1}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "roles")
 
@@ -414,7 +403,7 @@ class TestRoleQueries:
         response = graphql_query(
             query,
             variables={"id": 1},  # 🔹 Аргумент 'id', не 'roleId'
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "role")
         assert result["id"] == 1
@@ -427,11 +416,7 @@ class TestRoleQueries:
             role(id: $id) { id name }
         }
         """
-        response = graphql_query(
-            query,
-            variables={"id": 999999},
-            headers=ADMIN_HEADERS
-        )
+        response = graphql_query(query, variables={"id": 999999}, headers=ADMIN_HEADERS)
         assert response["status_code"] == 200
         assert response["data"]["data"]["role"] is None
 
@@ -447,12 +432,16 @@ class TestRoleQueries:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
-        token_resp = client.post("/api/auth/token", data={"username": test_login, "password": "pass123"})
+        token_resp = client.post(
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
+        )
         user_token = token_resp.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
@@ -475,9 +464,7 @@ class TestRoleQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"orderBy": {"name": "ASC"}},
-            headers=ADMIN_HEADERS
+            query, variables={"orderBy": {"name": "ASC"}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "roles")
         names = [n["name"] for n in result["nodes"]]
@@ -493,9 +480,7 @@ class TestRoleQueries:
         }
         """
         response = graphql_query(
-            query,
-            variables={"orderBy": {"id": "DESC"}},
-            headers=ADMIN_HEADERS
+            query, variables={"orderBy": {"id": "DESC"}}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "roles")
         ids = [n["id"] for n in result["nodes"]]
@@ -574,12 +559,16 @@ class TestRightQueries:
         }
         """
         response1 = graphql_query(
-            query, variables={"pagination": {"page": 1, "pageSize": 2}}, headers=ADMIN_HEADERS
+            query,
+            variables={"pagination": {"page": 1, "pageSize": 2}},
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "rights")
 
         response2 = graphql_query(
-            query, variables={"pagination": {"page": 2, "pageSize": 2}}, headers=ADMIN_HEADERS
+            query,
+            variables={"pagination": {"page": 2, "pageSize": 2}},
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "rights")
 
@@ -612,7 +601,9 @@ class TestRightQueries:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
             headers=ADMIN_HEADERS,
         )
 
@@ -745,7 +736,9 @@ class TestRoleRightGoalQueries:
             headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "roleRightGoals")
-        assert all(rrg["roleId"] == admin_id and rrg["rightId"] == 1 for rrg in result["nodes"])
+        assert all(
+            rrg["roleId"] == admin_id and rrg["rightId"] == 1 for rrg in result["nodes"]
+        )
 
     def test_role_right_goals_query_pagination(self):
         """Проверка пагинации связей"""
@@ -847,10 +840,14 @@ class TestRoleRightGoalQueries:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass1234", "isActive": True}},
+            variables={
+                "data": {"login": test_login, "password": "pass1234", "isActive": True}
+            },
             headers=ADMIN_HEADERS,
         )
-        token_response = client.post("/api/auth/token", data={"username": test_login, "password": "pass1234"})
+        token_response = client.post(
+            "/api/auth/token", data={"username": test_login, "password": "pass1234"}
+        )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
@@ -918,8 +915,14 @@ class TestRoleRightGoalQueries:
         )
         result2 = assert_graphql_success(response2, "roleRightGoals")
 
-        assert result1["paginationInfo"]["totalCount"] == result2["paginationInfo"]["totalCount"]
-        assert result1["paginationInfo"]["totalPages"] >= result2["paginationInfo"]["totalPages"]
+        assert (
+            result1["paginationInfo"]["totalCount"]
+            == result2["paginationInfo"]["totalCount"]
+        )
+        assert (
+            result1["paginationInfo"]["totalPages"]
+            >= result2["paginationInfo"]["totalPages"]
+        )
 
     def test_role_right_goals_query_page_beyond_total(self):
         """Запрос со страницей больше общего количества страниц"""
@@ -1011,7 +1014,9 @@ class TestRoleRightGoalIntegrity:
 
         rights_set = {(rrg["rightId"], rrg["goalId"]) for rrg in result["nodes"]}
         assert result["nodes"], "У admin роли должны быть права"
-        assert all(rrg["canGrant"] is True for rrg in result["nodes"]), "Все права admin должны быть делегируемыми"
+        assert all(rrg["canGrant"] is True for rrg in result["nodes"]), (
+            "Все права admin должны быть делегируемыми"
+        )
         assert (1, 3) in rights_set, "view -> users"
         assert (3, 3) in rights_set, "edit -> users"
         assert (4, 3) in rights_set, "delete -> users"
@@ -1043,7 +1048,9 @@ class TestRoleRightGoalIntegrity:
 
         combinations = [(r["roleId"], r["rightId"], r["goalId"]) for r in all_records]
         unique_combinations = set(combinations)
-        assert len(combinations) == len(unique_combinations), "Обнаружены дублирующиеся связи role_right_goal"
+        assert len(combinations) == len(unique_combinations), (
+            "Обнаружены дублирующиеся связи role_right_goal"
+        )
 
 
 class TestUserRoleQueries:
@@ -1083,11 +1090,8 @@ class TestUserRoleQueries:
 
         response = graphql_query(
             query,
-            variables={
-                "pagination": {"pageSize": 10, "page": 1},
-                "filter": None
-            },
-            headers=ADMIN_HEADERS
+            variables={"pagination": {"pageSize": 10, "page": 1}, "filter": None},
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "userRoles")
@@ -1110,8 +1114,10 @@ class TestUserRoleQueries:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -1124,7 +1130,7 @@ class TestUserRoleQueries:
         graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         # Фильтруем по user_id
@@ -1142,7 +1148,7 @@ class TestUserRoleQueries:
         response = graphql_query(
             query,
             variables={"filter": {"userId": {"eq": user_id}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "userRoles")
@@ -1165,7 +1171,7 @@ class TestUserRoleQueries:
         response = graphql_query(
             query,
             variables={"filter": {"roleId": {"eq": 1}}},  # Admin role
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "userRoles")
@@ -1196,7 +1202,7 @@ class TestUserRoleQueries:
         response1 = graphql_query(
             query,
             variables={"pagination": {"pageSize": 5, "page": 1}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "userRoles")
 
@@ -1242,7 +1248,7 @@ class TestUserRoleQueries:
             response = graphql_query(
                 query,
                 variables={"userId": first_ur["userId"], "roleId": first_ur["roleId"]},
-                headers=ADMIN_HEADERS
+                headers=ADMIN_HEADERS,
             )
 
             result = assert_graphql_success(response, "userRole")
@@ -1261,9 +1267,7 @@ class TestUserRoleQueries:
         """
 
         response = graphql_query(
-            query,
-            variables={"userId": 999999, "roleId": 999999},
-            headers=ADMIN_HEADERS
+            query, variables={"userId": 999999, "roleId": 999999}, headers=ADMIN_HEADERS
         )
 
         # GraphQL возвращает null для не найденного объекта
@@ -1284,14 +1288,15 @@ class TestUserRoleQueries:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -1345,11 +1350,8 @@ class TestUserQueries:
 
         response = graphql_query(
             query,
-            variables={
-                "pagination": {"pageSize": 10, "page": 1},
-                "filter": None
-            },
-            headers=ADMIN_HEADERS
+            variables={"pagination": {"pageSize": 10, "page": 1}, "filter": None},
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "users")
@@ -1374,8 +1376,10 @@ class TestUserQueries:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Фильтруем по login
@@ -1393,7 +1397,7 @@ class TestUserQueries:
         response = graphql_query(
             query,
             variables={"filter": {"login": {"eq": test_login}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "users")
@@ -1417,7 +1421,7 @@ class TestUserQueries:
         response = graphql_query(
             query,
             variables={"filter": {"isActive": {"eq": True}}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "users")
@@ -1451,7 +1455,7 @@ class TestUserQueries:
         response1 = graphql_query(
             query,
             variables={"pagination": {"pageSize": 1, "page": 1}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "users")
 
@@ -1459,7 +1463,7 @@ class TestUserQueries:
         response2 = graphql_query(
             query,
             variables={"pagination": {"pageSize": 1, "page": 2}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "users")
 
@@ -1503,9 +1507,7 @@ class TestUserQueries:
         """
 
         response = graphql_query(
-            query,
-            variables={"userId": admin_id},
-            headers=ADMIN_HEADERS
+            query, variables={"userId": admin_id}, headers=ADMIN_HEADERS
         )
 
         result = assert_graphql_success(response, "user")
@@ -1524,11 +1526,7 @@ class TestUserQueries:
         }
         """
 
-        response = graphql_query(
-            query,
-            variables={"Id": 999999},
-            headers=ADMIN_HEADERS
-        )
+        response = graphql_query(query, variables={"Id": 999999}, headers=ADMIN_HEADERS)
 
         # GraphQL возвращает null для не найденного объекта
         assert response["status_code"] == 200
@@ -1548,14 +1546,15 @@ class TestUserQueries:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -1620,13 +1619,18 @@ class TestRefreshTokenQueries:
         """
         create_resp = graphql_query(
             create_q,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
             headers=ADMIN_HEADERS,
         )
         user_id = create_resp["data"]["data"]["createUser"]["id"]
 
         # Генерируем refresh token через REST login
-        client.post("/api/auth/token", data={"username": test_login, "password": "pass123", "scope": "long"})
+        client.post(
+            "/api/auth/token",
+            data={"username": test_login, "password": "pass123", "scope": "long"},
+        )
 
         query = """
         query GetRefreshTokens($filter: RefreshTokenFilterInput) {
@@ -1670,12 +1674,16 @@ class TestRefreshTokenQueries:
         }
         """
         resp1 = graphql_query(
-            query, variables={"pagination": {"page": 1, "pageSize": 5}}, headers=ADMIN_HEADERS
+            query,
+            variables={"pagination": {"page": 1, "pageSize": 5}},
+            headers=ADMIN_HEADERS,
         )
         res1 = assert_graphql_success(resp1, "refreshTokens")
 
         resp2 = graphql_query(
-            query, variables={"pagination": {"page": 2, "pageSize": 5}}, headers=ADMIN_HEADERS
+            query,
+            variables={"pagination": {"page": 2, "pageSize": 5}},
+            headers=ADMIN_HEADERS,
         )
         res2 = assert_graphql_success(resp2, "refreshTokens")
 
@@ -1703,9 +1711,7 @@ class TestRefreshTokenQueries:
             refreshToken(id: $id) { id userId jti expDate revoked createdAt }
         }
         """
-        resp = graphql_query(
-            query, variables={"id": token_id}, headers=ADMIN_HEADERS
-        )
+        resp = graphql_query(query, variables={"id": token_id}, headers=ADMIN_HEADERS)
         result = assert_graphql_success(resp, "refreshToken")
         assert result["id"] == token_id
 
@@ -1716,9 +1722,7 @@ class TestRefreshTokenQueries:
             refreshToken(id: $id) { id }
         }
         """
-        resp = graphql_query(
-            query, variables={"id": 999999}, headers=ADMIN_HEADERS
-        )
+        resp = graphql_query(query, variables={"id": 999999}, headers=ADMIN_HEADERS)
         assert resp["status_code"] == 200
         assert resp["data"]["data"]["refreshToken"] is None
 
@@ -1730,10 +1734,14 @@ class TestRefreshTokenQueries:
         """
         graphql_query(
             create_q,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
             headers=ADMIN_HEADERS,
         )
-        token_resp = client.post("/api/auth/token", data={"username": test_login, "password": "pass123"})
+        token_resp = client.post(
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
+        )
         user_headers = {"Authorization": f"Bearer {token_resp.json()['access_token']}"}
 
         query = """
@@ -1758,7 +1766,9 @@ class TestRefreshTokenQueries:
         }
         """
         resp = graphql_query(
-            query, variables={"pagination": {"page": 1, "pageSize": 5}}, headers=ADMIN_HEADERS
+            query,
+            variables={"pagination": {"page": 1, "pageSize": 5}},
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(resp, "refreshTokens")
         assert len(result["nodes"]) > 0
@@ -1778,7 +1788,10 @@ class TestRefreshTokenQueries:
         """
         resp = graphql_query(
             query,
-            variables={"orderBy": {"createdAt": "DESC"}, "pagination": {"page": 1, "pageSize": 20}},
+            variables={
+                "orderBy": {"createdAt": "DESC"},
+                "pagination": {"page": 1, "pageSize": 20},
+            },
             headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(resp, "refreshTokens")

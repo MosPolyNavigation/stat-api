@@ -11,8 +11,7 @@ class Status(BaseModel):
     Attributes:
         status: Статус процедуры.
     """
+
     status: str = Field(
-        title="Procedure-status",
-        description="Status of procedure",
-        default="OK"
+        title="Procedure-status", description="Status of procedure", default="OK"
     )

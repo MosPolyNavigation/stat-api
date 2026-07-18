@@ -51,7 +51,7 @@ class RateLimiter:
         data = await self._extract_event_request(request)
         if data is None:
             return
-        
+
         state: AppState = request.app.state.app_state
         access_store = getattr(state, self.state_attr, None)
         if access_store is None:
@@ -126,8 +126,7 @@ class RateLimiter:
         for user_id in list(access_store.keys()):
             user_data = access_store[user_id]
             expired_events = [
-                event_key for event_key, ts in user_data.items()
-                if now - ts > threshold
+                event_key for event_key, ts in user_data.items() if now - ts > threshold
             ]
             for event_key in expired_events:
                 del user_data[event_key]

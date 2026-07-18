@@ -31,8 +31,7 @@ async def _create_or_update_admin(session_maker, login: str, hashed_pw: str) -> 
         await db.flush()
 
         role_stmt = select(UserRole).where(
-            UserRole.user_id == user.id,
-            UserRole.role_id == 1
+            UserRole.user_id == user.id, UserRole.role_id == 1
         )
         role_res = await db.execute(role_stmt)
         existing_role = role_res.scalar_one_or_none()

@@ -5,14 +5,17 @@ from typing import Optional, List
 
 class BanInfoOut(BaseModel):
     """Информация о бане пользователя."""
+
     user_id: str = Field(..., description="ID пользователя")
     banned: bool = Field(True, description="Флаг бана")
     ban_reason: Optional[str] = Field(None, description="Причина бана")
     ban_timestamp: Optional[str] = Field(None, description="Время бана (ISO 8601)")
     violation_count: int = Field(0, description="Количество нарушений")
     requests_count: int = Field(0, description="Количество запросов в истории")
-    last_request: Optional[str] = Field(None, description="Время последнего запроса (ISO 8601)")
-    
+    last_request: Optional[str] = Field(
+        None, description="Время последнего запроса (ISO 8601)"
+    )
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -22,7 +25,7 @@ class BanInfoOut(BaseModel):
                 "ban_timestamp": "2024-03-18T14:30:00",
                 "violation_count": 15,
                 "requests_count": 23,
-                "last_request": "2024-03-18T14:29:55"
+                "last_request": "2024-03-18T14:29:55",
             }
         }
     )
@@ -30,12 +33,13 @@ class BanInfoOut(BaseModel):
 
 class BanListOut(BaseModel):
     """Пагинированный список банов."""
+
     items: List[BanInfoOut] = Field(..., description="Список забаненных пользователей")
     total: int = Field(..., description="Общее количество забаненных")
     page: int = Field(..., description="Текущая страница")
     size: int = Field(..., description="Размер страницы")
     pages: int = Field(..., description="Всего страниц")
-    
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
@@ -47,13 +51,13 @@ class BanListOut(BaseModel):
                         "ban_timestamp": "2024-03-18T14:30:00",
                         "violation_count": 0,
                         "requests_count": 30,
-                        "last_request": "2024-03-18T14:29:58"
+                        "last_request": "2024-03-18T14:29:58",
                     }
                 ],
                 "total": 1,
                 "page": 1,
                 "size": 100,
-                "pages": 1
+                "pages": 1,
             }
         }
     )
@@ -61,10 +65,9 @@ class BanListOut(BaseModel):
 
 class UnbanRequest(BaseModel):
     """Запрос на снятие бана (для аудита)."""
+
     reason: Optional[str] = Field(None, description="Причина разбана")
-    
+
     model_config = ConfigDict(
-        json_schema_extra={
-            "example": {"reason": "False positive, user verified"}
-        }
+        json_schema_extra={"example": {"reason": "False positive, user verified"}}
     )

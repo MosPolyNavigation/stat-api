@@ -3,14 +3,22 @@ from typing import Callable, Any
 from app.graphql.core.resource import ResourceConfig, ResourcePermissions
 from app.graphql.core.permissions import P
 from app.graphql.domains.navigation.inputs import (
-    NavLocationFilterInput, NavLocationOrderByInput,
-    NavCampusFilterInput, NavCampusOrderByInput,
-    NavFloorFilterInput, NavFloorOrderByInput,
-    NavTypeFilterInput, NavTypeOrderByInput,
-    NavPlanFilterInput, NavPlanOrderByInput,
-    NavAuditoryFilterInput, NavAuditoryOrderByInput,
-    NavAuditoryPhotoFilterInput, NavAuditoryPhotoOrderByInput,
-    NavStaticFilterInput, NavStaticOrderByInput,
+    NavLocationFilterInput,
+    NavLocationOrderByInput,
+    NavCampusFilterInput,
+    NavCampusOrderByInput,
+    NavFloorFilterInput,
+    NavFloorOrderByInput,
+    NavTypeFilterInput,
+    NavTypeOrderByInput,
+    NavPlanFilterInput,
+    NavPlanOrderByInput,
+    NavAuditoryFilterInput,
+    NavAuditoryOrderByInput,
+    NavAuditoryPhotoFilterInput,
+    NavAuditoryPhotoOrderByInput,
+    NavStaticFilterInput,
+    NavStaticOrderByInput,
 )
 from app.graphql.domains.navigation.types import (
     NavLocation as NavLocationType,
@@ -21,8 +29,14 @@ from app.graphql.domains.navigation.types import (
     NavAuditory as NavAuditoryType,
     NavAuditoryPhoto as NavAuditoryPhotoType,
     NavStatic as NavStaticType,
-    _location_from_model, _campus_from_model, _floor_from_model, _type_from_model,
-    _plan_from_model, _auditory_from_model, _aud_photo_from_model, _static_from_model,
+    _location_from_model,
+    _campus_from_model,
+    _floor_from_model,
+    _type_from_model,
+    _plan_from_model,
+    _auditory_from_model,
+    _aud_photo_from_model,
+    _static_from_model,
 )
 from app.models import (
     Location as LModel,
@@ -38,6 +52,7 @@ from app.models import (
 
 def _json_array_validator(field_name: str) -> Callable[[Any], bool | str]:
     """Валидатор для полей, хранящих JSON-массивы."""
+
     def validator(value: Any) -> bool | str:
         if value is None:
             return True
@@ -48,11 +63,13 @@ def _json_array_validator(field_name: str) -> Callable[[Any], bool | str]:
         except (json.JSONDecodeError, ValueError):
             return f"{field_name} содержит невалидный JSON"
         return True
+
     return validator
 
 
 def _json_validator(field_name: str) -> Callable[[Any], bool | str]:
     """Валидатор для любых JSON полей."""
+
     def validator(value: Any) -> bool | str:
         if value is None:
             return True
@@ -61,6 +78,7 @@ def _json_validator(field_name: str) -> Callable[[Any], bool | str]:
         except (json.JSONDecodeError, ValueError):
             return f"{field_name} содержит невалидный JSON"
         return True
+
     return validator
 
 
@@ -72,10 +90,7 @@ LocationResource = ResourceConfig(
     convert=_location_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     validators={"crossings": _json_array_validator("crossings")},
     enable_logging=True,
@@ -89,10 +104,7 @@ CampusResource = ResourceConfig(
     convert=_campus_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     validators={"stair_groups": _json_array_validator("stair_groups")},
     enable_logging=True,
@@ -106,10 +118,7 @@ FloorResource = ResourceConfig(
     convert=_floor_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     enable_logging=True,
 )
@@ -122,10 +131,7 @@ TypeResource = ResourceConfig(
     convert=_type_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     enable_logging=True,
 )
@@ -138,14 +144,11 @@ PlanResource = ResourceConfig(
     convert=_plan_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     validators={
         "entrances": _json_array_validator("entrances"),
-        "graph": _json_array_validator("graph")
+        "graph": _json_array_validator("graph"),
     },
     enable_logging=True,
 )
@@ -158,10 +161,7 @@ AuditoryResource = ResourceConfig(
     convert=_auditory_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     enable_logging=True,
 )
@@ -174,10 +174,7 @@ AudPhotoResource = ResourceConfig(
     convert=_aud_photo_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     enable_logging=True,
 )
@@ -190,10 +187,7 @@ StaticResource = ResourceConfig(
     convert=_static_from_model,
     cursor_field="id",
     permissions=ResourcePermissions(
-        view=P.NAV_VIEW,
-        create=P.NAV_CREATE,
-        edit=P.NAV_EDIT,
-        delete=P.NAV_DELETE
+        view=P.NAV_VIEW, create=P.NAV_CREATE, edit=P.NAV_EDIT, delete=P.NAV_DELETE
     ),
     enable_logging=True,
 )

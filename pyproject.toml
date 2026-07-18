@@ -1,44 +1,43 @@
 [project]
 name = "stat-api"
-version = "0.4.0"
+version = "0.4.1"
 description = "Бэкенд для нужд проекта mospolynavigation"
 requires-python = ">=3.12"
 dependencies = [
-    "aiofiles",
-    "alembic",
-    "fastapi",
-    "strawberry-graphql",
-    "httpx",
-    "python-dotenv",
-    "python-multipart",
-    "sqlalchemy[asyncio]",
-    "uuid",
-    "uvicorn",
-    "pydantic-settings",
-    "apscheduler",
-    "pwdlib[argon2]",
-    "argparse",
-    "transliterate",
-    "aiosqlite",
-    "asyncpg",
-    "pillow",
-    "PyJWT",
-    "user-agents",
-    "pyyaml",
-    "pydantic",
-    "graphql-core",
-    "starlette",
-    "typer",
+    "aiofiles~=25.1.0",
+    "alembic~=1.18.4",
+    "fastapi~=0.139.0",
+    "strawberry-graphql~=0.322.0",
+    "python-dotenv~=1.2.2",
+    "python-multipart~=0.0.28",
+    "sqlalchemy[asyncio]~=2.0.49",
+    "uvicorn~=0.51.0",
+    "pydantic-settings~=2.14.1",
+    "apscheduler~=3.11.2",
+    "pwdlib[argon2]~=0.3.0",
+    "transliterate~=1.10.2",
+    "aiosqlite~=0.22.1",
+    "asyncpg~=0.31.0",
+    "pillow~=12.3.0",
+    "PyJWT~=2.13.0",
+    "user-agents~=2.2.0",
+    "pyyaml~=6.0.3",
+    "pydantic~=2.13.4",
+    "graphql-core~=3.2.8",
+    "starlette~=1.3.1",
+    "typer~=0.27.0",
+    "httpx2~=2.7.0",
 ]
 
 [dependency-groups]
 dev = [
-    "pytest",
-    "pytest-asyncio",
-    "pytest-cov",
+    "pre-commit~=4.6.0",
+    "pytest~=9.1.1",
+    "pytest-asyncio~=1.4.0",
+    "pytest-cov~=7.1.0",
 ]
 lint = [
-    "ruff",
+    "ruff~=0.15.12",
 ]
 
 [build-system]
@@ -46,10 +45,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# Включаем пакет app
 packages = ["app"]
-# Включаем main.py как топ-уровень модуль (чтобы работало main:app_cli)
-py-modules = ["main"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"  # или "strict"
@@ -59,7 +55,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [project.scripts]
-stat-api = "main:app_cli"
+stat-api = "app.cli.main:app_cli"
 
 [tool.ruff.lint]
 ignore = ["E402", "SLF001"]

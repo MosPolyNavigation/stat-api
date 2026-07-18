@@ -1,6 +1,13 @@
 from typing import Optional
 from app.schemas.filter import FilterSvobodn
-from app.schemas.rasp.schedule import ScheduleOut, Schedule, RaspOut, Auditory, DayOut, Day
+from app.schemas.rasp.schedule import (
+    ScheduleOut,
+    Schedule,
+    RaspOut,
+    Auditory,
+    DayOut,
+    Day,
+)
 
 
 def svobodn_day(day: Optional[Day], filter_: FilterSvobodn) -> DayOut:
@@ -30,8 +37,7 @@ def svobodn_day(day: Optional[Day], filter_: FilterSvobodn) -> DayOut:
 
     # Проверяем все пары в дне
     return {
-        para: (lessons is None or len(lessons) == 0)
-        for para, lessons in day.items()
+        para: (lessons is None or len(lessons) == 0) for para, lessons in day.items()
     }
 
 
@@ -74,9 +80,7 @@ def svobodn(schedule: Optional[Auditory], filter_: FilterSvobodn) -> RaspOut:
 
 
 def auditory_is_empty(
-    schedule: Schedule,
-    auds: list[str],
-    filter_: FilterSvobodn
+    schedule: Schedule, auds: list[str], filter_: FilterSvobodn
 ) -> ScheduleOut:
     """
     Проверяет свободность указанных аудиторий.
@@ -93,7 +97,4 @@ def auditory_is_empty(
         aud_data = schedule.get(auds[0])
         return svobodn(aud_data, filter_)
 
-    return {
-        aud: svobodn(schedule.get(aud), filter_)
-        for aud in auds
-    }
+    return {aud: svobodn(schedule.get(aud), filter_) for aud in auds}

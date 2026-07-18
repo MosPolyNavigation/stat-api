@@ -6,7 +6,9 @@ from app.graphql.core.logging import build_graphql_error_log
 
 
 class StatAPISchema(strawberry.Schema):
-    def process_errors(self, errors, execution_context: ExecutionContext | None = None) -> None:
+    def process_errors(
+        self, errors, execution_context: ExecutionContext | None = None
+    ) -> None:
         if execution_context is None or execution_context.context is None:
             return
 

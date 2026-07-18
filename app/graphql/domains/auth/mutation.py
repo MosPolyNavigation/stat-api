@@ -15,7 +15,7 @@ from app.graphql.domains.auth.inputs import (
     ChangeUserPasswordInput,
     CreateRoleInput,
     UpdateRoleInput,
-    GrantRoleInput
+    GrantRoleInput,
 )
 from app.graphql.domains.auth.types import (
     User as UserType,
@@ -50,7 +50,7 @@ class UserMutation:
             login=data.login,
             hash=password_hash.hash(data.password),
             fio=data.fio,
-            is_active=data.is_active
+            is_active=data.is_active,
         )
         ctx.db.add(user)
         await ctx.db.commit()
@@ -105,7 +105,9 @@ class UserMutation:
         return True
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
-    async def change_user_password(self, info: Info, data: ChangeUserPasswordInput) -> bool:
+    async def change_user_password(
+        self, info: Info, data: ChangeUserPasswordInput
+    ) -> bool:
         await require_permissions(info, P.USER_PASS_EDIT)
         ctx: GraphQLContext = info.context
         current_user = info.context.current_user
@@ -115,7 +117,9 @@ class UserMutation:
         if not user:
             raise GraphQLError(f"Пользователь с ID {data.user_id} не найден")
         if user.id == current_user.id:
-            raise GraphQLError("Используйте REST endpoint для смены собственного пароля.")
+            raise GraphQLError(
+                "Используйте REST endpoint для смены собственного пароля."
+            )
         if len(data.new_password) < 8:
             raise GraphQLError("Пароль должен содержать минимум 8 символов")
 
@@ -147,17 +151,26 @@ class RoleMutation:
             required = [(r.right_id, r.goal_id) for r in data.role_right_goals]
             missing = await service.check_grant_permissions(current_user.id, required)
             if missing:
-                raise GraphQLError(f"Недостаточно прав для назначения: {', '.join(missing)}")
+                raise GraphQLError(
+                    f"Недостаточно прав для назначения: {', '.join(missing)}"
+                )
 
         role = Role(name=data.name)
         ctx.db.add(role)
         await ctx.db.flush()
 
         if data.role_right_goals:
-            ctx.db.add_all([RoleRightGoal(
-                role_id=role.id, right_id=rrg.right_id,
-                goal_id=rrg.goal_id, can_grant=rrg.can_grant
-            ) for rrg in data.role_right_goals])
+            ctx.db.add_all(
+                [
+                    RoleRightGoal(
+                        role_id=role.id,
+                        right_id=rrg.right_id,
+                        goal_id=rrg.goal_id,
+                        can_grant=rrg.can_grant,
+                    )
+                    for rrg in data.role_right_goals
+                ]
+            )
         await ctx.db.commit()
         await ctx.db.refresh(role)
         logger.log(current_user, f"Создана роль {role.name}")
@@ -178,7 +191,9 @@ class RoleMutation:
             raise GraphQLError(f"Роль с ID {id} не найдена")
 
         if data.name is not None:
-            dup = await ctx.db.execute(select(Role).where(Role.name == data.name, Role.id != id))
+            dup = await ctx.db.execute(
+                select(Role).where(Role.name == data.name, Role.id != id)
+            )
             if dup.scalar_one_or_none():
                 raise GraphQLError("Роль с таким названием уже существует")
             role.name = data.name
@@ -187,18 +202,25 @@ class RoleMutation:
             required = [(r.right_id, r.goal_id) for r in data.role_right_goals]
             missing = await service.check_grant_permissions(current_user.id, required)
             if missing:
-                raise GraphQLError(f"Недостаточно прав для назначения: {', '.join(missing)}")
+                raise GraphQLError(
+                    f"Недостаточно прав для назначения: {', '.join(missing)}"
+                )
 
             await ctx.db.execute(
                 delete(RoleRightGoal).where(RoleRightGoal.role_id == id)
             )
 
-            ctx.db.add_all([RoleRightGoal(
-                role_id=id,
-                right_id=rrg.right_id,
-                goal_id=rrg.goal_id,
-                can_grant=rrg.can_grant
-            ) for rrg in data.role_right_goals])
+            ctx.db.add_all(
+                [
+                    RoleRightGoal(
+                        role_id=id,
+                        right_id=rrg.right_id,
+                        goal_id=rrg.goal_id,
+                        can_grant=rrg.can_grant,
+                    )
+                    for rrg in data.role_right_goals
+                ]
+            )
         await ctx.db.commit()
         await ctx.db.refresh(role)
         logger.log(current_user, f"Обновлена роль {role.name}")
@@ -224,12 +246,16 @@ class RoleMutation:
         if cast(int, count.scalar()) > 0:
             raise GraphQLError("Роль назначена пользователям. Сначала отзовите её.")
 
-        rights = await ctx.db.execute(select(RoleRightGoal).where(RoleRightGoal.role_id == id))
+        rights = await ctx.db.execute(
+            select(RoleRightGoal).where(RoleRightGoal.role_id == id)
+        )
         if rights.scalars().all():
             req = list({(r.right_id, r.goal_id) for r in rights.scalars()})
             missing = await service.check_grant_permissions(current_user.id, req)
             if missing:
-                raise GraphQLError(f"Недостаточно прав для удаления роли: {', '.join(missing)}")
+                raise GraphQLError(
+                    f"Недостаточно прав для удаления роли: {', '.join(missing)}"
+                )
 
         await ctx.db.delete(role)
         await ctx.db.commit()
@@ -261,10 +287,16 @@ class UserRoleMutation:
         if missing := set(data.role_ids) - found_ids:
             raise GraphQLError(f"Роли не найдены: {missing}")
 
-        rrgs = await ctx.db.execute(select(RoleRightGoal).where(RoleRightGoal.role_id.in_(found_ids)))
+        rrgs = await ctx.db.execute(
+            select(RoleRightGoal).where(RoleRightGoal.role_id.in_(found_ids))
+        )
         perms = list({(r.right_id, r.goal_id) for r in rrgs.scalars()})
-        if missing_perms := await service.check_grant_permissions(current_user.id, perms):
-            raise GraphQLError(f"Эскалация привилегий. Нет прав: {', '.join(missing_perms)}")
+        if missing_perms := await service.check_grant_permissions(
+            current_user.id, perms
+        ):
+            raise GraphQLError(
+                f"Эскалация привилегий. Нет прав: {', '.join(missing_perms)}"
+            )
 
         existing_result = await ctx.db.execute(
             select(UserRole.role_id).where(UserRole.user_id == data.user_id)
@@ -273,13 +305,14 @@ class UserRoleMutation:
         roles_to_assign = [rid for rid in data.role_ids if rid not in existing_role_ids]
 
         if roles_to_assign:
-            ctx.db.add_all([
-                UserRole(user_id=data.user_id, role_id=rid)
-                for rid in roles_to_assign
-            ])
+            ctx.db.add_all(
+                [UserRole(user_id=data.user_id, role_id=rid) for rid in roles_to_assign]
+            )
 
         await ctx.db.commit()
-        logger.log(current_user, f"Назначены роли {data.role_ids} пользователю {data.user_id}")
+        logger.log(
+            current_user, f"Назначены роли {data.role_ids} пользователю {data.user_id}"
+        )
         return True
 
     @strawberry.mutation(extensions=[GraphQLLoggingExtension()])
@@ -290,13 +323,17 @@ class UserRoleMutation:
         service: PermissionService = info.context.permission_service
         logger = info.context.user_logger
 
-        rrgs = await ctx.db.execute(select(RoleRightGoal).where(RoleRightGoal.role_id == role_id))
+        rrgs = await ctx.db.execute(
+            select(RoleRightGoal).where(RoleRightGoal.role_id == role_id)
+        )
         perms = list({(r.right_id, r.goal_id) for r in rrgs.scalars()})
         if missing := await service.check_grant_permissions(current_user.id, perms):
             raise GraphQLError(f"Недостаточно прав для отзыва: {', '.join(missing)}")
 
         ur = await ctx.db.execute(
-            select(UserRole).where(UserRole.user_id == user_id, UserRole.role_id == role_id)
+            select(UserRole).where(
+                UserRole.user_id == user_id, UserRole.role_id == role_id
+            )
         )
         link = ur.scalar_one_or_none()
         if not link:
@@ -318,4 +355,5 @@ class Mutation(
     UserRoleMutation,
 ):
     """Корневой Mutation для домена auth."""
+
     pass

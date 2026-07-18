@@ -1,9 +1,13 @@
 """Тесты для GraphQL Mutation операций с ролями (Role) в домене auth."""
+
 import uuid
 
 from tests.base import client
 from tests.graphql.base import (
-    graphql_query, assert_graphql_success, assert_graphql_error, unique_login
+    graphql_query,
+    assert_graphql_success,
+    assert_graphql_error,
+    unique_login,
 )
 
 # =============================================================================
@@ -30,7 +34,7 @@ class TestRoleMutations:
         response = graphql_query(
             query,
             variables={"data": {"name": test_name, "roleRightGoals": None}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "createRole")
         assert result["name"] == test_name
@@ -41,7 +45,7 @@ class TestRoleMutations:
         test_name = f"test_rights_{uuid.uuid4().hex[:8]}"
         query = """
         mutation CreateRole($data: CreateRoleInput!) {
-            createRole(data: $data) { id name roleRightGoals { rightId goalId } }
+            createRole(data: $data) { id name roleRightGoals { nodes { rightId goalId } } }
         }
         """
         response = graphql_query(
@@ -52,14 +56,14 @@ class TestRoleMutations:
                     "roleRightGoals": [
                         {"rightId": 1, "goalId": 1},
                         {"rightId": 1, "goalId": 3},
-                    ]
+                    ],
                 }
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "createRole")
         assert result["name"] == test_name
-        assert len(result["roleRightGoals"]) == 2
+        assert len(result["roleRightGoals"]["nodes"]) == 2
 
     def test_create_role_duplicate_name(self):
         """Ошибка при создании роли с существующим name."""
@@ -73,13 +77,13 @@ class TestRoleMutations:
         graphql_query(
             create_query,
             variables={"data": {"name": test_name, "roleRightGoals": None}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         # Пытаемся создать вторую с тем же name
         response = graphql_query(
             create_query,
             variables={"data": {"name": test_name, "roleRightGoals": None}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         assert_graphql_error(response, "уже существует")
 
@@ -93,10 +97,14 @@ class TestRoleMutations:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
-        token_resp = client.post("/api/auth/token", data={"username": test_login, "password": "pass123"})
+        token_resp = client.post(
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
+        )
         user_token = token_resp.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
 
@@ -108,7 +116,7 @@ class TestRoleMutations:
         response = graphql_query(
             create_query,
             variables={"data": {"name": "test", "roleRightGoals": None}},
-            headers=user_headers
+            headers=user_headers,
         )
         assert_graphql_error(response, "недостаточно прав")
 
@@ -124,7 +132,7 @@ class TestRoleMutations:
         create_resp = graphql_query(
             create_query,
             variables={"data": {"name": test_name, "roleRightGoals": None}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         role_id = create_resp["data"]["data"]["createRole"]["id"]
 
@@ -136,11 +144,8 @@ class TestRoleMutations:
         """
         response = graphql_query(
             update_query,
-            variables={
-                "id": role_id,
-                "data": {"name": f"{test_name}_updated"}
-            },
-            headers=ADMIN_HEADERS
+            variables={"id": role_id, "data": {"name": f"{test_name}_updated"}},
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "updateRole")
         assert result["name"] == f"{test_name}_updated"
@@ -155,7 +160,7 @@ class TestRoleMutations:
         response = graphql_query(
             update_query,
             variables={"id": 999999, "data": {"name": "Test"}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         assert_graphql_error(response, "не найдена")
 
@@ -171,7 +176,7 @@ class TestRoleMutations:
         create_resp = graphql_query(
             create_query,
             variables={"data": {"name": test_name, "roleRightGoals": None}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         role_id = create_resp["data"]["data"]["createRole"]["id"]
 
@@ -182,9 +187,7 @@ class TestRoleMutations:
         }
         """
         response = graphql_query(
-            delete_query,
-            variables={"id": role_id},
-            headers=ADMIN_HEADERS
+            delete_query, variables={"id": role_id}, headers=ADMIN_HEADERS
         )
         result = assert_graphql_success(response, "deleteRole")
         assert result is True  # 🔹 Возвращает Boolean, не объект
@@ -195,7 +198,9 @@ class TestRoleMutations:
             role(id: $id) { id }
         }
         """
-        get_resp = graphql_query(get_query, variables={"id": role_id}, headers=ADMIN_HEADERS)
+        get_resp = graphql_query(
+            get_query, variables={"id": role_id}, headers=ADMIN_HEADERS
+        )
         assert get_resp["data"]["data"]["role"] is None
 
     def test_delete_role_not_found(self):
@@ -206,9 +211,7 @@ class TestRoleMutations:
         }
         """
         response = graphql_query(
-            delete_query,
-            variables={"id": 999999},
-            headers=ADMIN_HEADERS
+            delete_query, variables={"id": 999999}, headers=ADMIN_HEADERS
         )
         assert_graphql_error(response, "не найдена")
 
@@ -223,8 +226,10 @@ class TestRoleMutations:
         """
         create_resp = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_resp["data"]["data"]["createUser"]["id"]
 
@@ -237,7 +242,7 @@ class TestRoleMutations:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "grantRole")
         assert result is True
@@ -252,7 +257,7 @@ class TestRoleMutations:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": 999999, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         assert_graphql_error(response, "не найден")
 
@@ -266,8 +271,10 @@ class TestRoleMutations:
         """
         create_resp = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": False}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": False}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_resp["data"]["data"]["createUser"]["id"]
 
@@ -279,7 +286,7 @@ class TestRoleMutations:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         assert_graphql_error(response, "неактивному")
 
@@ -294,8 +301,10 @@ class TestRoleMutations:
         """
         create_resp = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_resp["data"]["data"]["createUser"]["id"]
 
@@ -305,7 +314,11 @@ class TestRoleMutations:
             grantRole(data: $data)
         }
         """
-        graphql_query(grant_query, variables={"data": {"userId": user_id, "roleIds": [1]}}, headers=ADMIN_HEADERS)
+        graphql_query(
+            grant_query,
+            variables={"data": {"userId": user_id, "roleIds": [1]}},
+            headers=ADMIN_HEADERS,
+        )
 
         # Отзываем роль (🔹 аргументы: userId, roleId; возврат Boolean!)
         revoke_query = """
@@ -316,7 +329,7 @@ class TestRoleMutations:
         response = graphql_query(
             revoke_query,
             variables={"userId": user_id, "roleId": 1},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result = assert_graphql_success(response, "revokeRole")
         assert result is True
@@ -331,7 +344,7 @@ class TestRoleMutations:
         response = graphql_query(
             revoke_query,
             variables={"userId": 1, "roleId": 999999},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         assert_graphql_error(response, "не найдена")
 
@@ -354,8 +367,10 @@ class TestGrantRoleMutation:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -369,7 +384,7 @@ class TestGrantRoleMutation:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "grantRole")
@@ -390,8 +405,10 @@ class TestGrantRoleMutation:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -405,7 +422,7 @@ class TestGrantRoleMutation:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "grantRole")
@@ -422,7 +439,7 @@ class TestGrantRoleMutation:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": 999999, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "не найден")
@@ -443,8 +460,10 @@ class TestGrantRoleMutation:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": False}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": False}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -458,7 +477,7 @@ class TestGrantRoleMutation:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "неактивному")
@@ -478,8 +497,10 @@ class TestGrantRoleMutation:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -493,7 +514,7 @@ class TestGrantRoleMutation:
         response1 = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result1 = assert_graphql_success(response1, "grantRole")
         assert result1 is True
@@ -502,7 +523,7 @@ class TestGrantRoleMutation:
         response2 = graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
         result2 = assert_graphql_success(response2, "grantRole")
         assert result2 is True
@@ -521,14 +542,15 @@ class TestGrantRoleMutation:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -543,7 +565,7 @@ class TestGrantRoleMutation:
         response = graphql_query(
             grant_query,
             variables={"data": {"userId": 2, "roleIds": [1]}},
-            headers=user_headers
+            headers=user_headers,
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -567,8 +589,10 @@ class TestRevokeRoleMutation:
         """
         create_response = graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -581,7 +605,7 @@ class TestRevokeRoleMutation:
         graphql_query(
             grant_query,
             variables={"data": {"userId": user_id, "roleIds": [1]}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         # Отзываем роль
@@ -594,7 +618,7 @@ class TestRevokeRoleMutation:
         response = graphql_query(
             revoke_query,
             variables={"userId": user_id, "roleId": 1},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "revokeRole")
@@ -611,7 +635,7 @@ class TestRevokeRoleMutation:
         response = graphql_query(
             revoke_query,
             variables={"userId": 1, "roleId": 999999},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "не найдена")
@@ -630,14 +654,15 @@ class TestRevokeRoleMutation:
         """
         graphql_query(
             create_user_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -650,9 +675,7 @@ class TestRevokeRoleMutation:
         """
 
         response = graphql_query(
-            revoke_query,
-            variables={"userId": 2, "roleId": 1},
-            headers=user_headers
+            revoke_query, variables={"userId": 2, "roleId": 1}, headers=user_headers
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -683,10 +706,10 @@ class TestCreateUserMutation:
                     "login": test_login,
                     "password": "securepass123",
                     "fio": "Тестов Тест Тестович",
-                    "isActive": True
+                    "isActive": True,
                 }
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "createUser")
@@ -710,15 +733,19 @@ class TestCreateUserMutation:
         # Создаём первого пользователя
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Пытаемся создать второго с тем же login
         response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass456", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass456", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "уже существует")
@@ -737,14 +764,15 @@ class TestCreateUserMutation:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -752,8 +780,14 @@ class TestCreateUserMutation:
         # Пытаемся создать пользователя
         response = graphql_query(
             create_query,
-            variables={"data": {"login": unique_login("test"), "password": "pass123", "isActive": True}},
-            headers=user_headers
+            variables={
+                "data": {
+                    "login": unique_login("test"),
+                    "password": "pass123",
+                    "isActive": True,
+                }
+            },
+            headers=user_headers,
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -774,13 +808,9 @@ class TestCreateUserMutation:
         response = graphql_query(
             query,
             variables={
-                "data": {
-                    "login": test_login,
-                    "password": "pass123",
-                    "isActive": False
-                }
+                "data": {"login": test_login, "password": "pass123", "isActive": False}
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "createUser")
@@ -805,8 +835,10 @@ class TestUpdateUserMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -826,9 +858,9 @@ class TestUpdateUserMutation:
             update_query,
             variables={
                 "userId": user_id,
-                "data": {"fio": "Обновлён Обновлёнович Обновлёнов"}
+                "data": {"fio": "Обновлён Обновлёнович Обновлёнов"},
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "updateUser")
@@ -851,8 +883,10 @@ class TestUpdateUserMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -869,7 +903,7 @@ class TestUpdateUserMutation:
         response = graphql_query(
             update_query,
             variables={"userId": user_id, "data": {"isActive": False}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "updateUser")
@@ -892,8 +926,15 @@ class TestUpdateUserMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "fio": "Old FIO", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {
+                    "login": test_login,
+                    "password": "pass123",
+                    "fio": "Old FIO",
+                    "isActive": True,
+                }
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -911,7 +952,7 @@ class TestUpdateUserMutation:
         response = graphql_query(
             update_query,
             variables={"userId": user_id, "data": {"fio": "New FIO"}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "updateUser")
@@ -932,7 +973,7 @@ class TestUpdateUserMutation:
         response = graphql_query(
             update_query,
             variables={"userId": 999999, "data": {"fio": "Test"}},
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "не найден")
@@ -951,14 +992,15 @@ class TestUpdateUserMutation:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -976,7 +1018,7 @@ class TestUpdateUserMutation:
         response = graphql_query(
             update_query,
             variables={"userId": 1, "data": {"fio": "Test"}},
-            headers=user_headers
+            headers=user_headers,
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -1000,8 +1042,10 @@ class TestDeleteUserMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -1013,9 +1057,7 @@ class TestDeleteUserMutation:
         """
 
         response = graphql_query(
-            delete_query,
-            variables={"userId": user_id},
-            headers=ADMIN_HEADERS
+            delete_query, variables={"userId": user_id}, headers=ADMIN_HEADERS
         )
 
         result = assert_graphql_success(response, "deleteUser")
@@ -1031,9 +1073,7 @@ class TestDeleteUserMutation:
         }
         """
         get_response = graphql_query(
-            get_query,
-            variables={"userId": user_id},
-            headers=ADMIN_HEADERS
+            get_query, variables={"userId": user_id}, headers=ADMIN_HEADERS
         )
         assert get_response["data"]["data"]["user"] is None
 
@@ -1047,9 +1087,7 @@ class TestDeleteUserMutation:
 
         # Пытаемся удалить админа (текущий пользователь)
         response = graphql_query(
-            delete_query,
-            variables={"userId": 1},
-            headers=ADMIN_HEADERS
+            delete_query, variables={"userId": 1}, headers=ADMIN_HEADERS
         )
 
         assert_graphql_error(response, "нельзя удалить самого себя")
@@ -1063,9 +1101,7 @@ class TestDeleteUserMutation:
         """
 
         response = graphql_query(
-            delete_query,
-            variables={"userId": 999999},
-            headers=ADMIN_HEADERS
+            delete_query, variables={"userId": 999999}, headers=ADMIN_HEADERS
         )
 
         assert_graphql_error(response, "не найден")
@@ -1084,14 +1120,15 @@ class TestDeleteUserMutation:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -1104,9 +1141,7 @@ class TestDeleteUserMutation:
         """
 
         response = graphql_query(
-            delete_query,
-            variables={"userId": 2},
-            headers=user_headers
+            delete_query, variables={"userId": 2}, headers=user_headers
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -1130,8 +1165,14 @@ class TestChangeUserPasswordMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "oldpass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {
+                    "login": test_login,
+                    "password": "oldpass123",
+                    "isActive": True,
+                }
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -1144,13 +1185,8 @@ class TestChangeUserPasswordMutation:
 
         response = graphql_query(
             change_query,
-            variables={
-                "data": {
-                    "userId": user_id,
-                    "newPassword": "newpass456"
-                }
-            },
-            headers=ADMIN_HEADERS
+            variables={"data": {"userId": user_id, "newPassword": "newpass456"}},
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "changeUserPassword")
@@ -1158,16 +1194,14 @@ class TestChangeUserPasswordMutation:
 
         # Проверяем что можно войти с новым паролем
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "newpass456"}
+            "/api/auth/token", data={"username": test_login, "password": "newpass456"}
         )
         assert token_response.status_code == 200
         assert "access_token" in token_response.json()
 
         # Проверяем что старый пароль не работает
         old_token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "oldpass123"}
+            "/api/auth/token", data={"username": test_login, "password": "oldpass123"}
         )
         assert old_token_response.status_code == 400
 
@@ -1186,8 +1220,10 @@ class TestChangeUserPasswordMutation:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -1200,13 +1236,8 @@ class TestChangeUserPasswordMutation:
 
         response = graphql_query(
             change_query,
-            variables={
-                "data": {
-                    "userId": user_id,
-                    "newPassword": "short"
-                }
-            },
-            headers=ADMIN_HEADERS
+            variables={"data": {"userId": user_id, "newPassword": "short"}},
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "минимум 8 символов")
@@ -1222,16 +1253,13 @@ class TestChangeUserPasswordMutation:
         # Пытаемся изменить пароль админа (текущий пользователь)
         response = graphql_query(
             change_query,
-            variables={
-                "data": {
-                    "userId": 1,
-                    "newPassword": "newpass123"
-                }
-            },
-            headers=ADMIN_HEADERS
+            variables={"data": {"userId": 1, "newPassword": "newpass123"}},
+            headers=ADMIN_HEADERS,
         )
 
-        assert_graphql_error(response, "Используйте REST endpoint для смены собственного пароля")
+        assert_graphql_error(
+            response, "Используйте REST endpoint для смены собственного пароля"
+        )
 
     def test_change_user_password_not_found(self):
         """Пользователь не найден"""
@@ -1243,13 +1271,8 @@ class TestChangeUserPasswordMutation:
 
         response = graphql_query(
             change_query,
-            variables={
-                "data": {
-                    "userId": 999999,
-                    "newPassword": "newpass123"
-                }
-            },
-            headers=ADMIN_HEADERS
+            variables={"data": {"userId": 999999, "newPassword": "newpass123"}},
+            headers=ADMIN_HEADERS,
         )
 
         assert_graphql_error(response, "не найден")
@@ -1268,14 +1291,15 @@ class TestChangeUserPasswordMutation:
         """
         graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
 
         # Получаем токен пользователя
         token_response = client.post(
-            "/api/auth/token",
-            data={"username": test_login, "password": "pass123"}
+            "/api/auth/token", data={"username": test_login, "password": "pass123"}
         )
         user_token = token_response.json()["access_token"]
         user_headers = {"Authorization": f"Bearer {user_token}"}
@@ -1289,13 +1313,8 @@ class TestChangeUserPasswordMutation:
 
         response = graphql_query(
             change_query,
-            variables={
-                "data": {
-                    "userId": 2,
-                    "newPassword": "newpass123"
-                }
-            },
-            headers=user_headers
+            variables={"data": {"userId": 2, "newPassword": "newpass123"}},
+            headers=user_headers,
         )
 
         assert_graphql_error(response, "недостаточно прав")
@@ -1319,8 +1338,10 @@ class TestUserRolesRelationship:
         """
         create_response = graphql_query(
             create_query,
-            variables={"data": {"login": test_login, "password": "pass123", "isActive": True}},
-            headers=ADMIN_HEADERS
+            variables={
+                "data": {"login": test_login, "password": "pass123", "isActive": True}
+            },
+            headers=ADMIN_HEADERS,
         )
         user_id = create_response["data"]["data"]["createUser"]["id"]
 
@@ -1336,10 +1357,10 @@ class TestUserRolesRelationship:
             variables={
                 "data": {
                     "userId": user_id,
-                    "roleIds": [1]  # Admin role
+                    "roleIds": [1],  # Admin role
                 }
             },
-            headers=ADMIN_HEADERS
+            headers=ADMIN_HEADERS,
         )
 
         result = assert_graphql_success(response, "grantRole")
@@ -1352,10 +1373,12 @@ class TestUserRolesRelationship:
                 id
                 login
                 userRoles {
-                    roleId
-                    role {
-                        id
-                        name
+                    nodes {
+                        roleId
+                        role {
+                            id
+                            name
+                        }
                     }
                 }
             }
@@ -1363,12 +1386,10 @@ class TestUserRolesRelationship:
         """
 
         user_response = graphql_query(
-            user_query,
-            variables={"userId": user_id},
-            headers=ADMIN_HEADERS
+            user_query, variables={"userId": user_id}, headers=ADMIN_HEADERS
         )
 
         user_result = assert_graphql_success(user_response, "user")
         assert user_result["userRoles"] is not None
-        assert len(user_result["userRoles"]) > 0
-        assert user_result["userRoles"][0]["role"]["id"] == 1
+        assert len(user_result["userRoles"]["nodes"]) > 0
+        assert user_result["userRoles"]["nodes"][0]["role"]["id"] == 1

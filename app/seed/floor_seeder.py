@@ -6,4 +6,4 @@ class FloorSeeder(BaseSeeder):
     model = Floor
 
     def gather_data(self) -> list[dict[str, int | str]]:
-        return [{'id': x+2, 'name': x} for x in range(-1, 10)]
+        return [{"id": x + 2, "name": x} for x in range(-1, 10)]

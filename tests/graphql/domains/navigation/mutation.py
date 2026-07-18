@@ -1,4 +1,5 @@
 """Integration tests for GraphQL Mutation operations in navigation domain."""
+
 from tests.graphql.base import graphql_query
 
 # =============================================================================
@@ -119,8 +120,10 @@ class TestGraphQLMutationsNavPlan:
         """
         r = graphql_query(create_q, headers=ADMIN_HEADERS)["data"]
         assert "errors" in r
-        assert any("entrances" in e["message"].lower() and "json" in e["message"].lower()
-                   for e in r["errors"])
+        assert any(
+            "entrances" in e["message"].lower() and "json" in e["message"].lower()
+            for e in r["errors"]
+        )
 
 
 # =============================================================================
@@ -213,7 +216,7 @@ class TestGraphQLMutationsNavUnauthorized:
         assert r["status_code"] == 401
 
     def test_401_delete_without_token(self):
-        q = 'mutation { deleteNavLocation(id: 1) }'
+        q = "mutation { deleteNavLocation(id: 1) }"
         r = graphql_query(q)
         assert r["status_code"] == 401
 
@@ -409,8 +412,10 @@ class TestGraphQLMutationsNavPlanExtended:
         """
         r = graphql_query(update_q, headers=ADMIN_HEADERS)["data"]
         assert "errors" in r
-        assert any("entrances" in e["message"].lower() and "json" in e["message"].lower()
-                   for e in r["errors"])
+        assert any(
+            "entrances" in e["message"].lower() and "json" in e["message"].lower()
+            for e in r["errors"]
+        )
 
         # Cleanup
         delete_q = f"mutation {{ deleteNavPlan(id: {plan_id}) }}"

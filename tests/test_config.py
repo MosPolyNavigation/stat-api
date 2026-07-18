@@ -1,6 +1,7 @@
 """
 Тесты для новой системы конфигурации (YAML + env-подстановка + Pydantic).
 """
+
 import os
 import textwrap
 from pathlib import Path
@@ -17,6 +18,7 @@ from app.config import (
 
 
 # ─── Тесты _substitute_env ────────────────────────────────────────────────────
+
 
 class TestSubstituteEnv:
     def test_replaces_with_env_var(self, monkeypatch):
@@ -53,17 +55,18 @@ class TestSubstituteEnv:
 
 # ─── Тесты _load_dotenv ───────────────────────────────────────────────────────
 
+
 class TestLoadDotenv:
     def test_loads_vars_from_file(self, tmp_path, monkeypatch):
         dotenv = tmp_path / ".env"
-        dotenv.write_text('TEST_LOAD_KEY=loaded_value\n', encoding="utf-8")
+        dotenv.write_text("TEST_LOAD_KEY=loaded_value\n", encoding="utf-8")
         monkeypatch.delenv("TEST_LOAD_KEY", raising=False)
         _load_dotenv(dotenv)
         assert os.environ.get("TEST_LOAD_KEY") == "loaded_value"
 
     def test_does_not_overwrite_existing_env(self, tmp_path, monkeypatch):
         dotenv = tmp_path / ".env"
-        dotenv.write_text('EXISTING_KEY=from_dotenv\n', encoding="utf-8")
+        dotenv.write_text("EXISTING_KEY=from_dotenv\n", encoding="utf-8")
         monkeypatch.setenv("EXISTING_KEY", "from_system")
         _load_dotenv(dotenv)
         assert os.environ["EXISTING_KEY"] == "from_system"
@@ -74,10 +77,7 @@ class TestLoadDotenv:
 
     def test_skips_comments_and_empty_lines(self, tmp_path, monkeypatch):
         dotenv = tmp_path / ".env"
-        dotenv.write_text(
-            '# comment\n\nVALID_KEY=valid_value\n',
-            encoding="utf-8"
-        )
+        dotenv.write_text("# comment\n\nVALID_KEY=valid_value\n", encoding="utf-8")
         monkeypatch.delenv("VALID_KEY", raising=False)
         _load_dotenv(dotenv)
         assert os.environ.get("VALID_KEY") == "valid_value"
@@ -92,6 +92,7 @@ class TestLoadDotenv:
 
 # ─── Тесты load_settings ─────────────────────────────────────────────────────
 
+
 class TestLoadSettings:
     def _write_config(self, tmp_path: Path, content: str) -> Path:
         _ = self
@@ -100,29 +101,38 @@ class TestLoadSettings:
         return cfg
 
     def test_minimal_config_with_db_uri(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: sqlite+aiosqlite:///test.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert str(s.database.uri) == "sqlite+aiosqlite:///test.db"
 
     def test_env_var_substitution_in_yaml(self, tmp_path, monkeypatch):
         monkeypatch.setenv("STATAPI_DB_URL", "sqlite+aiosqlite:///env_test.db")
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: '{{ env("STATAPI_DB_URL") }}'
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert "env_test.db" in str(s.database.uri)
 
     def test_default_values_without_env_vars(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.host == "localhost"
@@ -134,13 +144,16 @@ class TestLoadSettings:
         assert s.jwt.refresh.cookie_name == "refresh_token"
 
     def test_server_section_overrides(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             server:
               host: 0.0.0.0
               port: 9000
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.host == "0.0.0.0"
@@ -148,12 +161,15 @@ class TestLoadSettings:
 
     def test_port_coerced_to_int_from_string_via_env(self, tmp_path, monkeypatch):
         monkeypatch.setenv("STATAPI_PORT", "5000")
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             server:
               port: '{{ env("STATAPI_PORT", "8080") }}'
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.port == 5000
@@ -165,16 +181,21 @@ class TestLoadSettings:
             load_settings()
 
     def test_missing_database_uri_raises_system_exit(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             server:
               host: localhost
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         with pytest.raises(SystemExit):
             load_settings()
 
     def test_jwt_section_overrides(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: sqlite+aiosqlite:///app.db
             jwt:
@@ -185,7 +206,8 @@ class TestLoadSettings:
                 secret: my_refresh_secret
                 expiration: 86400
                 cookie_name: my_refresh
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.jwt.access.secret == "my_access_secret"
@@ -195,7 +217,9 @@ class TestLoadSettings:
         assert s.jwt.refresh.cookie_name == "my_refresh"
 
     def test_cors_section(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             server:
               cors:
                 allowed_hosts:
@@ -207,7 +231,8 @@ class TestLoadSettings:
                   - Authorization
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.cors is not None
@@ -215,18 +240,22 @@ class TestLoadSettings:
         assert "GET" in s.server.cors.allowed_methods
 
     def test_static_section(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             server:
               static:
                 base_path: /srv/static
                 files:
                   - path: dist
                     name: frontend
+                    mount: /
                     fallback: true
                     fallback_to: index.html
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.static is not None
@@ -236,10 +265,13 @@ class TestLoadSettings:
         assert s.server.static.files[0].fallback_to == "index.html"
 
     def test_missing_sections_use_defaults(self, tmp_path, monkeypatch):
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: sqlite+aiosqlite:///app.db
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.server.cors is None
@@ -249,8 +281,7 @@ class TestLoadSettings:
     def test_custom_config_path_via_statapi_config(self, tmp_path, monkeypatch):
         custom = tmp_path / "custom.yaml"
         custom.write_text(
-            "database:\n  uri: sqlite+aiosqlite:///custom.db\n",
-            encoding="utf-8"
+            "database:\n  uri: sqlite+aiosqlite:///custom.db\n", encoding="utf-8"
         )
         monkeypatch.setenv("STATAPI_CONFIG", str(custom))
         s = load_settings()
@@ -259,12 +290,17 @@ class TestLoadSettings:
     def test_env_priority_system_over_dotenv(self, tmp_path, monkeypatch):
         """Системные переменные имеют приоритет над .env"""
         dotenv = tmp_path / ".env"
-        dotenv.write_text('STATAPI_DB_URL=sqlite+aiosqlite:///from_dotenv.db\n', encoding="utf-8")
+        dotenv.write_text(
+            "STATAPI_DB_URL=sqlite+aiosqlite:///from_dotenv.db\n", encoding="utf-8"
+        )
         monkeypatch.setenv("STATAPI_DB_URL", "sqlite+aiosqlite:///from_system.db")
-        cfg = self._write_config(tmp_path, """
+        cfg = self._write_config(
+            tmp_path,
+            """
             database:
               uri: '{{ env("STATAPI_DB_URL", "sqlite+aiosqlite:///default.db") }}'
-        """)
+        """,
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         # Системная переменная уже задана через monkeypatch, dotenv не должен её перезаписать
         _load_dotenv(dotenv)
@@ -274,27 +310,37 @@ class TestLoadSettings:
 
 # ─── Тесты StaticFileConfig валидации ────────────────────────────────────────
 
+
 class TestStaticFileConfig:
     def test_valid_without_fallback(self):
-        cfg = StaticFileConfig(path="dist", name="frontend")
+        cfg = StaticFileConfig(path="dist", name="frontend", mount="/")
         assert cfg.fallback is False
         assert cfg.fallback_to is None
 
     def test_valid_with_fallback(self):
-        cfg = StaticFileConfig(path="dist", name="frontend", fallback=True, fallback_to="index.html")
+        cfg = StaticFileConfig(
+            path="dist",
+            name="frontend",
+            fallback=True,
+            fallback_to="index.html",
+            mount="/",
+        )
         assert cfg.fallback is True
         assert cfg.fallback_to == "index.html"
 
     def test_fallback_true_without_fallback_to_raises(self):
         with pytest.raises(Exception, match="fallback_to"):
-            StaticFileConfig(path="dist", name="frontend", fallback=True)
+            StaticFileConfig(path="dist", name="frontend", fallback=True, mount="/")
 
     def test_fallback_to_without_fallback_raises(self):
         with pytest.raises(Exception, match="fallback_to"):
-            StaticFileConfig(path="dist", name="frontend", fallback_to="index.html")
+            StaticFileConfig(
+                path="dist", name="frontend", fallback_to="index.html", mount="/"
+            )
 
 
 # ─── Тесты backward-compatible свойств ───────────────────────────────────────
+
 
 class TestBackwardCompatProperties:
     def _make_settings(self, tmp_path, monkeypatch, extra_yaml: str = "") -> Settings:
@@ -336,7 +382,9 @@ class TestBackwardCompatProperties:
 
     def test_static_files_default_without_section(self, tmp_path, monkeypatch):
         cfg = tmp_path / "config.yaml"
-        cfg.write_text("database:\n  uri: sqlite+aiosqlite:///app.db\n", encoding="utf-8")
+        cfg.write_text(
+            "database:\n  uri: sqlite+aiosqlite:///app.db\n", encoding="utf-8"
+        )
         monkeypatch.setenv("STATAPI_CONFIG", str(cfg))
         s = load_settings()
         assert s.static_files == "./static"

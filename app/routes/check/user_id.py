@@ -17,19 +17,13 @@ def register_endpoint(router: APIRouter):
             500: {
                 "model": Status,
                 "description": "Server side error",
-                "content": {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                },
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
             404: {
                 "model": Status,
                 "description": "Item not found",
                 "content": {
-                    "application/json": {
-                        "example": {"status": "Client not found"}
-                    }
+                    "application/json": {"example": {"status": "Client not found"}}
                 },
             },
             200: {
@@ -54,19 +48,13 @@ def register_endpoint(router: APIRouter):
             500: {
                 "model": Status,
                 "description": "Server side error",
-                "content": {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                },
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
             404: {
                 "model": Status,
                 "description": "Item not found",
                 "content": {
-                    "application/json": {
-                        "example": {"status": "Client not found"}
-                    }
+                    "application/json": {"example": {"status": "Client not found"}}
                 },
             },
             200: {
@@ -75,8 +63,8 @@ def register_endpoint(router: APIRouter):
             },
         },
     )
-    async def check_client(
-            data: UserIdCheck = Depends(),
-            db: AsyncSession = Depends(get_db),
+    async def check_user(
+        data: UserIdCheck = Depends(),
+        db: AsyncSession = Depends(get_db),
     ):
         return await check_user_id(db, data)

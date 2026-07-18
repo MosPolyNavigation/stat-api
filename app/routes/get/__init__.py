@@ -7,9 +7,7 @@ from .event_type import register_endpoint as register_event_type
 from .payload_type import register_endpoint as register_payload_type
 from .user_id import register_endpoint as register_user_id
 
-router = APIRouter(
-    prefix="/api/get"
-)
+router = APIRouter(prefix="/api/get")
 
 register_popular(router)
 register_route(router)

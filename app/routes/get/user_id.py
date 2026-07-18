@@ -16,19 +16,12 @@ def register_endpoint(router: APIRouter):
         tags=["get"],
         responses={
             500: {
-                'model': Status,
-                'description': "Server side error",
-                'content': {
-                    "application/json": {
-                        "example": {"status": "Some error"}
-                    }
-                }
+                "model": Status,
+                "description": "Server side error",
+                "content": {"application/json": {"example": {"status": "Some error"}}},
             },
-            200: {
-                'model': UserId,
-                "description": "Newly generated user_id"
-            }
-        }
+            200: {"model": UserId, "description": "Newly generated user_id"},
+        },
     )
     async def get_uuid(db: AsyncSession = Depends(get_db)):
         """

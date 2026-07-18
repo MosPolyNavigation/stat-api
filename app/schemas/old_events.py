@@ -16,12 +16,13 @@ class ChangePlanBase(BaseModel):
         user_id: Уникальный идентификатор пользователя;
         plan_id: Идентификатор измененного плана.
     """
+
     user_id: str = Field(
         title="id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )
     plan_id: str = Field(
         title="Changed-plan",
@@ -39,6 +40,7 @@ class ChangePlanIn(ChangePlanBase):
     Этот класс наследуется от ChangePlanBase
     и не содержит дополнительных полей.
     """
+
     pass
 
 
@@ -53,12 +55,13 @@ class SelectedAuditoryBase(BaseModel):
         auditory_id: Идентификатор выбранной аудитории;
         success: Статус выбора аудитории.
     """
+
     user_id: str = Field(
         title="id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )
     auditory_id: str = Field(
         title="Selected-auditory",
@@ -67,8 +70,9 @@ class SelectedAuditoryBase(BaseModel):
         min_length=1,
         # pattern=r"(!?[abvn]d?(-\w+)*)"
     )
-    success: bool = Field(title="Selection-status",
-                          description="Status of auditory selection")
+    success: bool = Field(
+        title="Selection-status", description="Status of auditory selection"
+    )
 
 
 class SelectedAuditoryIn(SelectedAuditoryBase):
@@ -78,6 +82,7 @@ class SelectedAuditoryIn(SelectedAuditoryBase):
     Этот класс наследуется от SelectedAuditoryBase
     и не содержит дополнительных полей.
     """
+
     pass
 
 
@@ -91,15 +96,20 @@ class SiteStatBase(BaseModel):
         user_id: Уникальный идентификатор пользователя;
         endpoint: Путь, посещенный пользователем.
     """
-    user_id: str = Field(title="id",
-                         description="Unique user id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
-    endpoint: Optional[str] = Field(title="User-path",
-                                    description="Path visited by user",
-                                    max_length=100,
-                                    default=None)
+
+    user_id: str = Field(
+        title="id",
+        description="Unique user id",
+        min_length=36,
+        max_length=36,
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
+    )
+    endpoint: Optional[str] = Field(
+        title="User-path",
+        description="Path visited by user",
+        max_length=100,
+        default=None,
+    )
 
 
 class SiteStatIn(SiteStatBase):
@@ -108,6 +118,7 @@ class SiteStatIn(SiteStatBase):
 
     Этот класс наследуется от SiteStatBase и не содержит дополнительных полей.
     """
+
     pass
 
 
@@ -123,12 +134,13 @@ class StartWayBase(BaseModel):
         end_id: Идентификатор конца пути;
         success: Успешно ли был построен маршрут.
     """
+
     user_id: str = Field(
         title="id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )
     start_id: str = Field(
         title="start-of-way",
@@ -146,8 +158,7 @@ class StartWayBase(BaseModel):
     )
 
     success: bool = Field(
-        title="Selection-status",
-        description="Status of auditory selection"
+        title="Selection-status", description="Status of auditory selection"
     )
 
 
@@ -157,6 +168,7 @@ class StartWayIn(StartWayBase):
 
     Этот класс наследуется от StartWayBase и не содержит дополнительных полей.
     """
+
     pass
 
 
@@ -171,11 +183,14 @@ class UserId(BaseModel):
         user_id: Уникальный идентификатор пользователя;
         creation_date: Дата создания.
     """
-    user_id: str = Field(title="User-id",
-                         description="Unique user id",
-                         min_length=36,
-                         max_length=36,
-                         pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}")
+
+    user_id: str = Field(
+        title="User-id",
+        description="Unique user id",
+        min_length=36,
+        max_length=36,
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
+    )
     creation_date: Optional[datetime] = Field(default=None)
     model_config = ConfigDict(from_attributes=True)
 
@@ -190,10 +205,11 @@ class UserIdCheck(BaseModel):
     Attributes:
         user_id: Уникальный идентификатор пользователя.
     """
+
     user_id: str = Field(
         title="User-id",
         description="Unique user id",
         min_length=36,
         max_length=36,
-        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}"
+        pattern=r"[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{8}",
     )

@@ -8,7 +8,7 @@ from sqlalchemy.orm import DeclarativeBase
 
 class BaseSeeder(ABC):
     """Базовый класс для сидеров. Поддерживает простые и составные PK."""
-    
+
     model: Type[DeclarativeBase]
     pk_fields: tuple[str, ...] = ("id",)
 
@@ -16,7 +16,7 @@ class BaseSeeder(ABC):
     def gather_data(self) -> Sequence[dict[str, Any]]:
         """Собирает эталонные данные. Должен вернуть список словарей."""
         ...
-    
+
     async def add_missing(self, session: AsyncSession) -> None:
         """Добавляет только те записи, которых ещё нет в БД."""
         items = self.gather_data()
@@ -28,7 +28,8 @@ class BaseSeeder(ABC):
         existing_pks = {tuple(row) for row in result.all()}
 
         new_objs = [
-            self.model(**item) for item in items
+            self.model(**item)
+            for item in items
             if tuple(item[k] for k in self.pk_fields) not in existing_pks
         ]
 

@@ -13,51 +13,35 @@ from app.graphql.domains.navigation.resources import (
 
 
 LocationQuery = create_query_resource(
-    LocationResource,
-    name_list="nav_locations",
-    name_get="nav_location"
+    LocationResource, name_list="nav_locations", name_get="nav_location"
 )
 
 CampusQuery = create_query_resource(
-    CampusResource,
-    name_list="nav_campuses",
-    name_get="nav_campus"
+    CampusResource, name_list="nav_campuses", name_get="nav_campus"
 )
 
 FloorQuery = create_query_resource(
-    FloorResource,
-    name_list="nav_floors",
-    name_get="nav_floor"
+    FloorResource, name_list="nav_floors", name_get="nav_floor"
 )
 
 TypeQuery = create_query_resource(
-    TypeResource,
-    name_list="nav_types",
-    name_get="nav_type"
+    TypeResource, name_list="nav_types", name_get="nav_type"
 )
 
 PlanQuery = create_query_resource(
-    PlanResource,
-    name_list="nav_plans",
-    name_get="nav_plan"
+    PlanResource, name_list="nav_plans", name_get="nav_plan"
 )
 
 AuditoryQuery = create_query_resource(
-    AuditoryResource,
-    name_list="nav_auditories",
-    name_get="nav_auditory"
+    AuditoryResource, name_list="nav_auditories", name_get="nav_auditory"
 )
 
 AudPhotoQuery = create_query_resource(
-    AudPhotoResource,
-    name_list="nav_auditory_photos",
-    name_get="nav_auditory_photo"
+    AudPhotoResource, name_list="nav_auditory_photos", name_get="nav_auditory_photo"
 )
 
 StaticQuery = create_query_resource(
-    StaticResource,
-    name_list="nav_statics",
-    name_get="nav_static"
+    StaticResource, name_list="nav_statics", name_get="nav_static"
 )
 
 
@@ -85,4 +69,5 @@ class Query(
     - nav_auditory_photos / nav_auditory_photo
     - nav_statics / nav_static
     """
+
     pass

@@ -16,7 +16,7 @@ from app.models import (
     Corpus as CorpusModel,
     Plan as PlanModel,
     Type as TypeModel,
-    Auditory as AuditoryModel
+    Auditory as AuditoryModel,
 )
 
 StrIntId = dict[str, int]
@@ -76,19 +76,21 @@ def _load_plans(path: Path) -> list[PlanCSV]:
         reader = csv.reader(f)
         next(reader, None)  # skip header
         for row in reader:
-            data.append(PlanCSV(
-                id=row[0],
-                corpusId=row[1],
-                floor=int(row[2]),
-                available=row[3] == "TRUE",
-                entrances=json.dumps(json.loads(row[4]), separators=(",", ":")),
-                graph=json.dumps(json.loads(row[5]), separators=(",", ":")),
-                wayToSvg=row[6],
-                nearest_entrance=row[7] if len(row[7]) else None,
-                nearest_wc_man=row[8] if len(row[8]) else None,
-                nearest_wc_woman=row[9] if len(row[9]) else None,
-                nearest_wc=row[10] if len(row[10]) else None,
-            ))
+            data.append(
+                PlanCSV(
+                    id=row[0],
+                    corpusId=row[1],
+                    floor=int(row[2]),
+                    available=row[3] == "TRUE",
+                    entrances=json.dumps(json.loads(row[4]), separators=(",", ":")),
+                    graph=json.dumps(json.loads(row[5]), separators=(",", ":")),
+                    wayToSvg=row[6],
+                    nearest_entrance=row[7] if len(row[7]) else None,
+                    nearest_wc_man=row[8] if len(row[8]) else None,
+                    nearest_wc_woman=row[9] if len(row[9]) else None,
+                    nearest_wc=row[10] if len(row[10]) else None,
+                )
+            )
     return data
 
 
@@ -98,17 +100,19 @@ def _load_auditories(path: Path) -> list[AuditoryCSV]:
         reader = csv.reader(f)
         next(reader, None)
         for row in reader:
-            data.append(AuditoryCSV(
-                plan_id=row[0],
-                id=row[1],
-                type=row[2],
-                available=row[3] == "TRUE",
-                name=row[4],
-                sign_str=row[5] if len(row[5]) else None,
-                additional_info=row[6] if len(row[6]) else None,
-                comments=row[7] if len(row[7]) else None,
-                link=row[8] if len(row[8]) else None,
-            ))
+            data.append(
+                AuditoryCSV(
+                    plan_id=row[0],
+                    id=row[1],
+                    type=row[2],
+                    available=row[3] == "TRUE",
+                    name=row[4],
+                    sign_str=row[5] if len(row[5]) else None,
+                    additional_info=row[6] if len(row[6]) else None,
+                    comments=row[7] if len(row[7]) else None,
+                    link=row[8] if len(row[8]) else None,
+                )
+            )
     return data
 
 
@@ -118,16 +122,18 @@ def _load_locations(path: Path) -> list[LocationCSV]:
         reader = csv.reader(f)
         next(reader, None)
         for row in reader:
-            data.append(LocationCSV(
-                id=row[0],
-                name=row[1],
-                short_name=row[2],
-                available=row[3] == "TRUE",
-                address=row[4],
-                metro=row[5],
-                crossings=json.dumps(json.loads(row[6]), separators=(",", ":")),
-                comments=row[7] if len(row[7]) else None,
-            ))
+            data.append(
+                LocationCSV(
+                    id=row[0],
+                    name=row[1],
+                    short_name=row[2],
+                    available=row[3] == "TRUE",
+                    address=row[4],
+                    metro=row[5],
+                    crossings=json.dumps(json.loads(row[6]), separators=(",", ":")),
+                    comments=row[7] if len(row[7]) else None,
+                )
+            )
     return data
 
 
@@ -137,14 +143,16 @@ def _load_corpuses(path: Path) -> list[CorpusCSV]:
         reader = csv.reader(f)
         next(reader, None)
         for row in reader:
-            data.append(CorpusCSV(
-                id=row[0],
-                loc_id=row[1],
-                name=row[2],
-                available=row[3] == "TRUE",
-                ladders=json.dumps(json.loads(row[4]), separators=(",", ":")),
-                comments=row[5] if len(row[5]) else None,
-            ))
+            data.append(
+                CorpusCSV(
+                    id=row[0],
+                    loc_id=row[1],
+                    name=row[2],
+                    available=row[3] == "TRUE",
+                    ladders=json.dumps(json.loads(row[4]), separators=(",", ":")),
+                    comments=row[5] if len(row[5]) else None,
+                )
+            )
     return data
 
 
@@ -186,7 +194,9 @@ async def _fill_locations(db: AsyncSession, locations: list[LocationCSV]) -> Str
     return ids
 
 
-async def _fill_corpuses(db: AsyncSession, corpuses: list[CorpusCSV], loc_ids: StrIntId) -> StrIntId:
+async def _fill_corpuses(
+    db: AsyncSession, corpuses: list[CorpusCSV], loc_ids: StrIntId
+) -> StrIntId:
     ids: StrIntId = {}
     objs = [
         CorpusModel(
@@ -207,7 +217,9 @@ async def _fill_corpuses(db: AsyncSession, corpuses: list[CorpusCSV], loc_ids: S
     return ids
 
 
-async def _fill_plans(db: AsyncSession, plans: list[PlanCSV], cor_ids: StrIntId) -> StrIntId:
+async def _fill_plans(
+    db: AsyncSession, plans: list[PlanCSV], cor_ids: StrIntId
+) -> StrIntId:
     ids: StrIntId = {}
     objs = [
         PlanModel(
@@ -282,8 +294,10 @@ async def _run_migration(
     auds = _load_auditories(nav_dir / "auds.csv")
     types_ = _get_unique_types(auds)
 
-    typer.echo(f"📦 Загружено: {len(locations)} locations, {len(corpuses)} corpuses, "
-               f"{len(plans)} plans, {len(auds)} auditories, {len(types_)} types")
+    typer.echo(
+        f"📦 Загружено: {len(locations)} locations, {len(corpuses)} corpuses, "
+        f"{len(plans)} plans, {len(auds)} auditories, {len(types_)} types"
+    )
 
     if dry_run:
         typer.echo("✅ [DRY RUN] Данные готовы к загрузке")
@@ -315,7 +329,9 @@ async def _run_migration(
 def nav_csv_command(
     nav_dir: Annotated[
         Path,
-        typer.Argument(help="Папка с CSV-файлами навигации (locations.csv, corpuses.csv, plans.csv, auds.csv)")
+        typer.Argument(
+            help="Папка с CSV-файлами навигации (locations.csv, corpuses.csv, plans.csv, auds.csv)"
+        ),
     ] = Path("nav_data"),
     clean: Annotated[
         bool,

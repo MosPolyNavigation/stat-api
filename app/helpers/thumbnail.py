@@ -8,7 +8,7 @@ def create_thumbnail(
     source_path: str,
     thumbnail_dir: str,
     size: tuple[int, int] = (200, 200),
-    quality: int = 85
+    quality: int = 85,
 ) -> Optional[str]:
     """
     Создает thumbnail для изображения и сохраняет его в директорию thumbnails.
@@ -35,7 +35,9 @@ def create_thumbnail(
                 background = Image.new("RGB", img.size, (255, 255, 255))
                 if img.mode == "P":
                     img = img.convert("RGBA")
-                background.paste(img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None)
+                background.paste(
+                    img, mask=img.split()[-1] if img.mode in ("RGBA", "LA") else None
+                )
                 img = background
             elif img.mode != "RGB":
                 img = img.convert("RGB")
@@ -63,7 +65,7 @@ async def create_thumbnail_async(
     source_path: str,
     thumbnail_dir: str,
     size: tuple[int, int] = (200, 200),
-    quality: int = 85
+    quality: int = 85,
 ) -> Optional[str]:
     """
     Асинхронная обертка для создания thumbnail.
@@ -79,9 +81,5 @@ async def create_thumbnail_async(
         Имя файла thumbnail или None в случае ошибки
     """
     return await asyncio.to_thread(
-        create_thumbnail,
-        source_path,
-        thumbnail_dir,
-        size,
-        quality
+        create_thumbnail, source_path, thumbnail_dir, size, quality
     )

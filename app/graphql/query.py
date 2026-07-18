@@ -7,10 +7,5 @@ from app.graphql.domains.stat.query import Query as StatsQuery
 
 
 @strawberry.type
-class Query(
-    EventQuery,
-    NavQuery,
-    AuthQuery,
-    StatsQuery
-):
+class Query(EventQuery, NavQuery, AuthQuery, StatsQuery):
     pass

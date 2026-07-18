@@ -1,11 +1,13 @@
 import logging
 from os import makedirs, path
+from pathlib import Path
 from typing import List, Any, LiteralString
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import JobsConfig, Settings
@@ -51,10 +53,13 @@ TAGS_METADATA = [
     {"name": "free-aud", "description": "Эндпоинты для получения свободных аудиторий"},
     {"name": "nav", "description": "Эндпоинты для работы с данными навигации"},
     {"name": "check", "description": "Эндпоинты для проверки"},
-    {"name": "admin", "description": "Эндпоинты для управления забаненными пользователями"},
+    {
+        "name": "admin",
+        "description": "Эндпоинты для управления забаненными пользователями",
+    },
 ]
 
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.4.1"
 
 # Cleanup-задачи лимитеров вынесены в константу, чтобы не плодить захваченных ссылок в замыканиях.
 STAT_LIMITERS = [stat_rate_limiter]
@@ -81,6 +86,7 @@ class DefaultHooks(BaseHooks):
             RoleSeeder,
             ValueTypeSeeder,
         )
+
         return [
             ProblemSeeder(),
             ReviewStatusSeeder(),
@@ -93,7 +99,7 @@ class DefaultHooks(BaseHooks):
             EventTypeSeeder(),
             PayloadTypeSeeder(),
             AllowedPayloadSeeder(),
-            DashboardTypeSeeder()
+            DashboardTypeSeeder(),
         ]
 
     def setup_app_arguments(self, settings: Settings) -> dict[str, Any]:
@@ -116,7 +122,7 @@ class DefaultHooks(BaseHooks):
         if settings.server.compression and settings.server.compression.enable:
             app.add_middleware(
                 GZipMiddleware,  # type: ignore[arg-type]
-                minimum_size=settings.server.compression.minimum_size
+                minimum_size=settings.server.compression.minimum_size,
             )
 
     def setup_routers(self, app: FastAPI) -> None:
@@ -136,31 +142,53 @@ class DefaultHooks(BaseHooks):
         app.include_router(admin.router)
 
     def setup_static_files(self, app: FastAPI, settings: Settings) -> None:
-        current_file_dir = path.dirname(path.abspath(__file__))
-        project_dir: str = path.dirname(current_file_dir)
-        admin_dir = path.join(project_dir, "dist-panel")
-
+        base_static = Path(settings.static_files).resolve()
         directories: List[str | LiteralString | bytes] = [
-            path.join(settings.static_files, "images"),
-            path.join(settings.static_files, "auditories"),
-            path.join(settings.static_files, "plans"),
-            path.join(settings.static_files, "thumbnails"),
-            admin_dir,
+            path.join(base_static, "images"),
+            path.join(base_static, "auditories"),
+            path.join(base_static, "plans"),
+            path.join(base_static, "thumbnails"),
         ]
         for directory in directories:
             if not path.exists(directory):
                 makedirs(directory)
 
-        app.mount(
-            "/admin/",
-            SPAStaticFiles(directory=admin_dir, html=True),
-            "admin",
-        )
+        if settings.server.static and settings.server.static.files:
+            for spa_config in settings.server.static.files:
+                fr_dir = Path(spa_config.path)
+
+                if fr_dir.is_absolute():
+                    fr_dir = fr_dir.resolve()
+                else:
+                    fr_dir = (base_static / fr_dir).resolve()
+
+                if not path.exists(fr_dir):
+                    logger.warning(
+                        f"⚠️ Директория фронтенда не найдена: {fr_dir}. "
+                        f"Пропускаем монтирование по пути {fr_dir}"
+                    )
+                    continue
+
+                if spa_config.fallback:
+                    static = SPAStaticFiles(
+                        directory=str(fr_dir),
+                        html=True,
+                        fallback_to=spa_config.fallback_to,
+                    )
+                else:
+                    static = StaticFiles(directory=fr_dir, html=True)
+
+                app.mount(spa_config.mount, static, spa_config.name)
+                logger.info(
+                    f"✅ Смонтирован SPA фронтенд: {spa_config.mount} -> {fr_dir}"
+                )
 
     def setup_exception_handlers(self, app: FastAPI) -> None:
         @app.exception_handler(SQLAlchemyError)
         async def sqlalchemy_exception_handler(_, _exc: SQLAlchemyError):
-            return JSONResponse(status_code=500, content={"status": "Internal server error"})
+            return JSONResponse(
+                status_code=500, content={"status": "Internal server error"}
+            )
 
         @app.exception_handler(LookupException)
         async def lookup_exception_handler(_, exc: LookupException):
@@ -168,7 +196,9 @@ class DefaultHooks(BaseHooks):
 
         @app.exception_handler(HTTPException)
         async def http_exception_handler(_: Request, exc: HTTPException):
-            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+            return JSONResponse(
+                status_code=exc.status_code, content={"detail": exc.detail}
+            )
 
     # ── Lifespan ─────────────────────────────────────────────────────────────
 
@@ -180,7 +210,9 @@ class DefaultHooks(BaseHooks):
         try:
             loaded = review_rate_limiter.load_bans(state, settings)
             if loaded > 0:
-                logger.info("Loaded %d banned users from %s", loaded, settings.static_files)
+                logger.info(
+                    "Loaded %d banned users from %s", loaded, settings.static_files
+                )
         except Exception as e:
             logger.warning("Could not load banned users: %s", e)
 
@@ -190,7 +222,7 @@ class DefaultHooks(BaseHooks):
             static_path=settings.static_files,
             queue_type=jobs_config.queue,
             queue_db=jobs_config.url,
-            state=state
+            state=state,
         )
         job_manager.setup_from_config(jobs_config)
 

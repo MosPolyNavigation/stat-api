@@ -23,13 +23,11 @@ class VertexType(str):
         "stair",
         "crossing",
         "crossingSpace",
-        "lift"
+        "lift",
     }
 
     @classmethod
-    def __get_pydantic_core_schema__(
-        cls, _a, _b
-    ) -> core_schema.CoreSchema:
+    def __get_pydantic_core_schema__(cls, _a, _b) -> core_schema.CoreSchema:
         def validate(value: str) -> VertexType:
             if value not in cls.allowed_values:
                 raise ValueError(
@@ -37,6 +35,7 @@ class VertexType(str):
 {sorted(cls.allowed_values)}"
                 )
             return cls(value)
+
         return core_schema.no_info_after_validator_function(
             validate,
             core_schema.str_schema(),
@@ -81,10 +80,7 @@ class Graph:
     vertexes: Dict[str, "Vertex"]
 
     def __init__(
-        self,
-        location: LocationData,
-        plans: List[PlanData],
-        corpuses: List[CorpusData]
+        self, location: LocationData, plans: List[PlanData], corpuses: List[CorpusData]
     ):
         self.location = location
         self.plans = plans
@@ -95,8 +91,7 @@ class Graph:
 
     def __fill_vertexes_by_raw_vertexes(self):
         plans_of_loc = [
-            plan for plan in self.plans
-            if plan.corpus.location == self.location
+            plan for plan in self.plans if plan.corpus.location == self.location
         ]
         vertexes = dict()
         for plan in plans_of_loc:
@@ -107,33 +102,25 @@ class Graph:
                     y=raw_vertex.y,
                     type=VertexType(raw_vertex.type),
                     neighborData=raw_vertex.neighborData,
-                    plan=plan
+                    plan=plan,
                 )
         self.vertexes = vertexes
 
     def __add_stairs(self):
-        corpuses_of_loc = [
-            x for x in self.corpuses if x.location == self.location
-        ]
+        corpuses_of_loc = [x for x in self.corpuses if x.location == self.location]
         for corpus in corpuses_of_loc:
             for stairs_group in corpus.stairs:
                 for stair_id1, stair_id2 in pairwise(stairs_group):
                     stair1_vertex = self.find_vertex_by_id(stair_id1)
                     stair2_vertex = self.find_vertex_by_id(stair_id2)
-                    self.__add_neighbor_both(
-                        stair1_vertex, stair2_vertex,
-                        1085, 916
-                    )
+                    self.__add_neighbor_both(stair1_vertex, stair2_vertex, 1085, 916)
 
     def find_vertex_by_id(self, id_: str) -> Vertex:
         return self.vertexes[id_]
 
     @staticmethod
     def __add_neighbor_both(
-        vertex1: Vertex,
-        vertex2: Vertex,
-        distance1to2: float,
-        distance2to1: float
+        vertex1: Vertex, vertex2: Vertex, distance1to2: float, distance2to1: float
     ):
         vertex1.neighborData.append((vertex2.id, distance1to2))
         vertex2.neighborData.append((vertex1.id, distance2to1))
@@ -145,28 +132,25 @@ class Graph:
                 self.find_vertex_by_id(crossing1_id),
                 self.find_vertex_by_id(crossing2_id),
                 distance,
-                distance
+                distance,
             )
 
-    def get_shortest_way_from_to(
-        self,
-        start: str,
-        end: str
-    ) -> ShortestWay:
+    def get_shortest_way_from_to(self, start: str, end: str) -> ShortestWay:
         st_time = time.time()
         allowed_types = {
-            'hallway',
-            'lift',
-            'stair',
-            'corpusTransition',
-            'crossingSpace'
+            "hallway",
+            "lift",
+            "stair",
+            "corpusTransition",
+            "crossingSpace",
         }
 
         # Фильтрация вершин через словарь
-        valid_ids = {k for k, v in self.vertexes.items()
-                     if v.type in allowed_types
-                     or k in {start, end}
-                     or 'crossing' in k}
+        valid_ids = {
+            k
+            for k, v in self.vertexes.items()
+            if v.type in allowed_types or k in {start, end} or "crossing" in k
+        }
 
         distances = {vid: math.inf for vid in valid_ids}
         previous: Dict[str, str | None] = {vid: None for vid in valid_ids}
@@ -208,5 +192,5 @@ class Graph:
         print(f"The task took {e_time:.4f} seconds to complete.")
         return ShortestWay(
             way=[self.vertexes[vid] for vid in reversed(path) if vid],
-            distance=math.floor(distances.get(end, math.inf))
+            distance=math.floor(distances.get(end, math.inf)),
         )

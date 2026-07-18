@@ -18,6 +18,7 @@ _ENV_PATTERN = re.compile(r'\{\{\s*env\("([^"]+)"(?:\s*,\s*"([^"]*)"\s*)?\)\s*}}
 
 # ─── Загрузка .env без перезаписи системных переменных ────────────────────────
 
+
 def _load_dotenv(dotenv_path: Path) -> None:
     if not dotenv_path.exists():
         return
@@ -34,6 +35,7 @@ def _load_dotenv(dotenv_path: Path) -> None:
 
 # ─── Подстановка переменных окружения в YAML-строку ───────────────────────────
 
+
 def _substitute_env(raw: str) -> str:
     def replacer(match: re.Match) -> str:
         var_name: str = match.group(1)
@@ -49,6 +51,7 @@ def _substitute_env(raw: str) -> str:
 
 
 # ─── Pydantic-модели конфигурации ─────────────────────────────────────────────
+
 
 class CronConfig(BaseModel):
     minute: str | int = "*"
@@ -109,6 +112,7 @@ class CorsConfig(BaseModel):
 class StaticFileConfig(BaseModel):
     path: str
     name: str
+    mount: str
     fallback: bool = False
     fallback_to: str | None = None
 
@@ -118,6 +122,18 @@ class StaticFileConfig(BaseModel):
             raise ValueError("При fallback=True поле 'fallback_to' обязательно")
         if self.fallback_to is not None and not self.fallback:
             raise ValueError("Поле 'fallback_to' допустимо только при fallback=True")
+        return self
+
+    @model_validator(mode="after")
+    def validate_mount(self) -> Self:
+        if not self.mount.startswith("/"):
+            raise ValueError(
+                f"Поле 'mount' должно начинаться с '/'. Получено: '{self.mount}'"
+            )
+        if not self.mount.endswith("/"):
+            raise ValueError(
+                f"Поле 'mount' должно заканчиваться на '/'. Получено: '{self.mount}'"
+            )
         return self
 
 
@@ -196,7 +212,7 @@ class Settings(BaseModel):
         if self.server.cors:
             return self.server.cors.allowed_headers
         return ["Authorization"]
-    
+
     @property
     def allow_credentials(self) -> bool:
         if self.server.cors:
@@ -222,11 +238,11 @@ class Settings(BaseModel):
 
 # ─── Загрузка конфигурации ────────────────────────────────────────────────────
 
+
 def load_settings() -> Settings:
     # [1] Определяем путь к конфигу
     config_path = Path(os.getenv("STATAPI_CONFIG", "config.yaml"))
-    if not config_path.is_absolute():
-        config_path = BASE_DIR / config_path
+    config_path = Path(config_path.resolve())
 
     if not config_path.exists():
         raise FileNotFoundError(
