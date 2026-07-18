@@ -1,7 +1,7 @@
 import typer
-from scripts import CONFIG_ENV_NOTE
-from scripts.db.seed.run import seed_command
-from scripts.db.seed.nav_csv import nav_csv_command
+from app.cli import CONFIG_ENV_NOTE
+from app.cli.db.seed.run import seed_command
+from app.cli.db.seed.nav_csv import nav_csv_command
 
 seed_cli = typer.Typer(
     name="seed",
