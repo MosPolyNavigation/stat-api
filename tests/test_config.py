@@ -249,6 +249,7 @@ class TestLoadSettings:
                 files:
                   - path: dist
                     name: frontend
+                    mount: /
                     fallback: true
                     fallback_to: index.html
             database:
@@ -312,24 +313,30 @@ class TestLoadSettings:
 
 class TestStaticFileConfig:
     def test_valid_without_fallback(self):
-        cfg = StaticFileConfig(path="dist", name="frontend")
+        cfg = StaticFileConfig(path="dist", name="frontend", mount="/")
         assert cfg.fallback is False
         assert cfg.fallback_to is None
 
     def test_valid_with_fallback(self):
         cfg = StaticFileConfig(
-            path="dist", name="frontend", fallback=True, fallback_to="index.html"
+            path="dist",
+            name="frontend",
+            fallback=True,
+            fallback_to="index.html",
+            mount="/",
         )
         assert cfg.fallback is True
         assert cfg.fallback_to == "index.html"
 
     def test_fallback_true_without_fallback_to_raises(self):
         with pytest.raises(Exception, match="fallback_to"):
-            StaticFileConfig(path="dist", name="frontend", fallback=True)
+            StaticFileConfig(path="dist", name="frontend", fallback=True, mount="/")
 
     def test_fallback_to_without_fallback_raises(self):
         with pytest.raises(Exception, match="fallback_to"):
-            StaticFileConfig(path="dist", name="frontend", fallback_to="index.html")
+            StaticFileConfig(
+                path="dist", name="frontend", fallback_to="index.html", mount="/"
+            )
 
 
 # ─── Тесты backward-compatible свойств ───────────────────────────────────────
