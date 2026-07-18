@@ -142,7 +142,7 @@ class DefaultHooks(BaseHooks):
         app.include_router(admin.router)
 
     def setup_static_files(self, app: FastAPI, settings: Settings) -> None:
-        base_static = settings.static_files
+        base_static = Path(settings.static_files).resolve()
         directories: List[str | LiteralString | bytes] = [
             path.join(base_static, "images"),
             path.join(base_static, "auditories"),

@@ -242,8 +242,7 @@ class Settings(BaseModel):
 def load_settings() -> Settings:
     # [1] Определяем путь к конфигу
     config_path = Path(os.getenv("STATAPI_CONFIG", "config.yaml"))
-    if not config_path.is_absolute():
-        config_path = BASE_DIR / config_path
+    config_path = Path(config_path.resolve())
 
     if not config_path.exists():
         raise FileNotFoundError(
