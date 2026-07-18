@@ -1,8 +1,8 @@
 import typer
-from scripts import CONFIG_ENV_NOTE
-from scripts.db.migrate.sqlite_to_pg import sqlite_to_pg_command
-from scripts.db.migrate.old_events_to_new import old_events_to_new_command
-from scripts.db.migrate.alembic_ops import upgrade_command, downgrade_command
+from app.cli import CONFIG_ENV_NOTE
+from app.cli.db.migrate.sqlite_to_pg import sqlite_to_pg_command
+from app.cli.db.migrate.old_events_to_new import old_events_to_new_command
+from app.cli.db.migrate.alembic_ops import upgrade_command, downgrade_command
 
 migrate_cli = typer.Typer(
     name="migrate",

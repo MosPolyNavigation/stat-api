@@ -4,8 +4,8 @@ import uvicorn
 from app.default_hooks import DefaultHooks
 from app.logging import setup_logging
 from app.factory import AppFactory
-from scripts.db import db_cli
-from scripts import CONFIG_ENV_NOTE
+from app.cli.db import db_cli
+from . import CONFIG_ENV_NOTE
 
 setup_logging(level="INFO", use_colors=True)
 
@@ -47,7 +47,3 @@ def serve(
     if port is None:
         port = cfg.server.port
     uvicorn.run(app, host=host, port=port, reload=reload, workers=workers)
-
-
-if __name__ == "__main__":
-    app_cli()

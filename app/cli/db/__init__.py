@@ -1,8 +1,8 @@
 import typer
-from scripts import CONFIG_ENV_NOTE
-from scripts.db.migrate import migrate_cli
-from scripts.db.seed import seed_cli
-from scripts.db.admin import create_admin_command
+from app.cli import CONFIG_ENV_NOTE
+from app.cli.db.migrate import migrate_cli
+from app.cli.db.seed import seed_cli
+from app.cli.db.admin import create_admin_command
 
 db_cli = typer.Typer(
     name="db",

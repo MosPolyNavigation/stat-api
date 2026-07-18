@@ -45,10 +45,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-# Включаем пакет app
 packages = ["app"]
-# Включаем main.py как топ-уровень модуль (чтобы работало main:app_cli)
-py-modules = ["main"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"  # или "strict"
@@ -58,7 +55,7 @@ python_classes = ["Test*"]
 python_functions = ["test_*"]
 
 [project.scripts]
-stat-api = "main:app_cli"
+stat-api = "app.cli.main:app_cli"
 
 [tool.ruff.lint]
 ignore = ["E402", "SLF001"]
