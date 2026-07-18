@@ -30,10 +30,12 @@ server:
   # Статические файлы (опционально)
   static:
     base_path: {{ env("STATAPI_STATIC", "./static") }}
-    files: []
+    files: [] # Перечислить так, чтобы mount с наибольшим включением путей был последним
+    # Например сперва /admin/, а уже потом /
     # Пример маршрута SPA:
     # - path: dist
     #   name: frontend
+    #   mount: / # Должно начинаться и заканчиваться на /
     #   fallback: true
     #   fallback_to: index.html
 
