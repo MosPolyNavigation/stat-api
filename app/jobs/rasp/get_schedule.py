@@ -1,5 +1,5 @@
 import asyncio
-import httpx
+import httpx2
 import json
 import logging
 import re
@@ -31,7 +31,7 @@ def extract_json_string(html: str) -> str:
 
 
 async def get_groups() -> dict[str, dict[str, Any | None] | Any]:
-    async with httpx.AsyncClient(timeout=30) as client:
+    async with httpx2.AsyncClient(timeout=30) as client:
         r = await client.get(BASE_URL, headers={"User-Agent": USER_AGENT})
         r.raise_for_status()
     html = r.text
@@ -46,7 +46,7 @@ async def get_schedule() -> AsyncGenerator[tuple[str, Union[Dto, None]], None]:
         if value:
             yield key, None
             continue
-        async with httpx.AsyncClient(timeout=30) as client:
+        async with httpx2.AsyncClient(timeout=30) as client:
             r = await client.get(
                 f"{dataUrl}{key}",
                 headers={"User-Agent": USER_AGENT, "Referer": "https://rasp.dmami.ru"},
