@@ -1,10 +1,10 @@
-# 🧭 Polytech Navigation (PolyNa)
+# Polytech Navigation (PolyNa)
 
 Проект для сбора и управления аналитикой, а также хранения и раздачи статических ресурсов сервиса **Polytech Navigation (PolyNa)**.
 
 ## Содержание
 - [Требования](#требования)
-- [Запуск проекта (Production / Docker)](#запуск-проекта-production--docker)
+- [Запуск проекта (Production)](#запуск-проекта-production)
 - [Локальная разработка (Development)](#локальная-разработка-development)
 - [Правила работы с ветками](#правила-работы-с-ветками)
 - [Проверка кода и тесты](#проверка-кода-и-тесты)
@@ -15,12 +15,12 @@
 
 Для работы с проектом вам понадобятся:
 - [Docker](https://www.docker.com/) и [Docker Compose](https://docs.docker.com/compose/)
-- [uv](https://github.com/astral-sh/uv)
+- [uv](https://github.com/astral-sh/uv) или стандартный Python с `pip` и `virtualenv`
 - [Git](https://git-scm.com/)
 
 ---
 
-## Запуск проекта (Production / Docker)
+## Запуск проекта (Production)
 
 Для развертывания сервиса используется Docker Compose.
 
@@ -66,10 +66,10 @@ database:
 jwt:
   access:
     secret: {{ env("STATAPI_ACCESS_SECRET", "example1") }}
-    expiration: 900  # 15 минут
+    expiration: 900
   refresh:
     secret: {{ env("STATAPI_REFRESH_SECRET", "example2") }}
-    expiration: 2592000  # 30 дней
+    expiration: 2592000
     cookie_name: refresh_token
 
 jobs:
@@ -104,7 +104,7 @@ jobs:
 </details>
 
 ### 2. Настройка Docker Compose
-Создайте или обновите файл `docker-compose.yml`. 
+Создайте или обновите файл `docker-compose.yaml`. 
 
 > **ВАЖНО:** Перед запуском в production обязательно замените значения паролей и секретов (`test`, `secret`) на надежные, уникальные строки!
 
@@ -155,8 +155,8 @@ networks:
         - subnet: "172.16.0.0/24"
 ```
 
-### 3. Порядок запуска в Docker
-Из-за зависимости от инициализированной базы данных, запуск выполняется в два этапа:
+### 3. Порядок запуска и обновления
+Из-за зависимости от инициализированной базы данных, запуск и обновление выполняются в несколько этапов:
 
 1. Запустите только базу данных и дождитесь ее готовности:
    ```bash
@@ -175,6 +175,17 @@ networks:
    docker-compose up -d server
    ```
 
+> #### Если нужно перенести данные из sqlite в postgresql
+> 1. Укажите корректный URI подключения к PostgreSQL в `config.yaml` (переменная `STATAPI_DB`).
+> 2. Инициализируйте схему в новой PostgreSQL БД:
+>    ```bash
+>    uv run stat-api db migrate upgrade head
+>    ```
+> 3. Перенесите данные из старого SQLite файла:
+>    ```bash
+>    uv run stat-api db migrate sqlite-to-pg <путь_к_файлу_sqlite.db>
+>    ```
+
 ---
 
 ## Локальная разработка (Development)
@@ -185,16 +196,25 @@ networks:
    git clone -b dev <ссылка_на_репозиторий>
    cd <папка_проекта>
    ```
-2. Установите зависимости:
+2. **Рекомендуемый способ (через uv):**
    ```bash
    uv sync
    uv sync --group lint
-   ```
-3. Настройте pre-commit хуки:
-   ```bash
    uv run pre-commit
    uv run pre-commit install --hook-type pre-push --hook-type pre-commit
    ```
+
+   > **Альтернативный способ (стандартный venv и pip)**  
+   > Если вы предпочитаете не использовать `uv`, проект полностью совместим со стандартными инструментами Python:
+   > ```bash
+   > python -m venv .venv
+   > source .venv/bin/activate  # Для Windows: .venv\Scripts\activate
+   > pip install .
+   > # Для установки зависимостей линтинга (опционально):
+   > pip install ruff pytest pre-commit
+   > pre-commit install --hook-type pre-push --hook-type pre-commit
+   > ```
+   > **Важно:** При использовании этого способа префикс `uv run` **не требуется**, и все команды можно запускать напрямую (например, `stat-api serve`, `ruff check .`, `pytest`).
 
 ### 2. Работа с базой данных и запуск
 Для управления базой данных используется встроенный CLI. К любой команде можно добавить `--help`, чтобы узнать доступные аргументы и подкоманды (например: `uv run stat-api db --help`).
@@ -202,14 +222,8 @@ networks:
 Выберите подходящий сценарий:
 
 #### Сценарий А: Чистый запуск (Dev, базы данных нет)
-1. Примените миграции:
-   ```bash
-   uv run stat-api db migrate upgrade head
-   ```
-2. Заполните БД базовыми данными (сиды):
-   ```bash
-   uv run stat-api db seed run
-   ```
+1. Примените миграции: `uv run stat-api db migrate upgrade head`
+2. Заполните БД базовыми данными (сиды): `uv run stat-api db seed run`
 3. *(Опционально)* Загрузите данные навигации из CSV. Для этого в корне проекта должна существовать папка `nav_data` с 4 файлами: `auds.csv`, `corpuses.csv`, `locations.csv`, `plans.csv`:
    ```bash
    uv run stat-api db seed nav-csv
@@ -218,10 +232,7 @@ networks:
    ```bash
    uv run stat-api db create-admin <логин>
    ```
-5. Запустите сервер:
-   ```bash
-   uv run stat-api serve
-   ```
+5. Запустите сервер: `uv run stat-api serve`
 
 #### Сценарий Б: Обновление существующей БД
 Если база данных уже существует, перед запуском нового кода обязательно:
@@ -269,13 +280,13 @@ git checkout -b <название_ветки>
 Выполните следующие команды:
 ```bash
 # Проверка кода линтером
-uv run ruff check .
+uv run ruff check .          # или просто: ruff check .
 
 # Проверка форматирования кода
-uv run ruff format --check .
+uv run ruff format --check . # или просто: ruff format --check .
 
 # Запуск тестов
-uv run pytest
+uv run pytest                # или просто: pytest
 ```
 
-> **Примечание:** благодаря настроенным `pre-commit` и `pre-push` хукам, часть этих проверок будет запускаться автоматически, но рекомендуется проверять статус вручную перед финальным пушем.
+> **Примечание:** благодаря настроенным `pre-commit` и `pre-push` хукам, часть этих проверок будет запускаться автоматически, но рекомендуется проверять статус в ручную перед финальным пушем.
